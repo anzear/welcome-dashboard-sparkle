@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
-import GridFindings from "@/components/materialRegister/GridFindings";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import {
   BriefLink,
@@ -20,6 +19,7 @@ import {
   DEFAULT_PRESET,
   SIZE_MIN,
   axisVar,
+  niceScale,
   quadrantReadings,
   sizeRadius,
   type AxisVarId,
