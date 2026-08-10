@@ -18,7 +18,7 @@ import { nf } from "@/components/materialRegister/primitives";
 
 const W = 780;
 const H = 460;
-const PAD = { l: 78, r: 24, t: 22, b: 52 };
+const PAD = { l: 78, r: 52, t: 22, b: 52 };
 const PW = W - PAD.l - PAD.r;
 const PH = H - PAD.t - PAD.b;
 const Y_MAX = 12;
