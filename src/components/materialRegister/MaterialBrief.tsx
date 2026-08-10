@@ -102,7 +102,7 @@ const DataRow: React.FC<{
       </div>
       <div className="text-[11px] leading-snug text-muted-foreground/50">{provenance}</div>
     </div>
-    <div className="justify-self-end text-right">{value}</div>
+    <div className="min-w-0 justify-self-end break-words text-right">{value}</div>
     {children}
   </div>
 );
@@ -856,6 +856,7 @@ export const MaterialBrief: React.FC = () => {
                 computedInputs="volume x emission factor"
               />
               <EditableFigure
+                wide
                 label="GHG boundary"
                 value={m.ghg_boundary}
                 provenance={m.provenance.ghg_boundary}
@@ -863,6 +864,7 @@ export const MaterialBrief: React.FC = () => {
                 onSave={(raw) => saveText("ghg_boundary", raw)}
               />
               <EditableFigure
+                wide
                 label="GHG data basis"
                 value={m.ghg_data_basis}
                 provenance={m.provenance.ghg_data_basis}
@@ -906,6 +908,7 @@ export const MaterialBrief: React.FC = () => {
           <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
             <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <DerivedField
+                wide
                 label="Name"
                 value={m.name}
                 provenance={m.provenance.name}
@@ -943,6 +946,7 @@ export const MaterialBrief: React.FC = () => {
                 }
               />
               <DerivedField
+                wide
                 label="Material class"
                 value={m.material_class}
                 provenance={m.provenance.material_class}
