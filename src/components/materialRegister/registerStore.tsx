@@ -315,6 +315,16 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.owners.length && !filters.owners.includes(m.owner ?? UNASSIGNED_OWNER)) return false;
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
+      if (
+        filters.products.length &&
+        !(m.product_categories ?? []).some((c) => filters.products.includes(c))
+      )
+        return false;
+      if (
+        filters.applications.length &&
+        !(m.application_categories ?? []).some((c) => filters.applications.includes(c))
+      )
+        return false;
       if (filters.tags.length) {
         const wantUntagged = filters.tags.includes(UNTAGGED);
         const keys = new Set(filters.tags.filter((t) => t !== UNTAGGED).map(tagKey));
