@@ -1,0 +1,253 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hide development overlays and inspection tools */
+[data-inspector], 
+[class*="inspector"], 
+[class*="overlay"]:not([data-radix-popper-content-wrapper]):not([data-radix-portal]), 
+[class*="devtools"],
+[class*="debug"],
+.image-size-overlay,
+.development-overlay {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Hide GitHub-style circular overlays */
+div[style*="border-radius: 50%"][style*="background"],
+.circular-overlay,
+button[style*="border-radius: 50%"] {
+  display: none !important;
+}
+
+/* Hide size indicators */
+div[style*="1708"],
+div[style*="915"],
+.size-indicator,
+[class*="dimensions"] {
+  display: none !important;
+}
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 10% 8%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 145 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 145 60% 52%;
+    
+    /* Welcome widget specific green */
+    --welcome-green: 145 65% 42%;
+    --welcome-green-glow: 145 60% 52%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 145 65% 42%;
+
+    --success: 145 65% 42%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 45 93% 47%;
+    --warning-foreground: 222 47% 11%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 98%;
+
+    /* Filter category colors */
+    --product-blue: 217 91% 60%;
+    --product-blue-foreground: 0 0% 98%;
+    --application-purple: 262 83% 58%;
+    --application-purple-foreground: 0 0% 98%;
+    --application-orange: 25 95% 53%;
+    --application-orange-foreground: 0 0% 98%;
+    --market-orange: 25 95% 53%;
+    --market-orange-foreground: 0 0% 98%;
+
+    /* Dashboard specific colors */
+    --dashboard-primary: 145 65% 42%;
+    --dashboard-secondary: 0 0% 98%;
+    --dashboard-accent: 145 60% 52%;
+    
+    /* Purple items for lists */
+    --item-background: 258 90% 96%;
+    --item-hover: 258 90% 94%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-welcome: linear-gradient(135deg, hsl(var(--welcome-green)), hsl(var(--welcome-green-glow)));
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 14% 98%));
+    --gradient-feedstock: linear-gradient(135deg, hsl(0 0% 100%), hsl(152 20% 97%));
+
+    /* Shadows */
+    --shadow-soft: 0 2px 10px -2px hsl(220 20% 20% / 0.06);
+    --shadow-medium: 0 8px 30px -6px hsl(220 20% 20% / 0.1);
+    --shadow-strong: 0 20px 40px -10px hsl(220 20% 20% / 0.15);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 9% 46%;
+    --sidebar-primary: 145 65% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 145 65% 42%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 0 0% 98%;
+
+    --card: 222 47% 9%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 222 47% 9%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 145 65% 42%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 145 60% 52%;
+
+    --secondary: 222 30% 15%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 222 30% 15%;
+    --muted-foreground: 220 10% 60%;
+
+    --accent: 222 30% 15%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 222 30% 18%;
+    --input: 222 30% 18%;
+    --ring: 145 65% 42%;
+
+    --success: 145 65% 42%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 93% 47%;
+    --warning-foreground: 222 47% 11%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 98%;
+
+    /* Filter category colors */
+    --product-blue: 217 91% 60%;
+    --product-blue-foreground: 0 0% 98%;
+    --application-purple: 262 83% 58%;
+    --application-purple-foreground: 0 0% 98%;
+    --application-orange: 25 95% 53%;
+    --application-orange-foreground: 0 0% 98%;
+    --market-orange: 25 95% 53%;
+    --market-orange-foreground: 0 0% 98%;
+
+    --dashboard-primary: 145 65% 42%;
+    --dashboard-secondary: 222 30% 15%;
+    --dashboard-accent: 145 60% 52%;
+    
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-subtle: linear-gradient(135deg, hsl(var(--background)), hsl(var(--muted)));
+    --gradient-card: linear-gradient(135deg, hsl(222 47% 9%), hsl(222 30% 12%));
+    --gradient-feedstock: linear-gradient(135deg, hsl(222 47% 9%), hsl(152 20% 12%));
+
+    --shadow-soft: 0 2px 10px -2px hsl(0 0% 0% / 0.3);
+    --shadow-medium: 0 8px 30px -6px hsl(0 0% 0% / 0.4);
+    --shadow-strong: 0 20px 40px -10px hsl(0 0% 0% / 0.5);
+    --sidebar-background: 222 47% 8%;
+    --sidebar-foreground: 220 20% 70%;
+    --sidebar-primary: 145 65% 42%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 40% 14%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 222 40% 16%;
+    --sidebar-ring: 145 65% 42%;
+  }
+}
+
+/* Page transition animations */
+.page-transition-enter {
+  animation: slideInFromBottom 0.4s ease-out;
+}
+
+.page-transition-exit {
+  animation: slideOutToBottom 0.4s ease-in;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html, body {
+    @apply bg-background text-foreground;
+    overflow: hidden;
+    height: 100vh;
+    max-height: 100vh;
+  }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
