@@ -67,7 +67,8 @@ export type MaterialEventType =
   | "owner_change"
   | "priority_change"
   | "blocker_set"
-  | "field_correction";
+  | "field_correction"
+  | "score_change";
 
 export type BatchOrigin = "baselining" | "real_transition";
 
@@ -101,3 +102,27 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   material_class: "Material class",
   customer_material_group: "Material group",
 };
+
+/**
+ * One judgement on one question for one material. Stored sparsely: a missing
+ * entry means no judgement at all, which is never the same as a recorded 0.
+ */
+export interface DriverScore {
+  material_id: string;
+  question_id: string;
+  /** -5..+5, or null for a cleared judgement. Never a stand-in for zero. */
+  score: number | null;
+  note: string | null;
+  scored_by: string;
+  scored_at: string;
+}
+
+/**
+ * Counts of judgements, never a composite. All null when nothing is scored —
+ * an unscored material has no counts, not counts of zero.
+ */
+export interface DriverCounts {
+  strong_drivers: number | null;
+  strong_constraints: number | null;
+  scored_count: number | null;
+}
