@@ -501,7 +501,8 @@ const PrioritisationGrid: React.FC = () => {
               </g>
             ))}
 
-            {/* equal-position reference */}
+
+
 
             {/* median splits */}
             {xMedian !== null && (
