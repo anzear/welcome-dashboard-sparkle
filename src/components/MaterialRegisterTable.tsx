@@ -365,7 +365,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto overflow-y-auto rounded-md border border-border pr-4 max-h-[calc(100vh-16rem)]">
+      <div className="overflow-auto rounded-md border border-border max-h-[calc(100vh-16rem)]">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
@@ -387,7 +387,7 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, "w-[9.5rem] px-3 py-2 text-left")}>Other rankings</th>
+              <th className={cn(HEAD, "min-w-[10rem] px-3 py-2 text-left")}>Other rankings</th>
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
                 <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
@@ -411,7 +411,7 @@ export const MaterialRegisterTable: React.FC = () => {
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
 
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
-              {showLastChange && <th className={cn(HEAD, "px-3 py-2 text-left")}>Last change</th>}
+              {showLastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
           <tbody>
@@ -504,8 +504,8 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td className="w-[9.5rem] whitespace-nowrap px-3 py-2 align-top">
-                      <span className="grid grid-cols-3 gap-1">
+                    <td className="min-w-[10rem] whitespace-nowrap px-3 py-2 align-top">
+                      <span className="flex items-baseline">
                         {otherMeasures.map((mm) => {
                           const other = row.ranks[mm.id];
                           const amber = row.gapMeasure === mm.id;
@@ -513,7 +513,7 @@ export const MaterialRegisterTable: React.FC = () => {
                             <span
                               key={mm.id}
                               title={chipTooltip(row, mm)}
-                              className="inline-flex items-baseline gap-1 font-mono text-[10px] tabular-nums"
+                              className="inline-flex w-[3.1rem] shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums"
                             >
                               <span className={cn(amber ? "text-amber-700/70" : "text-muted-foreground/45")}>
                                 {mm.short}
@@ -591,7 +591,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       )}
                     </td>
                     {showLastChange && (
-                      <td className="whitespace-nowrap px-3 py-2 align-top">
+                      <td className="whitespace-nowrap px-3 pr-8 py-2 align-top">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
                           <>
                             <div
