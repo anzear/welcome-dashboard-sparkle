@@ -33,21 +33,34 @@ const Inner: React.FC = () => {
         <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
       </header>
 
-      <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-        {TABS.map((t) => (
+      <div className="flex items-center gap-3 rounded-t-md bg-muted/30 px-2 py-1.5">
+        <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={cn(
+                "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                tab === t.id ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab === "register" && (
           <button
-            key={t.id}
             type="button"
-            onClick={() => setTab(t.id)}
-            className={cn(
-              "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-              tab === t.id ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
-            )}
+            onClick={() => setAddOpen(true)}
+            className="ml-auto inline-flex items-center gap-1 rounded-sm bg-foreground px-2 py-1 text-[11px] font-medium text-background hover:bg-foreground/90"
           >
-            {t.label}
+            <Plus className="h-3 w-3" /> Add material
           </button>
-        ))}
+        )}
       </div>
+      <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
 
       {tab === "register" && <MaterialRegisterTable />}
       {tab === "grid" && <PrioritisationGrid />}
