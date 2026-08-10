@@ -178,10 +178,14 @@ export const MaterialRegisterTable: React.FC = () => {
   /** The active measure is marked once per column: header accent plus a faint tint. */
   const colTint = (id: MeasureId) => (activeCol(id) ? "bg-primary/[0.05]" : undefined);
 
-  // Base columns: checkbox, rank, material, position, volume, price, spend, GHG, suppliers, status, owner.
-  const colCount = 11;
+  // Always present: checkbox and Material. Everything else is switchable.
+  const colCount = 2;
   const extraCols =
     (activeCol("applications") ? 1 : 0) + OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
+
+  /** Pinned offsets shift when the rank column is switched off. */
+  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+  const positionLeft = cols.rank ? "left-[19rem]" : "left-[16rem]";
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
