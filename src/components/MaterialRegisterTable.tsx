@@ -356,27 +356,13 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
           <span className="font-mono tabular-nums">{data.length}</span> materials
         </div>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <span className="border-b border-dotted border-muted-foreground/60 font-mono">1 234</span> computed
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="text-primary/70">^</span> entered
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="rounded-sm bg-amber-500/10 px-1 font-mono text-amber-700">GHG 6</span> rank divergence
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="text-muted-foreground/50">—</span> no value (unranked)
-          </span>
-        </div>
       </div>
 
-      <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border border-border">
+      <div className="overflow-x-auto overflow-y-auto rounded-md border border-border pr-4 max-h-[calc(100vh-16rem)]">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
-              <th className={cn(HEAD, "w-8 px-2 py-2")}>
+              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2")}>
                 <Checkbox
                   checked={headerChecked}
                   onCheckedChange={toggleAllVisible}
@@ -384,20 +370,39 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              <th className={cn(HEAD, "w-10 px-2 py-2 text-right")}>#</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Material</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Other rankings</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>Annual volume (t/yr)</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>Unit price (EUR/kg)</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>Annual spend (EUR)</th>
+              <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              <th
+                className={cn(
+                  HEAD,
+                  STICK,
+                  "left-[5rem] z-30 w-56 border-r border-border px-3 py-2 text-left",
+                )}
+              >
+                Material
+              </th>
+              <th className={cn(HEAD, "w-[9.5rem] px-3 py-2 text-left")}>Other rankings</th>
+              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                Annual volume
+                <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+              </th>
+              <th className={cn(HEAD, "px-3 py-2 text-right")}>
+                Unit price
+                <div className={UNIT}>(EUR/kg)</div>
+              </th>
+              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                Annual spend
+                <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+              </th>
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
-                GHG contribution (tCO2e/yr)
+                GHG contribution
+                <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
               </th>
               {activeCol("multi_application") && (
                 <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
               )}
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
               {showLastChange && <th className={cn(HEAD, "px-3 py-2 text-left")}>Last change</th>}
             </tr>
