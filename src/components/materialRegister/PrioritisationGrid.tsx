@@ -698,8 +698,32 @@ const PrioritisationGrid: React.FC = () => {
           </div>
         </div>
 
-        {/* Not plotted */}
-        <aside className="w-full shrink-0 space-y-2 rounded-md border border-border bg-card p-2.5 lg:w-72">
+        {/* Right rail */}
+        <aside className="w-full shrink-0 space-y-3 rounded-md border border-border bg-card p-2.5 lg:w-72">
+          {views.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Views</p>
+              <div className="mt-1">
+                {views.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    aria-pressed={activeView === v.id}
+                    onClick={() => setActiveView((cur) => (cur === v.id ? null : v.id))}
+                    className={cn(
+                      "flex w-full items-baseline justify-between gap-2 py-0.5 text-left text-[11px] transition-colors",
+                      activeView === v.id ? "text-primary" : "text-foreground hover:text-primary",
+                    )}
+                  >
+                    <span>{v.label}</span>
+                    <span className="shrink-0 font-mono tabular-nums text-muted-foreground">{v.ids.length}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Not plotted</p>
             <p className="mt-1 text-[11px] text-foreground">
