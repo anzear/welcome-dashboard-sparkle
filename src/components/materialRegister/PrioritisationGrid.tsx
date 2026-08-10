@@ -580,8 +580,9 @@ const PrioritisationGrid: React.FC = () => {
                 }
                 openBrief(d.m.material_id);
               };
+              const inView = activeView === null || activeIds.has(d.m.material_id);
               return (
-                <g key={d.m.material_id}>
+                <g key={d.m.material_id} opacity={inView ? 1 : 0.16}>
                   {inPrioritySet(d.m) && (
                     <circle
                       cx={d.cx}
@@ -590,6 +591,17 @@ const PrioritisationGrid: React.FC = () => {
                       fill="none"
                       stroke="hsl(var(--foreground))"
                       strokeOpacity={0.55}
+                      strokeWidth={1.2}
+                    />
+                  )}
+                  {activeView !== null && inView && (
+                    <circle
+                      cx={d.cx}
+                      cy={d.cy}
+                      r={d.r + 4.4}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeOpacity={0.7}
                       strokeWidth={1.2}
                     />
                   )}
@@ -608,6 +620,7 @@ const PrioritisationGrid: React.FC = () => {
                     onClick={click}
                   />
                 </g>
+
               );
             })}
 
