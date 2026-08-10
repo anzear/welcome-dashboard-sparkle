@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { DRIVER_QUESTIONS, SCORE_POINTS } from "@/config/driverQuestions";
+import { DRIVER_QUESTIONS } from "@/config/driverQuestions";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitives";
 
@@ -63,7 +63,7 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
             <span className="font-mono tabular-nums text-foreground">{counts.strong_constraints}</span> strong{" "}
             {counts.strong_constraints === 1 ? "constraint" : "constraints"},{" "}
             <span className="font-mono tabular-nums text-foreground">{counts.scored_count}</span> of{" "}
-            <span className="font-mono tabular-nums">{SCORE_POINTS.length && DRIVER_QUESTIONS.length}</span> scored
+            <span className="font-mono tabular-nums">{DRIVER_QUESTIONS.length}</span> scored
           </>
         )}
       </p>
