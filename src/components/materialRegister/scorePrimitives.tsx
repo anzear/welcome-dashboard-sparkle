@@ -2,6 +2,22 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { SCORE_POINTS } from "@/config/driverQuestions";
 
+/** Static class lists so Tailwind keeps them; intensity tracks magnitude. */
+const POSITIVE = [
+  "bg-teal-600/10 text-teal-900 dark:text-teal-100",
+  "bg-teal-600/20 text-teal-900 dark:text-teal-100",
+  "bg-teal-600/30 text-teal-900 dark:text-teal-50",
+  "bg-teal-600/45 text-teal-950 dark:text-teal-50",
+  "bg-teal-600/60 text-teal-950 dark:text-teal-50",
+];
+const NEGATIVE = [
+  "bg-orange-600/10 text-orange-900 dark:text-orange-100",
+  "bg-orange-600/20 text-orange-900 dark:text-orange-100",
+  "bg-orange-600/30 text-orange-900 dark:text-orange-50",
+  "bg-orange-600/45 text-orange-950 dark:text-orange-50",
+  "bg-orange-600/60 text-orange-950 dark:text-orange-50",
+];
+
 /**
  * Diverging, muted colour by magnitude. Constraints sit on one hue, drivers on
  * another; a recorded 0 is neutral but present. Unscored is never coloured.
@@ -10,11 +26,9 @@ export function scoreTone(score: number | null): string {
   if (score === null) return "border border-dotted border-muted-foreground/40 text-transparent";
   if (score === 0) return "bg-muted/70 text-muted-foreground";
   const mag = Math.abs(score);
-  const step = ["/10", "/20", "/30", "/45", "/60"][mag - 1];
-  return score > 0
-    ? `bg-teal-600${step} text-teal-900 dark:text-teal-100`
-    : `bg-orange-600${step} text-orange-900 dark:text-orange-100`;
+  return score > 0 ? POSITIVE[mag - 1] : NEGATIVE[mag - 1];
 }
+
 
 export const signed = (score: number | null) =>
   score === null ? "—" : score > 0 ? `+${score}` : String(score);
