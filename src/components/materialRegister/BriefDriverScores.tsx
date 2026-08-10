@@ -4,12 +4,16 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitives";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 
-/** Thin read-only -5..+5 track with a centre tick and one filled marker. */
+/** Thin read-only -5..+5 track. Fixed width so every zero tick lines up. */
 const RAIL = "w-[128px]";
 
-/** Fixed-width -5..+5 rail. Zero ticks align down the block. */
+/**
+ * Fixed-width -5..+5 rail. The centre tick is always drawn, so the zero marks
+ * form one continuous line down the block. A recorded 0 is a filled neutral dot;
+ * an unscored question keeps an empty rail with a hollow marker instead.
+ */
 const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
-  const pct = value === null ? null : ((value + 5) / 10) * 100;
+  const pct = value === null ? 50 : ((value + 5) / 10) * 100;
   const negative = value !== null && value < 0;
   return (
     <div className={cn("relative h-3.5", RAIL)}>
@@ -18,32 +22,29 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
         <div
           className={cn(
             "absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full",
-            negative ? "bg-orange-600/80" : "bg-teal-600/80",
+            negative ? "bg-sky-700/70" : "bg-teal-600/80",
           )}
-          style={
-            negative
-              ? { right: "50%", width: `${50 - pct!}%` }
-              : { left: "50%", width: `${pct! - 50}%` }
-          }
+          style={negative ? { right: "50%", width: `${50 - pct}%` } : { left: "50%", width: `${pct - 50}%` }}
         />
       )}
-      <div className="absolute left-1/2 top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-muted-foreground/50" />
-      {value !== null && (
-        <div
-          className={cn(
-            "absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-            value === 0
-              ? "border border-muted-foreground/70 bg-background"
+      <div className="absolute left-1/2 top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-muted-foreground/40" />
+      <div
+        className={cn(
+          "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+          value === null
+            ? "h-2 w-2 border border-dotted border-muted-foreground/50 bg-background"
+            : value === 0
+              ? "h-2 w-2 bg-muted-foreground/60"
               : negative
-                ? "bg-orange-600"
-                : "bg-teal-600",
-          )}
-          style={{ left: `${pct}%` }}
-        />
-      )}
+                ? "h-2 w-2 bg-sky-700"
+                : "h-2 w-2 bg-teal-600",
+        )}
+        style={{ left: `${pct}%` }}
+      />
     </div>
   );
 };
+
 
 /**
  * Section 3 of the brief. Judgement, kept in its own tint and its own type —
@@ -72,15 +73,16 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
         )}
       </p>
 
+      {/* Axis key sits directly above the rails, its 0 on the same vertical line */}
       <div className="grid grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 px-1 pt-1 text-[10px] text-muted-foreground/60">
-        <span />
-        <span className="flex justify-between">
-          <span>-5 constraint</span>
-          <span>0</span>
-          <span>+5 driver</span>
+        <span className="text-right">-5 constraint</span>
+        <span className="relative block h-3 w-[128px]">
+          <span className="absolute left-1/2 top-0 -translate-x-1/2">0</span>
         </span>
-        <span />
+        <span className="whitespace-nowrap">+5 driver</span>
       </div>
+
+
 
       <div className="divide-y divide-primary/10">
         {questions.map((q) => {

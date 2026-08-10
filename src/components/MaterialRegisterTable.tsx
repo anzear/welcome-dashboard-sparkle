@@ -48,22 +48,23 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
 
 
 
-/** Up to two tag chips, remainder folded into a count. Empty reads as an em-dash. */
+/**
+ * Tags are a filter signal, not content: plain muted text so the column recedes
+ * and never reads as a second copy of the material class. Empty reads as an
+ * em-dash. Up to two tags, remainder folded into a count.
+ */
 const TagsCell: React.FC<{ tags: string[] }> = ({ tags }) => {
   if (tags.length === 0) return <span className="text-muted-foreground/50">—</span>;
   const shown = tags.slice(0, 2);
   const rest = tags.length - shown.length;
   return (
-    <span className="inline-flex flex-wrap items-center gap-1" title={tags.join(", ")}>
-      {shown.map((t) => (
-        <span key={t} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-          {t}
-        </span>
-      ))}
-      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
+    <span className="text-[11px] text-muted-foreground/80" title={tags.join(", ")}>
+      {shown.join(", ")}
+      {rest > 0 && <span className="ml-1 font-mono tabular-nums text-muted-foreground/60">+{rest}</span>}
     </span>
   );
 };
+
 
 export const MaterialRegisterTable: React.FC = () => {
   const {
@@ -150,6 +151,9 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
+  /** The active measure is marked once per column: header accent plus a faint tint. */
+  const colTint = (id: MeasureId) => (activeCol(id) ? "bg-primary/[0.05]" : undefined);
+
   // Base columns: checkbox, rank, material, position, volume, price, spend, GHG, suppliers, status, owner.
   const colCount = 11;
   const extraCols =
@@ -363,7 +367,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-auto rounded-md border border-border max-h-[calc(100vh-16rem)]">
+      <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
@@ -385,21 +389,17 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 py-2 text-left")}>
-                Position
-                <div className="mt-1 flex items-end gap-[4px]" aria-hidden>
-                  {[10, 7, 9, 5].map((h, i) => (
-                    <span key={i} className="bg-muted-foreground/45" style={{ width: 12, height: h }} />
-                  ))}
-                </div>
-                <div className="h-px w-[60px] bg-border" />
-                <div className={cn(UNIT, "flex w-[60px] justify-between font-mono")}>
+              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
+                <div className="leading-none">Position</div>
+                {/* Key letters only — one per bar slot, aligned to their positions */}
+                <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
                   <span title="Spend">S</span>
                   <span title="Emissions">E</span>
                   <span title="Volume">V</span>
                   <span title="Applications">A</span>
                 </div>
               </th>
+
 
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
@@ -481,15 +481,16 @@ export const MaterialRegisterTable: React.FC = () => {
                   <tr
                     onClick={() => openBrief(m.material_id)}
                     className={cn(
-                      "group cursor-pointer border-b border-border/40 last:border-0",
+                      "group h-[46px] cursor-pointer border-b border-border/40 last:border-0",
                       rank === null && "text-muted-foreground",
                       isSelected && "bg-muted/50",
                       highlightIds.has(m.material_id) && "bg-muted/70 ring-1 ring-inset ring-border",
                       "hover:bg-muted/30",
                     )}
                   >
+
                     <td
-                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-top group-hover:bg-muted/30")}
+                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-middle group-hover:bg-muted/30")}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
@@ -502,7 +503,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <td
                       className={cn(
                         STICK,
-                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-top font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
                       )}
                     >
                       {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
@@ -510,7 +511,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <td
                       className={cn(
                         STICK,
-                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <div
@@ -528,7 +529,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <td
                       className={cn(
                         STICK,
-                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <PositionBlock
@@ -538,24 +539,24 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
 
-                    <td className="px-3 py-2 text-right align-top">
+                    <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
                       <NumCell
                         value={m.annual_volume}
                         provenance={m.provenance.annual_volume}
                         emphasis={activeCol("volume")}
                       />
                     </td>
-                    <td className="px-3 py-2 text-right align-top">
+                    <td className="px-3 py-2 text-right align-middle">
                       <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
                     </td>
-                    <td className="px-3 py-2 text-right align-top">
+                    <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
                       <NumCell
                         value={m.annual_spend}
                         provenance={m.provenance.annual_spend}
                         emphasis={activeCol("spend")}
                       />
                     </td>
-                    <td className="px-3 py-2 text-right align-top">
+                    <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
                       <NumCell
                         value={m.ghg_contribution}
                         provenance={m.provenance.ghg_contribution}
@@ -563,10 +564,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
                     {activeCol("applications") && (
-                      <td className="px-3 py-2 text-right align-top">
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("applications"))}>
                         {m.application_categories && m.application_categories.length > 0 ? (
                           <span
-                            className="font-mono tabular-nums font-medium text-primary"
+                            className="font-mono font-medium tabular-nums text-foreground"
                             title={m.application_categories.join(", ")}
                           >
                             {m.application_categories.length}
@@ -576,22 +577,23 @@ export const MaterialRegisterTable: React.FC = () => {
                         )}
                       </td>
                     )}
-                    <td className="px-3 py-2 text-right align-top">
+
+                    <td className="px-3 py-2 text-right align-middle">
                       <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
                     </td>
-                    <td className="px-3 py-2 align-top">
+                    <td className="px-3 py-2 align-middle">
                       <StatusPill
                         status={m.journey_status}
                         entered={m.provenance.journey_status?.origin === "entered"}
                       />
                     </td>
                     {cols.tags && (
-                      <td className="px-3 py-2 align-top">
+                      <td className="px-3 py-2 align-middle">
                         <TagsCell tags={m.tags} />
                       </td>
                     )}
                     {cols.priority && (
-                      <td className="px-3 py-2 align-top">
+                      <td className="px-3 py-2 align-middle">
                         {m.priority_selected ? (
                           <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
                             <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" />
@@ -603,7 +605,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
                     {cols.target && (
-                      <td className="whitespace-nowrap px-3 py-2 align-top">
+                      <td className="whitespace-nowrap px-3 py-2 align-middle">
                         {(() => {
                           const iso = targetDateOf(m);
                           const rel = relativeDate(iso);
@@ -627,13 +629,13 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
                     {cols.intelligence && (
-                      <td className="px-3 py-2 align-top">
+                      <td className="px-3 py-2 align-middle">
                         <span className="text-[11px] text-muted-foreground">
                           {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
                         </span>
                       </td>
                     )}
-                    <td className="px-3 py-2 align-top">
+                    <td className="px-3 py-2 align-middle">
                       {m.owner ? (
                         <span>
                           {m.provenance.owner?.origin === "entered" && (
@@ -646,7 +648,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       )}
                     </td>
                     {cols.lastChange && (
-                      <td className="whitespace-nowrap px-3 pr-8 py-2 align-top">
+                      <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
                           <>
                             <div

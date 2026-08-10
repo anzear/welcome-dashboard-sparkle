@@ -90,10 +90,11 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
+      "group grid min-h-[46px] grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
       wide && "sm:col-span-2",
       onClick && "cursor-pointer hover:bg-muted/40",
     )}
+
   >
     <div className="min-w-0">
       <div className="text-[13px] leading-snug text-muted-foreground">
@@ -299,7 +300,10 @@ const TagsField: React.FC<{
   values: string[];
   onSave: (v: string[]) => void;
   suggestions?: string[];
-}> = ({ label, values, onSave, suggestions = [] }) => {
+  /** Only the tag vocabulary spans both halves; category groups sit two per row. */
+  wideField?: boolean;
+}> = ({ label, values, onSave, suggestions = [], wideField }) => {
+
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
   const add = (raw?: string) => {
@@ -316,7 +320,7 @@ const TagsField: React.FC<{
     ? suggestions.filter((s) => s.toLowerCase().includes(q) && !hasTag(values, s)).slice(0, 6)
     : [];
   return (
-    <div className="group px-1 py-1 sm:col-span-2">
+    <div className={cn("group min-h-[46px] px-1 py-1", wideField && "sm:col-span-2")}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[13px] text-muted-foreground">{label}</span>
         {!open && (
@@ -585,14 +589,15 @@ export const MaterialBrief: React.FC = () => {
     <div className="pb-24">
       <div ref={sentinel} className="h-px" />
 
-      {/* Header — full width, sticky, condensed once stuck */}
+      {/* Header — full-width opaque bar, hairline beneath, above all page content */}
       <header
         className={cn(
-          "sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur-sm transition-all",
+          "sticky top-0 z-40 -mx-4 border-b border-border bg-background px-4 shadow-[0_1px_0_0_hsl(var(--border))] transition-all",
           stuck ? "py-2" : "pb-4 pt-2",
         )}
       >
-        <div className="flex flex-nowrap items-start justify-between gap-4">
+        <div className="flex flex-nowrap items-center justify-between gap-4">
+
           <div className="min-w-0 leading-tight">
             {!stuck && (
               <div className="flex items-center gap-3 pb-0.5">
@@ -640,9 +645,12 @@ export const MaterialBrief: React.FC = () => {
               {m.name}
             </h1>
 
-            <div className="font-mono text-[11px] leading-tight text-muted-foreground">
-              {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
-            </div>
+            {!stuck && (
+              <div className="font-mono text-[11px] leading-tight text-muted-foreground">
+                {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
+              </div>
+            )}
+
 
             {!stuck && (
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
@@ -836,8 +844,9 @@ export const MaterialBrief: React.FC = () => {
         )}
       </div>
 
-      {/* Body — 62 / 38. Neither column scrolls. */}
-      <div className="mt-8 grid items-start gap-x-10 gap-y-8 lg:grid-cols-[62fr_38fr]">
+      {/* Body — 55 / 45. Neither column scrolls. */}
+      <div className="mt-8 grid items-start gap-x-10 gap-y-8 lg:grid-cols-[55fr_45fr]">
+
         {/* Left column */}
         <div className="space-y-10 self-start">
           <Section
@@ -988,7 +997,9 @@ export const MaterialBrief: React.FC = () => {
                 }
               />
               <TagsField
+                wideField
                 label="Tags"
+
                 values={m.tags}
                 suggestions={tagSuggestions}
                 onSave={(v) => {
