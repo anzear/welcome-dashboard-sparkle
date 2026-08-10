@@ -460,14 +460,17 @@ export const MaterialRegisterTable: React.FC = () => {
                   <tr
                     onClick={() => openBrief(m.material_id)}
                     className={cn(
-                      "cursor-pointer border-b border-border/60 last:border-0 hover:bg-muted/40",
+                      "group cursor-pointer border-b border-border/40 last:border-0",
                       rank === null && "text-muted-foreground",
-                      isSelected && "bg-primary/5",
-                      highlightIds.has(m.material_id) &&
-                        "bg-primary/10 ring-1 ring-inset ring-primary/40",
+                      isSelected && "bg-muted/50",
+                      highlightIds.has(m.material_id) && "bg-muted/70 ring-1 ring-inset ring-border",
+                      "hover:bg-muted/30",
                     )}
                   >
-                    <td className="px-2 py-1.5 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-top group-hover:bg-muted/30")}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleRow(m.material_id)}
@@ -475,24 +478,34 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right align-top font-mono tabular-nums text-muted-foreground">
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-top font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                      )}
+                    >
                       {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                      )}
+                    >
                       <div
                         className={cn(
-                          "font-medium leading-tight",
+                          "font-medium leading-[1.15]",
                           rank === null ? "text-foreground/70" : "text-foreground",
                         )}
                       >
                         {m.name}
                       </div>
-                      <div className="text-[10px] leading-tight text-muted-foreground">
+                      <div className="text-[10px] leading-[1.15] text-muted-foreground">
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1.5 align-top">
-                      <span className="inline-flex items-center gap-1">
+                    <td className="w-[9.5rem] whitespace-nowrap px-3 py-2 align-top">
+                      <span className="grid grid-cols-3 gap-1">
                         {otherMeasures.map((mm) => {
                           const other = row.ranks[mm.id];
                           const amber = row.gapMeasure === mm.id;
@@ -500,22 +513,24 @@ export const MaterialRegisterTable: React.FC = () => {
                             <span
                               key={mm.id}
                               title={chipTooltip(row, mm)}
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-mono text-[10px] tabular-nums",
-                                amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground/70",
-                              )}
+                              className="inline-flex items-baseline gap-1 font-mono text-[10px] tabular-nums"
                             >
-                              <span>{mm.short}</span>
+                              <span className={cn(amber ? "text-amber-700/70" : "text-muted-foreground/45")}>
+                                {mm.short}
+                              </span>
                               {other === null ? (
                                 <span className="text-muted-foreground/50">—</span>
                               ) : (
-                                <span className={amber ? "font-medium" : undefined}>{other}</span>
+                                <span className={amber ? "font-medium text-amber-700" : "text-muted-foreground/80"}>
+                                  {other}
+                                </span>
                               )}
                             </span>
                           );
                         })}
                       </span>
                     </td>
+
                     <td className="px-3 py-1.5 text-right align-top">
                       <NumCell
                         value={m.annual_volume}
