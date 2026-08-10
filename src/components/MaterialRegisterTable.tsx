@@ -171,7 +171,7 @@ export const MaterialRegisterTable: React.FC = () => {
   };
 
   const activeChips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "tags"] as const).forEach((k) => {
+  (["classes", "statuses", "owners", "entryTypes", "products", "applications", "tags"] as const).forEach((k) => {
     filters[k].forEach((v) => activeChips.push({ kind: k, value: v, label: labelFor(k, v) }));
   });
 
