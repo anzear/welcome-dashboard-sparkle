@@ -22,6 +22,7 @@ import {
   type RankedRow,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { Plus, X } from "lucide-react";
 
 const HEAD =
@@ -103,7 +104,6 @@ export const MaterialRegisterTable: React.FC = () => {
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
   const colCount = 12;
   const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
-  const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -131,18 +131,6 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const selectedMaterials = data.filter((m) => selected.has(m.material_id));
   const hiddenSelectedCount = selectedMaterials.filter((m) => !visibleIds.includes(m.material_id)).length;
-
-  const chipTooltip = (row: RankedRow, mm: Measure) => {
-    const other = row.ranks[mm.id];
-    if (other === null) return `${mm.label}: no figure — unranked`;
-    if (row.gapMeasure === mm.id && row.rank !== null) {
-      const a = MEASURES.find((x) => x.id === measureId)!;
-      const first = other < row.rank ? { m: mm, r: other } : { m: a, r: row.rank };
-      const second = other < row.rank ? { m: a, r: row.rank } : { m: mm, r: other };
-      return `Ranks ${first.r}${ordinal(first.r)} on ${first.m.noun} but ${second.r}${ordinal(second.r)} on ${second.m.noun}. ${row.gapSize} positions apart.`;
-    }
-    return `${mm.label}: rank ${other} of ${rankTables[mm.id].rankedCount} ranked`;
-  };
 
   const labelFor = (kind: keyof Filters, value: string) => {
     if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
@@ -630,7 +618,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="text-muted-foreground">^</span> entered
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="font-mono text-amber-700">GHG 6</span> rank divergence
+          <span className="text-amber-700">amber label</span> rank divergence
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="text-muted-foreground/50">—</span> no value (unranked)
