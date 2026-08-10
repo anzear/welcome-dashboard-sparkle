@@ -1077,17 +1077,17 @@ export const MaterialBrief: React.FC = () => {
               <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                 {(
                   [
-                    ["Target volume", m.requirements.target_volume, "t/yr"],
-                    ["Price ceiling", m.requirements.price_ceiling, "EUR/kg"],
-                    ["GHG reduction target", m.requirements.ghg_reduction_target, "%"],
-                  ] as [string, number | null, string][]
-                ).map(([label, value, unit]) => (
+                    ["Target volume", m.requirements.target_volume, "t/yr", 0],
+                    ["Price ceiling", m.requirements.price_ceiling, "EUR/kg", 2],
+                    ["GHG reduction target", m.requirements.ghg_reduction_target, "%", 0],
+                  ] as [string, number | null, string, number][]
+                ).map(([label, value, unit, decimals]) => (
                   <div key={label} className="min-w-0">
                     <div className="font-mono text-sm tabular-nums text-foreground">
                       {value === null ? (
                         <span className="font-sans text-[12px] text-muted-foreground/50">—</span>
                       ) : (
-                        `${nf(value)} ${unit}`
+                        `${nf(decimals).format(value)} ${unit}`
                       )}
                     </div>
                     <div className="text-[11px] text-muted-foreground">{label}</div>
