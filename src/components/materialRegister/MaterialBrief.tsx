@@ -240,9 +240,9 @@ export const MaterialBrief: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-16">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-background pb-3">
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <button
