@@ -9,10 +9,12 @@ import {
   type Material,
   type DriverCounts,
   type DriverScore,
+  type BatchOrigin,
   type MaterialEvent,
   type MaterialEventType,
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 
 
 export const CURRENT_USER = "You";
@@ -146,6 +148,8 @@ export interface EventInput {
   blocker_condition?: string | null;
   batch_id?: string | null;
   changed_by?: string;
+  /** Baselining records a starting position, not a decision the team made. */
+  batch_origin?: BatchOrigin;
 }
 
 interface Store {
@@ -341,7 +345,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     blocker_condition: input.blocker_condition ?? null,
     changed_by: input.changed_by ?? CURRENT_USER,
     changed_at: at,
-    batch_origin: "real_transition",
+    batch_origin: input.batch_origin ?? "real_transition",
     batch_id: input.batch_id ?? null,
   });
 
