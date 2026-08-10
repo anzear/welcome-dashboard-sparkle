@@ -1,9 +1,22 @@
 import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/types/materialPrioritisation";
+import {
+  JOURNEY_STATUS_LABEL,
+  targetDateOf,
+  type EntryType,
+  type JourneyStatus,
+} from "@/types/materialPrioritisation";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
-import { ENTRY_TYPE_LABEL, UNASSIGNED_OWNER, useRegister } from "@/components/materialRegister/registerStore";
+import {
+  ENTRY_TYPE_LABEL,
+  NO_BLOCKER,
+  NO_PRIORITY,
+  TARGET_DATE_BANDS,
+  UNASSIGNED_OWNER,
+  targetDateBand,
+  useRegister,
+} from "@/components/materialRegister/registerStore";
 
 /** The register's filter controls. Shared scope: any view mounting this filters the same set. */
 const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
@@ -38,6 +51,34 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         ...tagVocabulary(data).map((t) => ({ value: t.tag, label: `${t.tag} (${t.count})` })),
         { value: UNTAGGED, label: `Untagged (${data.filter((m) => m.tags.length === 0).length})` },
       ],
+      priorityPeriods: [
+        ...uniq(data.map((m) => (m.priority_selected ? m.priority_period : null))).map((v) => ({
+          value: v,
+          label: `${v} (${data.filter((m) => m.priority_selected && m.priority_period === v).length})`,
+        })),
+        {
+          value: NO_PRIORITY,
+          label: `Not prioritised (${data.filter((m) => !m.priority_selected).length})`,
+        },
+      ],
+      targetDates: TARGET_DATE_BANDS.map((b) => {
+        const count = data.filter((m) => {
+          const band = targetDateBand(targetDateOf(m));
+          return b.value === "next_90" ? band === "next_30" || band === "next_90" : band === b.value;
+        }).length;
+        return { value: b.value, label: `${b.label} (${count})` };
+      }),
+      blockers: [
+        ...uniq(data.map((m) => m.blocker_category)).map((v) => ({
+          value: v,
+          label: `${v} (${data.filter((m) => m.blocker_category === v).length})`,
+        })),
+        { value: NO_BLOCKER, label: `No blocker (${data.filter((m) => !m.blocker_category).length})` },
+      ],
+      countries: uniq(data.flatMap((m) => m.supplier_countries ?? [])).map((v) => ({
+        value: v,
+        label: `${v} (${data.filter((m) => (m.supplier_countries ?? []).includes(v)).length})`,
+      })),
     };
   }, [data]);
 
@@ -84,6 +125,30 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         options={options.tags}
         selected={filters.tags}
         onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
+      />
+      <MultiSelectFilter
+        label="Priority period"
+        options={options.priorityPeriods}
+        selected={filters.priorityPeriods}
+        onChange={(v) => setFilters((f) => ({ ...f, priorityPeriods: v }))}
+      />
+      <MultiSelectFilter
+        label="Target date"
+        options={options.targetDates}
+        selected={filters.targetDates}
+        onChange={(v) => setFilters((f) => ({ ...f, targetDates: v }))}
+      />
+      <MultiSelectFilter
+        label="Blocker"
+        options={options.blockers}
+        selected={filters.blockers}
+        onChange={(v) => setFilters((f) => ({ ...f, blockers: v }))}
+      />
+      <MultiSelectFilter
+        label="Supplier country"
+        options={options.countries}
+        selected={filters.countries}
+        onChange={(v) => setFilters((f) => ({ ...f, countries: v }))}
       />
     </div>
   );

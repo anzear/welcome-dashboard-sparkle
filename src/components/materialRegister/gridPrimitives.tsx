@@ -21,7 +21,7 @@ export const fmtMeasureCompact = (v: number, measure: Measure) => {
   const compact = (x: number) =>
     x >= 1_000_000 ? `${(x / 1_000_000).toFixed(1)}M` : x >= 10_000 ? `${(x / 1000).toFixed(0)}k` : nf(0).format(x);
   if (measure.id === "spend") return `EUR ${compact(v)}`;
-  if (measure.id === "multi_application") return `${nf(0).format(v)} ${measure.unit}`;
+  if (measure.id === "applications") return `${nf(0).format(v)} ${measure.unit}`;
   return `${compact(v)} ${measure.unit}`;
 };
 

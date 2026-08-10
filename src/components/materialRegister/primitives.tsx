@@ -30,10 +30,11 @@ interface NumProps {
 export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, emphasis }) => {
   if (value === null || value === undefined) return <Missing />;
 
-  const origin = provenance?.origin ?? "ingested";
-  const title = provenance
-    ? `${origin}${provenance.source ? ` · ${provenance.source}` : ""}${provenance.date ? ` · ${provenance.date}` : ""}`
-    : undefined;
+  const origin = provenance?.origin ?? "unknown";
+  const title =
+    provenance && origin !== "unknown"
+      ? `${origin}${provenance.source ? ` · ${provenance.source}` : ""}${provenance.date ? ` · ${provenance.date}` : ""}`
+      : "Source unknown";
 
   return (
     <span
@@ -51,30 +52,31 @@ export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, e
 };
 
 /**
- * Muted, sequential treatment. Reads as progression, not judgement:
- * grey -> slate -> teal -> filled. Amber outline for parked, lowest contrast
- * for rejected. No traffic lights, no red, no green accent.
+ * Eight-step muted progression. Reads as distance travelled, not judgement:
+ * transparent -> light slate -> darker slate -> filled for in use. No green
+ * anywhere — the accent belongs to the active ranking measure alone. Amber
+ * outline for parked, lowest contrast for rejected.
  */
 export const STATUS_STYLES: Record<JourneyStatus, string> = {
-  not_started: "border-transparent text-muted-foreground",
-  under_evaluation: "border-slate-300 text-slate-600",
-  in_testing: "border-slate-400 text-slate-700",
-  qualified: "border-teal-300 text-teal-700",
-  sourcing: "border-teal-500/70 text-teal-800",
-  in_use: "border-transparent bg-slate-700 text-slate-50",
+  not_started: "border-transparent text-muted-foreground/70",
+  under_evaluation: "border-slate-200 text-slate-500",
+  in_testing: "border-slate-300 text-slate-600",
+  qualified: "border-slate-400 text-slate-700",
+  sourcing: "border-slate-500 text-slate-800",
+  in_use: "border-transparent bg-slate-800 text-slate-50",
   parked: "border-amber-400/70 text-amber-700",
-  rejected: "border-transparent text-muted-foreground/60",
+  rejected: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
 };
 
 const STATUS_DOT_STYLES: Record<JourneyStatus, string> = {
-  not_started: "bg-muted-foreground/40",
-  under_evaluation: "bg-slate-400",
-  in_testing: "bg-slate-600",
-  qualified: "bg-teal-400",
-  sourcing: "bg-teal-600",
-  in_use: "bg-slate-200",
+  not_started: "bg-muted-foreground/30",
+  under_evaluation: "bg-slate-300",
+  in_testing: "bg-slate-400",
+  qualified: "bg-slate-500",
+  sourcing: "bg-slate-700",
+  in_use: "bg-slate-100",
   parked: "bg-amber-500/70",
-  rejected: "bg-muted-foreground/30",
+  rejected: "bg-muted-foreground/25",
 };
 
 export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (
@@ -99,7 +101,12 @@ const fmtDate = (d: string | null) => {
   return parsed.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 };
 
-/** Always-present provenance line for the brief's figures section. */
+/**
+ * Always-present provenance line for the brief's figures section.
+ * "No figure recorded" belongs to fields with NO value. A field that holds a
+ * value always came from somewhere: when the origin was never captured it reads
+ * "Source unknown", which is a different statement.
+ */
 export const provenanceLine = (
   provenance: FieldProvenance | undefined,
   hasValue: boolean,
@@ -107,9 +114,30 @@ export const provenanceLine = (
 ): string => {
   if (!hasValue) return "No figure recorded";
   const p = provenance;
-  if (!p) return "Source: not recorded";
+  if (!p || p.origin === "unknown") return "Source unknown";
   if (p.origin === "computed") return `Computed: ${computedInputs ?? p.source ?? "derived"}`;
   if (p.origin === "entered")
     return `Entered by ${p.source ?? "unknown"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
-  return `Source: ${p.source ?? "not recorded"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
+  return `Source: ${p.source ?? "unknown"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
 };
+
+/** Relative readout for a planned date. Undated is a state, never "today". */
+export const relativeDate = (
+  iso: string | null,
+): { label: string; overdue: boolean } | null => {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return { label: iso, overdue: false };
+  const days = Math.round((t - Date.now()) / 86400000);
+  if (days < 0) {
+    const n = Math.abs(days);
+    return { label: n >= 60 ? `${Math.round(n / 30)} months ago` : `${n} days ago`, overdue: true };
+  }
+  if (days === 0) return { label: "today", overdue: false };
+  return {
+    label: days >= 60 ? `in ${Math.round(days / 30)} months` : `in ${days} days`,
+    overdue: false,
+  };
+};
+
+export const shortDate = (iso: string | null) => fmtDate(iso);

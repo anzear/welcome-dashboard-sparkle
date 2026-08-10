@@ -23,7 +23,21 @@ export type JourneyStatus =
   | "parked"
   | "rejected";
 
-export type ProvenanceOrigin = "ingested" | "computed" | "entered";
+/**
+ * "unknown" is for a field that genuinely holds a value whose origin was never
+ * captured. It is NOT the same statement as "no value recorded" — a value with
+ * no provenance entry at all is a defect, not a state.
+ */
+export type ProvenanceOrigin = "ingested" | "computed" | "entered" | "unknown";
+
+export type IntelligenceStatus = "not_ordered" | "requested" | "in_progress" | "delivered";
+
+export const INTELLIGENCE_STATUS_LABEL: Record<IntelligenceStatus, string> = {
+  not_ordered: "Not ordered",
+  requested: "Requested",
+  in_progress: "In progress",
+  delivered: "Delivered",
+};
 
 export interface FieldProvenance {
   origin: ProvenanceOrigin;
@@ -61,11 +75,24 @@ export interface Material {
   owner: string | null;
   priority_selected: boolean;
   priority_period: string | null;
+  /** The date the change is planned for. null = undated, never "today". */
+  target_date: string | null;
+  intelligence_status: IntelligenceStatus;
+  intelligence_ordered_date: string | null;
+  intelligence_delivered_date: string | null;
+  intelligence_scope: string | null;
   last_status_change_date: string | null;
   last_status_user: string | null;
   last_change_batch_origin: "baselining" | "real_transition" | null;
   provenance: Record<string, FieldProvenance>;
 }
+
+/**
+ * One target date per material, read the same way everywhere: the planned date
+ * if one is set, otherwise the earliest need date stated in the requirements.
+ */
+export const targetDateOf = (m: Pick<Material, "target_date" | "requirements">): string | null =>
+  m.target_date ?? m.requirements?.earliest_need_date ?? null;
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
   not_started: "Not started",

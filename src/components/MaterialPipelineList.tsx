@@ -27,7 +27,7 @@ const MEASURES: { key: Measure; label: string }[] = [
   { key: "spend", label: "Spend" },
   { key: "emissions", label: "Emissions" },
   { key: "volume", label: "Volume" },
-  { key: "applications", label: "Multi-application" },
+  { key: "applications", label: "Applications" },
 ];
 
 const measureValue = (r: MaterialRow, m: Measure): number | null => {

@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
+  targetDateOf,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -576,7 +578,8 @@ export const MaterialBrief: React.FC = () => {
     return `Ranks ${first.r} on ${first.m.noun} but ${second.r} on ${second.m.noun}. ${row.gapSize} positions apart.`;
   };
 
-  const targetDate = m.requirements?.earliest_need_date ?? null;
+  // One reading of the target date everywhere: planned date, else earliest need date.
+  const targetDate = targetDateOf(m);
 
   return (
     <div className="pb-24">
@@ -1063,6 +1066,59 @@ export const MaterialBrief: React.FC = () => {
             </div>
           </Section>
 
+          {/* What the replacement has to achieve. Nothing stated is not a zero target. */}
+          <Section
+            title="Requirements"
+            note="What the replacement has to achieve. A requirement nobody stated stays empty."
+          >
+            {m.requirements === null ? (
+              <p className="text-[11px] text-muted-foreground/70">No requirements recorded.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                {(
+                  [
+                    ["Target volume", m.requirements.target_volume, "t/yr"],
+                    ["Price ceiling", m.requirements.price_ceiling, "EUR/kg"],
+                    ["GHG reduction target", m.requirements.ghg_reduction_target, "%"],
+                  ] as [string, number | null, string][]
+                ).map(([label, value, unit]) => (
+                  <div key={label} className="min-w-0">
+                    <div className="font-mono text-sm tabular-nums text-foreground">
+                      {value === null ? (
+                        <span className="font-sans text-[12px] text-muted-foreground/50">—</span>
+                      ) : (
+                        `${nf(value)} ${unit}`
+                      )}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">{label}</div>
+                  </div>
+                ))}
+                <div className="min-w-0">
+                  <div className="font-mono text-sm tabular-nums text-foreground">
+                    {m.requirements.earliest_need_date ?? (
+                      <span className="font-sans text-[12px] text-muted-foreground/50">—</span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">Earliest need date</div>
+                </div>
+                <div className="col-span-2 min-w-0">
+                  <div className="text-[12px] text-foreground">
+                    {m.requirements.required_certifications.length > 0
+                      ? m.requirements.required_certifications.join(", ")
+                      : <span className="text-muted-foreground/50">—</span>}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">Required certifications</div>
+                </div>
+                {m.requirements.notes && (
+                  <div className="col-span-2 min-w-0">
+                    <div className="text-[12px] leading-snug text-foreground">{m.requirements.notes}</div>
+                    <div className="text-[11px] text-muted-foreground">Notes</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Section>
+
         </div>
 
         {/* Right column */}
@@ -1082,6 +1138,32 @@ export const MaterialBrief: React.FC = () => {
               <BriefDriverScores materialId={m.material_id} />
             </Section>
           </div>
+
+          {/* Where the outside search stands. "Not ordered" is a state, not a gap. */}
+          <Section title="Intelligence" note="Whether a market and supplier search has been ordered for this material.">
+            <div className="text-sm text-foreground">{INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}</div>
+            <dl className="pt-2 space-y-1 text-[11px] text-muted-foreground">
+              <div className="flex gap-2">
+                <dt className="w-24 shrink-0 text-muted-foreground/60">Ordered</dt>
+                <dd className="font-mono tabular-nums">
+                  {m.intelligence_ordered_date ?? <span className="font-sans text-muted-foreground/50">—</span>}
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="w-24 shrink-0 text-muted-foreground/60">Delivered</dt>
+                <dd className="font-mono tabular-nums">
+                  {m.intelligence_delivered_date ?? <span className="font-sans text-muted-foreground/50">—</span>}
+                </dd>
+              </div>
+              <div className="flex gap-2">
+                <dt className="w-24 shrink-0 text-muted-foreground/60">Scope</dt>
+                <dd className="min-w-0">
+                  {m.intelligence_scope ?? <span className="text-muted-foreground/50">Not stated</span>}
+                </dd>
+              </div>
+            </dl>
+          </Section>
+
 
           <Section title="History" note="The record of decisions. Newest first.">
             <MaterialHistory materialId={m.material_id} />
