@@ -86,7 +86,7 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[minmax(4.5rem,auto)_minmax(0,1fr)] items-baseline gap-3 rounded-sm px-1 py-1",
+      "group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
       wide && "sm:col-span-2",
       onClick && "cursor-pointer hover:bg-muted/40",
     )}
@@ -117,7 +117,8 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
   return (
     <span
       className={cn(
-        "font-mono text-[15px] font-medium tabular-nums",
+        "font-mono font-medium tabular-nums",
+        typeof value === "number" ? "text-[15px]" : "text-[13px]",
         hasValue ? "text-foreground" : "text-muted-foreground/50",
         hasValue && computed && "border-b border-dotted border-muted-foreground/60",
       )}
