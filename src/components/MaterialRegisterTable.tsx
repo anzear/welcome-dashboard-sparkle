@@ -389,7 +389,10 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, "min-w-[10rem] px-3 py-2 text-left")}>Other rankings</th>
+              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[216px] border-r border-border px-3 py-2 text-left")}>
+                Position
+                <div className={UNIT}>rank of ranked materials</div>
+              </th>
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
                 <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
