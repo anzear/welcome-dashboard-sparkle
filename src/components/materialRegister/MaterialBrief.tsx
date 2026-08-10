@@ -315,6 +315,61 @@ export const MaterialBrief: React.FC = () => {
   }
 
   const m: Material = material;
+
+  /** Records a numeric figure as entered, recomputing anything derived from it. */
+  const saveFigure = (
+    field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
+    raw: string,
+  ) => {
+    const parsed = raw === "" ? null : Number(raw.replace(/[,\s]/g, ""));
+    if (parsed !== null && !Number.isFinite(parsed)) return;
+    const before = m[field];
+    if (before === parsed) return;
+
+    const patch: Partial<Material> = { [field]: parsed } as Partial<Material>;
+    const entered: string[] = [field];
+    const provenance = { ...m.provenance };
+
+    const volume = field === "annual_volume" ? parsed : m.annual_volume;
+    const price = field === "unit_price" ? parsed : m.unit_price;
+    const factor = field === "ghg_emission_factor" ? parsed : m.ghg_emission_factor;
+
+    if (field === "annual_volume" || field === "unit_price") {
+      patch.annual_spend = volume !== null && price !== null ? Math.round(volume * 1000 * price) : null;
+      provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
+    }
+    if (field === "annual_volume" || field === "ghg_emission_factor") {
+      patch.ghg_contribution = volume !== null && factor !== null ? Math.round(volume * factor) : null;
+      provenance.ghg_contribution = { origin: "computed", source: "emission factor x volume", date: today() };
+    }
+    patch.provenance = provenance;
+
+    updateMaterial(m.material_id, patch, entered, [
+      {
+        material_id: m.material_id,
+        event_type: "field_correction",
+        field,
+        from_value: before === null ? null : String(before),
+        to_value: parsed === null ? null : String(parsed),
+      },
+    ]);
+  };
+
+  /** Records a free-text figure qualifier as entered. */
+  const saveText = (field: "ghg_boundary" | "ghg_data_basis", raw: string) => {
+    const next = raw === "" ? null : raw;
+    if (next === m[field]) return;
+    updateMaterial(m.material_id, { [field]: next } as Partial<Material>, [field], [
+      {
+        material_id: m.material_id,
+        event_type: "field_correction",
+        field,
+        from_value: m[field],
+        to_value: next,
+      },
+    ]);
+  };
+
   const draftNeedsBlocker = draftStatus === "parked" || draftStatus === "rejected";
   const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
 
