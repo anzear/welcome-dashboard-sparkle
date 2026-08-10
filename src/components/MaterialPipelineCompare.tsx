@@ -22,7 +22,7 @@ const MEASURES: Measure[] = [
   { key: "spend", label: "Spend", unit: "€/yr", group: "Lenses", get: (r) => r.annualSpend },
   { key: "ghg", label: "GHG", unit: "tCO₂e/yr", group: "Lenses", get: (r) => r.ghgContribution },
   { key: "volume", label: "Volume", unit: "t/yr", group: "Lenses", get: (r) => r.annualVolume },
-  { key: "apps", label: "Multi-application fit", unit: "count", group: "Lenses", get: (r) => r.applicationCount },
+  { key: "apps", label: "Applications fit", unit: "count", group: "Lenses", get: (r) => r.applicationCount },
   ...DRIVER_KEYS.map((k: DriverKey) => ({
     key: `driver:${k}`,
     label: DRIVER_LABELS[k],

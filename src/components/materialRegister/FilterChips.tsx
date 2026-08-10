@@ -4,6 +4,9 @@ import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/type
 import {
   EMPTY_FILTERS,
   ENTRY_TYPE_LABEL,
+  NO_BLOCKER,
+  NO_PRIORITY,
+  TARGET_DATE_BANDS,
   UNASSIGNED_OWNER,
   useRegister,
   type Filters,
@@ -15,6 +18,9 @@ const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
   if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
   if (kind === "tags" && value === UNTAGGED) return "Untagged";
+  if (kind === "priorityPeriods" && value === NO_PRIORITY) return "Not prioritised";
+  if (kind === "blockers" && value === NO_BLOCKER) return "No blocker";
+  if (kind === "targetDates") return TARGET_DATE_BANDS.find((b) => b.value === value)?.label ?? value;
   return value;
 };
 
@@ -23,7 +29,21 @@ const FilterChips: React.FC = () => {
   const { filters, setFilters } = useRegister();
 
   const chips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "products", "applications", "tags"] as const).forEach((k) => {
+  (
+    [
+      "classes",
+      "statuses",
+      "owners",
+      "entryTypes",
+      "products",
+      "applications",
+      "tags",
+      "priorityPeriods",
+      "targetDates",
+      "blockers",
+      "countries",
+    ] as const
+  ).forEach((k) => {
     filters[k].forEach((v) => chips.push({ kind: k, value: v, label: labelFor(k, v) }));
   });
 

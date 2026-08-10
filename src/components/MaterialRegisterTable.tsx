@@ -1,28 +1,30 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
+  INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  type EntryType,
+  targetDateOf,
   type JourneyStatus,
 } from "@/types/materialPrioritisation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
+import FilterChips from "@/components/materialRegister/FilterChips";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
-import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
+import { Missing, NumCell, relativeDate, StatusPill } from "@/components/materialRegister/primitives";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
-  EMPTY_FILTERS,
+  DIVERGENCE_THRESHOLD_RATIO,
   ENTRY_TYPE_LABEL,
   MEASURES,
   UNASSIGNED_OWNER,
   useRegister,
-  type Filters,
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
-import { Plus, X } from "lucide-react";
+import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
@@ -32,6 +34,18 @@ const STICK = "sticky bg-muted/60";
 
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+
+type OptionalColumn = "tags" | "priority" | "target" | "intelligence" | "lastChange";
+
+/** Columns a reader can switch off, each with the reason it exists. */
+const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
+  ["tags", "Tags", "Customer tags on the material"],
+  ["priority", "Priority", "Selected for a period"],
+  ["target", "Target date", "Date the replacement is needed by"],
+  ["intelligence", "Intelligence", "Whether a search has been requested"],
+  ["lastChange", "Last change", "Age of the most recent real transition"],
+];
+
 
 
 /** Up to two tag chips, remainder folded into a count. Empty reads as an em-dash. */
@@ -82,13 +96,17 @@ export const MaterialRegisterTable: React.FC = () => {
     setToast,
     undo,
     highlightIds,
-    inPrioritySet,
-    priorityPeriod,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
-  const [showLastChange, setShowLastChange] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>({
+    tags: true,
+    priority: true,
+    target: true,
+    intelligence: true,
+    lastChange: true,
+  });
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
@@ -132,8 +150,10 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
-  const colCount = 12;
-  const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
+  // Base columns: checkbox, rank, material, position, volume, price, spend, GHG, suppliers, status, owner.
+  const colCount = 11;
+  const extraCols =
+    (activeCol("applications") ? 1 : 0) + OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -162,21 +182,6 @@ export const MaterialRegisterTable: React.FC = () => {
   const selectedMaterials = data.filter((m) => selected.has(m.material_id));
   const hiddenSelectedCount = selectedMaterials.filter((m) => !visibleIds.includes(m.material_id)).length;
 
-  const labelFor = (kind: keyof Filters, value: string) => {
-    if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
-    if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
-    if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
-    if (kind === "tags" && value === UNTAGGED) return "Untagged";
-    return value;
-  };
-
-  const activeChips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "products", "applications", "tags"] as const).forEach((k) => {
-    filters[k].forEach((v) => activeChips.push({ kind: k, value: v, label: labelFor(k, v) }));
-  });
-
-  const removeChip = (kind: keyof Filters, value: string) =>
-    setFilters((f) => ({ ...f, [kind]: (f[kind] as string[]).filter((v) => v !== value) }));
 
   return (
     <div className="w-full">
@@ -236,15 +241,37 @@ export const MaterialRegisterTable: React.FC = () => {
             Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
           </button>
 
-          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <input
-              type="checkbox"
-              checked={showLastChange}
-              onChange={(e) => setShowLastChange(e.target.checked)}
-              className="h-3 w-3"
-            />
-            Last change
-          </label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                <SlidersHorizontal className="h-3 w-3" /> Columns
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 p-2">
+              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+                Optional columns
+              </div>
+              {OPTIONAL_COLUMNS.map(([key, label, hint]) => (
+                <label
+                  key={key}
+                  className="flex cursor-pointer items-start gap-2 rounded-sm px-1 py-1 hover:bg-muted/60"
+                >
+                  <Checkbox
+                    checked={cols[key]}
+                    onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
+                    className="mt-0.5 h-3.5 w-3.5"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-[11px] text-foreground">{label}</span>
+                    <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
+                  </span>
+                </label>
+              ))}
+            </PopoverContent>
+          </Popover>
 
           <FilterSelects className="ml-auto" />
 
@@ -257,34 +284,7 @@ export const MaterialRegisterTable: React.FC = () => {
             placeholder="Search name, CAS, customer ID"
             className="h-7 w-56 bg-background text-[11px]"
           />
-          {filters.search.trim() !== "" && (
-            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]">
-              “{filters.search}”
-              <button type="button" onClick={() => setFilters((f) => ({ ...f, search: "" }))}>
-                <X className="h-3 w-3 opacity-60 hover:opacity-100" />
-              </button>
-            </span>
-          )}
-          {activeChips.map((c) => (
-            <span
-              key={`${c.kind}-${c.value}`}
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]"
-            >
-              {c.label}
-              <button type="button" onClick={() => removeChip(c.kind, c.value)}>
-                <X className="h-3 w-3 opacity-60 hover:opacity-100" />
-              </button>
-            </span>
-          ))}
-          {(activeChips.length > 0 || filters.search.trim() !== "") && (
-            <button
-              type="button"
-              onClick={() => setFilters(EMPTY_FILTERS)}
-              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              Clear all
-            </button>
-          )}
+          <FilterChips />
         </div>
       </div>
 
@@ -394,10 +394,10 @@ export const MaterialRegisterTable: React.FC = () => {
                 </div>
                 <div className="h-px w-[60px] bg-border" />
                 <div className={cn(UNIT, "flex w-[60px] justify-between font-mono")}>
-                  <span>S</span>
-                  <span>E</span>
-                  <span>V</span>
-                  <span>A</span>
+                  <span title="Spend">S</span>
+                  <span title="Emissions">E</span>
+                  <span title="Volume">V</span>
+                  <span title="Applications">A</span>
                 </div>
               </th>
 
@@ -417,16 +417,22 @@ export const MaterialRegisterTable: React.FC = () => {
                 GHG contribution
                 <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
               </th>
-              {activeCol("multi_application") && (
+              {activeCol("applications") && (
                 <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
               )}
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>
-
+              {cols.tags && <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>}
+              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
+              {cols.target && (
+                <th className={cn(HEAD, "px-3 py-2 text-left")}>
+                  Target date
+                  <div className={UNIT}>(need by)</div>
+                </th>
+              )}
+              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
-              {showLastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
+              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
           <tbody>
@@ -556,7 +562,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         emphasis={activeCol("emissions")}
                       />
                     </td>
-                    {activeCol("multi_application") && (
+                    {activeCol("applications") && (
                       <td className="px-3 py-2 text-right align-top">
                         {m.application_categories && m.application_categories.length > 0 ? (
                           <span
@@ -579,19 +585,54 @@ export const MaterialRegisterTable: React.FC = () => {
                         entered={m.provenance.journey_status?.origin === "entered"}
                       />
                     </td>
-                    <td className="px-3 py-2 align-top">
-                      <TagsCell tags={m.tags} />
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      {inPrioritySet(m) ? (
-                        <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                          {priorityPeriod || "Priority set"}
+                    {cols.tags && (
+                      <td className="px-3 py-2 align-top">
+                        <TagsCell tags={m.tags} />
+                      </td>
+                    )}
+                    {cols.priority && (
+                      <td className="px-3 py-2 align-top">
+                        {m.priority_selected ? (
+                          <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
+                            <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" />
+                            {m.priority_period ?? "Selected"}
+                          </span>
+                        ) : (
+                          <Missing />
+                        )}
+                      </td>
+                    )}
+                    {cols.target && (
+                      <td className="whitespace-nowrap px-3 py-2 align-top">
+                        {(() => {
+                          const iso = targetDateOf(m);
+                          const rel = relativeDate(iso);
+                          if (!iso || !rel) return <Missing />;
+                          return (
+                            <>
+                              <div className="font-mono text-[11px] tabular-nums leading-[1.15] text-foreground/85">
+                                {iso}
+                              </div>
+                              <div
+                                className={cn(
+                                  "text-[10px] leading-[1.15]",
+                                  rel.overdue ? "text-amber-700" : "text-muted-foreground",
+                                )}
+                              >
+                                {rel.label}
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </td>
+                    )}
+                    {cols.intelligence && (
+                      <td className="px-3 py-2 align-top">
+                        <span className="text-[11px] text-muted-foreground">
+                          {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
                         </span>
-                      ) : (
-                        <span className="text-muted-foreground/50">—</span>
-                      )}
-                    </td>
+                      </td>
+                    )}
                     <td className="px-3 py-2 align-top">
                       {m.owner ? (
                         <span>
@@ -604,7 +645,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         <span className="text-muted-foreground/60">Unassigned</span>
                       )}
                     </td>
-                    {showLastChange && (
+                    {cols.lastChange && (
                       <td className="whitespace-nowrap px-3 pr-8 py-2 align-top">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
                           <>
@@ -649,7 +690,8 @@ export const MaterialRegisterTable: React.FC = () => {
         </span>
         <span>
           Position bars: taller = better rank. Four independent scales, one per measure — never combined. Dotted
-          outline = no figure recorded, not ranked last.
+          outline = no figure recorded, not ranked last. A rank gap of{" "}
+          {Math.round(DIVERGENCE_THRESHOLD_RATIO * 100)}% of the ranked population or more counts as divergent.
         </span>
 
       </div>

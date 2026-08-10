@@ -333,7 +333,12 @@ const DriverScoring: React.FC = () => {
                       </th>
                     );
                   })}
-                  <th className={cn(HEAD, "border-b border-l border-border bg-background px-2 py-2 text-right")}>
+                  <th
+                    className={cn(
+                      HEAD,
+                      "sticky right-0 z-30 border-b border-l border-border bg-background px-2 py-2 text-right",
+                    )}
+                  >
                     Scored
                   </th>
                 </tr>
@@ -403,7 +408,7 @@ const DriverScoring: React.FC = () => {
                           </td>
                         );
                       })}
-                      <td className="border-b border-l border-border px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                      <td className="sticky right-0 z-10 border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
                         {rowScored === null ? (
                           <span className="text-muted-foreground/60" title="No judgements recorded">
                             —

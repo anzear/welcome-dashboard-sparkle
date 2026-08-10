@@ -26,15 +26,16 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
   const { rankTables, measureId, filteredTotal } = useRegister();
   const detail = variant === "detail";
 
-  const labelFor = (id: MeasureId) => (id === "multi_application" ? "Applications" : undefined);
-
+  // Fixed slot order, always: Spend | Emissions | Volume | Applications.
+  // Bar index matches measure index — never sorted by height or by state.
   const entries = MEASURES.map((mm) => {
     const table = rankTables[mm.id];
     const rank = table.ranks[materialId] ?? null;
     const rankedCount = table.rankedCount;
     const missing = filteredTotal - rankedCount;
     const isActive = mm.id === measureId;
-    const isAmber = gapMeasure === mm.id;
+    // One accent bar and at most one amber bar per row; the active slot wins.
+    const isAmber = !isActive && gapMeasure === mm.id;
 
     let coverage: string;
     if (rank === null) coverage = `${mm.label}: no figure recorded. Not ranked.`;
@@ -65,7 +66,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
     const tooltip = entries
       .map(
         (e) =>
-          `${(labelFor(e.mm.id) || e.mm.label).padEnd(14, " ")}${
+          `${(e.mm.label).padEnd(14, " ")}${
             e.rank === null ? "no figure recorded" : `#${e.rank} of ${e.rankedCount} ranked`
           }${e.gapSentence}`,
       )
@@ -119,7 +120,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
                   e.isActive ? "text-primary/70" : e.isAmber ? "text-amber-700/70" : "text-muted-foreground/45",
                 )}
               >
-                {labelFor(e.mm.id) || e.mm.label}
+                {e.mm.label}
               </span>
               <span className={cn("font-mono text-[14px] tabular-nums", tone)}>
                 {e.rank === null ? "—" : `#${e.rank}`}

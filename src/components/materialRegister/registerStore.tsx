@@ -11,6 +11,7 @@ import {
 } from "@/config/driverQuestions";
 import {
   JOURNEY_STATUS_LABEL,
+  targetDateOf,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -27,7 +28,7 @@ import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/
 
 export const CURRENT_USER = "You";
 
-export type MeasureId = "spend" | "emissions" | "volume" | "multi_application";
+export type MeasureId = "spend" | "emissions" | "volume" | "applications";
 
 export interface Measure {
   id: MeasureId;
@@ -55,18 +56,20 @@ export const MEASURES: Measure[] = [
   },
   { id: "volume", label: "Volume", short: "VOL", noun: "volume", unit: "t/yr", value: (m) => m.annual_volume },
   {
-    id: "multi_application",
-    label: "Multi-application",
+    id: "applications",
+    label: "Applications",
     short: "APP",
-    noun: "application",
+    noun: "applications",
     unit: "applications",
+    // An empty array is NO APPLICATIONS RECORDED, never zero applications:
+    // those materials stay unranked on this measure.
     value: (m) =>
       m.application_categories && m.application_categories.length > 0 ? m.application_categories.length : null,
   },
 ];
 
 /** A gap counts as divergent at or above this share of the ranked population. */
-export const DIVERGENCE_THRESHOLD_RATIO = 0.4;
+export const DIVERGENCE_THRESHOLD_RATIO = 0.5;
 
 export const UNASSIGNED_OWNER = "__unassigned__";
 
@@ -117,6 +120,27 @@ export interface RankedRow {
   gapSize: number;
 }
 
+export type TargetDateBand = "overdue" | "next_30" | "next_90" | "undated";
+
+export const TARGET_DATE_BANDS: { value: TargetDateBand; label: string }[] = [
+  { value: "overdue", label: "Overdue" },
+  { value: "next_30", label: "Next 30 days" },
+  { value: "next_90", label: "Next 90 days" },
+  { value: "undated", label: "Undated" },
+];
+
+/** Which band a material's single target date falls in. Undated is a state. */
+export const targetDateBand = (iso: string | null): TargetDateBand | "later" => {
+  if (!iso) return "undated";
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return "undated";
+  const days = Math.round((t - Date.now()) / 86400000);
+  if (days < 0) return "overdue";
+  if (days <= 30) return "next_30";
+  if (days <= 90) return "next_90";
+  return "later";
+};
+
 export interface Filters {
   search: string;
   classes: string[];
@@ -129,7 +153,18 @@ export interface Filters {
   products: string[];
   /** Application categories, matched with ANY. */
   applications: string[];
+  /** Priority periods, matched with ANY. May include NO_PRIORITY. */
+  priorityPeriods: string[];
+  /** Target date bands, matched with ANY. */
+  targetDates: string[];
+  /** Blocker categories, matched with ANY. May include NO_BLOCKER. */
+  blockers: string[];
+  /** Supplier countries, matched with ANY. */
+  countries: string[];
 }
+
+export const NO_PRIORITY = "__no_priority__";
+export const NO_BLOCKER = "__no_blocker__";
 
 export const EMPTY_FILTERS: Filters = {
   search: "",
@@ -140,6 +175,10 @@ export const EMPTY_FILTERS: Filters = {
   tags: [],
   products: [],
   applications: [],
+  priorityPeriods: [],
+  targetDates: [],
+  blockers: [],
+  countries: [],
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -302,7 +341,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.entryTypes.length > 0 ||
     filters.products.length > 0 ||
     filters.applications.length > 0 ||
-    filters.tags.length > 0;
+    filters.tags.length > 0 ||
+    filters.priorityPeriods.length > 0 ||
+    filters.targetDates.length > 0 ||
+    filters.blockers.length > 0 ||
+    filters.countries.length > 0;
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -332,6 +375,21 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           (wantUntagged && m.tags.length === 0) || m.tags.some((t) => keys.has(tagKey(t)));
         if (!anyMatch) return false;
       }
+      if (filters.priorityPeriods.length) {
+        const key = m.priority_selected ? (m.priority_period ?? NO_PRIORITY) : NO_PRIORITY;
+        if (!filters.priorityPeriods.includes(key)) return false;
+      }
+      if (filters.targetDates.length) {
+        const band = targetDateBand(targetDateOf(m));
+        const hit = filters.targetDates.some((b) => {
+          if (b === "next_90") return band === "next_30" || band === "next_90";
+          return b === band;
+        });
+        if (!hit) return false;
+      }
+      if (filters.blockers.length && !filters.blockers.includes(m.blocker_category ?? NO_BLOCKER)) return false;
+      if (filters.countries.length && !(m.supplier_countries ?? []).some((c) => filters.countries.includes(c)))
+        return false;
       return true;
     });
   }, [data, filters]);
