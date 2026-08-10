@@ -52,8 +52,6 @@ interface Dot {
   scored: boolean;
 }
 
-const compact = (x: number) =>
-  x >= 1_000_000 ? `${(x / 1_000_000).toFixed(1)}M` : x >= 10_000 ? `${(x / 1000).toFixed(0)}k` : nf(0).format(x);
 
 const AxisSelect: React.FC<{
   label: string;
