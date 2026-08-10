@@ -300,7 +300,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
       {/* Selection bar */}
       {selected.size > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
           <span className="font-medium text-foreground">
             <span className="font-mono tabular-nums">{selected.size}</span> selected
             {hiddenSelectedCount > 0 && (
@@ -436,7 +436,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAddOpen(true)}
-                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline decoration-dotted underline-offset-2"
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-foreground underline decoration-dotted underline-offset-2"
                   >
                     <Plus className="h-3 w-3" /> Add material
                   </button>
@@ -559,7 +559,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       <td className="px-3 py-2 text-right align-top">
                         {m.application_categories && m.application_categories.length > 0 ? (
                           <span
-                            className="font-mono tabular-nums font-medium text-foreground"
+                            className="font-mono tabular-nums font-medium text-primary"
                             title={m.application_categories.join(", ")}
                           >
                             {m.application_categories.length}
@@ -582,7 +582,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       {m.owner ? (
                         <span>
                           {m.provenance.owner?.origin === "entered" && (
-                            <span className="mr-0.5 text-primary/70">^</span>
+                            <span className="mr-0.5 text-muted-foreground/70">^</span>
                           )}
                           {m.owner}
                         </span>

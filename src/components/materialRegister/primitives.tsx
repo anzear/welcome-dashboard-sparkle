@@ -40,11 +40,11 @@ export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, e
       className={cn(
         "font-mono tabular-nums",
         origin === "computed" && "border-b border-dotted border-muted-foreground/60",
-        emphasis && "font-medium text-foreground",
+        emphasis && "font-medium text-primary",
       )}
       title={title}
     >
-      {origin === "entered" && <span className="mr-0.5 text-primary/70">^</span>}
+      {origin === "entered" && <span className="mr-0.5 text-muted-foreground/70">^</span>}
       {nf(decimals).format(value)}
     </span>
   );
