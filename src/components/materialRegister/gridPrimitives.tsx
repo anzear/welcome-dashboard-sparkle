@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { MEASURES, useRegister, type Measure } from "@/components/materialRegister/registerStore";
+import { useRegister, type Measure } from "@/components/materialRegister/registerStore";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { nf } from "@/components/materialRegister/primitives";
 
@@ -95,5 +95,3 @@ export const Expandable: React.FC<{
     </div>
   );
 };
-
-export const useMeasures = () => useMemo(() => MEASURES, []);

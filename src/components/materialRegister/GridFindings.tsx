@@ -1,7 +1,6 @@
 import React, { useMemo } from "react";
-import { useRegister, type Measure, type RankedRow } from "@/components/materialRegister/registerStore";
+import { MEASURES, useRegister, type Measure, type RankedRow } from "@/components/materialRegister/registerStore";
 import { BriefLink, Expandable, fmtMeasureCompact, ordinal } from "@/components/materialRegister/gridPrimitives";
-import { MEASURES } from "@/components/materialRegister/registerStore";
 
 const Card: React.FC<{ title: string; lead: React.ReactNode; children?: React.ReactNode }> = ({
   title,
