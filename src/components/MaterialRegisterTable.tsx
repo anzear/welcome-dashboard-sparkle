@@ -283,7 +283,6 @@ export const MaterialRegisterTable: React.FC = () => {
               selected={filters.applications}
               onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
             />
-            />
             <MultiSelectFilter
               label="Tags (any)"
               options={options.tags}
