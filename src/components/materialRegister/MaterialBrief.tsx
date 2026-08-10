@@ -427,6 +427,8 @@ export const MaterialBrief: React.FC = () => {
   const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
   const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
   const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
+  const [notes, setNotes] = useState<Record<string, string>>({});
+
 
   /** Header condenses once it sticks. */
   const sentinel = useRef<HTMLDivElement | null>(null);
