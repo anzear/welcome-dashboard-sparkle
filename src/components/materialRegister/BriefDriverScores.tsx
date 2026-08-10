@@ -20,26 +20,26 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
           const v = rec?.score ?? null;
           return (
             <div key={q.id} className="px-2 py-1.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-baseline justify-between gap-2">
                 <span className="text-[11px] text-foreground" title={q.helper}>
                   {q.label}
                 </span>
-                <div className="flex items-center gap-2">
-                  <ScoreScale
-                    value={v}
-                    size="sm"
-                    ariaLabel={`${q.label} score`}
-                    onChange={(next) => setScore(materialId, q.id, next, rec?.note ?? null)}
-                  />
-                  <span
-                    className={cn(
-                      "w-14 text-right text-[10px]",
-                      v === null ? "text-muted-foreground/60" : "text-muted-foreground",
-                    )}
-                  >
-                    {v === null ? "Not scored" : signed(v)}
-                  </span>
-                </div>
+                <span
+                  className={cn(
+                    "shrink-0 text-[10px]",
+                    v === null ? "text-muted-foreground/60" : "text-muted-foreground",
+                  )}
+                >
+                  {v === null ? "Not scored" : signed(v)}
+                </span>
+              </div>
+              <div className="mt-1">
+                <ScoreScale
+                  value={v}
+                  size="sm"
+                  ariaLabel={`${q.label} score`}
+                  onChange={(next) => setScore(materialId, q.id, next, rec?.note ?? null)}
+                />
               </div>
               {rec?.note && <p className="mt-0.5 text-[10px] italic text-muted-foreground">{rec.note}</p>}
               {rec && v !== null && (
