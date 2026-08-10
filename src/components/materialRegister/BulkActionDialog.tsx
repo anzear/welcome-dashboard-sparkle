@@ -16,9 +16,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
+import { cleanTags, hasTag, normalizeTag, tagVocabulary } from "@/components/materialRegister/tags";
 
-export type BulkKind = "status" | "owner" | "tag";
+export type BulkKind = "status" | "owner" | "add_tags" | "remove_tags";
 
 export const BLOCKER_CATEGORIES = [
   "Technical performance",
@@ -43,6 +45,8 @@ const STATUS_ORDER: JourneyStatus[] = [
 export interface BulkPayload {
   kind: BulkKind;
   value: string | null;
+  /** Tags to add or remove. Empty for status / owner actions. */
+  tags?: string[];
   blocker_category?: string | null;
   blocker_detail?: string | null;
 }
@@ -52,6 +56,8 @@ interface Props {
   materials: Material[];
   hiddenCount: number;
   ownerOptions: string[];
+  /** Every tag in use across the register, for autocomplete. */
+  tagSuggestions: string[];
   onCancel: () => void;
   onApply: (payload: BulkPayload) => void;
 }
@@ -60,8 +66,7 @@ const UNASSIGNED = "__unassigned__";
 
 const currentLabel = (kind: BulkKind, m: Material) => {
   if (kind === "status") return JOURNEY_STATUS_LABEL[m.journey_status];
-  if (kind === "owner") return m.owner ?? "Unassigned";
-  return m.customer_material_group ?? "No tag";
+  return m.owner ?? "Unassigned";
 };
 
 export const BulkActionDialog: React.FC<Props> = ({
@@ -69,10 +74,13 @@ export const BulkActionDialog: React.FC<Props> = ({
   materials,
   hiddenCount,
   ownerOptions,
+  tagSuggestions,
   onCancel,
   onApply,
 }) => {
   const [value, setValue] = useState<string>("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
   const [blockerCategory, setBlockerCategory] = useState<string>("");
   const [blockerDetail, setBlockerDetail] = useState<string>("");
   const [showList, setShowList] = useState(false);
@@ -80,37 +88,71 @@ export const BulkActionDialog: React.FC<Props> = ({
   // reset when the action changes
   React.useEffect(() => {
     setValue("");
+    setTags([]);
+    setDraft("");
     setBlockerCategory("");
     setBlockerDetail("");
     setShowList(false);
   }, [kind]);
 
+  const isTagAction = kind === "add_tags" || kind === "remove_tags";
+
+  /** Tags present on the selection, with counts — the only removable set. */
+  const selectionTags = useMemo(() => tagVocabulary(materials), [materials]);
+
+  const addMatches = useMemo(() => {
+    const q = draft.trim().toLowerCase();
+    if (!q) return [];
+    return tagSuggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(tags, t)).slice(0, 6);
+  }, [draft, tagSuggestions, tags]);
+
+  const addTag = (raw: string) => {
+    const t = normalizeTag(raw);
+    setDraft("");
+    if (!t || hasTag(tags, t)) return;
+    setTags((prev) => [...prev, t]);
+  };
+
   const targetLabel = useMemo(() => {
-    if (!kind || !value) return null;
+    if (!kind || isTagAction || !value) return null;
     if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
-    if (kind === "owner") return value === UNASSIGNED ? "Unassigned" : value;
-    return value;
-  }, [kind, value]);
+    return value === UNASSIGNED ? "Unassigned" : value;
+  }, [kind, isTagAction, value]);
 
   const breakdown = useMemo(() => {
-    if (!kind) return [];
+    if (!kind || isTagAction) return [];
     const counts = new Map<string, number>();
     materials.forEach((m) => {
       const l = currentLabel(kind, m);
       counts.set(l, (counts.get(l) ?? 0) + 1);
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [kind, materials]);
+  }, [kind, isTagAction, materials]);
+
+  /** Per-tag consequence sentence: who gains it, who already has it. */
+  const tagEffects = useMemo(() => {
+    if (!isTagAction) return [];
+    return cleanTags(tags).map((t) => {
+      const have = materials.filter((m) => hasTag(m.tags, t)).length;
+      return kind === "add_tags"
+        ? { tag: t, sentence: `${materials.length - have} will gain the tag. ${have} already have it.` }
+        : { tag: t, sentence: `${have} will lose the tag. ${materials.length - have} do not have it.` };
+    });
+  }, [isTagAction, kind, tags, materials]);
 
   const requiresBlocker = kind === "status" && (value === "parked" || value === "rejected");
-  const canApply = Boolean(value) && (!requiresBlocker || Boolean(blockerCategory));
+  const canApply = isTagAction
+    ? cleanTags(tags).length > 0
+    : Boolean(value) && (!requiresBlocker || Boolean(blockerCategory));
 
   const title =
     kind === "status"
       ? `Set status for ${materials.length} materials`
       : kind === "owner"
         ? `Set owner for ${materials.length} materials`
-        : `Set tag for ${materials.length} materials`;
+        : kind === "add_tags"
+          ? `Add tags to ${materials.length} materials`
+          : `Remove tags from ${materials.length} materials`;
 
   return (
     <Dialog open={kind !== null} onOpenChange={(o) => !o && onCancel()}>
@@ -118,22 +160,95 @@ export const BulkActionDialog: React.FC<Props> = ({
         <DialogHeader>
           <DialogTitle className="text-sm">{title}</DialogTitle>
           <DialogDescription className="text-xs">
-            Nothing is written until you press Apply. Bulk-set values are recorded as entered data.
+            {kind === "add_tags"
+              ? "Tags are added, never overwritten. Nothing is written until you press Apply."
+              : kind === "remove_tags"
+                ? "Only tags present on the selection can be removed. Nothing is written until you press Apply."
+                : "Nothing is written until you press Apply. Bulk-set values are recorded as entered data."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-xs">
           <div className="space-y-1">
             <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {kind === "status" ? "New status" : kind === "owner" ? "New owner" : "Tag"}
+              {kind === "status"
+                ? "New status"
+                : kind === "owner"
+                  ? "New owner"
+                  : kind === "add_tags"
+                    ? "Tags to add"
+                    : "Tags to remove"}
             </div>
-            {kind === "tag" ? (
-              <Input
-                value={value}
-                onChange={(e) => setValue(e.target.value)}
-                placeholder="e.g. Q3 review batch"
-                className="h-8 text-xs"
-              />
+
+            {kind === "add_tags" ? (
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-1.5 py-1">
+                  {tags.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
+                    >
+                      {t}
+                      <button type="button" aria-label={`Remove ${t}`} onClick={() => setTags(tags.filter((x) => x !== t))}>
+                        <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+                      </button>
+                    </span>
+                  ))}
+                  <input
+                    value={draft}
+                    maxLength={40}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTag(draft);
+                      }
+                      if (e.key === "Backspace" && draft === "" && tags.length) setTags(tags.slice(0, -1));
+                    }}
+                    onBlur={() => addTag(draft)}
+                    placeholder={tags.length === 0 ? "Type a tag and press Enter" : ""}
+                    className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
+                  />
+                </div>
+                {addMatches.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {addMatches.map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => addTag(t)}
+                        className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : kind === "remove_tags" ? (
+              selectionTags.length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">No tags on the selected materials.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {selectionTags.map(({ tag, count }) => {
+                    const on = hasTag(tags, tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => setTags(on ? tags.filter((x) => x !== tag) : [...tags, tag])}
+                        className={
+                          on
+                            ? "rounded-sm bg-foreground px-1.5 py-0.5 text-[10px] text-background"
+                            : "rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                        }
+                      >
+                        {tag} <span className="tabular-nums opacity-70">({count})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )
             ) : (
               <Select value={value} onValueChange={setValue}>
                 <SelectTrigger className="h-8 text-xs">
@@ -187,22 +302,41 @@ export const BulkActionDialog: React.FC<Props> = ({
             </div>
           )}
 
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              What will be overwritten
+          {isTagAction ? (
+            tagEffects.length > 0 && (
+              <div className="space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  What will happen
+                </div>
+                <ul className="space-y-0.5 text-[11px]">
+                  {tagEffects.map((e) => (
+                    <li key={e.tag}>
+                      {kind === "add_tags" ? "Add" : "Remove"} '{e.tag}'{" "}
+                      {kind === "add_tags" ? "to" : "from"} {materials.length} materials?{" "}
+                      <span className="text-muted-foreground">{e.sentence}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
+          ) : (
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                What will be overwritten
+              </div>
+              <ul className="space-y-0.5 font-mono text-[11px]">
+                {breakdown.map(([label, count]) => {
+                  const noChange = targetLabel !== null && label === targetLabel;
+                  return (
+                    <li key={label} className={noChange ? "text-muted-foreground" : "text-foreground"}>
+                      <span className="tabular-nums">{count}</span> x {label}
+                      {targetLabel ? (noChange ? " (no change)" : ` -> ${targetLabel}`) : ""}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
-            <ul className="space-y-0.5 font-mono text-[11px]">
-              {breakdown.map(([label, count]) => {
-                const noChange = targetLabel !== null && label === targetLabel;
-                return (
-                  <li key={label} className={noChange ? "text-muted-foreground" : "text-foreground"}>
-                    <span className="tabular-nums">{count}</span> x {label}
-                    {targetLabel ? (noChange ? " (no change)" : ` -> ${targetLabel}`) : ""}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
+          )}
 
           {hiddenCount > 0 && (
             <p className="text-[11px] text-amber-700">
@@ -239,7 +373,8 @@ export const BulkActionDialog: React.FC<Props> = ({
             onClick={() =>
               onApply({
                 kind: kind!,
-                value: kind === "owner" && value === UNASSIGNED ? null : value,
+                value: isTagAction ? null : kind === "owner" && value === UNASSIGNED ? null : value,
+                tags: isTagAction ? cleanTags(tags) : undefined,
                 blocker_category: requiresBlocker ? blockerCategory : undefined,
                 blocker_detail: requiresBlocker ? blockerDetail || null : undefined,
               })
