@@ -282,18 +282,19 @@ const DriverScoring: React.FC = () => {
         };
 
         return (
-          <div className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
+          <div className="relative overflow-x-auto rounded-md border border-border">
             <table className="w-full border-separate border-spacing-0 text-[11px]">
               <thead className="sticky top-0 z-20">
                 <tr>
                   <th
                     className={cn(
                       HEAD,
-                      "sticky left-0 z-30 min-w-[220px] border-b border-r border-border bg-background px-3 py-2 text-left",
+                      "sticky left-0 z-30 min-w-[300px] border-b border-r border-border bg-background px-3 py-2 text-left",
                     )}
                   >
                     {transposed ? "Question" : "Material"}
                   </th>
+
                   {colItems.map((c) => {
                     const active = transposed ? false : mode === "by_question" && focusQuestion === c.id;
                     const cov = transposed
@@ -307,9 +308,10 @@ const DriverScoring: React.FC = () => {
                         key={c.id}
                         title={c.helper ? `${c.label} — ${c.helper}` : c.label}
                         className={cn(
-                          "border-b border-border bg-background px-1 py-1.5 align-bottom",
+                          "w-[38px] border-b border-border bg-background px-0.5 py-1.5 align-bottom",
                           active && "bg-primary/5",
                         )}
+
                       >
                         <button
                           type="button"
@@ -336,11 +338,12 @@ const DriverScoring: React.FC = () => {
                   <th
                     className={cn(
                       HEAD,
-                      "sticky right-0 z-30 border-b border-l border-border bg-background px-2 py-2 text-right",
+                      "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-background px-2 py-2 text-right",
                     )}
                   >
                     Scored
                   </th>
+
                 </tr>
               </thead>
               <tbody>
@@ -362,18 +365,11 @@ const DriverScoring: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => openRun(rowMode, r.id)}
-                          className="block max-w-[200px] truncate text-left hover:text-primary"
+                          className="block max-w-[280px] truncate text-left hover:text-primary"
                           title={r.helper ? `${r.label} — ${r.helper}` : r.label}
                         >
                           <span className={cn("leading-tight", activeRow && "text-primary")}>{r.label}</span>
                         </button>
-                        {!transposed && counts && counts.scored_count !== null && (
-                          <span className="block text-[9px] leading-tight text-muted-foreground">
-                            {counts.strong_drivers} strong {counts.strong_drivers === 1 ? "driver" : "drivers"},{" "}
-                            {counts.strong_constraints} strong{" "}
-                            {counts.strong_constraints === 1 ? "constraint" : "constraints"}
-                          </span>
-                        )}
                       </td>
                       {colItems.map((c) => {
                         const rec = scoreAt(r.id, c.id);
@@ -383,7 +379,7 @@ const DriverScoring: React.FC = () => {
                         return (
                           <td
                             key={c.id}
-                            className={cn("border-b border-border px-1 py-1 text-center", activeCol && "bg-primary/5")}
+                            className={cn("border-b border-border px-0.5 py-1 text-center", activeCol && "bg-primary/5")}
                           >
                             <button
                               type="button"
@@ -399,7 +395,7 @@ const DriverScoring: React.FC = () => {
                                     }`
                               }
                               className={cn(
-                                "mx-auto flex h-5 w-7 items-center justify-center rounded-[3px] font-mono text-[10px] tabular-nums",
+                                "mx-auto flex h-5 w-[30px] items-center justify-center rounded-[3px] font-mono text-[11px] tabular-nums",
                                 scoreTone(v),
                               )}
                             >
@@ -408,14 +404,26 @@ const DriverScoring: React.FC = () => {
                           </td>
                         );
                       })}
-                      <td className="sticky right-0 z-10 border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                      {/* Coverage and the two strong counts, one compact readout */}
+                      <td className="sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
                         {rowScored === null ? (
                           <span className="text-muted-foreground/60" title="No judgements recorded">
                             —
                           </span>
                         ) : (
-                          `${rowScored}/${rowDenom}`
+                          <>
+                            {rowScored}/{rowDenom}
+                            {!transposed && counts && counts.scored_count !== null && (
+                              <span
+                                className="pl-1 text-muted-foreground/70"
+                                title={`${counts.strong_drivers} strong drivers, ${counts.strong_constraints} strong constraints`}
+                              >
+                                · {counts.strong_drivers}↑ {counts.strong_constraints}↓
+                              </span>
+                            )}
+                          </>
                         )}
+
                       </td>
                     </tr>
                   );
@@ -429,19 +437,32 @@ const DriverScoring: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-3 w-5 rounded-[3px]", scoreTone(-4))} /> constraint
+          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(-4))}>
+            -4
+          </span>{" "}
+          constraint
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-3 w-5 rounded-[3px]", scoreTone(0))} /> recorded neutral
+          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(0))}>
+            0
+          </span>{" "}
+          recorded neutral
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-3 w-5 rounded-[3px]", scoreTone(4))} /> driver
+          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(4))}>
+            +4
+          </span>{" "}
+          driver
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-3 w-5 rounded-[3px]", scoreTone(null))} /> not scored — not zero
+          <span className={cn("inline-block h-4 w-6 rounded-[3px]", scoreTone(null))} /> not scored — not zero
         </span>
-        <span>Counts of judgements only. Scores are never combined into an index.</span>
+        <span>
+          Only strong judgements (+3 or more, -3 or less) carry a tint. Counts of judgements only — scores are never
+          combined into an index.
+        </span>
       </div>
+
     </div>
   );
 };

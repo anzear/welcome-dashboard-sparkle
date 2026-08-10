@@ -101,8 +101,10 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
     );
   }
 
+  /* Detail: one row per measure — label, fixed rail, rank. Read as one unit
+     inside ~380px; the coverage sentence sits beneath in the faintest tier. */
   return (
-    <div className="flex flex-col gap-3">
+    <div className="max-w-[380px] space-y-2.5">
       {entries.map((e) => {
         const tone = e.isActive
           ? "text-primary"
@@ -110,34 +112,41 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
             ? "text-amber-700"
             : e.rank === null
               ? "text-muted-foreground/50"
-              : "text-muted-foreground";
+              : "text-foreground";
         return (
-          <div key={e.mm.id} className="min-w-0">
-            <div className="flex items-baseline gap-1 text-[12px]">
+          <div key={e.mm.id} className="min-w-0" title={`${e.coverage}${e.gapSentence}`}>
+            <div className="grid grid-cols-[6rem_180px_auto] items-center gap-3">
               <span
                 className={cn(
-                  "w-24 shrink-0 truncate",
-                  e.isActive ? "text-primary/70" : e.isAmber ? "text-amber-700/70" : "text-muted-foreground/45",
+                  "truncate text-[11px]",
+                  e.isActive ? "text-primary/80" : e.isAmber ? "text-amber-700/80" : "text-muted-foreground",
                 )}
               >
                 {e.mm.label}
               </span>
-              <span className={cn("font-mono text-[14px] tabular-nums", tone)}>
+              <span className="relative block h-[3px] w-[180px] rounded-full bg-muted-foreground/15">
+                {e.pos !== null && (
+                  <span
+                    className={cn(
+                      "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
+                      e.isActive
+                        ? "h-[7px] w-[7px] bg-primary"
+                        : e.isAmber
+                          ? "h-[6px] w-[6px] bg-amber-500"
+                          : "h-[6px] w-[6px] bg-muted-foreground/70",
+                    )}
+                    style={{ left: `${e.pos * 100}%` }}
+                  />
+                )}
+              </span>
+              <span className={cn("justify-self-end font-mono text-[13px] tabular-nums", tone)}>
                 {e.rank === null ? "—" : `#${e.rank}`}
+                <span className="pl-1 text-[11px] text-muted-foreground/60">
+                  {e.rank === null ? "" : `of ${e.rankedCount}`}
+                </span>
               </span>
             </div>
-            <div className="relative mt-1 h-[3px] w-full rounded-full bg-muted-foreground/15">
-              {e.pos !== null && (
-                <span
-                  className={cn(
-                    "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-                    e.isActive ? "h-[6px] w-[6px] bg-primary" : "h-[5px] w-[5px] bg-muted-foreground/70",
-                  )}
-                  style={{ left: `${e.pos * 100}%` }}
-                />
-              )}
-            </div>
-            <div className="pt-1 text-[11px] text-muted-foreground/60">
+            <div className="pl-[6.75rem] pt-0.5 text-[11px] leading-tight text-muted-foreground/55">
               {e.coverage}
               {e.gapSentence}
             </div>
@@ -147,5 +156,6 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
     </div>
   );
 };
+
 
 export default PositionBlock;
