@@ -469,10 +469,6 @@ const DriverScoring: React.FC = () => {
         <span className="flex items-center gap-1">
           <span className={cn("inline-block h-4 w-6 rounded-[3px]", scoreTone(null))} /> not scored — not zero
         </span>
-        <span>
-          Only strong judgements (+3 or more, -3 or less) carry a tint. Counts of judgements only — scores are never
-          combined into an index.
-        </span>
       </div>
 
     </div>
