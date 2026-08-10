@@ -543,18 +543,21 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
+                    {cols.rank && (
+                      <td
+                        className={cn(
+                          STICK,
+                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                        )}
+                      >
+                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
+                      </td>
+                    )}
                     <td
                       className={cn(
                         STICK,
-                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
-                      )}
-                    >
-                      {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
-                    </td>
-                    <td
-                      className={cn(
-                        STICK,
-                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        materialLeft,
+                        "z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <div
@@ -569,43 +572,54 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td
-                      className={cn(
-                        STICK,
-                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
-                      )}
-                    >
-                      <PositionBlock
-                        materialId={m.material_id}
-                        gapMeasure={row.gapMeasure}
-                        gapSize={row.gapSize}
-                      />
-                    </td>
+                    {cols.position && (
+                      <td
+                        className={cn(
+                          STICK,
+                          positionLeft,
+                          "z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        )}
+                      >
+                        <PositionBlock
+                          materialId={m.material_id}
+                          gapMeasure={row.gapMeasure}
+                          gapSize={row.gapSize}
+                        />
+                      </td>
+                    )}
 
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
-                      <NumCell
-                        value={m.annual_volume}
-                        provenance={m.provenance.annual_volume}
-                        emphasis={activeCol("volume")}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-right align-middle">
-                      <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
-                    </td>
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
-                      <NumCell
-                        value={m.annual_spend}
-                        provenance={m.provenance.annual_spend}
-                        emphasis={activeCol("spend")}
-                      />
-                    </td>
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
-                      <NumCell
-                        value={m.ghg_contribution}
-                        provenance={m.provenance.ghg_contribution}
-                        emphasis={activeCol("emissions")}
-                      />
-                    </td>
+                    {cols.volume && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
+                        <NumCell
+                          value={m.annual_volume}
+                          provenance={m.provenance.annual_volume}
+                          emphasis={activeCol("volume")}
+                        />
+                      </td>
+                    )}
+                    {cols.price && (
+                      <td className="px-3 py-2 text-right align-middle">
+                        <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
+                      </td>
+                    )}
+                    {cols.spend && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
+                        <NumCell
+                          value={m.annual_spend}
+                          provenance={m.provenance.annual_spend}
+                          emphasis={activeCol("spend")}
+                        />
+                      </td>
+                    )}
+                    {cols.emissions && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
+                        <NumCell
+                          value={m.ghg_contribution}
+                          provenance={m.provenance.ghg_contribution}
+                          emphasis={activeCol("emissions")}
+                        />
+                      </td>
+                    )}
                     {activeCol("applications") && (
                       <td className={cn("px-3 py-2 text-right align-middle", colTint("applications"))}>
                         {m.application_categories && m.application_categories.length > 0 ? (
@@ -621,15 +635,20 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    <td className="px-3 py-2 text-right align-middle">
-                      <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
-                    </td>
-                    <td className="px-3 py-2 align-middle">
-                      <StatusPill
-                        status={m.journey_status}
-                        entered={m.provenance.journey_status?.origin === "entered"}
-                      />
-                    </td>
+                    {cols.suppliers && (
+                      <td className="px-3 py-2 text-right align-middle">
+                        <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
+                      </td>
+                    )}
+                    {cols.status && (
+                      <td className="px-3 py-2 align-middle">
+                        <StatusPill
+                          status={m.journey_status}
+                          entered={m.provenance.journey_status?.origin === "entered"}
+                        />
+                      </td>
+                    )}
+
                     {cols.tags && (
                       <td className="px-3 py-2 align-middle">
                         <TagsCell tags={m.tags} />
