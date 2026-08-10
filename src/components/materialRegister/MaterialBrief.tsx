@@ -640,7 +640,7 @@ export const MaterialBrief: React.FC = () => {
         </section>
 
         {/* Section 6 — History */}
-        <section className="rounded-md border border-border p-3">
+        <section className="order-7 rounded-md border border-border p-3">
           <SectionTitle note="The record of decisions. Newest first.">History</SectionTitle>
           <MaterialHistory materialId={m.material_id} />
         </section>
