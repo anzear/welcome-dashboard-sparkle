@@ -1,4 +1,4 @@
-import { seedMaterials } from "@/data/materialPrioritisationMock";
+import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
 import type {
   EntryType,
   FieldProvenance,
