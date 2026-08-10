@@ -427,7 +427,10 @@ export const MaterialBrief: React.FC = () => {
   const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
   const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
   const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<
+    Record<string, { id: string; author: string; at: string; body: string }[]>
+  >({});
+  const [draft, setDraft] = useState<Record<string, string>>({});
 
 
   /** Header condenses once it sticks. */
@@ -1106,15 +1109,58 @@ export const MaterialBrief: React.FC = () => {
             </Section>
           </div>
 
-          <Section title="Notes" note="Working notes for this material. Not a field of record.">
-            <textarea
-              value={notes[m.material_id] ?? ""}
-              onChange={(e) => setNotes((n) => ({ ...n, [m.material_id]: e.target.value }))}
-              rows={5}
-              placeholder="Add a note…"
-              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
-            />
+          <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
+            <div className="space-y-3">
+              {(comments[m.material_id] ?? []).length === 0 ? (
+                <p className="text-[11px] text-muted-foreground">No comments yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {(comments[m.material_id] ?? []).map((c) => (
+                    <li key={c.id} className="border-l-2 border-border/70 pl-3">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[11px] font-medium text-foreground">{c.author}</span>
+                        <span className="font-mono text-[10px] text-muted-foreground">
+                          {new Date(c.at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-foreground">{c.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <textarea
+                value={draft[m.material_id] ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, [m.material_id]: e.target.value }))}
+                rows={3}
+                placeholder="Write a comment for the team…"
+                className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">Visible to all team members.</span>
+                <button
+                  type="button"
+                  disabled={!(draft[m.material_id] ?? "").trim()}
+                  onClick={() => {
+                    const body = (draft[m.material_id] ?? "").trim();
+                    if (!body) return;
+                    setComments((prev) => ({
+                      ...prev,
+                      [m.material_id]: [
+                        ...(prev[m.material_id] ?? []),
+                        { id: `${Date.now()}`, author: "You", at: new Date().toISOString(), body },
+                      ],
+                    }));
+                    setDraft((d) => ({ ...d, [m.material_id]: "" }));
+                  }}
+                  className="rounded-md bg-foreground px-3 py-1.5 text-[11px] font-medium text-background disabled:opacity-40"
+                >
+                  Publish
+                </button>
+              </div>
+            </div>
           </Section>
+
         </div>
       </div>
 
