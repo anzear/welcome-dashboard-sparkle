@@ -15,6 +15,7 @@ import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDial
 import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
+import BriefStepCards from "@/components/materialRegister/BriefStepCards";
 
 import {
   CURRENT_USER,
