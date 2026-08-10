@@ -125,13 +125,13 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>({
-    tags: true,
-    priority: true,
-    target: true,
-    intelligence: true,
-    lastChange: true,
-  });
+  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>(
+    () =>
+      Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])) as Record<
+        OptionalColumn,
+        boolean
+      >,
+  );
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
