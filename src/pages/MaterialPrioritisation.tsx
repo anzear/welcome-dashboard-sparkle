@@ -5,6 +5,8 @@ import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import DriverScoring from "@/components/materialRegister/DriverScoring";
 import PrioritisationGrid from "@/components/materialRegister/PrioritisationGrid";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
+import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import { Plus } from "lucide-react";
 
 const TABS = [
   { id: "register", label: "Register" },
@@ -16,6 +18,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 const Inner: React.FC = () => {
   const [tab, setTab] = useState<TabId>("register");
+  const [addOpen, setAddOpen] = useState(false);
   const { openId } = useRegister();
 
   if (openId) {
