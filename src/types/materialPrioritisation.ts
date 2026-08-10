@@ -1,4 +1,17 @@
-export type EntryType = "substitute_material_source" | "new_material";
+export type EntryType = "drop_in_substitute" | "new_substitute" | "new_application";
+
+/**
+ * What the replacement has to achieve. Every field optional — a requirement the
+ * customer has not stated is null, never a zero target.
+ */
+export interface MaterialRequirements {
+  target_volume: number | null;
+  price_ceiling: number | null;
+  ghg_reduction_target: number | null;
+  required_certifications: string[];
+  earliest_need_date: string | null;
+  notes: string | null;
+}
 
 export type JourneyStatus =
   | "not_started"
@@ -38,6 +51,8 @@ export interface Material {
   supplier_count: number | null;
   supplier_countries: string[];
   journey_status: JourneyStatus;
+  /** null when no requirement has been stated at all. */
+  requirements: MaterialRequirements | null;
   blocker_category: string | null;
   blocker_detail: string | null;
   blocker_date: string | null;
@@ -101,6 +116,8 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   cas_number: "CAS number",
   material_class: "Material class",
   customer_material_group: "Material group",
+  customer_material_ids: "Customer material IDs",
+  material_added: "Material added",
 };
 
 /**

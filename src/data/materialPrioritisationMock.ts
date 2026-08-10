@@ -136,7 +136,10 @@ export const materials: Material[] = rows.map((row, i) => {
     customer_material_group: group,
     application_categories: APPLICATIONS[i % APPLICATIONS.length],
     product_categories: PRODUCTS[i % PRODUCTS.length],
-    entry_type: i % 9 === 4 ? "new_material" : "substitute_material_source",
+    // Migrated from the earlier two-value enum:
+    //   substitute_material_source -> drop_in_substitute, new_material -> new_substitute
+    entry_type: i % 9 === 4 ? "new_substitute" : "drop_in_substitute",
+    requirements: null,
     annual_volume: volume,
     unit_price: price,
     annual_spend,

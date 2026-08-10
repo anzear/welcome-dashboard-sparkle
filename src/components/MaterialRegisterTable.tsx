@@ -21,7 +21,8 @@ import {
   type MeasureId,
   type RankedRow,
 } from "@/components/materialRegister/registerStore";
-import { X } from "lucide-react";
+import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import { Plus, X } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border";
@@ -56,10 +57,12 @@ export const MaterialRegisterTable: React.FC = () => {
     toast,
     setToast,
     undo,
+    highlightIds,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
   const [showLastChange, setShowLastChange] = useState(true);
+  const [addOpen, setAddOpen] = useState(false);
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
@@ -172,6 +175,14 @@ export const MaterialRegisterTable: React.FC = () => {
             ))}
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="inline-flex items-center gap-1 rounded-sm border border-primary/40 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10"
+        >
+          <Plus className="h-3 w-3" /> Add material
+        </button>
 
         <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
           <span>
@@ -415,7 +426,14 @@ export const MaterialRegisterTable: React.FC = () => {
                   colSpan={colCount + extraCols}
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
-                  No materials match the current filters.
+                  <div>No materials match the current filters.</div>
+                  <button
+                    type="button"
+                    onClick={() => setAddOpen(true)}
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline decoration-dotted underline-offset-2"
+                  >
+                    <Plus className="h-3 w-3" /> Add material
+                  </button>
                 </td>
               </tr>
             )}
@@ -439,6 +457,8 @@ export const MaterialRegisterTable: React.FC = () => {
                       "cursor-pointer border-b border-border/60 last:border-0 hover:bg-muted/40",
                       rank === null && "text-muted-foreground",
                       isSelected && "bg-primary/5",
+                      highlightIds.has(m.material_id) &&
+                        "bg-primary/10 ring-1 ring-inset ring-primary/40",
                     )}
                   >
                     <td className="px-2 py-1.5 align-top" onClick={(e) => e.stopPropagation()}>
@@ -577,6 +597,8 @@ export const MaterialRegisterTable: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
 
       <BulkActionDialog
         kind={bulkKind}
