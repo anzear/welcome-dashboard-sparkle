@@ -685,12 +685,6 @@ const PrioritisationGrid: React.FC = () => {
               Solid outer ring = in the {priorityPeriod} priority set
             </span>
             <span className="text-[10px] text-muted-foreground">
-              Axes: measured figures. Bubble size: your team's judgement.
-            </span>
-            <span className="text-[10px] text-muted-foreground">
-              Two axes, two units, one size encoding — never blended into a score.
-            </span>
-            <span className="text-[10px] text-muted-foreground">
               Shift-click or drag a box to select. Click a dot to open its brief.
             </span>
           </div>
