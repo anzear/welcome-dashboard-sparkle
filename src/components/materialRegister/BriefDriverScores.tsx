@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { DRIVER_QUESTIONS } from "@/config/driverQuestions";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitives";
+import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 
 /** Thin read-only -5..+5 track with a centre tick and one filled marker. */
 const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
@@ -47,7 +47,8 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
  * one compact row per question at rest, expanding to the 11-point control on click.
  */
 const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => {
-  const { scoreFor, setScore, countsFor } = useRegister();
+  const { scoreFor, setScore, countsFor, questions, canEditQuestionSet } = useRegister();
+  const [editorOpen, setEditorOpen] = useState(false);
   const counts = countsFor(materialId);
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -63,13 +64,13 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
             <span className="font-mono tabular-nums text-foreground">{counts.strong_constraints}</span> strong{" "}
             {counts.strong_constraints === 1 ? "constraint" : "constraints"},{" "}
             <span className="font-mono tabular-nums text-foreground">{counts.scored_count}</span> of{" "}
-            <span className="font-mono tabular-nums">{DRIVER_QUESTIONS.length}</span> scored
+            <span className="font-mono tabular-nums">{questions.length}</span> scored
           </>
         )}
       </p>
 
       <div className="divide-y divide-primary/10">
-        {DRIVER_QUESTIONS.map((q) => {
+        {questions.map((q) => {
           const rec = scoreFor(materialId, q.question_id);
           const v = rec?.score ?? null;
           const expanded = openId === q.question_id;
@@ -123,6 +124,27 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
           );
         })}
       </div>
+
+      <div className="pt-1">
+        {canEditQuestionSet ? (
+          <button
+            type="button"
+            onClick={() => setEditorOpen(true)}
+            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Edit question set
+          </button>
+        ) : (
+          <span
+            className="cursor-default text-[10px] text-muted-foreground/60"
+            title="Managed by your workspace administrator"
+          >
+            Edit question set
+          </span>
+        )}
+      </div>
+
+      <QuestionSetDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </div>
   );
 };
