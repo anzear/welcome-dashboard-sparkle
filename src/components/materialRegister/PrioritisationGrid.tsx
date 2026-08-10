@@ -287,11 +287,11 @@ const PrioritisationGrid: React.FC = () => {
     setLasso(null);
   };
 
-  const xTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * xMax);
-  const yTicks =
-    yv.fixedMax !== undefined
-      ? Array.from({ length: yv.fixedMax + 1 }, (_, i) => i)
-      : [0, 0.25, 0.5, 0.75, 1].map((f) => f * yMax);
+  const xTicks = xScale.ticks;
+  const yTicks = yScale.ticks;
+  /** Thousands separators on every tick; decimals only when the step needs them. */
+  const tickLabel = (v: number, step: number) => nf(step < 1 ? 2 : 0).format(v);
+
 
   return (
     <div className="w-full space-y-2">
