@@ -188,6 +188,20 @@ interface Store {
     events?: EventInput[],
   ) => void;
   applyBulk: (payload: BulkPayload, ids: Set<string>) => void;
+  /**
+   * Appends new register rows. Drafts arrive with their own provenance so entered,
+   * computed and ingested figures stay distinct. Returns the assigned ids.
+   */
+  addMaterials: (
+    drafts: Omit<Material, "material_id">[],
+    opts: { batchOrigin: BatchOrigin; source: string; batchId?: string },
+  ) => string[];
+  /** Rolls an import batch back: drops the rows and the batch's events. */
+  removeMaterials: (ids: string[], batchId: string) => void;
+  /** Folds incoming customer IDs into an existing row instead of duplicating it. */
+  mergeCustomerIds: (materialId: string, ids: string[], source: string, batchId: string) => void;
+  /** Rows added a moment ago, highlighted briefly in the register. */
+  highlightIds: Set<string>;
   events: MaterialEvent[];
   eventsFor: (id: string) => MaterialEvent[];
   recordEvents: (inputs: EventInput[]) => void;
@@ -236,6 +250,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [onlySelected, setOnlySelected] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
+  const [highlightIds, setHighlightIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{
     message: string;
     snapshot: Material[];
@@ -468,6 +483,77 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 
+  const nextIds = (count: number, taken: Material[]) => {
+    let max = 0;
+    taken.forEach((m) => {
+      const n = Number(m.material_id.replace(/\D/g, ""));
+      if (Number.isFinite(n) && n > max) max = n;
+    });
+    return Array.from({ length: count }, (_, i) => `MAT-${String(max + 1 + i).padStart(4, "0")}`);
+  };
+
+  const addMaterials = (
+    drafts: Omit<Material, "material_id">[],
+    opts: { batchOrigin: BatchOrigin; source: string; batchId?: string },
+  ) => {
+    if (drafts.length === 0) return [];
+    const ids = nextIds(drafts.length, data);
+    const rowsToAdd: Material[] = drafts.map((d, i) => ({ ...d, material_id: ids[i] }));
+    setData((prev) => [...prev, ...rowsToAdd]);
+    recordEvents(
+      rowsToAdd.map((m) => ({
+        material_id: m.material_id,
+        event_type: "field_correction" as MaterialEventType,
+        field: "material_added",
+        from_value: null,
+        to_value: m.name,
+        reason: opts.batchOrigin === "baselining" ? `Loaded from ${opts.source}` : null,
+        batch_id: opts.batchId ?? null,
+        batch_origin: opts.batchOrigin,
+      })),
+    );
+    setHighlightIds(new Set(ids));
+    window.setTimeout(() => setHighlightIds(new Set()), 4000);
+    return ids;
+  };
+
+  const removeMaterials = (ids: string[], batchId: string) => {
+    const drop = new Set(ids);
+    setData((prev) => prev.filter((m) => !drop.has(m.material_id)));
+    setEvents((prev) => prev.filter((e) => e.batch_id !== batchId));
+    setSelected((prev) => new Set([...prev].filter((id) => !drop.has(id))));
+    setHighlightIds(new Set());
+  };
+
+  const mergeCustomerIds = (materialId: string, incoming: string[], source: string, batchId: string) => {
+    setData((prev) =>
+      prev.map((m) => {
+        if (m.material_id !== materialId) return m;
+        const merged = [...new Set([...m.customer_material_ids, ...incoming])];
+        return {
+          ...m,
+          customer_material_ids: merged,
+          provenance: {
+            ...m.provenance,
+            customer_material_ids: { origin: "ingested", source, date: today() },
+          },
+        };
+      }),
+    );
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "field_correction",
+        field: "customer_material_ids",
+        from_value: null,
+        to_value: incoming.join(", "),
+        reason: `Merged from ${source}`,
+        batch_id: batchId,
+        batch_origin: "baselining",
+      },
+    ]);
+  };
+
   const inPrioritySet = (m: Material) => m.priority_selected && m.priority_period === priorityPeriod;
   const prioritySetCount = data.filter(inPrioritySet).length;
 
@@ -602,6 +688,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     closeBrief: () => setOpenId(null),
     updateMaterial,
     applyBulk,
+    addMaterials,
+    removeMaterials,
+    mergeCustomerIds,
+    highlightIds,
     events,
     eventsFor,
     recordEvents,
