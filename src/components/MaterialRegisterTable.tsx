@@ -375,10 +375,22 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[216px] border-r border-border px-3 py-2 text-left")}>
+              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 py-2 text-left")}>
                 Position
-                <div className={UNIT}>rank of ranked materials</div>
+                <div className="mt-1 flex items-end gap-[4px]" aria-hidden>
+                  {[10, 7, 9, 5].map((h, i) => (
+                    <span key={i} className="bg-muted-foreground/45" style={{ width: 12, height: h }} />
+                  ))}
+                </div>
+                <div className="h-px w-[60px] bg-border" />
+                <div className={cn(UNIT, "flex w-[60px] justify-between font-mono")}>
+                  <span>S</span>
+                  <span>E</span>
+                  <span>V</span>
+                  <span>A</span>
+                </div>
               </th>
+
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
                 <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
@@ -499,7 +511,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <td
                       className={cn(
                         STICK,
-                        "left-[19rem] z-10 w-[216px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
                       )}
                     >
                       <PositionBlock
@@ -616,11 +628,16 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="text-muted-foreground">^</span> entered
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="text-amber-700">amber label</span> rank divergence
+          <span className="text-amber-700">amber bar</span> rank divergence
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="text-muted-foreground/50">—</span> no value (unranked)
         </span>
+        <span>
+          Position bars: taller = better rank. Four independent scales, one per measure — never combined. Dotted
+          outline = no figure recorded, not ranked last.
+        </span>
+
       </div>
 
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
