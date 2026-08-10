@@ -305,19 +305,20 @@ export const MaterialRegisterTable: React.FC = () => {
             </PopoverContent>
           </Popover>
 
-          <FilterSelects className="ml-auto" />
-
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
           <Input
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
             placeholder="Search name, CAS, customer ID"
-            className="h-7 w-56 bg-background text-[11px]"
+            className="ml-auto h-7 w-56 bg-background text-[11px]"
           />
-          <FilterChips />
         </div>
+
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <FilterSelects />
+        </div>
+
+        <FilterChips />
+
       </div>
 
 
