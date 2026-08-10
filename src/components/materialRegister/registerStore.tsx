@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
 import { seedDriverScores } from "@/data/driverScoresMock";
-import { DRIVER_QUESTIONS, scoreKey } from "@/config/driverQuestions";
+import {
+  DRIVER_QUESTIONS,
+  scoreKey,
+  shortForLabel,
+  slugForLabel,
+  type DriverQuestion,
+  type QuestionSetEvent,
+} from "@/config/driverQuestions";
 import {
   JOURNEY_STATUS_LABEL,
   type FieldProvenance,
@@ -211,6 +218,22 @@ interface Store {
   setScore: (materialId: string, questionId: string, score: number, note: string | null) => void;
   countsFor: (materialId: string) => DriverCounts;
   questionCoverage: (questionId: string, rows: Material[]) => number;
+  /**
+   * Account-level driver question set, shared by every material. Active
+   * questions in display order; archived ones keep their scores but leave the
+   * brief, the matrix, exports and the derived counts.
+   */
+  questions: DriverQuestion[];
+  archivedQuestions: DriverQuestion[];
+  allQuestions: DriverQuestion[];
+  canEditQuestionSet: boolean;
+  addQuestion: (label: string, helper: string | null) => string;
+  renameQuestion: (questionId: string, label: string) => void;
+  setQuestionHelper: (questionId: string, helper: string | null) => void;
+  archiveQuestion: (questionId: string) => void;
+  restoreQuestion: (questionId: string) => void;
+  reorderQuestions: (ids: string[]) => void;
+  questionSetEvents: QuestionSetEvent[];
   /** Period the priority set is being assembled for. Free text. */
   priorityPeriod: string;
   setPriorityPeriod: (v: string) => void;
@@ -241,6 +264,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [data, setData] = useState<Material[]>(rows);
   const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
   const [scores, setScores] = useState<Record<string, DriverScore>>(seedDriverScores);
+  const [questionSet, setQuestionSet] = useState<DriverQuestion[]>(DRIVER_QUESTIONS);
+  const [questionSetEvents, setQuestionSetEvents] = useState<QuestionSetEvent[]>([]);
+  const canEditQuestionSet = true;
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
@@ -608,6 +634,104 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
 
+  const activeQuestions = useMemo(
+    () => questionSet.filter((q) => !q.archived).sort((a, b) => a.order - b.order),
+    [questionSet],
+  );
+  const archivedQuestions = useMemo(
+    () => questionSet.filter((q) => q.archived).sort((a, b) => a.order - b.order),
+    [questionSet],
+  );
+
+  const logQuestionSet = (
+    action: QuestionSetEvent["action"],
+    question_id: string,
+    from_label: string | null,
+    to_label: string | null,
+  ) =>
+    setQuestionSetEvents((prev) => [
+      {
+        event_id: `QSE-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        action,
+        question_id,
+        from_label,
+        to_label,
+        changed_by: CURRENT_USER,
+        changed_at: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+
+  /** A new question appears on every material as unscored — never zero. */
+  const addQuestion = (label: string, helper: string | null) => {
+    const clean = label.trim();
+    const id = slugForLabel(clean, questionSet.map((q) => q.question_id));
+    const order = questionSet.reduce((max, q) => Math.max(max, q.order), 0) + 1;
+    setQuestionSet((prev) => [
+      ...prev,
+      {
+        question_id: id,
+        label: clean,
+        short: shortForLabel(clean),
+        helper: helper && helper.trim() ? helper.trim() : null,
+        order,
+        archived: false,
+        archived_at: null,
+        created_by: CURRENT_USER,
+        created_at: today(),
+      },
+    ]);
+    logQuestionSet("added", id, null, clean);
+    return id;
+  };
+
+  /** Renaming touches the label only. question_id never changes, so no score is orphaned. */
+  const renameQuestion = (questionId: string, label: string) => {
+    const clean = label.trim();
+    const current = questionSet.find((q) => q.question_id === questionId);
+    if (!current || !clean || clean === current.label) return;
+    setQuestionSet((prev) =>
+      prev.map((q) => (q.question_id === questionId ? { ...q, label: clean, short: shortForLabel(clean) } : q)),
+    );
+    logQuestionSet("renamed", questionId, current.label, clean);
+  };
+
+  const setQuestionHelper = (questionId: string, helper: string | null) => {
+    const clean = helper && helper.trim() ? helper.trim() : null;
+    setQuestionSet((prev) => prev.map((q) => (q.question_id === questionId ? { ...q, helper: clean } : q)));
+  };
+
+  /** Archive, never delete. Scores are retained and return intact on restore. */
+  const archiveQuestion = (questionId: string) => {
+    const current = questionSet.find((q) => q.question_id === questionId);
+    if (!current) return;
+    setQuestionSet((prev) =>
+      prev.map((q) =>
+        q.question_id === questionId ? { ...q, archived: true, archived_at: new Date().toISOString() } : q,
+      ),
+    );
+    logQuestionSet("archived", questionId, current.label, current.label);
+  };
+
+  const restoreQuestion = (questionId: string) => {
+    const current = questionSet.find((q) => q.question_id === questionId);
+    if (!current) return;
+    setQuestionSet((prev) =>
+      prev.map((q) => (q.question_id === questionId ? { ...q, archived: false, archived_at: null } : q)),
+    );
+    logQuestionSet("restored", questionId, current.label, current.label);
+  };
+
+  const reorderQuestions = (ids: string[]) => {
+    setQuestionSet((prev) =>
+      prev.map((q) => {
+        const i = ids.indexOf(q.question_id);
+        return i === -1 ? q : { ...q, order: i + 1 };
+      }),
+    );
+    logQuestionSet("reordered", ids[0] ?? "", null, null);
+  };
+
   const scoreFor = (materialId: string, questionId: string) =>
     scores[scoreKey(materialId, questionId)] ?? null;
 
@@ -616,9 +740,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
    * A material with nothing scored has null counts, not zeroes.
    */
   const countsFor = (materialId: string): DriverCounts => {
-    const values = DRIVER_QUESTIONS.map((q) => scores[scoreKey(materialId, q.question_id)]?.score ?? null).filter(
-      (v): v is number => v !== null,
-    );
+    const values = activeQuestions
+      .map((q) => scores[scoreKey(materialId, q.question_id)]?.score ?? null)
+      .filter(
+        (v): v is number => v !== null,
+      );
     if (values.length === 0) {
       return { strong_drivers: null, strong_constraints: null, scored_count: null };
     }
@@ -700,6 +826,17 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     setScore,
     countsFor,
     questionCoverage,
+    questions: activeQuestions,
+    archivedQuestions,
+    allQuestions: questionSet,
+    canEditQuestionSet,
+    addQuestion,
+    renameQuestion,
+    setQuestionHelper,
+    archiveQuestion,
+    restoreQuestion,
+    reorderQuestions,
+    questionSetEvents,
     priorityPeriod,
     setPriorityPeriod,
     prioritySetCount,
