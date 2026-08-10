@@ -161,8 +161,18 @@ const PrioritisationGrid: React.FC = () => {
 
   const { plotted, noFigure, notScored } = classified;
 
-  const xMax = xv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.x));
-  const yMax = yv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.y));
+  /** Round axis maxima and round tick intervals, derived from the data range. */
+  const xScale =
+    xv.fixedMax !== undefined
+      ? { max: xv.fixedMax, step: 1, ticks: Array.from({ length: xv.fixedMax + 1 }, (_, i) => i) }
+      : niceScale(Math.max(1, ...plotted.map((p) => p.x)));
+  const yScale =
+    yv.fixedMax !== undefined
+      ? { max: yv.fixedMax, step: 1, ticks: Array.from({ length: yv.fixedMax + 1 }, (_, i) => i) }
+      : niceScale(Math.max(1, ...plotted.map((p) => p.y)));
+
+  const xMax = xScale.max;
+  const yMax = yScale.max;
   const xMedian = median(plotted.map((p) => p.x));
   const yMedian = median(plotted.map((p) => p.y));
 
@@ -179,20 +189,6 @@ const PrioritisationGrid: React.FC = () => {
     };
   });
 
-  /**
-   * Equal-position reference: the path where a material's position on X matches its
-   * position on Y. Drawn through matching quantiles of the two distributions, so the
-   * two units are never blended into one number.
-   */
-  const equalLine = useMemo(() => {
-    if (plotted.length < 4) return null;
-    const xs = plotted.map((p) => p.x).sort((a, b) => a - b);
-    const ys = plotted.map((p) => p.y).sort((a, b) => a - b);
-    const at = (arr: number[], f: number) => arr[Math.min(arr.length - 1, Math.round(f * (arr.length - 1)))];
-    return Array.from({ length: 21 }, (_, i) => i / 20)
-      .map((f) => `${sx(at(xs, f)).toFixed(1)},${sy(at(ys, f)).toFixed(1)}`)
-      .join(" ");
-  }, [plotted, xMax, yMax]);
 
   const rankOf = (m: Material, id: AxisVarId) => {
     const v = axisVar(id);
