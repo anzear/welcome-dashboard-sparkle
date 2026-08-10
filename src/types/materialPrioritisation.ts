@@ -116,6 +116,8 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   cas_number: "CAS number",
   material_class: "Material class",
   customer_material_group: "Material group",
+  customer_material_ids: "Customer material IDs",
+  material_added: "Material added",
 };
 
 /**
