@@ -80,11 +80,11 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm px-1 py-1.5",
+      "group grid grid-cols-[minmax(7rem,1fr)_auto] items-baseline gap-4 rounded-sm px-1 py-1.5",
       onClick && "cursor-pointer hover:bg-muted/50",
     )}
   >
-    <div className="min-w-[7rem]">
+    <div className="min-w-0">
       <div className="text-[11px] leading-snug text-muted-foreground">
         {label}
         {onClick && (
@@ -95,7 +95,7 @@ const DataRow: React.FC<{
       </div>
       <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
     </div>
-    <div className="max-w-[65%] justify-self-end text-right">{value}</div>
+    <div className="justify-self-end text-right">{value}</div>
     {children}
   </div>
 );
