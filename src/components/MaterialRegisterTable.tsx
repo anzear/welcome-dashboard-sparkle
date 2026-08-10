@@ -697,18 +697,20 @@ export const MaterialRegisterTable: React.FC = () => {
                         </span>
                       </td>
                     )}
-                    <td className="px-3 py-2 align-middle">
-                      {m.owner ? (
-                        <span>
-                          {m.provenance.owner?.origin === "entered" && (
-                            <span className="mr-0.5 text-muted-foreground/70">^</span>
-                          )}
-                          {m.owner}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/60">Unassigned</span>
-                      )}
-                    </td>
+                    {cols.owner && (
+                      <td className="px-3 py-2 align-middle">
+                        {m.owner ? (
+                          <span>
+                            {m.provenance.owner?.origin === "entered" && (
+                              <span className="mr-0.5 text-muted-foreground/70">^</span>
+                            )}
+                            {m.owner}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/60">Unassigned</span>
+                        )}
+                      </td>
+                    )}
                     {cols.lastChange && (
                       <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
