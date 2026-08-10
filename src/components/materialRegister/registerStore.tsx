@@ -125,6 +125,10 @@ export interface Filters {
   entryTypes: string[];
   /** Tag values, matched with ANY. May include UNTAGGED. */
   tags: string[];
+  /** Product categories, matched with ANY. */
+  products: string[];
+  /** Application categories, matched with ANY. */
+  applications: string[];
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -134,6 +138,8 @@ export const EMPTY_FILTERS: Filters = {
   owners: [],
   entryTypes: [],
   tags: [],
+  products: [],
+  applications: [],
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
