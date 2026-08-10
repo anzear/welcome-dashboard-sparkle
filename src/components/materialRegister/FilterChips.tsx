@@ -8,6 +8,7 @@ import {
   useRegister,
   type Filters,
 } from "@/components/materialRegister/registerStore";
+import { UNTAGGED } from "@/components/materialRegister/tags";
 
 const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
