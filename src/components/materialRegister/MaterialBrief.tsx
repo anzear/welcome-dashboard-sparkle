@@ -1079,55 +1079,20 @@ export const MaterialBrief: React.FC = () => {
 
           {/* What the replacement has to achieve. Nothing stated is not a zero target. */}
           <Section
-            title="Requirements"
+            title="Material requirements"
             note="What the replacement has to achieve. A requirement nobody stated stays empty."
           >
-            {m.requirements === null ? (
-              <p className="text-[11px] text-muted-foreground/70">No requirements recorded.</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                {(
-                  [
-                    ["Target volume", m.requirements.target_volume, "t/yr", 0],
-                    ["Price ceiling", m.requirements.price_ceiling, "EUR/kg", 2],
-                    ["GHG reduction target", m.requirements.ghg_reduction_target, "%", 0],
-                  ] as [string, number | null, string, number][]
-                ).map(([label, value, unit, decimals]) => (
-                  <div key={label} className="min-w-0">
-                    <div className="font-mono text-sm tabular-nums text-foreground">
-                      {value === null ? (
-                        <span className="font-sans text-[12px] text-muted-foreground/50">—</span>
-                      ) : (
-                        `${nf(decimals).format(value)} ${unit}`
-                      )}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">{label}</div>
-                  </div>
-                ))}
-                <div className="min-w-0">
-                  <div className="font-mono text-sm tabular-nums text-foreground">
-                    {m.requirements.earliest_need_date ?? (
-                      <span className="font-sans text-[12px] text-muted-foreground/50">—</span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">Earliest need date</div>
-                </div>
-                <div className="col-span-2 min-w-0">
-                  <div className="text-[12px] text-foreground">
-                    {m.requirements.required_certifications.length > 0
-                      ? m.requirements.required_certifications.join(", ")
-                      : <span className="text-muted-foreground/50">—</span>}
-                  </div>
-                  <div className="text-[11px] text-muted-foreground">Required certifications</div>
-                </div>
-                {m.requirements.notes && (
-                  <div className="col-span-2 min-w-0">
-                    <div className="text-[12px] leading-snug text-foreground">{m.requirements.notes}</div>
-                    <div className="text-[11px] text-muted-foreground">Notes</div>
-                  </div>
-                )}
-              </div>
-            )}
+            <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
+          </Section>
+
+          <Section title="Notes" note="Working notes for this material. Not a field of record.">
+            <textarea
+              value={notes[m.material_id] ?? ""}
+              onChange={(e) => setNotes((n) => ({ ...n, [m.material_id]: e.target.value }))}
+              rows={5}
+              placeholder="Add a note…"
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
           </Section>
 
         </div>
@@ -1149,43 +1114,16 @@ export const MaterialBrief: React.FC = () => {
               <BriefDriverScores materialId={m.material_id} />
             </Section>
           </div>
-
-          {/* Where the outside search stands. "Not ordered" is a state, not a gap. */}
-          <Section title="Intelligence" note="Whether a market and supplier search has been ordered for this material.">
-            <div className="text-sm text-foreground">{INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}</div>
-            <dl className="pt-2 space-y-1 text-[11px] text-muted-foreground">
-              <div className="flex gap-2">
-                <dt className="w-24 shrink-0 text-muted-foreground/60">Ordered</dt>
-                <dd className="font-mono tabular-nums">
-                  {m.intelligence_ordered_date ?? <span className="font-sans text-muted-foreground/50">—</span>}
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="w-24 shrink-0 text-muted-foreground/60">Delivered</dt>
-                <dd className="font-mono tabular-nums">
-                  {m.intelligence_delivered_date ?? <span className="font-sans text-muted-foreground/50">—</span>}
-                </dd>
-              </div>
-              <div className="flex gap-2">
-                <dt className="w-24 shrink-0 text-muted-foreground/60">Scope</dt>
-                <dd className="min-w-0">
-                  {m.intelligence_scope ?? <span className="text-muted-foreground/50">Not stated</span>}
-                </dd>
-              </div>
-            </dl>
-          </Section>
-
-
-          <Section title="History" note="The record of decisions. Newest first.">
-            <MaterialHistory materialId={m.material_id} />
-          </Section>
         </div>
       </div>
 
-      {/* Requirements — one quiet full-width row beneath both columns */}
+      {/* History — one full-width row beneath both columns */}
       <div className="mt-10 border-t border-border/60 pt-3">
-        <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
+        <Section title="History" note="The record of decisions. Newest first.">
+          <MaterialHistory materialId={m.material_id} />
+        </Section>
       </div>
+
     </div>
   );
 };
