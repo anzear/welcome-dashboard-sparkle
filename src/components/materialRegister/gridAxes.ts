@@ -173,7 +173,9 @@ export const niceStep = (range: number, count = 4) => {
   const raw = Math.max(range, Number.EPSILON) / count;
   const mag = 10 ** Math.floor(Math.log10(raw));
   const norm = raw / mag;
-  const mult = [1, 2, 2.5, 5, 10].find((m) => norm <= m) ?? 10;
+  const mult = [1, 2, 2.5, 5, 10].reduce((best, m) =>
+    Math.abs(norm - m) < Math.abs(norm - best) ? m : best,
+  );
   return mult * mag;
 };
 
