@@ -427,7 +427,10 @@ export const MaterialBrief: React.FC = () => {
   const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
   const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
   const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [comments, setComments] = useState<
+    Record<string, { id: string; author: string; at: string; body: string }[]>
+  >({});
+  const [draft, setDraft] = useState<Record<string, string>>({});
 
 
   /** Header condenses once it sticks. */
