@@ -327,8 +327,8 @@ export const MaterialBrief: React.FC = () => {
     if (before === parsed) return;
 
     const patch: Partial<Material> = { [field]: parsed } as Partial<Material>;
-    const entered: string[] = [field];
     const provenance = { ...m.provenance };
+    provenance[field] = { origin: "entered", source: CURRENT_USER, date: today() };
 
     const volume = field === "annual_volume" ? parsed : m.annual_volume;
     const price = field === "unit_price" ? parsed : m.unit_price;
@@ -344,7 +344,7 @@ export const MaterialBrief: React.FC = () => {
     }
     patch.provenance = provenance;
 
-    updateMaterial(m.material_id, patch, entered, [
+    updateMaterial(m.material_id, patch, [], [
       {
         material_id: m.material_id,
         event_type: "field_correction",
