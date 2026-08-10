@@ -140,6 +140,81 @@ const DerivedField: React.FC<{
   );
 };
 
+/**
+ * Editable measured figure. Keeps the measurement typesetting (right-aligned, mono)
+ * but lets a user record a figure. Saved figures become provenance "entered".
+ */
+const EditableFigure: React.FC<{
+  label: string;
+  value: number | string | null;
+  decimals?: number;
+  provenance?: FieldProvenance;
+  placeholder?: string;
+  onSave: (raw: string) => void;
+}> = ({ label, value, decimals = 0, provenance, placeholder, onSave }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const hasValue = value !== null && value !== undefined && value !== "";
+
+  const begin = () => {
+    setDraft(value === null || value === undefined ? "" : String(value));
+    setEditing(true);
+  };
+
+  return (
+    <div className="border-t border-border/60 px-3 py-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">{label}</span>
+        {editing ? null : (
+          <div className="flex items-baseline gap-2">
+            <span
+              className={cn(
+                "text-right font-mono text-xs tabular-nums",
+                hasValue ? "text-foreground" : "text-muted-foreground/50",
+              )}
+            >
+              {!hasValue ? "—" : typeof value === "number" ? nf(decimals).format(value) : value}
+            </span>
+            <button
+              type="button"
+              onClick={begin}
+              className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              <Pencil className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+      </div>
+      {editing && (
+        <div className="flex items-center gap-1 pt-1">
+          <Input
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            className="h-7 text-right font-mono text-xs tabular-nums"
+          />
+          <Button
+            size="sm"
+            className="h-7 text-[11px]"
+            onClick={() => {
+              onSave(draft.trim());
+              setEditing(false);
+            }}
+          >
+            Save
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+        </div>
+      )}
+      <div className="pt-0.5 text-[10px] text-muted-foreground/80">
+        {provenanceLine(provenance, hasValue)}
+      </div>
+    </div>
+  );
+};
+
 /** Editable list of tags (application / product categories). */
 const TagsField: React.FC<{
   label: string;
@@ -240,6 +315,60 @@ export const MaterialBrief: React.FC = () => {
   }
 
   const m: Material = material;
+
+  /** Records a numeric figure as entered, recomputing anything derived from it. */
+  const saveFigure = (
+    field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
+    raw: string,
+  ) => {
+    const parsed = raw === "" ? null : Number(raw.replace(/[,\s]/g, ""));
+    if (parsed !== null && !Number.isFinite(parsed)) return;
+    const before = m[field];
+    if (before === parsed) return;
+
+    const patch: Partial<Material> = { [field]: parsed } as Partial<Material>;
+    const provenance = { ...m.provenance };
+
+    const volume = field === "annual_volume" ? parsed : m.annual_volume;
+    const price = field === "unit_price" ? parsed : m.unit_price;
+    const factor = field === "ghg_emission_factor" ? parsed : m.ghg_emission_factor;
+
+    if (field === "annual_volume" || field === "unit_price") {
+      patch.annual_spend = volume !== null && price !== null ? Math.round(volume * 1000 * price) : null;
+      provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
+    }
+    if (field === "annual_volume" || field === "ghg_emission_factor") {
+      patch.ghg_contribution = volume !== null && factor !== null ? Math.round(volume * factor) : null;
+      provenance.ghg_contribution = { origin: "computed", source: "emission factor x volume", date: today() };
+    }
+    patch.provenance = provenance;
+
+    updateMaterial(m.material_id, patch, [field], [
+      {
+        material_id: m.material_id,
+        event_type: "field_correction",
+        field,
+        from_value: before === null ? null : String(before),
+        to_value: parsed === null ? null : String(parsed),
+      },
+    ]);
+  };
+
+  /** Records a free-text figure qualifier as entered. */
+  const saveText = (field: "ghg_boundary" | "ghg_data_basis", raw: string) => {
+    const next = raw === "" ? null : raw;
+    if (next === m[field]) return;
+    updateMaterial(m.material_id, { [field]: next } as Partial<Material>, [field], [
+      {
+        material_id: m.material_id,
+        event_type: "field_correction",
+        field,
+        from_value: m[field],
+        to_value: next,
+      },
+    ]);
+  };
+
   const draftNeedsBlocker = draftStatus === "parked" || draftStatus === "rejected";
   const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
 
@@ -697,16 +826,20 @@ export const MaterialBrief: React.FC = () => {
             </SectionTitle>
           </div>
           <div className="grid sm:grid-cols-2 xl:grid-cols-3">
-            <Figure
+            <EditableFigure
               label="Annual volume (t/yr)"
               value={m.annual_volume}
               provenance={m.provenance.annual_volume}
+              placeholder="t/yr"
+              onSave={(raw) => saveFigure("annual_volume", raw)}
             />
-            <Figure
+            <EditableFigure
               label="Unit price (EUR/kg)"
               value={m.unit_price}
               decimals={2}
               provenance={m.provenance.unit_price}
+              placeholder="EUR/kg"
+              onSave={(raw) => saveFigure("unit_price", raw)}
             />
             <Figure
               label="Annual spend (EUR)"
@@ -714,11 +847,13 @@ export const MaterialBrief: React.FC = () => {
               provenance={m.provenance.annual_spend}
               computedInputs="volume x price"
             />
-            <Figure
+            <EditableFigure
               label="GHG emission factor (kgCO2e/kg)"
               value={m.ghg_emission_factor}
               decimals={2}
               provenance={m.provenance.ghg_emission_factor}
+              placeholder="kgCO2e/kg"
+              onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
             />
             <Figure
               label="GHG contribution (tCO2e/yr)"
@@ -726,13 +861,47 @@ export const MaterialBrief: React.FC = () => {
               provenance={m.provenance.ghg_contribution}
               computedInputs="volume x emission factor"
             />
-            <Figure label="GHG boundary" value={m.ghg_boundary} provenance={m.provenance.ghg_boundary} />
-            <Figure label="GHG data basis" value={m.ghg_data_basis} provenance={m.provenance.ghg_data_basis} />
-            <Figure label="Suppliers" value={m.supplier_count} provenance={m.provenance.supplier_count} />
-            <Figure
+            <EditableFigure
+              label="GHG boundary"
+              value={m.ghg_boundary}
+              provenance={m.provenance.ghg_boundary}
+              placeholder="e.g. Cradle-to-gate (A1-A3)"
+              onSave={(raw) => saveText("ghg_boundary", raw)}
+            />
+            <EditableFigure
+              label="GHG data basis"
+              value={m.ghg_data_basis}
+              provenance={m.provenance.ghg_data_basis}
+              placeholder="e.g. Supplier-specific"
+              onSave={(raw) => saveText("ghg_data_basis", raw)}
+            />
+            <EditableFigure
+              label="Suppliers"
+              value={m.supplier_count}
+              provenance={m.provenance.supplier_count}
+              placeholder="count"
+              onSave={(raw) => saveFigure("supplier_count", raw)}
+            />
+            <EditableFigure
               label="Supplier countries"
               value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
               provenance={m.provenance.supplier_countries}
+              placeholder="DE, FI, CN"
+              onSave={(raw) => {
+                const next = raw
+                  .split(",")
+                  .map((x) => x.trim().toUpperCase())
+                  .filter(Boolean);
+                updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "supplier_countries",
+                    from_value: m.supplier_countries.join(", ") || null,
+                    to_value: next.join(", ") || null,
+                  },
+                ]);
+              }}
             />
           </div>
         </section>
