@@ -531,24 +531,24 @@ export const MaterialRegisterTable: React.FC = () => {
                       </span>
                     </td>
 
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.annual_volume}
                         provenance={m.provenance.annual_volume}
                         emphasis={activeCol("volume")}
                       />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.annual_spend}
                         provenance={m.provenance.annual_spend}
                         emphasis={activeCol("spend")}
                       />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.ghg_contribution}
                         provenance={m.provenance.ghg_contribution}
@@ -556,7 +556,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
                     {activeCol("multi_application") && (
-                      <td className="px-3 py-1.5 text-right align-top">
+                      <td className="px-3 py-2 text-right align-top">
                         {m.application_categories && m.application_categories.length > 0 ? (
                           <span
                             className="font-mono tabular-nums font-medium text-foreground"
@@ -569,16 +569,16 @@ export const MaterialRegisterTable: React.FC = () => {
                         )}
                       </td>
                     )}
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td className="px-3 py-2 align-top">
                       <StatusPill
                         status={m.journey_status}
                         entered={m.provenance.journey_status?.origin === "entered"}
                       />
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td className="px-3 py-2 align-top">
                       {m.owner ? (
                         <span>
                           {m.provenance.owner?.origin === "entered" && (
@@ -591,16 +591,16 @@ export const MaterialRegisterTable: React.FC = () => {
                       )}
                     </td>
                     {showLastChange && (
-                      <td className="whitespace-nowrap px-3 py-1.5 align-top">
+                      <td className="whitespace-nowrap px-3 py-2 align-top">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
                           <>
                             <div
-                              className="leading-tight text-foreground/80"
+                              className="leading-[1.15] text-foreground/80"
                               title={m.last_status_change_date}
                             >
                               {relativeAge(m.last_status_change_date)}
                             </div>
-                            <div className="text-[10px] leading-tight text-muted-foreground">
+                            <div className="text-[10px] leading-[1.15] text-muted-foreground">
                               {m.last_status_user ?? "—"}
                             </div>
                           </>
