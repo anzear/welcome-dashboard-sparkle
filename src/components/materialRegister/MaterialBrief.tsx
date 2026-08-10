@@ -95,7 +95,7 @@ const DataRow: React.FC<{
       </div>
       <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
     </div>
-    <div className="max-w-[65%] justify-self-end break-words text-right">{value}</div>
+    <div className="max-w-[65%] justify-self-end text-right">{value}</div>
     {children}
   </div>
 );
