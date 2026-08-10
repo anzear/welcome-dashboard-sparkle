@@ -19,7 +19,8 @@ interface EntryTarget {
 }
 
 const DriverScoring: React.FC = () => {
-  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions } = useRegister();
+  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions, filters, setFilters } =
+    useRegister();
   const rows = useMemo(() => ordered.map((r) => r.m), [ordered]);
 
   const [mode, setMode] = useState<Mode>("by_question");
