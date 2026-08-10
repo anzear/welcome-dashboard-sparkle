@@ -37,7 +37,8 @@ export interface Material {
   name: string;
   cas_number: string | null;
   material_class: string | null;
-  customer_material_group: string | null;
+  /** Free-text customer tags. Never null — empty array when none. */
+  tags: string[];
   application_categories: string[];
   product_categories: string[];
   entry_type: EntryType;
