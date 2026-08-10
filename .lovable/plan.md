@@ -1,7 +1,10 @@
-# Plan
+# Remove "(any)" from multi-select filter labels
 
-_No active plan yet._
+## Change
+Drop the "(any)" suffix from the three multi-select filter labels in `src/components/MaterialRegisterTable.tsx` (lines 275, 281, 287):
 
-This remix's Value Chain Pathways tree-view improvements (Single/All toggle, selection-based
-application nodes, "Go to pathway profile" CTA) were already implemented and verified rendering
-correctly. Pick a new direction to start the next plan.
+- `Product (any)` → `Product`
+- `Application (any)` → `Application`
+- `Tags (any)` → `Tags`
+
+No logic changes — these filters already match on ANY (OR) semantics. Label-only cleanup.
