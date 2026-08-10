@@ -501,9 +501,6 @@ const PrioritisationGrid: React.FC = () => {
               </g>
             ))}
 
-
-
-
             {/* median splits */}
             {xMedian !== null && (
               <line
@@ -528,24 +525,25 @@ const PrioritisationGrid: React.FC = () => {
               />
             )}
 
-            {/* quadrant readings */}
-            <text x={PAD.l + PW - 6} y={PAD.t + 28} textAnchor="end" className="fill-muted-foreground/60 text-[10px]">
+            {/* quadrant readings — orientation only, kept out of the way of the dots */}
+            <text x={PAD.l + PW - 4} y={PAD.t + 10} textAnchor="end" className="fill-muted-foreground/45 text-[9px]">
               {readings.topRight}
             </text>
-            <text x={PAD.l + 6} y={PAD.t + 28} className="fill-muted-foreground/60 text-[10px]">
+            <text x={PAD.l + 4} y={PAD.t + 10} className="fill-muted-foreground/45 text-[9px]">
               {readings.topLeft}
             </text>
             <text
-              x={PAD.l + PW - 6}
-              y={PAD.t + PH - 8}
+              x={PAD.l + PW - 4}
+              y={PAD.t + PH - 4}
               textAnchor="end"
-              className="fill-muted-foreground/60 text-[10px]"
+              className="fill-muted-foreground/45 text-[9px]"
             >
               {readings.bottomRight}
             </text>
-            <text x={PAD.l + 6} y={PAD.t + PH - 8} className="fill-muted-foreground/60 text-[10px]">
+            <text x={PAD.l + 4} y={PAD.t + PH - 4} className="fill-muted-foreground/45 text-[9px]">
               {readings.bottomLeft}
             </text>
+
 
             {/* axis titles */}
             <text
