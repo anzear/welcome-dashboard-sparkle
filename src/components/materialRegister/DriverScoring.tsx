@@ -24,6 +24,7 @@ const DriverScoring: React.FC = () => {
   const rows = useMemo(() => ordered.map((r) => r.m), [ordered]);
 
   const [mode, setMode] = useState<Mode>("by_question");
+  const [runKind, setRunKind] = useState<"question" | "material" | null>(null);
   const [focusQuestion, setFocusQuestion] = useState<string | null>(null);
   const [focusMaterial, setFocusMaterial] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -44,16 +45,16 @@ const DriverScoring: React.FC = () => {
 
   /** The isolated run of items being scored, in order. */
   const run: EntryTarget[] = useMemo(() => {
-    if (mode === "by_question" && focusQuestion) {
+    if (runKind === "question" && focusQuestion) {
       return rows.map((m) => ({ material: m, questionId: focusQuestion }));
     }
-    if (mode === "by_material" && focusMaterial) {
+    if (runKind === "material" && focusMaterial) {
       const m = rows.find((x) => x.material_id === focusMaterial);
       if (!m) return [];
       return questions.map((q) => ({ material: m, questionId: q.question_id }));
     }
     return [];
-  }, [mode, focusQuestion, focusMaterial, rows]);
+  }, [runKind, focusQuestion, focusMaterial, rows, questions]);
 
   const current = run[index] ?? null;
   const currentScore = current ? (scoreFor(current.material.material_id, current.questionId)?.score ?? null) : null;
@@ -70,12 +71,22 @@ const DriverScoring: React.FC = () => {
     (t) => (scoreFor(t.material.material_id, t.questionId)?.score ?? null) !== null,
   ).length;
 
-  const openRun = (next: Mode, id: string) => {
-    setMode(next);
-    if (next === "by_question") setFocusQuestion(id);
-    else setFocusMaterial(id);
-    setIndex(0);
+  /** Open a run down one question column (every material, one question). */
+  const openQuestionRun = (questionId: string, startIndex = 0) => {
+    setRunKind("question");
+    setFocusQuestion(questionId);
+    setFocusMaterial(null);
+    setIndex(startIndex);
   };
+
+  /** Open a run across one material (every question, one material). */
+  const openMaterialRun = (materialId: string, startIndex = 0) => {
+    setRunKind("material");
+    setFocusMaterial(materialId);
+    setFocusQuestion(null);
+    setIndex(startIndex);
+  };
+
 
   const exitRun = () => {
     setFocusQuestion(null);
