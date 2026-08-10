@@ -65,6 +65,8 @@ export const MaterialRegisterTable: React.FC = () => {
     setToast,
     undo,
     highlightIds,
+    inPrioritySet,
+    priorityPeriod,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
@@ -99,7 +101,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
-  const colCount = 11;
+  const colCount = 12;
   const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
   const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
 
@@ -409,6 +411,7 @@ export const MaterialRegisterTable: React.FC = () => {
               )}
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+              <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>
 
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
               {showLastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
@@ -577,6 +580,16 @@ export const MaterialRegisterTable: React.FC = () => {
                         status={m.journey_status}
                         entered={m.provenance.journey_status?.origin === "entered"}
                       />
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      {inPrioritySet(m) ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          {priorityPeriod || "Priority set"}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
                     </td>
                     <td className="px-3 py-2 align-top">
                       {m.owner ? (
