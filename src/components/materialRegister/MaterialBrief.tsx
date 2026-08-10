@@ -1105,6 +1105,16 @@ export const MaterialBrief: React.FC = () => {
               <BriefDriverScores materialId={m.material_id} />
             </Section>
           </div>
+
+          <Section title="Notes" note="Working notes for this material. Not a field of record.">
+            <textarea
+              value={notes[m.material_id] ?? ""}
+              onChange={(e) => setNotes((n) => ({ ...n, [m.material_id]: e.target.value }))}
+              rows={5}
+              placeholder="Add a note…"
+              className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </Section>
         </div>
       </div>
 
