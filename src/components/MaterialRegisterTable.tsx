@@ -17,9 +17,7 @@ import {
   UNASSIGNED_OWNER,
   useRegister,
   type Filters,
-  type Measure,
   type MeasureId,
-  type RankedRow,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
@@ -656,13 +654,5 @@ function relativeAge(iso: string) {
   return `${Math.round(days / 365)} years ago`;
 }
 
-function ordinal(n: number) {
-  const r10 = n % 10;
-  const r100 = n % 100;
-  if (r10 === 1 && r100 !== 11) return "st";
-  if (r10 === 2 && r100 !== 12) return "nd";
-  if (r10 === 3 && r100 !== 13) return "rd";
-  return "th";
-}
 
 export default MaterialRegisterTable;
