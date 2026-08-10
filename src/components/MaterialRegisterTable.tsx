@@ -65,6 +65,8 @@ export const MaterialRegisterTable: React.FC = () => {
     setToast,
     undo,
     highlightIds,
+    inPrioritySet,
+    priorityPeriod,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
