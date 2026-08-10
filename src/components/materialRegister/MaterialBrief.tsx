@@ -643,6 +643,11 @@ export const MaterialBrief: React.FC = () => {
           {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
         </section>
 
+        {/* Section 6 — History */}
+        <section className="rounded-md border border-border p-3">
+          <SectionTitle note="The record of decisions. Newest first.">History</SectionTitle>
+          <MaterialHistory materialId={m.material_id} />
+        </section>
         </aside>
       </div>
     </div>
