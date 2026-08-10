@@ -496,7 +496,7 @@ const PrioritisationGrid: React.FC = () => {
                   textAnchor="middle"
                   className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                 >
-                  {xv.fixedMax !== undefined ? Math.round(t) : compact(t)}
+                  {tickLabel(t, xScale.step)}
                 </text>
               </g>
             ))}
