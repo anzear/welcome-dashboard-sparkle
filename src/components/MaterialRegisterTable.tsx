@@ -17,11 +17,10 @@ import {
   UNASSIGNED_OWNER,
   useRegister,
   type Filters,
-  type Measure,
   type MeasureId,
-  type RankedRow,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { Plus, X } from "lucide-react";
 
 const HEAD =
@@ -103,7 +102,6 @@ export const MaterialRegisterTable: React.FC = () => {
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
   const colCount = 12;
   const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
-  const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -131,18 +129,6 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const selectedMaterials = data.filter((m) => selected.has(m.material_id));
   const hiddenSelectedCount = selectedMaterials.filter((m) => !visibleIds.includes(m.material_id)).length;
-
-  const chipTooltip = (row: RankedRow, mm: Measure) => {
-    const other = row.ranks[mm.id];
-    if (other === null) return `${mm.label}: no figure — unranked`;
-    if (row.gapMeasure === mm.id && row.rank !== null) {
-      const a = MEASURES.find((x) => x.id === measureId)!;
-      const first = other < row.rank ? { m: mm, r: other } : { m: a, r: row.rank };
-      const second = other < row.rank ? { m: a, r: row.rank } : { m: mm, r: other };
-      return `Ranks ${first.r}${ordinal(first.r)} on ${first.m.noun} but ${second.r}${ordinal(second.r)} on ${second.m.noun}. ${row.gapSize} positions apart.`;
-    }
-    return `${mm.label}: rank ${other} of ${rankTables[mm.id].rankedCount} ranked`;
-  };
 
   const labelFor = (kind: keyof Filters, value: string) => {
     if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
@@ -389,7 +375,10 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, "min-w-[10rem] px-3 py-2 text-left")}>Other rankings</th>
+              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[216px] border-r border-border px-3 py-2 text-left")}>
+                Position
+                <div className={UNIT}>rank of ranked materials</div>
+              </th>
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
                 <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
@@ -507,31 +496,17 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td className="min-w-[10rem] whitespace-nowrap px-3 py-2 align-top">
-                      <span className="flex items-baseline">
-                        {otherMeasures.map((mm) => {
-                          const other = row.ranks[mm.id];
-                          const amber = row.gapMeasure === mm.id;
-                          return (
-                            <span
-                              key={mm.id}
-                              title={chipTooltip(row, mm)}
-                              className="inline-flex w-[3.1rem] shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums"
-                            >
-                              <span className={cn(amber ? "text-amber-700/70" : "text-muted-foreground/45")}>
-                                {mm.short}
-                              </span>
-                              {other === null ? (
-                                <span className="text-muted-foreground/50">—</span>
-                              ) : (
-                                <span className={amber ? "font-medium text-amber-700" : "text-muted-foreground/80"}>
-                                  {other}
-                                </span>
-                              )}
-                            </span>
-                          );
-                        })}
-                      </span>
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-[19rem] z-10 w-[216px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                      )}
+                    >
+                      <PositionBlock
+                        materialId={m.material_id}
+                        gapMeasure={row.gapMeasure}
+                        gapSize={row.gapSize}
+                      />
                     </td>
 
                     <td className="px-3 py-2 text-right align-top">
@@ -641,7 +616,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="text-muted-foreground">^</span> entered
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="font-mono text-amber-700">GHG 6</span> rank divergence
+          <span className="text-amber-700">amber label</span> rank divergence
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="text-muted-foreground/50">—</span> no value (unranked)
@@ -679,13 +654,5 @@ function relativeAge(iso: string) {
   return `${Math.round(days / 365)} years ago`;
 }
 
-function ordinal(n: number) {
-  const r10 = n % 10;
-  const r100 = n % 100;
-  if (r10 === 1 && r100 !== 11) return "st";
-  if (r10 === 2 && r100 !== 12) return "nd";
-  if (r10 === 3 && r100 !== 13) return "rd";
-  return "th";
-}
 
 export default MaterialRegisterTable;

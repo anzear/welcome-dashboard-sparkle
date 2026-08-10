@@ -13,6 +13,7 @@ import {
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
+import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
 import BriefStepCards from "@/components/materialRegister/BriefStepCards";
@@ -1045,33 +1046,12 @@ export const MaterialBrief: React.FC = () => {
         {/* Right column */}
         <div className="space-y-10 self-start">
           <Section title="Position" note="Four separate positions. Never combined into one score.">
-            <div>
-              {MEASURES.map((mm) => {
-                const rank = rankTables[mm.id].ranks[m.material_id] ?? null;
-                const amber = row?.gapMeasure === mm.id || (row?.gapMeasure && mm.id === measureId);
-                return (
-                  <div
-                    key={mm.id}
-                    className={cn(
-                      "flex items-baseline justify-between gap-3 rounded-sm px-1 py-1.5 text-[13px]",
-                      amber ? "text-amber-700" : "text-muted-foreground",
-                    )}
-                  >
-                    <span>{mm.label}</span>
-                    <span className="font-mono text-[11px] tabular-nums">
-                      {rank === null ? (
-                        <span className="text-muted-foreground/50">— No figure</span>
-                      ) : (
-                        <>
-                          <span className={cn("text-[15px] font-medium", amber ? "" : "text-foreground")}>{rank}</span> of{" "}
-                          {rankTables[mm.id].rankedCount} ranked
-                        </>
-                      )}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            <PositionBlock
+              materialId={m.material_id}
+              gapMeasure={row?.gapMeasure ?? null}
+              gapSize={row?.gapSize ?? 0}
+              variant="detail"
+            />
             {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
           </Section>
 
