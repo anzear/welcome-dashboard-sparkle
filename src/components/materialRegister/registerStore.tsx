@@ -65,7 +65,7 @@ export const MEASURES: Measure[] = [
 ];
 
 /** A gap counts as divergent at or above this share of the ranked population. */
-export const DIVERGENCE_THRESHOLD_RATIO = 0.25;
+export const DIVERGENCE_THRESHOLD_RATIO = 0.4;
 
 export const UNASSIGNED_OWNER = "__unassigned__";
 

@@ -25,7 +25,14 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, X } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border";
+  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
+
+/** Pinned identity columns: they hold while the measures scroll. */
+const STICK = "sticky bg-muted/60";
+
+/** Units live in the header, second line, faintest tier. */
+const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+
 
 export const MaterialRegisterTable: React.FC = () => {
   const {
@@ -152,124 +159,115 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Rank control */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Ranked by</span>
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-            {MEASURES.map((mm) => (
+      {/* Control band — one tint, one hairline beneath */}
+      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">Ranked by</span>
+            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+              {MEASURES.map((mm) => (
+                <button
+                  key={mm.id}
+                  type="button"
+                  aria-pressed={measureId === mm.id}
+                  onClick={() => setMeasureId(mm.id)}
+                  className={cn(
+                    "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    measureId === mm.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {mm.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
+            <span>
+              Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
+              <span className="font-mono tabular-nums">{filteredTotal}</span>
+              {filtersActive ? " filtered" : ""}
+            </span>
+            {missingCount > 0 && (
               <button
-                key={mm.id}
                 type="button"
-                aria-pressed={measureId === mm.id}
-                onClick={() => setMeasureId(mm.id)}
-                className={cn(
-                  "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-                  measureId === mm.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                onClick={() => setOnlyUnranked((v) => !v)}
+                className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
               >
-                {mm.label}
+                {onlyUnranked ? "Show all" : `${missingCount} missing`}
               </button>
-            ))}
+            )}
+          </div>
+
+          <button
+            type="button"
+            aria-pressed={onlyDivergent}
+            onClick={() => setOnlyDivergent((v) => !v)}
+            className={cn(
+              "rounded-sm border bg-background px-2 py-1 text-[11px] font-medium transition-colors",
+              onlyDivergent
+                ? "border-amber-400/60 text-amber-700"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
+          </button>
+
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showLastChange}
+              onChange={(e) => setShowLastChange(e.target.checked)}
+              className="h-3 w-3"
+            />
+            Last change
+          </label>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <MultiSelectFilter
+              label="Class"
+              options={options.classes}
+              selected={filters.classes}
+              onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
+            />
+            <MultiSelectFilter
+              label="Status"
+              options={options.statuses}
+              selected={filters.statuses}
+              onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
+            />
+            <MultiSelectFilter
+              label="Owner"
+              options={options.owners}
+              selected={filters.owners}
+              onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
+            />
+            <MultiSelectFilter
+              label="Entry type"
+              options={options.entryTypes}
+              selected={filters.entryTypes}
+              onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+            />
+            <MultiSelectFilter
+              label="Group"
+              options={options.groups}
+              selected={filters.groups}
+              onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
+            />
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-1 rounded-sm border border-primary/40 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10"
-        >
-          <Plus className="h-3 w-3" /> Add material
-        </button>
-
-        <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
-          <span>
-            Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
-            <span className="font-mono tabular-nums">{filteredTotal}</span>
-            {filtersActive ? " filtered" : ""}
-          </span>
-          {missingCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setOnlyUnranked((v) => !v)}
-              className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              {onlyUnranked ? "Show all" : `${missingCount} missing`}
-            </button>
-          )}
-        </div>
-
-        <button
-          type="button"
-          aria-pressed={onlyDivergent}
-          onClick={() => setOnlyDivergent((v) => !v)}
-          className={cn(
-            "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
-            onlyDivergent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
-              : "border-border text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
-        </button>
-
-        <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={showLastChange}
-            onChange={(e) => setShowLastChange(e.target.checked)}
-            className="h-3 w-3 accent-[hsl(var(--primary))]"
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={filters.search}
+            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+            placeholder="Search name, CAS, customer ID"
+            className="h-7 w-56 bg-background text-[11px]"
           />
-          Last change
-        </label>
-      </div>
-
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
-        <Input
-          value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          placeholder="Search name, CAS, customer ID"
-          className="h-7 w-56 text-[11px]"
-        />
-        <MultiSelectFilter
-          label="Class"
-          options={options.classes}
-          selected={filters.classes}
-          onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-        />
-        <MultiSelectFilter
-          label="Status"
-          options={options.statuses}
-          selected={filters.statuses}
-          onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
-        />
-        <MultiSelectFilter
-          label="Owner"
-          options={options.owners}
-          selected={filters.owners}
-          onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
-        />
-        <MultiSelectFilter
-          label="Entry type"
-          options={options.entryTypes}
-          selected={filters.entryTypes}
-          onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
-        />
-        <MultiSelectFilter
-          label="Group"
-          options={options.groups}
-          selected={filters.groups}
-          onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
-        />
-      </div>
-
-      {(activeChips.length > 0 || filters.search.trim() !== "") && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-2">
           {filters.search.trim() !== "" && (
-            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]">
+            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]">
               “{filters.search}”
               <button type="button" onClick={() => setFilters((f) => ({ ...f, search: "" }))}>
                 <X className="h-3 w-3 opacity-60 hover:opacity-100" />
@@ -279,7 +277,7 @@ export const MaterialRegisterTable: React.FC = () => {
           {activeChips.map((c) => (
             <span
               key={`${c.kind}-${c.value}`}
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]"
             >
               {c.label}
               <button type="button" onClick={() => removeChip(c.kind, c.value)}>
@@ -287,19 +285,22 @@ export const MaterialRegisterTable: React.FC = () => {
               </button>
             </span>
           ))}
-          <button
-            type="button"
-            onClick={() => setFilters(EMPTY_FILTERS)}
-            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            Clear all
-          </button>
+          {(activeChips.length > 0 || filters.search.trim() !== "") && (
+            <button
+              type="button"
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              Clear all
+            </button>
+          )}
         </div>
-      )}
+      </div>
+
 
       {/* Selection bar */}
       {selected.size > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
           <span className="font-medium text-foreground">
             <span className="font-mono tabular-nums">{selected.size}</span> selected
             {hiddenSelectedCount > 0 && (
@@ -362,27 +363,13 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
           <span className="font-mono tabular-nums">{data.length}</span> materials
         </div>
-        <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <span className="border-b border-dotted border-muted-foreground/60 font-mono">1 234</span> computed
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="text-primary/70">^</span> entered
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="rounded-sm bg-amber-500/10 px-1 font-mono text-amber-700">GHG 6</span> rank divergence
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="text-muted-foreground/50">—</span> no value (unranked)
-          </span>
-        </div>
       </div>
 
-      <div className="max-h-[calc(100vh-16rem)] overflow-auto rounded-md border border-border">
+      <div className="overflow-auto rounded-md border border-border max-h-[calc(100vh-16rem)]">
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
-              <th className={cn(HEAD, "w-8 px-2 py-2")}>
+              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2")}>
                 <Checkbox
                   checked={headerChecked}
                   onCheckedChange={toggleAllVisible}
@@ -390,22 +377,41 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              <th className={cn(HEAD, "w-10 px-2 py-2 text-right")}>#</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Material</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Other rankings</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>Annual volume (t/yr)</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>Unit price (EUR/kg)</th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>Annual spend (EUR)</th>
+              <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              <th
+                className={cn(
+                  HEAD,
+                  STICK,
+                  "left-[5rem] z-30 w-56 border-r border-border px-3 py-2 text-left",
+                )}
+              >
+                Material
+              </th>
+              <th className={cn(HEAD, "min-w-[10rem] px-3 py-2 text-left")}>Other rankings</th>
+              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                Annual volume
+                <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+              </th>
+              <th className={cn(HEAD, "px-3 py-2 text-right")}>
+                Unit price
+                <div className={UNIT}>(EUR/kg)</div>
+              </th>
+              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                Annual spend
+                <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+              </th>
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
-                GHG contribution (tCO2e/yr)
+                GHG contribution
+                <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
               </th>
               {activeCol("multi_application") && (
                 <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
               )}
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
-              {showLastChange && <th className={cn(HEAD, "px-3 py-2 text-left")}>Last change</th>}
+              {showLastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
           <tbody>
@@ -430,7 +436,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setAddOpen(true)}
-                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline decoration-dotted underline-offset-2"
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-foreground underline decoration-dotted underline-offset-2"
                   >
                     <Plus className="h-3 w-3" /> Add material
                   </button>
@@ -454,14 +460,17 @@ export const MaterialRegisterTable: React.FC = () => {
                   <tr
                     onClick={() => openBrief(m.material_id)}
                     className={cn(
-                      "cursor-pointer border-b border-border/60 last:border-0 hover:bg-muted/40",
+                      "group cursor-pointer border-b border-border/40 last:border-0",
                       rank === null && "text-muted-foreground",
-                      isSelected && "bg-primary/5",
-                      highlightIds.has(m.material_id) &&
-                        "bg-primary/10 ring-1 ring-inset ring-primary/40",
+                      isSelected && "bg-muted/50",
+                      highlightIds.has(m.material_id) && "bg-muted/70 ring-1 ring-inset ring-border",
+                      "hover:bg-muted/30",
                     )}
                   >
-                    <td className="px-2 py-1.5 align-top" onClick={(e) => e.stopPropagation()}>
+                    <td
+                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-top group-hover:bg-muted/30")}
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleRow(m.material_id)}
@@ -469,24 +478,34 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
-                    <td className="px-2 py-1.5 text-right align-top font-mono tabular-nums text-muted-foreground">
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-top font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                      )}
+                    >
                       {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                      )}
+                    >
                       <div
                         className={cn(
-                          "font-medium leading-tight",
+                          "font-medium leading-[1.15]",
                           rank === null ? "text-foreground/70" : "text-foreground",
                         )}
                       >
                         {m.name}
                       </div>
-                      <div className="text-[10px] leading-tight text-muted-foreground">
+                      <div className="text-[10px] leading-[1.15] text-muted-foreground">
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-3 py-1.5 align-top">
-                      <span className="inline-flex items-center gap-1">
+                    <td className="min-w-[10rem] whitespace-nowrap px-3 py-2 align-top">
+                      <span className="flex items-baseline">
                         {otherMeasures.map((mm) => {
                           const other = row.ranks[mm.id];
                           const amber = row.gapMeasure === mm.id;
@@ -494,40 +513,42 @@ export const MaterialRegisterTable: React.FC = () => {
                             <span
                               key={mm.id}
                               title={chipTooltip(row, mm)}
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-mono text-[10px] tabular-nums",
-                                amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground/70",
-                              )}
+                              className="inline-flex w-[3.1rem] shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums"
                             >
-                              <span>{mm.short}</span>
+                              <span className={cn(amber ? "text-amber-700/70" : "text-muted-foreground/45")}>
+                                {mm.short}
+                              </span>
                               {other === null ? (
                                 <span className="text-muted-foreground/50">—</span>
                               ) : (
-                                <span className={amber ? "font-medium" : undefined}>{other}</span>
+                                <span className={amber ? "font-medium text-amber-700" : "text-muted-foreground/80"}>
+                                  {other}
+                                </span>
                               )}
                             </span>
                           );
                         })}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.annual_volume}
                         provenance={m.provenance.annual_volume}
                         emphasis={activeCol("volume")}
                       />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.annual_spend}
                         provenance={m.provenance.annual_spend}
                         emphasis={activeCol("spend")}
                       />
                     </td>
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell
                         value={m.ghg_contribution}
                         provenance={m.provenance.ghg_contribution}
@@ -535,10 +556,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
                     {activeCol("multi_application") && (
-                      <td className="px-3 py-1.5 text-right align-top">
+                      <td className="px-3 py-2 text-right align-top">
                         {m.application_categories && m.application_categories.length > 0 ? (
                           <span
-                            className="font-mono tabular-nums font-medium text-foreground"
+                            className="font-mono tabular-nums font-medium text-primary"
                             title={m.application_categories.join(", ")}
                           >
                             {m.application_categories.length}
@@ -548,20 +569,20 @@ export const MaterialRegisterTable: React.FC = () => {
                         )}
                       </td>
                     )}
-                    <td className="px-3 py-1.5 text-right align-top">
+                    <td className="px-3 py-2 text-right align-top">
                       <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td className="px-3 py-2 align-top">
                       <StatusPill
                         status={m.journey_status}
                         entered={m.provenance.journey_status?.origin === "entered"}
                       />
                     </td>
-                    <td className="px-3 py-1.5 align-top">
+                    <td className="px-3 py-2 align-top">
                       {m.owner ? (
                         <span>
                           {m.provenance.owner?.origin === "entered" && (
-                            <span className="mr-0.5 text-primary/70">^</span>
+                            <span className="mr-0.5 text-muted-foreground/70">^</span>
                           )}
                           {m.owner}
                         </span>
@@ -570,16 +591,16 @@ export const MaterialRegisterTable: React.FC = () => {
                       )}
                     </td>
                     {showLastChange && (
-                      <td className="whitespace-nowrap px-3 py-1.5 align-top">
+                      <td className="whitespace-nowrap px-3 pr-8 py-2 align-top">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
                           <>
                             <div
-                              className="leading-tight text-foreground/80"
+                              className="leading-[1.15] text-foreground/80"
                               title={m.last_status_change_date}
                             >
                               {relativeAge(m.last_status_change_date)}
                             </div>
-                            <div className="text-[10px] leading-tight text-muted-foreground">
+                            <div className="text-[10px] leading-[1.15] text-muted-foreground">
                               {m.last_status_user ?? "—"}
                             </div>
                           </>
@@ -598,7 +619,24 @@ export const MaterialRegisterTable: React.FC = () => {
         </table>
       </div>
 
+      {/* Reference, not chrome. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 text-[10px] text-muted-foreground/70">
+        <span className="inline-flex items-center gap-1">
+          <span className="border-b border-dotted border-muted-foreground/60 font-mono">1 234</span> computed
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-muted-foreground">^</span> entered
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="font-mono text-amber-700">GHG 6</span> rank divergence
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-muted-foreground/50">—</span> no value (unranked)
+        </span>
+      </div>
+
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
 
       <BulkActionDialog
         kind={bulkKind}
