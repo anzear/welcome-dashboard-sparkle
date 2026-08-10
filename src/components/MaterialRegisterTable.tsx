@@ -101,7 +101,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
-  const colCount = 11;
+  const colCount = 12;
   const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
   const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
 
