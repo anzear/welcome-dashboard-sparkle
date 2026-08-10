@@ -121,6 +121,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     setLookup(null);
     setMaterialClass(null);
     setCustomerIds([""]);
+    setTags([]);
     setApplications([]);
     setProducts([]);
     setVolume(null);
