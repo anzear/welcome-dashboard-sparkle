@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
-import GridFindings from "@/components/materialRegister/GridFindings";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import {
   BriefLink,
@@ -20,6 +19,7 @@ import {
   DEFAULT_PRESET,
   SIZE_MIN,
   axisVar,
+  niceScale,
   quadrantReadings,
   sizeRadius,
   type AxisVarId,
@@ -52,8 +52,6 @@ interface Dot {
   scored: boolean;
 }
 
-const compact = (x: number) =>
-  x >= 1_000_000 ? `${(x / 1_000_000).toFixed(1)}M` : x >= 10_000 ? `${(x / 1000).toFixed(0)}k` : nf(0).format(x);
 
 const AxisSelect: React.FC<{
   label: string;
@@ -123,6 +121,7 @@ const PrioritisationGrid: React.FC = () => {
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [prioritySetOnly, setPrioritySetOnly] = useState(false);
+  const [activeView, setActiveView] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ add: boolean } | null>(null);
   const [hover, setHover] = useState<{ dot: Dot; left: number; top: number } | null>(null);
   const [lasso, setLasso] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
@@ -161,8 +160,18 @@ const PrioritisationGrid: React.FC = () => {
 
   const { plotted, noFigure, notScored } = classified;
 
-  const xMax = xv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.x));
-  const yMax = yv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.y));
+  /** Round axis maxima and round tick intervals, derived from the data range. */
+  const xScale =
+    xv.fixedMax !== undefined
+      ? { max: xv.fixedMax, step: 1, ticks: Array.from({ length: xv.fixedMax + 1 }, (_, i) => i) }
+      : niceScale(Math.max(1, ...plotted.map((p) => p.x)));
+  const yScale =
+    yv.fixedMax !== undefined
+      ? { max: yv.fixedMax, step: 1, ticks: Array.from({ length: yv.fixedMax + 1 }, (_, i) => i) }
+      : niceScale(Math.max(1, ...plotted.map((p) => p.y)));
+
+  const xMax = xScale.max;
+  const yMax = yScale.max;
   const xMedian = median(plotted.map((p) => p.x));
   const yMedian = median(plotted.map((p) => p.y));
 
@@ -179,20 +188,6 @@ const PrioritisationGrid: React.FC = () => {
     };
   });
 
-  /**
-   * Equal-position reference: the path where a material's position on X matches its
-   * position on Y. Drawn through matching quantiles of the two distributions, so the
-   * two units are never blended into one number.
-   */
-  const equalLine = useMemo(() => {
-    if (plotted.length < 4) return null;
-    const xs = plotted.map((p) => p.x).sort((a, b) => a - b);
-    const ys = plotted.map((p) => p.y).sort((a, b) => a - b);
-    const at = (arr: number[], f: number) => arr[Math.min(arr.length - 1, Math.round(f * (arr.length - 1)))];
-    return Array.from({ length: 21 }, (_, i) => i / 20)
-      .map((f) => `${sx(at(xs, f)).toFixed(1)},${sy(at(ys, f)).toFixed(1)}`)
-      .join(" ");
-  }, [plotted, xMax, yMax]);
 
   const rankOf = (m: Material, id: AxisVarId) => {
     const v = axisVar(id);
@@ -210,6 +205,47 @@ const PrioritisationGrid: React.FC = () => {
   const unplottedTotal = noFigure.length + notScored.length;
   const statusesPresent = [...new Set(plotted.map((p) => p.m.journey_status))] as JourneyStatus[];
   const readings = quadrantReadings(xv, yv);
+
+  /** Saved readings of the same scope. Each one is a set of materials, never a score. */
+  const views = useMemo(() => {
+    const ranked = rows.filter((r) => r.rank !== null);
+    const cut = Math.ceil(ranked.length / 3);
+    const stalled = ranked
+      .filter((r) => (r.rank as number) <= cut && r.m.journey_status === "not_started" && !r.m.owner)
+      .map((r) => r.m.material_id);
+    const divergent = rows.filter((r) => r.gapMeasure !== null).map((r) => r.m.material_id);
+
+    const byClass = new Map<string, typeof rows>();
+    rows.forEach((r) => {
+      const key = r.m.material_class ?? "Unclassified";
+      byClass.set(key, [...(byClass.get(key) ?? []), r]);
+    });
+    const topClass = [...byClass.entries()]
+      .filter(([, group]) => group.length >= 3)
+      .map(([cls, group]) => ({
+        cls,
+        ids: group.map((r) => r.m.material_id),
+        combined: group.reduce((sum, r) => sum + (measure.value(r.m) ?? 0), 0),
+      }))
+      .sort((a, b) => b.combined - a.combined)[0];
+
+    const untouched = rows
+      .filter((r) => r.m.last_change_batch_origin !== "real_transition")
+      .map((r) => r.m.material_id);
+
+    return [
+      { id: "stalled", label: "Exposed, nobody working on it", ids: stalled },
+      { id: "divergent", label: "Ranks differently by measure", ids: divergent },
+      { id: "concentrated", label: "Concentrated by material class", ids: topClass?.ids ?? [] },
+      { id: "untouched", label: "Never touched since load", ids: untouched },
+    ].filter((v) => v.ids.length > 1);
+  }, [rows, measure]);
+
+  const activeIds = useMemo(
+    () => new Set(views.find((v) => v.id === activeView)?.ids ?? []),
+    [views, activeView],
+  );
+
 
   const pickedMaterials = data.filter((m) => picked.has(m.material_id));
 
@@ -249,11 +285,11 @@ const PrioritisationGrid: React.FC = () => {
     setLasso(null);
   };
 
-  const xTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * xMax);
-  const yTicks =
-    yv.fixedMax !== undefined
-      ? Array.from({ length: yv.fixedMax + 1 }, (_, i) => i)
-      : [0, 0.25, 0.5, 0.75, 1].map((f) => f * yMax);
+  const xTicks = xScale.ticks;
+  const yTicks = yScale.ticks;
+  /** Thousands separators on every tick; decimals only when the step needs them. */
+  const tickLabel = (v: number, step: number) => nf(step < 1 ? 2 : 0).format(v);
+
 
   return (
     <div className="w-full space-y-2">
@@ -344,7 +380,7 @@ const PrioritisationGrid: React.FC = () => {
 
       <FilterChips />
 
-      <GridFindings rows={rows} measure={measure} />
+
 
       {/* Selection bar */}
       {picked.size > 0 && (
@@ -441,7 +477,7 @@ const PrioritisationGrid: React.FC = () => {
                       textAnchor="end"
                       className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                     >
-                      {isCount ? t : compact(t)}
+                      {tickLabel(t, yScale.step)}
                     </text>
                   )}
                 </g>
@@ -458,30 +494,10 @@ const PrioritisationGrid: React.FC = () => {
                   textAnchor="middle"
                   className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                 >
-                  {xv.fixedMax !== undefined ? Math.round(t) : compact(t)}
+                  {tickLabel(t, xScale.step)}
                 </text>
               </g>
             ))}
-
-            {/* equal-position reference */}
-            {equalLine && (
-              <>
-                <polyline
-                  points={equalLine}
-                  fill="none"
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.28}
-                  strokeWidth={1}
-                />
-                <text
-                  x={xMedian !== null ? sx(xMedian) + 8 : PAD.l + 8}
-                  y={yMedian !== null ? sy(yMedian) - 8 : PAD.t + 12}
-                  className="fill-muted-foreground/70 text-[9px]"
-                >
-                  equal position on both measures
-                </text>
-              </>
-            )}
 
             {/* median splits */}
             {xMedian !== null && (
@@ -507,24 +523,25 @@ const PrioritisationGrid: React.FC = () => {
               />
             )}
 
-            {/* quadrant readings */}
-            <text x={PAD.l + PW - 6} y={PAD.t + 28} textAnchor="end" className="fill-muted-foreground/60 text-[10px]">
+            {/* quadrant readings — orientation only, kept out of the way of the dots */}
+            <text x={PAD.l + PW - 4} y={PAD.t + 10} textAnchor="end" className="fill-muted-foreground/45 text-[9px]">
               {readings.topRight}
             </text>
-            <text x={PAD.l + 6} y={PAD.t + 28} className="fill-muted-foreground/60 text-[10px]">
+            <text x={PAD.l + 4} y={PAD.t + 10} className="fill-muted-foreground/45 text-[9px]">
               {readings.topLeft}
             </text>
             <text
-              x={PAD.l + PW - 6}
-              y={PAD.t + PH - 8}
+              x={PAD.l + PW - 4}
+              y={PAD.t + PH - 4}
               textAnchor="end"
-              className="fill-muted-foreground/60 text-[10px]"
+              className="fill-muted-foreground/45 text-[9px]"
             >
               {readings.bottomRight}
             </text>
-            <text x={PAD.l + 6} y={PAD.t + PH - 8} className="fill-muted-foreground/60 text-[10px]">
+            <text x={PAD.l + 4} y={PAD.t + PH - 4} className="fill-muted-foreground/45 text-[9px]">
               {readings.bottomLeft}
             </text>
+
 
             {/* axis titles */}
             <text
@@ -561,8 +578,9 @@ const PrioritisationGrid: React.FC = () => {
                 }
                 openBrief(d.m.material_id);
               };
+              const inView = activeView === null || activeIds.has(d.m.material_id);
               return (
-                <g key={d.m.material_id}>
+                <g key={d.m.material_id} opacity={inView ? 1 : 0.16}>
                   {inPrioritySet(d.m) && (
                     <circle
                       cx={d.cx}
@@ -571,6 +589,17 @@ const PrioritisationGrid: React.FC = () => {
                       fill="none"
                       stroke="hsl(var(--foreground))"
                       strokeOpacity={0.55}
+                      strokeWidth={1.2}
+                    />
+                  )}
+                  {activeView !== null && inView && (
+                    <circle
+                      cx={d.cx}
+                      cy={d.cy}
+                      r={d.r + 4.4}
+                      fill="none"
+                      stroke="hsl(var(--primary))"
+                      strokeOpacity={0.7}
                       strokeWidth={1.2}
                     />
                   )}
@@ -589,6 +618,7 @@ const PrioritisationGrid: React.FC = () => {
                     onClick={click}
                   />
                 </g>
+
               );
             })}
 
@@ -666,8 +696,32 @@ const PrioritisationGrid: React.FC = () => {
           </div>
         </div>
 
-        {/* Not plotted */}
-        <aside className="w-full shrink-0 space-y-2 rounded-md border border-border bg-card p-2.5 lg:w-72">
+        {/* Right rail */}
+        <aside className="w-full shrink-0 space-y-3 rounded-md border border-border bg-card p-2.5 lg:w-72">
+          {views.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Views</p>
+              <div className="mt-1">
+                {views.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    aria-pressed={activeView === v.id}
+                    onClick={() => setActiveView((cur) => (cur === v.id ? null : v.id))}
+                    className={cn(
+                      "flex w-full items-baseline justify-between gap-2 py-0.5 text-left text-[11px] transition-colors",
+                      activeView === v.id ? "text-primary" : "text-foreground hover:text-primary",
+                    )}
+                  >
+                    <span>{v.label}</span>
+                    <span className="shrink-0 font-mono tabular-nums text-muted-foreground">{v.ids.length}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Not plotted</p>
             <p className="mt-1 text-[11px] text-foreground">
