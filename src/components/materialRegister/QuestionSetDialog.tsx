@@ -110,6 +110,7 @@ const QuestionSetDialog: React.FC<{ open: boolean; onOpenChange: (v: boolean) =>
     setNewLabel("");
     setNewHelper("");
     setNotice(`Question added. Unscored on all ${total} materials.`);
+    window.setTimeout(() => setNotice(null), 5000);
     onOpenChange(false);
   };
 
