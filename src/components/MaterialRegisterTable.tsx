@@ -107,6 +107,14 @@ export const MaterialRegisterTable: React.FC = () => {
         value: v,
         label: ENTRY_TYPE_LABEL[v] ?? v,
       })),
+      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+        value: v,
+        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+      })),
+      applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
+        value: v,
+        label: `${v} (${data.filter((m) => (m.application_categories ?? []).includes(v)).length})`,
+      })),
       tags: [
         ...tagVocabulary(data).map((t) => ({ value: t.tag, label: `${t.tag} (${t.count})` })),
         {
