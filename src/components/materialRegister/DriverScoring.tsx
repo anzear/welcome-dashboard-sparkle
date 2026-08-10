@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import FilterSelects from "@/components/materialRegister/FilterSelects";
+import FilterChips from "@/components/materialRegister/FilterChips";
 import { ScoreScale, scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
@@ -17,7 +19,8 @@ interface EntryTarget {
 }
 
 const DriverScoring: React.FC = () => {
-  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions } = useRegister();
+  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions, filters, setFilters } =
+    useRegister();
   const rows = useMemo(() => ordered.map((r) => r.m), [ordered]);
 
   const [mode, setMode] = useState<Mode>("by_question");
@@ -166,13 +169,25 @@ const DriverScoring: React.FC = () => {
           <span className="font-mono tabular-nums">{totalCells.toLocaleString("en-GB")}</span> cells scored (
           <span className="font-mono tabular-nums">{pct}%</span>)
         </div>
-        {filtersActive && (
-          <span className="text-[10px] text-muted-foreground">Matrix follows the register's current filters.</span>
-        )}
         <span className="text-[10px] text-muted-foreground">
           Partial scoring is normal. Nothing depends on filling this in.
         </span>
       </div>
+
+      {/* Same filter scope as the register */}
+      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={filters.search}
+            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+            placeholder="Search name, CAS, customer ID"
+            className="h-7 w-56 bg-background text-[11px]"
+          />
+          <FilterSelects className="ml-auto" />
+        </div>
+        <FilterChips />
+      </div>
+
 
       {/* Focused entry panel */}
       {current ? (

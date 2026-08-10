@@ -7,7 +7,7 @@ import {
 } from "@/types/materialPrioritisation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
+import FilterSelects from "@/components/materialRegister/FilterSelects";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
@@ -246,50 +246,8 @@ export const MaterialRegisterTable: React.FC = () => {
             Last change
           </label>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
-            <MultiSelectFilter
-              label="Class"
-              options={options.classes}
-              selected={filters.classes}
-              onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-            />
-            <MultiSelectFilter
-              label="Status"
-              options={options.statuses}
-              selected={filters.statuses}
-              onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
-            />
-            <MultiSelectFilter
-              label="Owner"
-              options={options.owners}
-              selected={filters.owners}
-              onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
-            />
-            <MultiSelectFilter
-              label="Entry type"
-              options={options.entryTypes}
-              selected={filters.entryTypes}
-              onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
-            />
-            <MultiSelectFilter
-              label="Product"
-              options={options.products}
-              selected={filters.products}
-              onChange={(v) => setFilters((f) => ({ ...f, products: v }))}
-            />
-            <MultiSelectFilter
-              label="Application"
-              options={options.applications}
-              selected={filters.applications}
-              onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
-            />
-            <MultiSelectFilter
-              label="Tags"
-              options={options.tags}
-              selected={filters.tags}
-              onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
-            />
-          </div>
+          <FilterSelects className="ml-auto" />
+
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
