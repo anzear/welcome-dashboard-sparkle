@@ -17,6 +17,7 @@ import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
 import BriefStepCards from "@/components/materialRegister/BriefStepCards";
+import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 
 import {
   CURRENT_USER,
