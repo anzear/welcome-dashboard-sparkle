@@ -26,18 +26,30 @@ export interface Measure {
   short: string;
   /** label used in the unranked divider, lower-case */
   noun: string;
+  /** axis / figure unit for the measure */
+  unit: string;
+  /** decimals when a single figure is printed */
+  decimals?: number;
   value: (m: Material) => number | null;
 }
 
 export const MEASURES: Measure[] = [
-  { id: "spend", label: "Spend", short: "SPD", noun: "spend", value: (m) => m.annual_spend },
-  { id: "emissions", label: "Emissions", short: "GHG", noun: "emissions", value: (m) => m.ghg_contribution },
-  { id: "volume", label: "Volume", short: "VOL", noun: "volume", value: (m) => m.annual_volume },
+  { id: "spend", label: "Spend", short: "SPD", noun: "spend", unit: "EUR", value: (m) => m.annual_spend },
+  {
+    id: "emissions",
+    label: "Emissions",
+    short: "GHG",
+    noun: "emissions",
+    unit: "tCO2e/yr",
+    value: (m) => m.ghg_contribution,
+  },
+  { id: "volume", label: "Volume", short: "VOL", noun: "volume", unit: "t/yr", value: (m) => m.annual_volume },
   {
     id: "multi_application",
     label: "Multi-application",
     short: "APP",
     noun: "application",
+    unit: "applications",
     value: (m) =>
       m.application_categories && m.application_categories.length > 0 ? m.application_categories.length : null,
   },
@@ -182,6 +194,13 @@ interface Store {
   setScore: (materialId: string, questionId: string, score: number, note: string | null) => void;
   countsFor: (materialId: string) => DriverCounts;
   questionCoverage: (questionId: string, rows: Material[]) => number;
+  /** Period the priority set is being assembled for. Free text. */
+  priorityPeriod: string;
+  setPriorityPeriod: (v: string) => void;
+  prioritySetCount: number;
+  inPrioritySet: (m: Material) => boolean;
+  /** Sets or clears priority_selected for a set of materials in one batch. */
+  applyPriority: (ids: Set<string>, add: boolean) => void;
   toast: { message: string; snapshot: Material[]; batchId?: string } | null;
   setToast: React.Dispatch<
     React.SetStateAction<{ message: string; snapshot: Material[]; batchId?: string } | null>
@@ -206,6 +225,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
   const [scores, setScores] = useState<Record<string, DriverScore>>(seedDriverScores);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
+  const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [onlyUnranked, setOnlyUnranked] = useState(false);
@@ -445,6 +465,50 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 
+  const inPrioritySet = (m: Material) => m.priority_selected && m.priority_period === priorityPeriod;
+  const prioritySetCount = data.filter(inPrioritySet).length;
+
+  /** Priority set changes: one event per material, all sharing one batch_id. */
+  const applyPriority = (ids: Set<string>, add: boolean) => {
+    const snapshot = data.filter((m) => ids.has(m.material_id)).map((m) => ({ ...m }));
+    const batchId = `BATCH-${Date.now()}`;
+
+    setData((prev) =>
+      prev.map((m) => {
+        if (!ids.has(m.material_id)) return m;
+        return {
+          ...m,
+          priority_selected: add,
+          priority_period: add ? priorityPeriod : null,
+          provenance: {
+            ...m.provenance,
+            priority_selected: enteredProvenance(),
+            priority_period: enteredProvenance(),
+          },
+        };
+      }),
+    );
+
+    recordEvents(
+      snapshot.map((m) => ({
+        material_id: m.material_id,
+        event_type: "priority_change",
+        field: "priority_selected",
+        from_value: m.priority_selected ? (m.priority_period ?? "current period") : null,
+        to_value: add ? priorityPeriod : null,
+        batch_id: batchId,
+      })),
+    );
+
+    setToast({
+      message: add
+        ? `${ids.size} materials added to the ${priorityPeriod} priority set.`
+        : `${ids.size} materials removed from the priority set.`,
+      snapshot,
+      batchId,
+    });
+  };
+
   /** Undo removes the batch's events rather than writing compensating ones. */
   const undo = () => {
     if (!toast) return;
@@ -543,6 +607,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     setScore,
     countsFor,
     questionCoverage,
+    priorityPeriod,
+    setPriorityPeriod,
+    prioritySetCount,
+    inPrioritySet,
+    applyPriority,
 
     toast,
     setToast,
