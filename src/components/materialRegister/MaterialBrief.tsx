@@ -362,7 +362,7 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Step cards — content filled in later */}
         <div className="lg:col-span-2">
-          <BriefStepCards />
+          <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
         </div>
 
 
