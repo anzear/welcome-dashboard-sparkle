@@ -134,7 +134,9 @@ const DerivedField: React.FC<{
 };
 
 export const MaterialBrief: React.FC = () => {
-  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial } = useRegister();
+  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
+    useRegister();
+
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
