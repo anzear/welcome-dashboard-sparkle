@@ -375,10 +375,22 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[216px] border-r border-border px-3 py-2 text-left")}>
+              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 py-2 text-left")}>
                 Position
-                <div className={UNIT}>rank of ranked materials</div>
+                <div className="mt-1 flex items-end gap-[4px]" aria-hidden>
+                  {[10, 7, 9, 5].map((h, i) => (
+                    <span key={i} className="bg-muted-foreground/45" style={{ width: 12, height: h }} />
+                  ))}
+                </div>
+                <div className="h-px w-[60px] bg-border" />
+                <div className={cn(UNIT, "flex w-[60px] justify-between font-mono")}>
+                  <span>S</span>
+                  <span>E</span>
+                  <span>V</span>
+                  <span>A</span>
+                </div>
               </th>
+
               <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
                 Annual volume
                 <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
