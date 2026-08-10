@@ -178,6 +178,25 @@ function buildEvents(materials: Material[]): MaterialEvent[] {
             batch_id: null,
           });
         }
+        if (currentOwner !== (m.owner ?? null)) {
+          events.push({
+            event_id: id(),
+            material_id: m.material_id,
+            event_type: "owner_change",
+            field: "owner",
+            from_value: currentOwner,
+            to_value: m.owner,
+            reason: null,
+            blocker_category: null,
+            blocker_detail: null,
+            blocker_condition: null,
+            changed_by: user,
+            changed_at: iso(t + 90000),
+            batch_origin: "real_transition",
+            batch_id: null,
+          });
+          currentOwner = m.owner;
+        }
         if (m.priority_selected && !priority) {
           events.push({
             event_id: id(),
