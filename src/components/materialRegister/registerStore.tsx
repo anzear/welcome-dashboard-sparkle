@@ -122,7 +122,8 @@ export interface Filters {
   statuses: string[];
   owners: string[];
   entryTypes: string[];
-  groups: string[];
+  /** Tag values, matched with ANY. May include UNTAGGED. */
+  tags: string[];
 }
 
 export const EMPTY_FILTERS: Filters = {
@@ -131,7 +132,7 @@ export const EMPTY_FILTERS: Filters = {
   statuses: [],
   owners: [],
   entryTypes: [],
-  groups: [],
+  tags: [],
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -292,7 +293,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.statuses.length > 0 ||
     filters.owners.length > 0 ||
     filters.entryTypes.length > 0 ||
-    filters.groups.length > 0;
+    filters.tags.length > 0;
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -305,7 +306,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.owners.length && !filters.owners.includes(m.owner ?? UNASSIGNED_OWNER)) return false;
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
-      if (filters.groups.length && !filters.groups.includes(m.customer_material_group ?? "")) return false;
+      if (filters.tags.length) {
+        const wantUntagged = filters.tags.includes(UNTAGGED);
+        const keys = new Set(filters.tags.filter((t) => t !== UNTAGGED).map(tagKey));
+        const anyMatch =
+          (wantUntagged && m.tags.length === 0) || m.tags.some((t) => keys.has(tagKey(t)));
+        if (!anyMatch) return false;
+      }
       return true;
     });
   }, [data, filters]);
@@ -460,9 +467,12 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         } else if (payload.kind === "owner") {
           next.owner = payload.value;
           next.provenance.owner = enteredProvenance();
+        } else if (payload.kind === "add_tags") {
+          next.tags = addTags(m.tags, payload.tags ?? []);
+          next.provenance.tags = enteredProvenance();
         } else {
-          next.customer_material_group = payload.value;
-          next.provenance.customer_material_group = enteredProvenance();
+          next.tags = removeTags(m.tags, payload.tags ?? []);
+          next.provenance.tags = enteredProvenance();
         }
         return next;
       }),
@@ -494,18 +504,27 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
+        const nextTags =
+          payload.kind === "add_tags"
+            ? addTags(m.tags, payload.tags ?? [])
+            : removeTags(m.tags, payload.tags ?? []);
         return {
           material_id: m.material_id,
-          event_type: "field_correction",
-          field: "customer_material_group",
-          from_value: m.customer_material_group,
-          to_value: payload.value,
+          event_type: "tags_change",
+          field: "tags",
+          from_value: formatTags(m.tags) || null,
+          to_value: formatTags(nextTags) || null,
           batch_id: batchId,
         } as EventInput;
       }),
     );
 
-    const noun = payload.kind === "status" ? "Status" : payload.kind === "owner" ? "Owner" : "Tag";
+    const noun =
+      payload.kind === "status"
+        ? "Status"
+        : payload.kind === "owner"
+          ? "Owner"
+          : "Tags";
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 

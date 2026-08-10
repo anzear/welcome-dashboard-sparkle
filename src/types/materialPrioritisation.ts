@@ -84,7 +84,8 @@ export type MaterialEventType =
   | "priority_change"
   | "blocker_set"
   | "field_correction"
-  | "score_change";
+  | "score_change"
+  | "tags_change";
 
 export type BatchOrigin = "baselining" | "real_transition";
 
