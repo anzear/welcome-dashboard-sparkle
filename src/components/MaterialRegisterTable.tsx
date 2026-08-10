@@ -628,11 +628,16 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="text-muted-foreground">^</span> entered
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="text-amber-700">amber label</span> rank divergence
+          <span className="text-amber-700">amber bar</span> rank divergence
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="text-muted-foreground/50">—</span> no value (unranked)
         </span>
+        <span>
+          Position bars: taller = better rank. Four independent scales, one per measure — never combined. Dotted
+          outline = no figure recorded, not ranked last.
+        </span>
+
       </div>
 
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
