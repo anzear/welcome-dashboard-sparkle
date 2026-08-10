@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ChevronLeft, ChevronRight, Pencil } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -80,7 +80,9 @@ const DerivedField: React.FC<{
   value: string | null;
   provenance?: FieldProvenance;
   onSave: (v: string) => void;
-}> = ({ label, value, provenance, onSave }) => {
+  note?: string;
+  placeholder?: string;
+}> = ({ label, value, provenance, onSave, note, placeholder }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
@@ -97,13 +99,18 @@ const DerivedField: React.FC<{
             }}
             className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
-            <Pencil className="h-3 w-3" /> Correct this
+            <Pencil className="h-3 w-3" /> Edit
           </button>
         )}
       </div>
       {editing ? (
         <div className="flex items-center gap-1 pt-1">
-          <Input value={draft} onChange={(e) => setDraft(e.target.value)} className="h-7 text-xs" />
+          <Input
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            className="h-7 text-xs"
+          />
           <Button
             size="sm"
             className="h-7 text-[11px]"
@@ -127,11 +134,74 @@ const DerivedField: React.FC<{
       <div className="pt-0.5 text-[10px] text-muted-foreground/80">
         {provenance?.origin === "entered"
           ? `Entered by ${provenance.source ?? CURRENT_USER}${provenance.date ? ` · ${provenance.date}` : ""}`
-          : "Derived by VCG from our ontology"}
+          : (note ?? "Derived by VCG from our ontology")}
       </div>
     </div>
   );
 };
+
+/** Editable list of tags (application / product categories). */
+const TagsField: React.FC<{
+  label: string;
+  values: string[];
+  onSave: (v: string[]) => void;
+}> = ({ label, values, onSave }) => {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const v = draft.trim();
+    if (!v || values.includes(v)) {
+      setDraft("");
+      return;
+    }
+    onSave([...values, v]);
+    setDraft("");
+  };
+  return (
+    <div className="border-t border-border/60 px-3 py-2">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="flex flex-wrap items-center gap-1 pt-1">
+        {values.length > 0 ? (
+          values.map((c) => (
+            <span
+              key={c}
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+            >
+              {c}
+              <button
+                type="button"
+                aria-label={`Remove ${c}`}
+                onClick={() => onSave(values.filter((x) => x !== c))}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))
+        ) : (
+          <span className="text-[10px] text-muted-foreground/50">—</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1 pt-1.5">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder="Add…"
+          className="h-7 max-w-[180px] text-xs"
+        />
+        <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={add}>
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 export const MaterialBrief: React.FC = () => {
   const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
@@ -320,6 +390,148 @@ export const MaterialBrief: React.FC = () => {
 
       <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
         <div className="space-y-4 lg:col-span-2">
+        {/* Section 2 — Classification (editable) */}
+        <section className="rounded-md border border-border">
+          <div className="px-3 pt-3">
+            <SectionTitle note="Identity and classification. Corrections are written to the event log.">
+              Classification
+            </SectionTitle>
+          </div>
+          <div className="grid sm:grid-cols-2">
+            <DerivedField
+              label="Name"
+              value={m.name}
+              provenance={m.provenance.name}
+              note="Source: not recorded"
+              placeholder="Material name"
+              onSave={(v) =>
+                v &&
+                v !== m.name &&
+                updateMaterial(m.material_id, { name: v }, ["name"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "name",
+                    from_value: m.name,
+                    to_value: v,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="CAS number — Derived by VCG"
+              value={m.cas_number}
+              provenance={m.provenance.cas_number}
+              placeholder="e.g. 13463-67-7"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "cas_number",
+                    from_value: m.cas_number,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="Material class — Derived by VCG"
+              value={m.material_class}
+              provenance={m.provenance.material_class}
+              placeholder="Material class"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "material_class",
+                    from_value: m.material_class,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="Customer material group"
+              value={m.customer_material_group}
+              provenance={m.provenance.customer_material_group}
+              note="Source: not recorded"
+              placeholder="Group"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { customer_material_group: v || null }, ["customer_material_group"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "customer_material_group",
+                    from_value: m.customer_material_group,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <TagsField
+              label="Application categories"
+              values={m.application_categories}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { application_categories: v }, ["application_categories"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "application_categories",
+                    from_value: m.application_categories.join(", ") || null,
+                    to_value: v.join(", ") || null,
+                  },
+                ])
+              }
+            />
+            <TagsField
+              label="Product categories"
+              values={m.product_categories}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "product_categories",
+                    from_value: m.product_categories.join(", ") || null,
+                    to_value: v.join(", ") || null,
+                  },
+                ])
+              }
+            />
+            <div className="border-t border-border/60 px-3 py-2">
+              <div className="text-[11px] text-muted-foreground">Entry type</div>
+              <Select
+                value={m.entry_type}
+                onValueChange={(v) => {
+                  if (v === m.entry_type) return;
+                  updateMaterial(m.material_id, { entry_type: v as Material["entry_type"] }, ["entry_type"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "entry_type",
+                      from_value: ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type,
+                      to_value: ENTRY_TYPE_LABEL[v as Material["entry_type"]] ?? v,
+                    },
+                  ]);
+                }}
+              >
+                <SelectTrigger className="mt-1 h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {ENTRY_TYPE_LABEL[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
+
         {/* Section 5 — Where it stands */}
         <section className="rounded-md border border-border p-3">
           <SectionTitle note="Recorded judgement. Every change is written to the event log.">
@@ -525,79 +737,6 @@ export const MaterialBrief: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 2 — Classification */}
-        <section className="rounded-md border border-border">
-          <div className="px-3 pt-3">
-            <SectionTitle>Classification</SectionTitle>
-          </div>
-          <div className="grid sm:grid-cols-2">
-            <Figure label="Name" value={m.name} provenance={m.provenance.name} />
-            <DerivedField
-              label="CAS number — Derived by VCG"
-              value={m.cas_number}
-              provenance={m.provenance.cas_number}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "cas_number",
-                    from_value: m.cas_number,
-                    to_value: v || null,
-                  },
-                ])
-              }
-
-            />
-            <DerivedField
-              label="Material class — Derived by VCG"
-              value={m.material_class}
-              provenance={m.provenance.material_class}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "material_class",
-                    from_value: m.material_class,
-                    to_value: v || null,
-                  },
-                ])
-              }
-
-            />
-            <Figure
-              label="Customer material group"
-              value={m.customer_material_group}
-              provenance={m.provenance.customer_material_group}
-            />
-            <div className="border-t border-border/60 px-3 py-2">
-              <div className="text-[11px] text-muted-foreground">Application categories</div>
-              <div className="flex flex-wrap gap-1 pt-1">
-                {m.application_categories.length > 0 ? (
-                  m.application_categories.map((c) => <Chip key={c}>{c}</Chip>)
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
-                )}
-              </div>
-            </div>
-            <div className="border-t border-border/60 px-3 py-2">
-              <div className="text-[11px] text-muted-foreground">Product categories</div>
-              <div className="flex flex-wrap gap-1 pt-1">
-                {m.product_categories.length > 0 ? (
-                  m.product_categories.map((c) => <Chip key={c}>{c}</Chip>)
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
-                )}
-              </div>
-            </div>
-            <Figure
-              label="Entry type"
-              value={ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
-              provenance={m.provenance.entry_type}
-            />
-          </div>
-        </section>
 
         </div>
 

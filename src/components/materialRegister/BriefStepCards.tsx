@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Star, Target, Upload } from "lucide-react";
+import { CheckCircle2, Upload } from "lucide-react";
 import type { Material } from "@/types/materialPrioritisation";
-import MaterialDetailsDialog from "@/components/materialRegister/MaterialDetailsDialog";
 import MaterialRequirementsDialog, {
   EVIDENCE_SLOTS,
   emptyEvidence,
@@ -19,13 +18,12 @@ const STATE_LABEL: Record<StepState, string> = {
 };
 
 const StepCard: React.FC<{
-  step: number;
   title: string;
   description: string;
   state: StepState;
   icon: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
-}> = ({ step, title, description, state, icon: Icon, onClick }) => {
+}> = ({ title, description, state, icon: Icon, onClick }) => {
   const done = state === "completed";
   return (
     <button
@@ -42,12 +40,10 @@ const StepCard: React.FC<{
         <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
           <Icon className="h-4 w-4 text-foreground" />
         </div>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Step {step}
-        </span>
+
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         <div className="text-sm font-semibold text-foreground">{title}</div>
         <div className="mt-0.5 text-[12px] text-muted-foreground">{description}</div>
       </div>
@@ -72,19 +68,8 @@ const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = (
   material,
   scoredCount = 0,
 }) => {
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const [reqOpen, setReqOpen] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceState>(emptyEvidence());
-
-  const detailsFields = [
-    material.name,
-    material.material_class,
-    material.application_categories.length > 0 ? "y" : null,
-    material.owner,
-  ];
-  const detailsFilled = detailsFields.filter(Boolean).length;
-  const detailsState: StepState =
-    detailsFilled === detailsFields.length ? "completed" : detailsFilled > 0 ? "in_progress" : "not_started";
 
   const filledEvidence = evidenceFilledCount(evidence);
   const reqState: StepState =
@@ -94,39 +79,18 @@ const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = (
         ? "in_progress"
         : "not_started";
 
-  const scoringState: StepState = scoredCount === 0 ? "not_started" : scoredCount >= 12 ? "completed" : "in_progress";
-
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         <StepCard
-          step={1}
-          title="Material Details"
-          description="Identify the material & intent"
-          state={detailsState}
-          icon={Target}
-          onClick={() => setDetailsOpen(true)}
-        />
-        <StepCard
-          step={2}
-          title="Strategic Scoring"
-          description="Rate priority drivers"
-          state={scoringState}
-          icon={Star}
-        />
-        <StepCard
-          step={3}
           title="Material Requirements"
-          description="Upload supporting docs"
+          description="Upload supporting docs & evidence"
           state={reqState}
           icon={Upload}
           onClick={() => setReqOpen(true)}
         />
       </div>
 
-      {detailsOpen && (
-        <MaterialDetailsDialog material={material} open={detailsOpen} onOpenChange={setDetailsOpen} />
-      )}
       {reqOpen && (
         <MaterialRequirementsDialog
           open={reqOpen}
