@@ -313,9 +313,9 @@ export const MaterialBrief: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
         {/* Section 1 — Figures */}
-        <section className="rounded-md border border-border lg:col-span-2">
+        <section className="order-4 rounded-md border border-border lg:col-span-2">
           <div className="px-3 pt-3">
             <SectionTitle note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero.">
               Figures
