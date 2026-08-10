@@ -40,6 +40,8 @@ export function eventSentence(e: MaterialEvent): string {
       return e.from_value === null
         ? `${fieldLabel(e.field)} scored ${signedValue(e.to_value)}`
         : `${fieldLabel(e.field)} changed from ${signedValue(e.from_value)} to ${signedValue(e.to_value)}`;
+    case "tags_change":
+      return `Tags changed from ${e.from_value ?? "none"} to ${e.to_value ?? "none"}`;
     case "field_correction":
       if (e.field === "material_added") return `Material added to the register as ${e.to_value ?? "—"}`;
       if (e.field === "customer_material_ids")

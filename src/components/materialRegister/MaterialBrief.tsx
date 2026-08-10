@@ -17,6 +17,7 @@ import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
 import BriefStepCards from "@/components/materialRegister/BriefStepCards";
+import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 
 import {
   CURRENT_USER,
@@ -295,18 +296,23 @@ const TagsField: React.FC<{
   label: string;
   values: string[];
   onSave: (v: string[]) => void;
-}> = ({ label, values, onSave }) => {
+  suggestions?: string[];
+}> = ({ label, values, onSave, suggestions = [] }) => {
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
-  const add = () => {
-    const v = draft.trim();
-    if (!v || values.includes(v)) {
+  const add = (raw?: string) => {
+    const v = normalizeTag(raw ?? draft);
+    if (!v || hasTag(values, v)) {
       setDraft("");
       return;
     }
     onSave([...values, v]);
     setDraft("");
   };
+  const q = draft.trim().toLowerCase();
+  const matches = q
+    ? suggestions.filter((s) => s.toLowerCase().includes(q) && !hasTag(values, s)).slice(0, 6)
+    : [];
   return (
     <div className="group px-1 py-1 sm:col-span-2">
       <div className="flex items-baseline justify-between gap-2">
@@ -358,15 +364,30 @@ const TagsField: React.FC<{
               }
               if (e.key === "Escape") setOpen(false);
             }}
+            maxLength={TAG_MAX_LENGTH}
             placeholder="Add…"
             className="h-7 max-w-[180px] text-xs"
           />
-          <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={add}>
+          <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => add()}>
             Add
           </Button>
           <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setOpen(false)}>
             Done
           </Button>
+        </div>
+      )}
+      {open && matches.length > 0 && (
+        <div className="flex flex-wrap gap-1 pt-1">
+          {matches.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              {s}
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -388,6 +409,8 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 export const MaterialBrief: React.FC = () => {
   const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
     useRegister();
+
+  const tagSuggestions = useMemo(() => tagVocabulary(data).map((t) => t.tag), [data]);
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
@@ -961,23 +984,22 @@ export const MaterialBrief: React.FC = () => {
                   ])
                 }
               />
-              <DerivedField
-                label="Customer material group"
-                value={m.customer_material_group}
-                provenance={m.provenance.customer_material_group}
-                note="Source: not recorded"
-                placeholder="Group"
-                onSave={(v) =>
-                  updateMaterial(m.material_id, { customer_material_group: v || null }, ["customer_material_group"], [
+              <TagsField
+                label="Tags"
+                values={m.tags}
+                suggestions={tagSuggestions}
+                onSave={(v) => {
+                  const next = cleanTags(v);
+                  updateMaterial(m.material_id, { tags: next }, ["tags"], [
                     {
                       material_id: m.material_id,
-                      event_type: "field_correction",
-                      field: "customer_material_group",
-                      from_value: m.customer_material_group,
-                      to_value: v || null,
+                      event_type: "tags_change",
+                      field: "tags",
+                      from_value: formatTags(m.tags) || null,
+                      to_value: formatTags(next) || null,
                     },
-                  ])
-                }
+                  ]);
+                }}
               />
               <TagsField
                 label="Application categories"

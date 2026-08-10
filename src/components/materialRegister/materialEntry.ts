@@ -1,3 +1,4 @@
+import { cleanTags } from "@/components/materialRegister/tags";
 import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
 import type {
   EntryType,
@@ -132,7 +133,7 @@ export function blankMaterial(entry_type: EntryType = "drop_in_substitute"): Omi
     name: "",
     cas_number: null,
     material_class: null,
-    customer_material_group: null,
+    tags: [],
     application_categories: [],
     product_categories: [],
     entry_type,
@@ -183,10 +184,10 @@ export const CSV_COLUMNS: CsvColumn[] = [
     example2: "SKU-24110",
   },
   {
-    field: "customer_material_group",
-    label: "Customer material group",
-    kind: "text",
-    example1: "Solvents",
+    field: "tags",
+    label: "Tags",
+    kind: "list",
+    example1: "Solvents;Q3 review",
     example2: "Humectants",
   },
   {
@@ -495,7 +496,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
     cas_number: toNullString(v.cas_number),
     material_class: toNullString(v.material_class),
     customer_material_ids: splitList(v.customer_material_ids),
-    customer_material_group: toNullString(v.customer_material_group),
+    tags: cleanTags(splitList(v.tags)),
     application_categories: splitList(v.application_categories),
     product_categories: splitList(v.product_categories),
     entry_type,

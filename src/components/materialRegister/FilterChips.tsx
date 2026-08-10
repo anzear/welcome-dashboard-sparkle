@@ -8,11 +8,13 @@ import {
   useRegister,
   type Filters,
 } from "@/components/materialRegister/registerStore";
+import { UNTAGGED } from "@/components/materialRegister/tags";
 
 const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
   if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
   if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
+  if (kind === "tags" && value === UNTAGGED) return "Untagged";
   return value;
 };
 
@@ -21,7 +23,7 @@ const FilterChips: React.FC = () => {
   const { filters, setFilters } = useRegister();
 
   const chips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "groups"] as const).forEach((k) => {
+  (["classes", "statuses", "owners", "entryTypes", "tags"] as const).forEach((k) => {
     filters[k].forEach((v) => chips.push({ kind: k, value: v, label: labelFor(k, v) }));
   });
 

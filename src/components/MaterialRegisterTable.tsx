@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
+import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   EMPTY_FILTERS,
   ENTRY_TYPE_LABEL,
@@ -32,6 +33,23 @@ const STICK = "sticky bg-muted/60";
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
+
+/** Up to two tag chips, remainder folded into a count. Empty reads as an em-dash. */
+const TagsCell: React.FC<{ tags: string[] }> = ({ tags }) => {
+  if (tags.length === 0) return <span className="text-muted-foreground/50">—</span>;
+  const shown = tags.slice(0, 2);
+  const rest = tags.length - shown.length;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1" title={tags.join(", ")}>
+      {shown.map((t) => (
+        <span key={t} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {t}
+        </span>
+      ))}
+      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
+    </span>
+  );
+};
 
 export const MaterialRegisterTable: React.FC = () => {
   const {
@@ -89,7 +107,13 @@ export const MaterialRegisterTable: React.FC = () => {
         value: v,
         label: ENTRY_TYPE_LABEL[v] ?? v,
       })),
-      groups: uniq(data.map((m) => m.customer_material_group)).map((v) => ({ value: v, label: v })),
+      tags: [
+        ...tagVocabulary(data).map((t) => ({ value: t.tag, label: `${t.tag} (${t.count})` })),
+        {
+          value: UNTAGGED,
+          label: `Untagged (${data.filter((m) => m.tags.length === 0).length})`,
+        },
+      ],
     };
   }, [data]);
 
@@ -134,11 +158,12 @@ export const MaterialRegisterTable: React.FC = () => {
     if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
     if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
     if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
+    if (kind === "tags" && value === UNTAGGED) return "Untagged";
     return value;
   };
 
   const activeChips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "groups"] as const).forEach((k) => {
+  (["classes", "statuses", "owners", "entryTypes", "tags"] as const).forEach((k) => {
     filters[k].forEach((v) => activeChips.push({ kind: k, value: v, label: labelFor(k, v) }));
   });
 
@@ -239,10 +264,10 @@ export const MaterialRegisterTable: React.FC = () => {
               onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
             />
             <MultiSelectFilter
-              label="Group"
-              options={options.groups}
-              selected={filters.groups}
-              onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
+              label="Tags (any)"
+              options={options.tags}
+              selected={filters.tags}
+              onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
             />
           </div>
         </div>
@@ -306,14 +331,21 @@ export const MaterialRegisterTable: React.FC = () => {
             {onlySelected ? "Show all rows" : "Show selected"}
           </button>
           <span className="ml-auto flex items-center gap-1.5">
-            {(["status", "owner", "tag"] as BulkKind[]).map((k) => (
+            {(
+              [
+                ["status", "Set status"],
+                ["owner", "Set owner"],
+                ["add_tags", "Add tags"],
+                ["remove_tags", "Remove tags"],
+              ] as [BulkKind, string][]
+            ).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
                 onClick={() => setBulkKind(k)}
                 className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
               >
-                Set {k}
+                {label}
               </button>
             ))}
             <button
@@ -412,6 +444,7 @@ export const MaterialRegisterTable: React.FC = () => {
               )}
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+              <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>
 
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
@@ -569,6 +602,9 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
                     <td className="px-3 py-2 align-top">
+                      <TagsCell tags={m.tags} />
+                    </td>
+                    <td className="px-3 py-2 align-top">
                       {inPrioritySet(m) ? (
                         <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
                           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
@@ -648,6 +684,7 @@ export const MaterialRegisterTable: React.FC = () => {
         materials={selectedMaterials}
         hiddenCount={hiddenSelectedCount}
         ownerOptions={ownerNames}
+        tagSuggestions={tagVocabulary(data).map((t) => t.tag)}
         onCancel={() => setBulkKind(null)}
         onApply={(payload) => {
           applyBulk(payload, new Set(selected));

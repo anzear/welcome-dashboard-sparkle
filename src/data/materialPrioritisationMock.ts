@@ -133,7 +133,7 @@ export const materials: Material[] = rows.map((row, i) => {
     name,
     cas_number: cas,
     material_class: materialClass,
-    customer_material_group: group,
+    tags: group ? [group] : [],
     application_categories: APPLICATIONS[i % APPLICATIONS.length],
     product_categories: PRODUCTS[i % PRODUCTS.length],
     // Migrated from the earlier two-value enum:
