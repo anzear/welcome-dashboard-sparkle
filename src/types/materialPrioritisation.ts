@@ -1,4 +1,17 @@
-export type EntryType = "substitute_material_source" | "new_material";
+export type EntryType = "drop_in_substitute" | "new_substitute" | "new_application";
+
+/**
+ * What the replacement has to achieve. Every field optional — a requirement the
+ * customer has not stated is null, never a zero target.
+ */
+export interface MaterialRequirements {
+  target_volume: number | null;
+  price_ceiling: number | null;
+  ghg_reduction_target: number | null;
+  required_certifications: string[];
+  earliest_need_date: string | null;
+  notes: string | null;
+}
 
 export type JourneyStatus =
   | "not_started"
