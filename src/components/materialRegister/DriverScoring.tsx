@@ -89,6 +89,7 @@ const DriverScoring: React.FC = () => {
 
 
   const exitRun = () => {
+    setRunKind(null);
     setFocusQuestion(null);
     setFocusMaterial(null);
     setIndex(0);
@@ -210,9 +211,9 @@ const DriverScoring: React.FC = () => {
         >
           <div className="flex flex-wrap items-baseline justify-between gap-2">
             <div>
-              <div className={HEAD}>{mode === "by_question" ? questionLabel(current.questionId) : current.material.name}</div>
+              <div className={HEAD}>{current.material.name}</div>
               <div className="text-sm font-semibold tracking-tight text-foreground">
-                {mode === "by_question" ? current.material.name : questionLabel(current.questionId)}
+                {questionLabel(current.questionId)}
               </div>
               <div className="text-[10px] text-muted-foreground">{questionHelper(current.questionId)}</div>
             </div>
@@ -281,8 +282,7 @@ const DriverScoring: React.FC = () => {
           ? rows.map((m) => ({ id: m.material_id, label: m.name, short: m.name, helper: "" }))
           : questions.map((q) => ({ id: q.question_id, label: q.label, short: q.short, helper: q.helper }));
 
-        const focusId = transposed ? focusMaterial : focusQuestion;
-        const rowMode: Mode = transposed ? "by_material" : "by_question";
+        const focusId = transposed ? focusQuestion : focusMaterial;
         const scoreAt = (rowId: string, colId: string) =>
           transposed ? scoreFor(colId, rowId) : scoreFor(rowId, colId);
         const cellTitleParts = (rowId: string, colId: string) => {
@@ -307,7 +307,7 @@ const DriverScoring: React.FC = () => {
                   </th>
 
                   {colItems.map((c) => {
-                    const active = transposed ? false : mode === "by_question" && focusQuestion === c.id;
+                    const active = transposed ? focusMaterial === c.id : focusQuestion === c.id;
                     const cov = transposed
                       ? questions.filter(
                           (q) => (scoreFor(c.id, q.question_id)?.score ?? null) !== null,
@@ -326,7 +326,7 @@ const DriverScoring: React.FC = () => {
                       >
                         <button
                           type="button"
-                          onClick={() => openRun(transposed ? "by_material" : "by_question", c.id)}
+                          onClick={() => (transposed ? openMaterialRun(c.id) : openQuestionRun(c.id))}
                           className="flex w-full flex-col items-center gap-0.5"
                         >
                           <span
@@ -375,7 +375,7 @@ const DriverScoring: React.FC = () => {
                       >
                         <button
                           type="button"
-                          onClick={() => openRun(rowMode, r.id)}
+                          onClick={() => (transposed ? openQuestionRun(r.id) : openMaterialRun(r.id))}
                           className="block max-w-[280px] truncate text-left hover:text-primary"
                           title={r.helper ? `${r.label} — ${r.helper}` : r.label}
                         >
@@ -385,7 +385,7 @@ const DriverScoring: React.FC = () => {
                       {colItems.map((c) => {
                         const rec = scoreAt(r.id, c.id);
                         const v = rec?.score ?? null;
-                        const activeCol = !transposed && mode === "by_question" && focusQuestion === c.id;
+                        const activeCol = transposed ? focusMaterial === c.id : focusQuestion === c.id;
                         const t = cellTitleParts(r.id, c.id);
                         return (
                           <td
@@ -395,8 +395,9 @@ const DriverScoring: React.FC = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                openRun(rowMode, r.id);
-                                setIndex(colItems.findIndex((x) => x.id === c.id));
+                                const start = colItems.findIndex((x) => x.id === c.id);
+                                if (transposed) openQuestionRun(r.id, start);
+                                else openMaterialRun(r.id, start);
                               }}
                               title={
                                 v === null
