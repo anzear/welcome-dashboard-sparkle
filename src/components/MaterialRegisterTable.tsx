@@ -7,7 +7,7 @@ import {
 } from "@/types/materialPrioritisation";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
+import FilterSelects from "@/components/materialRegister/FilterSelects";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
