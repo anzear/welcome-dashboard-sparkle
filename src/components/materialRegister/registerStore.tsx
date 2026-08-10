@@ -300,6 +300,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.statuses.length > 0 ||
     filters.owners.length > 0 ||
     filters.entryTypes.length > 0 ||
+    filters.products.length > 0 ||
+    filters.applications.length > 0 ||
     filters.tags.length > 0;
 
   const filtered = useMemo(() => {
