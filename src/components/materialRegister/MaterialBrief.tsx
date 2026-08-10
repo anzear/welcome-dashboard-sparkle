@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, ChevronLeft, ChevronRight, Pencil, X } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,127 +23,129 @@ import {
   MEASURES,
   today,
   useRegister,
-  type MeasureId,
 } from "@/components/materialRegister/registerStore";
 
 const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 const UNASSIGNED = "__unassigned__";
 
-const SectionTitle: React.FC<{ children: React.ReactNode; note?: string }> = ({ children, note }) => (
-  <div className="mb-2">
-    <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</h2>
-    {note && <p className="text-[11px] text-muted-foreground">{note}</p>}
+/* ------------------------------------------------------------------ type scale
+ * Three data tiers only: value (text-sm mono tabular), label (text-[11px] muted),
+ * provenance (text-[10px] faint). Section headers sit above all three.
+ * ---------------------------------------------------------------------------- */
+
+const Section: React.FC<{
+  title: string;
+  note?: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ title, note, children, className }) => (
+  <section className={cn("space-y-2", className)}>
+    <div>
+      <h2 className="text-[13px] font-medium tracking-tight text-foreground">{title}</h2>
+      {note && <p className="text-[10px] leading-snug text-muted-foreground/70">{note}</p>}
+    </div>
+    {children}
+  </section>
+);
+
+const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
+  <div className={cn("pb-1", first ? "" : "mt-3 border-t border-border/50 pt-3")}>
+    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">{children}</span>
   </div>
 );
 
 const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <span className="inline-flex items-center rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]">
+  <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
     {children}
   </span>
 );
 
-interface FigureProps {
+/** One data row: label + provenance on the left, value right-aligned in a fixed column. */
+const DataRow: React.FC<{
+  label: React.ReactNode;
+  provenance: React.ReactNode;
+  value: React.ReactNode;
+  onClick?: () => void;
+  children?: React.ReactNode;
+}> = ({ label, provenance, value, onClick, children }) => (
+  <div
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onClick={onClick}
+    onKeyDown={
+      onClick
+        ? (e) => {
+            if (e.key === "Enter") onClick();
+          }
+        : undefined
+    }
+    className={cn(
+      "group grid grid-cols-[1fr_auto] items-baseline gap-3 rounded-sm px-1 py-1.5",
+      onClick && "cursor-pointer hover:bg-muted/50",
+    )}
+  >
+    <div className="min-w-0">
+      <div className="text-[11px] leading-snug text-muted-foreground">
+        {label}
+        {onClick && (
+          <span className="ml-1.5 text-[10px] text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/70">
+            edit
+          </span>
+        )}
+      </div>
+      <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
+    </div>
+    <div className="justify-self-end text-right">{value}</div>
+    {children}
+  </div>
+);
+
+const ValueText: React.FC<{ value: number | string | null; decimals?: number; computed?: boolean; entered?: boolean }> = ({
+  value,
+  decimals = 0,
+  computed,
+  entered,
+}) => {
+  const hasValue = value !== null && value !== undefined && value !== "";
+  return (
+    <span
+      className={cn(
+        "font-mono text-sm tabular-nums",
+        hasValue ? "text-foreground" : "text-muted-foreground/50",
+        hasValue && computed && "border-b border-dotted border-muted-foreground/60",
+      )}
+    >
+      {entered && hasValue && <span className="mr-0.5 text-primary/70">^</span>}
+      {!hasValue ? "—" : typeof value === "number" ? nf(decimals).format(value) : value}
+    </span>
+  );
+};
+
+/** Read-only measured / computed figure. Provenance always visible. */
+const Figure: React.FC<{
   label: string;
   value: number | string | null;
   decimals?: number;
   provenance?: FieldProvenance;
   computedInputs?: string;
-}
-
-/** Measured / computed figure. Monospace, right-aligned, provenance always shown. */
-const Figure: React.FC<FigureProps> = ({ label, value, decimals = 0, provenance, computedInputs }) => {
+}> = ({ label, value, decimals = 0, provenance, computedInputs }) => {
   const hasValue = value !== null && value !== undefined && value !== "";
-  const origin = provenance?.origin ?? "ingested";
   return (
-    <div className="border-t border-border/60 px-3 py-2">
-      <div className="flex items-baseline justify-between gap-3">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
-        <span
-          className={cn(
-            "text-right font-mono text-xs tabular-nums",
-            hasValue ? "text-foreground" : "text-muted-foreground/50",
-            hasValue && origin === "computed" && "border-b border-dotted border-muted-foreground/60",
-          )}
-        >
-          {!hasValue ? "—" : typeof value === "number" ? nf(decimals).format(value) : value}
-        </span>
-      </div>
-      <div className="pt-0.5 text-[10px] text-muted-foreground/80">
-        {provenanceLine(provenance, hasValue, computedInputs)}
-      </div>
-    </div>
+    <DataRow
+      label={label}
+      provenance={provenanceLine(provenance, hasValue, computedInputs)}
+      value={
+        <ValueText
+          value={value}
+          decimals={decimals}
+          computed={(provenance?.origin ?? "ingested") === "computed"}
+        />
+      }
+    />
   );
 };
 
-const DerivedField: React.FC<{
-  label: string;
-  value: string | null;
-  provenance?: FieldProvenance;
-  onSave: (v: string) => void;
-  note?: string;
-  placeholder?: string;
-}> = ({ label, value, provenance, onSave, note, placeholder }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value ?? "");
-
-  return (
-    <div className="border-t border-border/60 px-3 py-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
-        {!editing && (
-          <button
-            type="button"
-            onClick={() => {
-              setDraft(value ?? "");
-              setEditing(true);
-            }}
-            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            <Pencil className="h-3 w-3" /> Edit
-          </button>
-        )}
-      </div>
-      {editing ? (
-        <div className="flex items-center gap-1 pt-1">
-          <Input
-            value={draft}
-            placeholder={placeholder}
-            onChange={(e) => setDraft(e.target.value)}
-            className="h-7 text-xs"
-          />
-          <Button
-            size="sm"
-            className="h-7 text-[11px]"
-            onClick={() => {
-              onSave(draft.trim());
-              setEditing(false);
-            }}
-          >
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
-            Cancel
-          </Button>
-        </div>
-      ) : (
-        <div className="font-mono text-xs text-foreground">
-          {provenance?.origin === "entered" && <span className="mr-0.5 text-primary/70">^</span>}
-          {value ?? <span className="text-muted-foreground/50">—</span>}
-        </div>
-      )}
-      <div className="pt-0.5 text-[10px] text-muted-foreground/80">
-        {provenance?.origin === "entered"
-          ? `Entered by ${provenance.source ?? CURRENT_USER}${provenance.date ? ` · ${provenance.date}` : ""}`
-          : (note ?? "Derived by VCG from our ontology")}
-      </div>
-    </div>
-  );
-};
-
-/**
- * Editable measured figure. Keeps the measurement typesetting (right-aligned, mono)
- * but lets a user record a figure. Saved figures become provenance "entered".
- */
+/** Editable figure. Whole row is the target; affordance appears on hover only. */
 const EditableFigure: React.FC<{
   label: string;
   value: number | string | null;
@@ -161,57 +163,115 @@ const EditableFigure: React.FC<{
     setEditing(true);
   };
 
-  return (
-    <div className="border-t border-border/60 px-3 py-2">
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
-        {editing ? null : (
-          <div className="flex items-baseline gap-2">
-            <span
-              className={cn(
-                "text-right font-mono text-xs tabular-nums",
-                hasValue ? "text-foreground" : "text-muted-foreground/50",
-              )}
-            >
-              {!hasValue ? "—" : typeof value === "number" ? nf(decimals).format(value) : value}
-            </span>
-            <button
-              type="button"
-              onClick={begin}
-              className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              <Pencil className="h-3 w-3" />
-            </button>
-          </div>
-        )}
-      </div>
-      {editing && (
+  const commit = () => {
+    onSave(draft.trim());
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="px-1 py-1.5">
+        <div className="text-[11px] text-muted-foreground">{label}</div>
         <div className="flex items-center gap-1 pt-1">
           <Input
+            autoFocus
             value={draft}
             placeholder={placeholder}
             onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit();
+              if (e.key === "Escape") setEditing(false);
+            }}
             className="h-7 text-right font-mono text-xs tabular-nums"
           />
-          <Button
-            size="sm"
-            className="h-7 text-[11px]"
-            onClick={() => {
-              onSave(draft.trim());
-              setEditing(false);
-            }}
-          >
+          <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
             Save
           </Button>
           <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
             Cancel
           </Button>
         </div>
-      )}
-      <div className="pt-0.5 text-[10px] text-muted-foreground/80">
-        {provenanceLine(provenance, hasValue)}
+        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provenanceLine(provenance, hasValue)}</div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <DataRow
+      label={label}
+      provenance={provenanceLine(provenance, hasValue)}
+      onClick={begin}
+      value={
+        <ValueText
+          value={value}
+          decimals={decimals}
+          entered={provenance?.origin === "entered"}
+        />
+      }
+    />
+  );
+};
+
+/** Classification field. Text value, same right-aligned mono column. */
+const DerivedField: React.FC<{
+  label: string;
+  value: string | null;
+  provenance?: FieldProvenance;
+  onSave: (v: string) => void;
+  note?: string;
+  placeholder?: string;
+}> = ({ label, value, provenance, onSave, note, placeholder }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value ?? "");
+
+  const provText =
+    provenance?.origin === "entered"
+      ? `Entered by ${provenance.source ?? CURRENT_USER}${provenance.date ? ` · ${provenance.date}` : ""}`
+      : (note ?? "Derived by VCG from our ontology");
+
+  const commit = () => {
+    onSave(draft.trim());
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="px-1 py-1.5">
+        <div className="text-[11px] text-muted-foreground">{label}</div>
+        <div className="flex items-center gap-1 pt-1">
+          <Input
+            autoFocus
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") commit();
+              if (e.key === "Escape") setEditing(false);
+            }}
+            className="h-7 text-xs"
+          />
+          <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
+            Save
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
+            Cancel
+          </Button>
+        </div>
+        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provText}</div>
+      </div>
+    );
+  }
+
+  return (
+    <DataRow
+      label={label}
+      provenance={provText}
+      onClick={() => {
+        setDraft(value ?? "");
+        setEditing(true);
+      }}
+      value={<ValueText value={value} entered={provenance?.origin === "entered"} />}
+    />
   );
 };
 
@@ -222,6 +282,7 @@ const TagsField: React.FC<{
   onSave: (v: string[]) => void;
 }> = ({ label, values, onSave }) => {
   const [draft, setDraft] = useState("");
+  const [open, setOpen] = useState(false);
   const add = () => {
     const v = draft.trim();
     if (!v || values.includes(v)) {
@@ -232,56 +293,86 @@ const TagsField: React.FC<{
     setDraft("");
   };
   return (
-    <div className="border-t border-border/60 px-3 py-2">
-      <div className="text-[11px] text-muted-foreground">{label}</div>
+    <div className="group px-1 py-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] text-muted-foreground">{label}</span>
+        {!open && (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-[10px] text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/70"
+          >
+            edit
+          </button>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-1 pt-1">
         {values.length > 0 ? (
           values.map((c) => (
             <span
               key={c}
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+              className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 text-[10px]"
             >
               {c}
-              <button
-                type="button"
-                aria-label={`Remove ${c}`}
-                onClick={() => onSave(values.filter((x) => x !== c))}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
+              {open && (
+                <button
+                  type="button"
+                  aria-label={`Remove ${c}`}
+                  onClick={() => onSave(values.filter((x) => x !== c))}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-2.5 w-2.5" />
+                </button>
+              )}
             </span>
           ))
         ) : (
-          <span className="text-[10px] text-muted-foreground/50">—</span>
+          <span className="font-mono text-sm text-muted-foreground/50">—</span>
         )}
       </div>
-      <div className="flex items-center gap-1 pt-1.5">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              add();
-            }
-          }}
-          placeholder="Add…"
-          className="h-7 max-w-[180px] text-xs"
-        />
-        <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={add}>
-          Add
-        </Button>
-      </div>
+      {open && (
+        <div className="flex items-center gap-1 pt-1.5">
+          <Input
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+              if (e.key === "Escape") setOpen(false);
+            }}
+            placeholder="Add…"
+            className="h-7 max-w-[180px] text-xs"
+          />
+          <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={add}>
+            Add
+          </Button>
+          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setOpen(false)}>
+            Done
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
+/** Compact labelled control for the decision bar. */
+const BarField: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({
+  label,
+  children,
+  className,
+}) => (
+  <div className={cn("min-w-0 space-y-1", className)}>
+    <div className="text-[10px] text-muted-foreground">{label}</div>
+    {children}
+  </div>
+);
 
 export const MaterialBrief: React.FC = () => {
   const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
     useRegister();
-
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
@@ -293,6 +384,16 @@ export const MaterialBrief: React.FC = () => {
   const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
   const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
 
+  /** Header condenses once it sticks. */
+  const sentinel = useRef<HTMLDivElement | null>(null);
+  const [stuck, setStuck] = useState(false);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), { threshold: 1 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   const ownerNames = useMemo(
     () => [...new Set(data.map((m) => m.owner).filter((o): o is string => Boolean(o)))].sort(),
@@ -427,7 +528,6 @@ export const MaterialBrief: React.FC = () => {
     setStatusReason("");
   };
 
-
   const gapSentence = () => {
     if (!row || row.gapMeasure === null || row.rank === null) return null;
     const active = MEASURES.find((x) => x.id === measureId)!;
@@ -438,296 +538,162 @@ export const MaterialBrief: React.FC = () => {
     return `Ranks ${first.r} on ${first.m.noun} but ${second.r} on ${second.m.noun}. ${row.gapSize} positions apart.`;
   };
 
+  const targetDate = m.requirements?.earliest_need_date ?? null;
+
   return (
-    <div className="space-y-4 pb-16">
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-background pb-3">
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={closeBrief}
-              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-3 w-3" /> Back to register
-            </button>
-            {index >= 0 && (
-              <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+    <div className="pb-24">
+      <div ref={sentinel} className="h-px" />
+
+      {/* Header — full width, sticky, condensed once stuck */}
+      <header
+        className={cn(
+          "sticky top-0 z-20 -mx-4 border-b border-border bg-background/95 px-4 backdrop-blur-sm transition-all",
+          stuck ? "py-2" : "pb-4 pt-2",
+        )}
+      >
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
+            {!stuck && (
+              <div className="flex items-center gap-3 pb-1">
                 <button
                   type="button"
-                  disabled={index <= 0}
-                  onClick={() => openBrief(visible[index - 1].m.material_id)}
-                  className="rounded-sm border border-border p-0.5 disabled:opacity-40"
-                  aria-label="Previous material"
+                  onClick={closeBrief}
+                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
                 >
-                  <ChevronLeft className="h-3 w-3" />
+                  <ArrowLeft className="h-3 w-3" /> Back to register
                 </button>
-                <button
-                  type="button"
-                  disabled={index >= visible.length - 1}
-                  onClick={() => openBrief(visible[index + 1].m.material_id)}
-                  className="rounded-sm border border-border p-0.5 disabled:opacity-40"
-                  aria-label="Next material"
-                >
-                  <ChevronRight className="h-3 w-3" />
-                </button>
-                <span className="font-mono tabular-nums">
-                  {index + 1} of {visible.length}
-                </span>
-              </span>
+                {index >= 0 && (
+                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <button
+                      type="button"
+                      disabled={index <= 0}
+                      onClick={() => openBrief(visible[index - 1].m.material_id)}
+                      className="rounded-sm border border-border p-0.5 disabled:opacity-40"
+                      aria-label="Previous material"
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={index >= visible.length - 1}
+                      onClick={() => openBrief(visible[index + 1].m.material_id)}
+                      className="rounded-sm border border-border p-0.5 disabled:opacity-40"
+                      aria-label="Next material"
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </button>
+                    <span className="font-mono tabular-nums">
+                      {index + 1} of {visible.length}
+                    </span>
+                  </span>
+                )}
+              </div>
             )}
-          </div>
 
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">{m.name}</h1>
-          <div className="font-mono text-[10px] text-muted-foreground">
-            {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Their IDs</span>
-            {m.customer_material_ids.length > 0 ? (
-              m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
-            ) : (
-              <span className="text-[10px] text-muted-foreground/50">—</span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-muted-foreground">
-            <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
-            <span>{m.owner ?? "Unassigned"}</span>
-            <span>
-              {m.priority_selected ? "Priority" : "Not prioritised"}
-              {m.priority_selected && m.priority_period ? ` · ${m.priority_period}` : ""}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="h-7 text-[11px]">
-            Export brief
-          </Button>
-          <Button size="sm" className="h-7 text-[11px]">
-            Order intelligence
-          </Button>
-        </div>
-      </div>
-
-        {/* Step cards — the workflow, first thing you see */}
-        <div >
-          <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
-        </div>
-
-      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
-        <div className="space-y-4 lg:col-span-2">
-        {/* Section 2 — Classification (editable) */}
-        <section className="rounded-md border border-border">
-          <div className="px-3 pt-3">
-            <SectionTitle note="Identity and classification. Corrections are written to the event log.">
-              Classification
-            </SectionTitle>
-          </div>
-          <div className="grid sm:grid-cols-2">
-            <DerivedField
-              label="Name"
-              value={m.name}
-              provenance={m.provenance.name}
-              note="Source: not recorded"
-              placeholder="Material name"
-              onSave={(v) =>
-                v &&
-                v !== m.name &&
-                updateMaterial(m.material_id, { name: v }, ["name"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "name",
-                    from_value: m.name,
-                    to_value: v,
-                  },
-                ])
-              }
-            />
-            <DerivedField
-              label="CAS number — Derived by VCG"
-              value={m.cas_number}
-              provenance={m.provenance.cas_number}
-              placeholder="e.g. 13463-67-7"
-              onSave={(v) =>
-                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "cas_number",
-                    from_value: m.cas_number,
-                    to_value: v || null,
-                  },
-                ])
-              }
-            />
-            <DerivedField
-              label="Material class — Derived by VCG"
-              value={m.material_class}
-              provenance={m.provenance.material_class}
-              placeholder="Material class"
-              onSave={(v) =>
-                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "material_class",
-                    from_value: m.material_class,
-                    to_value: v || null,
-                  },
-                ])
-              }
-            />
-            <DerivedField
-              label="Customer material group"
-              value={m.customer_material_group}
-              provenance={m.provenance.customer_material_group}
-              note="Source: not recorded"
-              placeholder="Group"
-              onSave={(v) =>
-                updateMaterial(m.material_id, { customer_material_group: v || null }, ["customer_material_group"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "customer_material_group",
-                    from_value: m.customer_material_group,
-                    to_value: v || null,
-                  },
-                ])
-              }
-            />
-            <TagsField
-              label="Application categories"
-              values={m.application_categories}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { application_categories: v }, ["application_categories"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "application_categories",
-                    from_value: m.application_categories.join(", ") || null,
-                    to_value: v.join(", ") || null,
-                  },
-                ])
-              }
-            />
-            <TagsField
-              label="Product categories"
-              values={m.product_categories}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "product_categories",
-                    from_value: m.product_categories.join(", ") || null,
-                    to_value: v.join(", ") || null,
-                  },
-                ])
-              }
-            />
-            <div className="border-t border-border/60 px-3 py-2">
-              <div className="text-[11px] text-muted-foreground">Entry type</div>
-              <Select
-                value={m.entry_type}
-                onValueChange={(v) => {
-                  if (v === m.entry_type) return;
-                  updateMaterial(m.material_id, { entry_type: v as Material["entry_type"] }, ["entry_type"], [
-                    {
-                      material_id: m.material_id,
-                      event_type: "field_correction",
-                      field: "entry_type",
-                      from_value: ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type,
-                      to_value: ENTRY_TYPE_LABEL[v as Material["entry_type"]] ?? v,
-                    },
-                  ]);
-                }}
-              >
-                <SelectTrigger className="mt-1 h-7 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
-                    <SelectItem key={k} value={k} className="text-xs">
-                      {ENTRY_TYPE_LABEL[k]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 5 — Where it stands */}
-        <section className="rounded-md border border-border p-3">
-          <SectionTitle note="Recorded judgement. Every change is written to the event log.">
-            Where it stands
-          </SectionTitle>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</div>
-              <Select
-                value={draftStatus ?? m.journey_status}
-                onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
-              >
-                <SelectTrigger className="h-7 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_ORDER.map((s) => (
-                    <SelectItem key={s} value={s} className="text-xs">
-                      {JOURNEY_STATUS_LABEL[s]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {draftStatus === null && m.blocker_category && (
-                <div className="text-[10px] text-muted-foreground">
-                  Blocker on record: <span className="text-amber-700">{m.blocker_category}</span>
-                </div>
+            <h1
+              className={cn(
+                "truncate font-semibold tracking-tight text-foreground transition-all",
+                stuck ? "text-base" : "text-2xl",
               )}
+            >
+              {m.name}
+            </h1>
+
+            <div className="font-mono text-[11px] text-muted-foreground">
+              {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
             </div>
 
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Owner</div>
-              <Select
-                value={m.owner ?? UNASSIGNED}
-                onValueChange={(v) => {
-                  const next = v === UNASSIGNED ? null : v;
-                  if (next === m.owner) return;
-                  updateMaterial(m.material_id, { owner: next }, ["owner"], [
-                    {
-                      material_id: m.material_id,
-                      event_type: "owner_change",
-                      field: "owner",
-                      from_value: m.owner,
-                      to_value: next,
-                    },
-                  ]);
-                }}
-              >
-                <SelectTrigger className="h-7 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ownerNames.map((o) => (
-                    <SelectItem key={o} value={o} className="text-xs">
-                      {o}
-                    </SelectItem>
-                  ))}
-                  <SelectItem value={UNASSIGNED} className="text-xs">
-                    Unassigned
+            {!stuck && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+                {m.customer_material_ids.length > 0 ? (
+                  m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
+                ) : (
+                  <span className="font-mono text-[10px] text-muted-foreground/50">No customer IDs</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" className="h-7 text-[11px]">
+              Export brief
+            </Button>
+            <Button size="sm" className="h-7 text-[11px]">
+              Order intelligence
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Decision bar — the interactive layer above the reference material */}
+      <div className="mt-4 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          <BarField label="Status" className="w-[168px]">
+            <Select
+              value={draftStatus ?? m.journey_status}
+              onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
+            >
+              <SelectTrigger className="h-7 bg-background text-xs">
+                <SelectValue asChild>
+                  <span>
+                    <StatusPill
+                      status={draftStatus ?? m.journey_status}
+                      entered={m.provenance.journey_status?.origin === "entered"}
+                    />
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_ORDER.map((s) => (
+                  <SelectItem key={s} value={s} className="text-xs">
+                    {JOURNEY_STATUS_LABEL[s]}
                   </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                ))}
+              </SelectContent>
+            </Select>
+            {draftStatus === null && m.blocker_category && (
+              <div className="text-[10px] text-muted-foreground">
+                Blocker: <span className="text-amber-700">{m.blocker_category}</span>
+              </div>
+            )}
+          </BarField>
 
-            <div className="space-y-1">
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Priority</div>
-              <label className="flex items-center gap-2 text-[11px]">
+          <BarField label="Owner" className="w-[150px]">
+            <Select
+              value={m.owner ?? UNASSIGNED}
+              onValueChange={(v) => {
+                const next = v === UNASSIGNED ? null : v;
+                if (next === m.owner) return;
+                updateMaterial(m.material_id, { owner: next }, ["owner"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "owner_change",
+                    field: "owner",
+                    from_value: m.owner,
+                    to_value: next,
+                  },
+                ]);
+              }}
+            >
+              <SelectTrigger className="h-7 bg-background text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ownerNames.map((o) => (
+                  <SelectItem key={o} value={o} className="text-xs">
+                    {o}
+                  </SelectItem>
+                ))}
+                <SelectItem value={UNASSIGNED} className="text-xs">
+                  Unassigned
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </BarField>
+
+          <BarField label="Priority" className="w-[210px]">
+            <div className="flex items-center gap-2">
+              <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-foreground">
                 <Checkbox
                   checked={m.priority_selected}
                   onCheckedChange={(c) => {
@@ -749,214 +715,363 @@ export const MaterialBrief: React.FC = () => {
                   }}
                   className="h-3.5 w-3.5"
                 />
-                Selected as priority
+                Selected
               </label>
               <Input
                 value={m.priority_period ?? ""}
                 onChange={(e) =>
                   updateMaterial(m.material_id, { priority_period: e.target.value || null }, ["priority_period"])
                 }
-                placeholder="Period, e.g. 2026 H2"
-                className="h-7 text-[11px]"
+                placeholder="Period"
+                className="h-7 bg-background font-mono text-[11px]"
               />
             </div>
-          </div>
+          </BarField>
+
+          <BarField label="Target date" className="w-[120px]">
+            <div className="flex h-7 items-center font-mono text-xs tabular-nums text-foreground">
+              {targetDate ?? <span className="text-muted-foreground/50">—</span>}
+            </div>
+          </BarField>
 
           {draftStatus !== null && (
-            <div className="mt-3 space-y-2 rounded-sm border border-border bg-muted/40 p-2">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground">
                 {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
-              </div>
-              <Input
-                value={statusReason}
-                onChange={(e) => setStatusReason(e.target.value)}
-                placeholder="Reason for change (optional)"
-                className="h-7 text-[11px]"
-              />
-
-              {draftNeedsBlocker && (
-                <div className="grid gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2 sm:grid-cols-3">
-                  <Select value={draftBlockerCategory} onValueChange={setDraftBlockerCategory}>
-                    <SelectTrigger className="h-7 text-xs">
-                      <SelectValue placeholder="Blocker category (required)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BLOCKER_CATEGORIES.map((b) => (
-                        <SelectItem key={b} value={b} className="text-xs">
-                          {b}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    value={draftBlockerDetail}
-                    onChange={(e) => setDraftBlockerDetail(e.target.value)}
-                    placeholder="Blocker detail (optional)"
-                    className="h-7 text-[11px]"
-                  />
-                  <Input
-                    value={draftBlockerCondition}
-                    onChange={(e) => setDraftBlockerCondition(e.target.value)}
-                    placeholder="What would have to change (optional)"
-                    className="h-7 text-[11px]"
-                  />
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
-                  Save
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
-                  Cancel
-                </Button>
-                {draftNeedsBlocker && !draftBlockerCategory && (
-                  <span className="text-[10px] text-amber-700">A blocker category is required for this status.</span>
-                )}
-              </div>
+              </span>
+              <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
+                Save changes
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
+                Discard
+              </Button>
             </div>
           )}
-        </section>
-
-        {/* Section 1 — Figures */}
-        <section className="rounded-md border border-border">
-          <div className="px-3 pt-3">
-            <SectionTitle note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero.">
-              Figures
-            </SectionTitle>
-          </div>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3">
-            <EditableFigure
-              label="Annual volume (t/yr)"
-              value={m.annual_volume}
-              provenance={m.provenance.annual_volume}
-              placeholder="t/yr"
-              onSave={(raw) => saveFigure("annual_volume", raw)}
-            />
-            <EditableFigure
-              label="Unit price (EUR/kg)"
-              value={m.unit_price}
-              decimals={2}
-              provenance={m.provenance.unit_price}
-              placeholder="EUR/kg"
-              onSave={(raw) => saveFigure("unit_price", raw)}
-            />
-            <Figure
-              label="Annual spend (EUR)"
-              value={m.annual_spend}
-              provenance={m.provenance.annual_spend}
-              computedInputs="volume x price"
-            />
-            <EditableFigure
-              label="GHG emission factor (kgCO2e/kg)"
-              value={m.ghg_emission_factor}
-              decimals={2}
-              provenance={m.provenance.ghg_emission_factor}
-              placeholder="kgCO2e/kg"
-              onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
-            />
-            <Figure
-              label="GHG contribution (tCO2e/yr)"
-              value={m.ghg_contribution}
-              provenance={m.provenance.ghg_contribution}
-              computedInputs="volume x emission factor"
-            />
-            <EditableFigure
-              label="GHG boundary"
-              value={m.ghg_boundary}
-              provenance={m.provenance.ghg_boundary}
-              placeholder="e.g. Cradle-to-gate (A1-A3)"
-              onSave={(raw) => saveText("ghg_boundary", raw)}
-            />
-            <EditableFigure
-              label="GHG data basis"
-              value={m.ghg_data_basis}
-              provenance={m.provenance.ghg_data_basis}
-              placeholder="e.g. Supplier-specific"
-              onSave={(raw) => saveText("ghg_data_basis", raw)}
-            />
-            <EditableFigure
-              label="Suppliers"
-              value={m.supplier_count}
-              provenance={m.provenance.supplier_count}
-              placeholder="count"
-              onSave={(raw) => saveFigure("supplier_count", raw)}
-            />
-            <EditableFigure
-              label="Supplier countries"
-              value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
-              provenance={m.provenance.supplier_countries}
-              placeholder="DE, FI, CN"
-              onSave={(raw) => {
-                const next = raw
-                  .split(",")
-                  .map((x) => x.trim().toUpperCase())
-                  .filter(Boolean);
-                updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "supplier_countries",
-                    from_value: m.supplier_countries.join(", ") || null,
-                    to_value: next.join(", ") || null,
-                  },
-                ]);
-              }}
-            />
-          </div>
-        </section>
-
-
         </div>
 
-        <aside className="space-y-4">
-        {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
-        <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 lg:max-h-[560px] lg:overflow-y-auto">
-          <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
-          <BriefDriverScores materialId={m.material_id} />
-        </section>
+        {draftStatus !== null && (
+          <div className="mt-2.5 space-y-2 border-t border-border/60 pt-2.5">
+            <Input
+              value={statusReason}
+              onChange={(e) => setStatusReason(e.target.value)}
+              placeholder="Reason for change (optional)"
+              className="h-7 bg-background text-[11px]"
+            />
 
+            {draftNeedsBlocker && (
+              <div className="grid gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2 sm:grid-cols-3">
+                <Select value={draftBlockerCategory} onValueChange={setDraftBlockerCategory}>
+                  <SelectTrigger className="h-7 bg-background text-xs">
+                    <SelectValue placeholder="Blocker category (required)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BLOCKER_CATEGORIES.map((b) => (
+                      <SelectItem key={b} value={b} className="text-xs">
+                        {b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  value={draftBlockerDetail}
+                  onChange={(e) => setDraftBlockerDetail(e.target.value)}
+                  placeholder="Blocker detail (optional)"
+                  className="h-7 bg-background text-[11px]"
+                />
+                <Input
+                  value={draftBlockerCondition}
+                  onChange={(e) => setDraftBlockerCondition(e.target.value)}
+                  placeholder="What would have to change (optional)"
+                  className="h-7 bg-background text-[11px]"
+                />
+              </div>
+            )}
 
-
-        {/* Section 4 — Position */}
-        <section className="rounded-md border border-border p-3">
-          <SectionTitle note="Four separate positions. Never combined into one score.">Position</SectionTitle>
-          <div className="space-y-1.5">
-            {MEASURES.map((mm) => {
-              const rank = rankTables[mm.id].ranks[m.material_id] ?? null;
-              const amber = row?.gapMeasure === mm.id || (row?.gapMeasure && mm.id === measureId);
-              return (
-                <div
-                  key={mm.id}
-                  className={cn(
-                    "flex items-baseline justify-between gap-2 rounded-sm px-1.5 py-1 text-[11px]",
-                    amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground",
-                  )}
-                >
-                  <span>{mm.label}</span>
-                  <span className="font-mono tabular-nums">
-                    {rank === null ? (
-                      <span className="text-muted-foreground/50">— No figure</span>
-                    ) : (
-                      <>
-                        <span className={cn("text-xs", amber ? "font-medium" : "text-foreground")}>{rank}</span> of{" "}
-                        {rankTables[mm.id].rankedCount} ranked
-                      </>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
+            {draftNeedsBlocker && !draftBlockerCategory && (
+              <span className="text-[10px] text-amber-700">A blocker category is required for this status.</span>
+            )}
           </div>
-          {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
-        </section>
+        )}
+      </div>
 
-        {/* Section 6 — History */}
-        <section className="rounded-md border border-border p-3">
-          <SectionTitle note="The record of decisions. Newest first.">History</SectionTitle>
-          <MaterialHistory materialId={m.material_id} />
-        </section>
-        </aside>
+      {/* Body — 62 / 38. Neither column scrolls. */}
+      <div className="mt-8 grid gap-x-10 gap-y-8 lg:grid-cols-[62fr_38fr] lg:items-start">
+        {/* Left column */}
+        <div className="space-y-8">
+          <Section
+            title="Figures"
+            note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
+          >
+            <div>
+              <GroupLabel first>Volume and cost</GroupLabel>
+              <EditableFigure
+                label="Annual volume (t/yr)"
+                value={m.annual_volume}
+                provenance={m.provenance.annual_volume}
+                placeholder="t/yr"
+                onSave={(raw) => saveFigure("annual_volume", raw)}
+              />
+              <EditableFigure
+                label="Unit price (EUR/kg)"
+                value={m.unit_price}
+                decimals={2}
+                provenance={m.provenance.unit_price}
+                placeholder="EUR/kg"
+                onSave={(raw) => saveFigure("unit_price", raw)}
+              />
+              <Figure
+                label="Annual spend (EUR)"
+                value={m.annual_spend}
+                provenance={m.provenance.annual_spend}
+                computedInputs="volume x price"
+              />
+
+              <GroupLabel>Emissions</GroupLabel>
+              <EditableFigure
+                label="GHG emission factor (kgCO2e/kg)"
+                value={m.ghg_emission_factor}
+                decimals={2}
+                provenance={m.provenance.ghg_emission_factor}
+                placeholder="kgCO2e/kg"
+                onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
+              />
+              <Figure
+                label="GHG contribution (tCO2e/yr)"
+                value={m.ghg_contribution}
+                provenance={m.provenance.ghg_contribution}
+                computedInputs="volume x emission factor"
+              />
+              <EditableFigure
+                label="GHG boundary"
+                value={m.ghg_boundary}
+                provenance={m.provenance.ghg_boundary}
+                placeholder="e.g. Cradle-to-gate (A1-A3)"
+                onSave={(raw) => saveText("ghg_boundary", raw)}
+              />
+              <EditableFigure
+                label="GHG data basis"
+                value={m.ghg_data_basis}
+                provenance={m.provenance.ghg_data_basis}
+                placeholder="e.g. Supplier-specific"
+                onSave={(raw) => saveText("ghg_data_basis", raw)}
+              />
+
+              <GroupLabel>Supply</GroupLabel>
+              <EditableFigure
+                label="Suppliers"
+                value={m.supplier_count}
+                provenance={m.provenance.supplier_count}
+                placeholder="count"
+                onSave={(raw) => saveFigure("supplier_count", raw)}
+              />
+              <EditableFigure
+                label="Supplier countries"
+                value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
+                provenance={m.provenance.supplier_countries}
+                placeholder="DE, FI, CN"
+                onSave={(raw) => {
+                  const next = raw
+                    .split(",")
+                    .map((x) => x.trim().toUpperCase())
+                    .filter(Boolean);
+                  updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "supplier_countries",
+                      from_value: m.supplier_countries.join(", ") || null,
+                      to_value: next.join(", ") || null,
+                    },
+                  ]);
+                }}
+              />
+            </div>
+          </Section>
+
+          <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
+            <div className="grid sm:grid-cols-2 sm:gap-x-8">
+              <DerivedField
+                label="Name"
+                value={m.name}
+                provenance={m.provenance.name}
+                note="Source: not recorded"
+                placeholder="Material name"
+                onSave={(v) =>
+                  v &&
+                  v !== m.name &&
+                  updateMaterial(m.material_id, { name: v }, ["name"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "name",
+                      from_value: m.name,
+                      to_value: v,
+                    },
+                  ])
+                }
+              />
+              <DerivedField
+                label="CAS number"
+                value={m.cas_number}
+                provenance={m.provenance.cas_number}
+                placeholder="e.g. 13463-67-7"
+                onSave={(v) =>
+                  updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "cas_number",
+                      from_value: m.cas_number,
+                      to_value: v || null,
+                    },
+                  ])
+                }
+              />
+              <DerivedField
+                label="Material class"
+                value={m.material_class}
+                provenance={m.provenance.material_class}
+                placeholder="Material class"
+                onSave={(v) =>
+                  updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "material_class",
+                      from_value: m.material_class,
+                      to_value: v || null,
+                    },
+                  ])
+                }
+              />
+              <DerivedField
+                label="Customer material group"
+                value={m.customer_material_group}
+                provenance={m.provenance.customer_material_group}
+                note="Source: not recorded"
+                placeholder="Group"
+                onSave={(v) =>
+                  updateMaterial(m.material_id, { customer_material_group: v || null }, ["customer_material_group"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "customer_material_group",
+                      from_value: m.customer_material_group,
+                      to_value: v || null,
+                    },
+                  ])
+                }
+              />
+              <TagsField
+                label="Application categories"
+                values={m.application_categories}
+                onSave={(v) =>
+                  updateMaterial(m.material_id, { application_categories: v }, ["application_categories"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "application_categories",
+                      from_value: m.application_categories.join(", ") || null,
+                      to_value: v.join(", ") || null,
+                    },
+                  ])
+                }
+              />
+              <TagsField
+                label="Product categories"
+                values={m.product_categories}
+                onSave={(v) =>
+                  updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "product_categories",
+                      from_value: m.product_categories.join(", ") || null,
+                      to_value: v.join(", ") || null,
+                    },
+                  ])
+                }
+              />
+              <div className="px-1 py-1.5">
+                <div className="text-[11px] text-muted-foreground">Entry type</div>
+                <Select
+                  value={m.entry_type}
+                  onValueChange={(v) => {
+                    if (v === m.entry_type) return;
+                    updateMaterial(m.material_id, { entry_type: v as Material["entry_type"] }, ["entry_type"], [
+                      {
+                        material_id: m.material_id,
+                        event_type: "field_correction",
+                        field: "entry_type",
+                        from_value: ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type,
+                        to_value: ENTRY_TYPE_LABEL[v as Material["entry_type"]] ?? v,
+                      },
+                    ]);
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-7 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
+                      <SelectItem key={k} value={k} className="text-xs">
+                        {ENTRY_TYPE_LABEL[k]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </Section>
+
+          <div className="border-t border-border/50 pt-2">
+            <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
+          </div>
+        </div>
+
+        {/* Right column */}
+        <div className="space-y-8">
+          <Section title="Position" note="Four separate positions. Never combined into one score.">
+            <div>
+              {MEASURES.map((mm) => {
+                const rank = rankTables[mm.id].ranks[m.material_id] ?? null;
+                const amber = row?.gapMeasure === mm.id || (row?.gapMeasure && mm.id === measureId);
+                return (
+                  <div
+                    key={mm.id}
+                    className={cn(
+                      "flex items-baseline justify-between gap-3 rounded-sm px-1 py-1 text-[11px]",
+                      amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground",
+                    )}
+                  >
+                    <span>{mm.label}</span>
+                    <span className="font-mono text-[11px] tabular-nums">
+                      {rank === null ? (
+                        <span className="text-muted-foreground/50">— No figure</span>
+                      ) : (
+                        <>
+                          <span className={cn("text-sm", amber ? "font-medium" : "text-foreground")}>{rank}</span> of{" "}
+                          {rankTables[mm.id].rankedCount} ranked
+                        </>
+                      )}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {gapSentence() && <p className="pt-1 text-[11px] text-amber-700">{gapSentence()}</p>}
+          </Section>
+
+          <div className="rounded-md border border-dashed border-primary/25 bg-primary/5 p-3">
+            <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
+              <BriefDriverScores materialId={m.material_id} />
+            </Section>
+          </div>
+
+          <Section title="History" note="The record of decisions. Newest first.">
+            <MaterialHistory materialId={m.material_id} />
+          </Section>
+        </div>
       </div>
     </div>
   );
