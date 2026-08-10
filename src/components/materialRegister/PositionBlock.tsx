@@ -3,9 +3,11 @@ import { cn } from "@/lib/utils";
 import { MEASURES, useRegister, type MeasureId } from "@/components/materialRegister/registerStore";
 
 /**
- * Four independent rank positions for one material. One rail per measure —
- * the rails are separate scales and are never normalised against each other,
- * averaged, or drawn as a single combined bar. Read-only.
+ * Four independent rank positions for one material, always rendered in the same
+ * fixed order (Spend, Emissions, Volume, Applications) whatever measure the table
+ * is ranked by — only the accent highlight moves. One rail per measure; the rails
+ * are separate scales and are never normalised together, averaged, or drawn as a
+ * single combined bar. Read-only.
  */
 interface Props {
   materialId: string;
@@ -19,7 +21,8 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
   const { rankTables, measureId, filteredTotal } = useRegister();
   const detail = variant === "detail";
 
-  const compactLabel = (id: MeasureId) => (id === "multi_application" ? "Apps" : undefined);
+  const labelFor = (id: MeasureId, compact: boolean) =>
+    id === "multi_application" ? (compact ? "Apps" : "Applications") : undefined;
 
   const entries = MEASURES.map((mm) => {
     const table = rankTables[mm.id];
@@ -75,7 +78,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
                   e.isActive ? "text-primary/70" : e.isAmber ? "text-amber-700/70" : "text-muted-foreground/45",
                 )}
               >
-                {(!detail && compactLabel(e.mm.id)) || e.mm.label}
+                {labelFor(e.mm.id, !detail) || e.mm.label}
               </span>
               <span className={cn("font-mono tabular-nums", detail && "text-[14px]", tone)}>
                 {e.rank === null ? "—" : `#${e.rank}`}
