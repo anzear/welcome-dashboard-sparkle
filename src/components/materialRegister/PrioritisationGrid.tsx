@@ -1,0 +1,602 @@
+import React, { useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
+import { MEASURES, useRegister } from "@/components/materialRegister/registerStore";
+import FilterChips from "@/components/materialRegister/FilterChips";
+import GridFindings from "@/components/materialRegister/GridFindings";
+import PriorityDialog from "@/components/materialRegister/PriorityDialog";
+import {
+  BriefLink,
+  Expandable,
+  STATUS_DOT,
+  StatusLegend,
+  fmtMeasure,
+  median,
+} from "@/components/materialRegister/gridPrimitives";
+import { nf } from "@/components/materialRegister/primitives";
+
+const W = 780;
+const H = 460;
+const PAD = { l: 78, r: 24, t: 22, b: 52 };
+const PW = W - PAD.l - PAD.r;
+const PH = H - PAD.t - PAD.b;
+const Y_MAX = 12;
+
+/** Deterministic jitter so overlapping dots stay individually clickable. */
+const jitter = (id: string) => {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) % 997;
+  return { dx: ((h % 13) - 6) * 0.55, dy: (((h >> 2) % 13) - 6) * 0.55 };
+};
+
+interface Dot {
+  m: Material;
+  x: number;
+  y: number;
+  cx: number;
+  cy: number;
+  r: number;
+  drivers: number;
+  constraints: number;
+}
+
+const PrioritisationGrid: React.FC = () => {
+  const {
+    measureId,
+    setMeasureId,
+    measure,
+    ordered,
+    data,
+    filtersActive,
+    countsFor,
+    openBrief,
+    priorityPeriod,
+    setPriorityPeriod,
+    prioritySetCount,
+    inPrioritySet,
+    applyPriority,
+    toast,
+    setToast,
+    undo,
+  } = useRegister();
+
+  const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [prioritySetOnly, setPrioritySetOnly] = useState(false);
+  const [dialog, setDialog] = useState<{ add: boolean } | null>(null);
+  const [hover, setHover] = useState<{ dot: Dot; left: number; top: number } | null>(null);
+  const [lasso, setLasso] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  const rows = useMemo(
+    () => (prioritySetOnly ? ordered.filter((r) => inPrioritySet(r.m)) : ordered),
+    [ordered, prioritySetOnly, inPrioritySet],
+  );
+
+  const classified = useMemo(() => {
+    const plotted: { m: Material; x: number; y: number; constraints: number }[] = [];
+    const noFigure: Material[] = [];
+    const notScored: Material[] = [];
+    rows.forEach(({ m }) => {
+      const x = measure.value(m);
+      const counts = countsFor(m.material_id);
+      if (x === null) {
+        noFigure.push(m);
+        return;
+      }
+      if (counts.scored_count === null) {
+        notScored.push(m);
+        return;
+      }
+      plotted.push({
+        m,
+        x,
+        y: counts.strong_drivers as number,
+        constraints: counts.strong_constraints as number,
+      });
+    });
+    const byName = (a: Material, b: Material) => a.name.localeCompare(b.name);
+    return { plotted, noFigure: noFigure.sort(byName), notScored: notScored.sort(byName) };
+  }, [rows, measure, countsFor]);
+
+  const { plotted, noFigure, notScored } = classified;
+
+  const xMax = Math.max(1, ...plotted.map((p) => p.x));
+  const xMedian = median(plotted.map((p) => p.x));
+  const yMedian = median(plotted.map((p) => p.y));
+
+  const sx = (v: number) => PAD.l + (v / xMax) * PW;
+  const sy = (v: number) => PAD.t + PH - (v / Y_MAX) * PH;
+
+  const dots: Dot[] = plotted.map((p) => {
+    const j = jitter(p.m.material_id);
+    return {
+      ...p,
+      cx: sx(p.x) + j.dx,
+      cy: sy(p.y) + j.dy,
+      r: 3.4 + Math.min(p.constraints, 6) * 1.35,
+      drivers: p.y,
+    };
+  });
+
+  const unplottedTotal = noFigure.length + notScored.length;
+  const statusesPresent = [...new Set(plotted.map((p) => p.m.journey_status))] as JourneyStatus[];
+
+  const pickedMaterials = data.filter((m) => picked.has(m.material_id));
+
+  const toSvg = (e: React.MouseEvent) => {
+    const rect = svgRef.current!.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * W,
+      y: ((e.clientY - rect.top) / rect.height) * H,
+    };
+  };
+
+  const startLasso = (e: React.MouseEvent) => {
+    const p = toSvg(e);
+    setLasso({ x0: p.x, y0: p.y, x1: p.x, y1: p.y });
+  };
+
+  const moveLasso = (e: React.MouseEvent) => {
+    if (!lasso) return;
+    const p = toSvg(e);
+    setLasso({ ...lasso, x1: p.x, y1: p.y });
+  };
+
+  const endLasso = () => {
+    if (!lasso) return;
+    const x0 = Math.min(lasso.x0, lasso.x1);
+    const x1 = Math.max(lasso.x0, lasso.x1);
+    const y0 = Math.min(lasso.y0, lasso.y1);
+    const y1 = Math.max(lasso.y0, lasso.y1);
+    if (x1 - x0 > 3 && y1 - y0 > 3) {
+      const inside = dots.filter((d) => d.cx >= x0 && d.cx <= x1 && d.cy >= y0 && d.cy <= y1);
+      setPicked((prev) => {
+        const next = new Set(prev);
+        inside.forEach((d) => next.add(d.m.material_id));
+        return next;
+      });
+    }
+    setLasso(null);
+  };
+
+  const xTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * xMax);
+
+  return (
+    <div className="w-full space-y-2">
+      {/* Controls */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Exposure</span>
+          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+            {MEASURES.map((mm) => (
+              <button
+                key={mm.id}
+                type="button"
+                aria-pressed={measureId === mm.id}
+                onClick={() => setMeasureId(mm.id)}
+                className={cn(
+                  "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  measureId === mm.id
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {mm.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Priority set for
+          </span>
+          <Input
+            value={priorityPeriod}
+            onChange={(e) => setPriorityPeriod(e.target.value)}
+            className="h-7 w-28 text-[11px]"
+            aria-label="Priority period"
+          />
+          <span className="text-[11px] text-muted-foreground">
+            <span className="font-mono tabular-nums">{prioritySetCount}</span> materials in {priorityPeriod} priority
+            set
+          </span>
+        </div>
+
+        <button
+          type="button"
+          aria-pressed={prioritySetOnly}
+          onClick={() => setPrioritySetOnly((v) => !v)}
+          className={cn(
+            "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
+            prioritySetOnly
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-border text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Priority set only
+        </button>
+
+        <span className="text-[11px] text-muted-foreground">
+          Showing <span className="font-mono tabular-nums">{rows.length}</span> of{" "}
+          <span className="font-mono tabular-nums">{data.length}</span> materials
+        </span>
+      </div>
+
+      <FilterChips />
+
+      <GridFindings rows={rows} measure={measure} />
+
+      {/* Selection bar */}
+      {picked.size > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
+          <span className="font-medium text-foreground">
+            <span className="font-mono tabular-nums">{picked.size}</span> selected
+          </span>
+          <button
+            type="button"
+            onClick={() => setDialog({ add: true })}
+            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
+          >
+            Add to priority set
+          </button>
+          <button
+            type="button"
+            onClick={() => setDialog({ add: false })}
+            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
+          >
+            Remove
+          </button>
+          <button
+            type="button"
+            onClick={() => setPicked(new Set())}
+            className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
+      {toast && (
+        <div className="flex items-center gap-3 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
+          <span className="text-foreground">{toast.message}</span>
+          <button
+            type="button"
+            onClick={undo}
+            className="underline decoration-dotted underline-offset-2 hover:text-primary"
+          >
+            Undo
+          </button>
+          <button type="button" onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground">
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2 lg:flex-row">
+        {/* Plot */}
+        <div className="relative min-w-0 flex-1 rounded-md border border-border bg-card p-1">
+          <svg
+            ref={svgRef}
+            viewBox={`0 0 ${W} ${H}`}
+            className="w-full select-none"
+            onMouseMove={moveLasso}
+            onMouseUp={endLasso}
+            onMouseLeave={() => {
+              setLasso(null);
+              setHover(null);
+            }}
+          >
+            <rect
+              x={PAD.l}
+              y={PAD.t}
+              width={PW}
+              height={PH}
+              fill="transparent"
+              onMouseDown={startLasso}
+              className="cursor-crosshair"
+            />
+
+            {/* frame */}
+            <line x1={PAD.l} y1={PAD.t + PH} x2={PAD.l + PW} y2={PAD.t + PH} stroke="hsl(var(--border))" />
+            <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + PH} stroke="hsl(var(--border))" />
+
+            {/* y ticks: integer count axis */}
+            {Array.from({ length: Y_MAX + 1 }, (_, i) => i).map((i) => (
+              <g key={i}>
+                <line
+                  x1={PAD.l - 4}
+                  y1={sy(i)}
+                  x2={PAD.l + PW}
+                  y2={sy(i)}
+                  stroke="hsl(var(--border))"
+                  strokeOpacity={i % 2 === 0 ? 0.5 : 0.2}
+                />
+                {i % 2 === 0 && (
+                  <text
+                    x={PAD.l - 8}
+                    y={sy(i) + 3}
+                    textAnchor="end"
+                    className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                  >
+                    {i}
+                  </text>
+                )}
+              </g>
+            ))}
+
+            {/* x ticks */}
+            {xTicks.map((t, i) => (
+              <g key={i}>
+                <line x1={sx(t)} y1={PAD.t + PH} x2={sx(t)} y2={PAD.t + PH + 4} stroke="hsl(var(--border))" />
+                <text
+                  x={sx(t)}
+                  y={PAD.t + PH + 15}
+                  textAnchor="middle"
+                  className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                >
+                  {nf(0).format(Math.round(t))}
+                </text>
+              </g>
+            ))}
+
+            {/* median splits */}
+            {xMedian !== null && (
+              <>
+                <line
+                  x1={sx(xMedian)}
+                  y1={PAD.t}
+                  x2={sx(xMedian)}
+                  y2={PAD.t + PH}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeOpacity={0.35}
+                  strokeDasharray="3 3"
+                />
+                <text
+                  x={sx(xMedian) + 4}
+                  y={PAD.t + 10}
+                  className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                >
+                  median {nf(0).format(Math.round(xMedian))}
+                </text>
+              </>
+            )}
+            {yMedian !== null && (
+              <>
+                <line
+                  x1={PAD.l}
+                  y1={sy(yMedian)}
+                  x2={PAD.l + PW}
+                  y2={sy(yMedian)}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeOpacity={0.35}
+                  strokeDasharray="3 3"
+                />
+                <text
+                  x={PAD.l + PW - 2}
+                  y={sy(yMedian) - 4}
+                  textAnchor="end"
+                  className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                >
+                  median {yMedian}
+                </text>
+              </>
+            )}
+
+            {/* quadrant orientation labels */}
+            <text x={PAD.l + PW - 6} y={PAD.t + 24} textAnchor="end" className="fill-muted-foreground/60 text-[10px]">
+              Act now
+            </text>
+            <text x={PAD.l + 6} y={PAD.t + 24} className="fill-muted-foreground/60 text-[10px]">
+              Watch
+            </text>
+            <text
+              x={PAD.l + PW - 6}
+              y={PAD.t + PH - 8}
+              textAnchor="end"
+              className="fill-muted-foreground/60 text-[10px]"
+            >
+              Exposed, no case yet
+            </text>
+            <text x={PAD.l + 6} y={PAD.t + PH - 8} className="fill-muted-foreground/60 text-[10px]">
+              Low priority
+            </text>
+
+            {/* axis titles */}
+            <text
+              x={PAD.l + PW / 2}
+              y={H - 12}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+            >
+              {measure.label} ({measure.unit}) — measured
+            </text>
+            <text
+              transform={`translate(14 ${PAD.t + PH / 2}) rotate(-90)`}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+            >
+              Strong drivers (count)
+            </text>
+
+            {/* dots */}
+            {dots.map((d) => {
+              const isPicked = picked.has(d.m.material_id);
+              return (
+                <g key={d.m.material_id}>
+                  {inPrioritySet(d.m) && (
+                    <circle
+                      cx={d.cx}
+                      cy={d.cy}
+                      r={d.r + 2.6}
+                      fill="none"
+                      stroke="hsl(var(--foreground))"
+                      strokeOpacity={0.55}
+                      strokeWidth={1.2}
+                    />
+                  )}
+                  <circle
+                    cx={d.cx}
+                    cy={d.cy}
+                    r={d.r}
+                    className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                    fill="currentColor"
+                    fillOpacity={0.75}
+                    stroke={isPicked ? "hsl(var(--primary))" : "hsl(var(--background))"}
+                    strokeWidth={isPicked ? 2 : 0.8}
+                    onMouseEnter={(e) => {
+                      const rect = svgRef.current!.getBoundingClientRect();
+                      setHover({
+                        dot: d,
+                        left: ((d.cx / W) * rect.width) as number,
+                        top: ((d.cy / H) * rect.height) as number,
+                      });
+                    }}
+                    onMouseLeave={() => setHover(null)}
+                    onClick={(e) => {
+                      if (e.shiftKey) {
+                        setPicked((prev) => {
+                          const next = new Set(prev);
+                          next.has(d.m.material_id) ? next.delete(d.m.material_id) : next.add(d.m.material_id);
+                          return next;
+                        });
+                        return;
+                      }
+                      openBrief(d.m.material_id);
+                    }}
+                  />
+                </g>
+              );
+            })}
+
+            {lasso && (
+              <rect
+                x={Math.min(lasso.x0, lasso.x1)}
+                y={Math.min(lasso.y0, lasso.y1)}
+                width={Math.abs(lasso.x1 - lasso.x0)}
+                height={Math.abs(lasso.y1 - lasso.y0)}
+                fill="hsl(var(--primary))"
+                fillOpacity={0.08}
+                stroke="hsl(var(--primary))"
+                strokeOpacity={0.5}
+                strokeDasharray="3 3"
+              />
+            )}
+          </svg>
+
+          {hover && (
+            <div
+              className="pointer-events-none absolute z-20 w-56 rounded-md border border-border bg-popover p-2 text-[10px] shadow-md"
+              style={{
+                left: Math.min(hover.left + 12, 9999),
+                top: Math.max(hover.top - 10, 0),
+                transform: hover.left > 420 ? "translateX(-110%)" : undefined,
+              }}
+            >
+              <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
+              <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
+              <p className="mt-1 font-mono tabular-nums text-foreground">
+                {fmtMeasure(hover.dot.x, measure)}
+              </p>
+              <p className="text-muted-foreground">
+                {hover.dot.drivers} strong drivers · {hover.dot.constraints} strong constraints
+              </p>
+              <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-2 py-1.5">
+            <StatusLegend statuses={statusesPresent} />
+            <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
+                <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
+                <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
+              </svg>
+              Dot size = strong constraints (count). Bigger dot, more barriers.
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <svg width="14" height="14" viewBox="0 0 14 14">
+                <circle cx="7" cy="7" r="6" fill="none" stroke="hsl(var(--foreground))" strokeOpacity={0.55} />
+                <circle cx="7" cy="7" r="3.2" fill="currentColor" fillOpacity={0.6} />
+              </svg>
+              Ring = already in the {priorityPeriod} priority set
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              X is measured. Y and dot size are counts of judgements — never combined into a score or a ranking.
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              Shift-click or drag a box to select. Click a dot to open its brief.
+            </span>
+          </div>
+        </div>
+
+        {/* Not plotted */}
+        <aside className="w-full shrink-0 space-y-2 rounded-md border border-border bg-card p-2.5 lg:w-72">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Not plotted</p>
+            <p className="mt-1 text-[11px] text-foreground">
+              <span className="font-mono tabular-nums">{unplottedTotal}</span> materials not plotted
+            </p>
+            <p className="text-[10px] text-muted-foreground">
+              A missing figure or no judgement at all cannot be a position. None of these sits at zero.
+            </p>
+          </div>
+
+          {unplottedTotal === 0 ? (
+            <p className="text-[11px] text-muted-foreground">Everything in scope has a figure and a judgement.</p>
+          ) : (
+            <div className="space-y-2">
+              {noFigure.length > 0 && (
+                <Expandable
+                  count={noFigure.length}
+                  summary={
+                    <>
+                      <span className="font-mono tabular-nums">{noFigure.length}</span> no {measure.noun} figure
+                    </>
+                  }
+                >
+                  {noFigure.map((m) => (
+                    <BriefLink key={m.material_id} m={m} />
+                  ))}
+                </Expandable>
+              )}
+              {notScored.length > 0 && (
+                <Expandable
+                  count={notScored.length}
+                  summary={
+                    <>
+                      <span className="font-mono tabular-nums">{notScored.length}</span> not yet scored
+                    </>
+                  }
+                >
+                  {notScored.map((m) => (
+                    <BriefLink key={m.material_id} m={m} />
+                  ))}
+                </Expandable>
+              )}
+              <p className="text-[10px] text-muted-foreground">
+                Scoring or a figure moves a material onto the plot. This is a task list, not an error.
+              </p>
+            </div>
+          )}
+        </aside>
+      </div>
+
+      <PriorityDialog
+        open={dialog !== null}
+        add={dialog?.add ?? true}
+        period={priorityPeriod}
+        materials={pickedMaterials}
+        onCancel={() => setDialog(null)}
+        onApply={() => {
+          applyPriority(picked, dialog!.add);
+          setDialog(null);
+          setPicked(new Set());
+        }}
+      />
+    </div>
+  );
+};
+
+export default PrioritisationGrid;
