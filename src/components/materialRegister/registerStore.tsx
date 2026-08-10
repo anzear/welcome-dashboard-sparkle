@@ -22,6 +22,7 @@ import {
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/materialRegister/tags";
 
 
 export const CURRENT_USER = "You";
