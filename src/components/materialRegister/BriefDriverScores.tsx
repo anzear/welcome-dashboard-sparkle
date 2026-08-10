@@ -70,14 +70,14 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
 
       <div className="divide-y divide-primary/10">
         {DRIVER_QUESTIONS.map((q) => {
-          const rec = scoreFor(materialId, q.id);
+          const rec = scoreFor(materialId, q.question_id);
           const v = rec?.score ?? null;
-          const expanded = openId === q.id;
+          const expanded = openId === q.question_id;
           return (
-            <div key={q.id} className="py-1.5">
+            <div key={q.question_id} className="py-1.5">
               <button
                 type="button"
-                onClick={() => setOpenId(expanded ? null : q.id)}
+                onClick={() => setOpenId(expanded ? null : q.question_id)}
                 className="grid w-full grid-cols-[1fr_auto_2.25rem] items-center gap-2 rounded-sm px-1 text-left hover:bg-primary/5"
                 title={q.helper}
               >
@@ -106,7 +106,7 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
                     size="sm"
                     ariaLabel={`${q.label} score`}
                     onChange={(next) => {
-                      setScore(materialId, q.id, next, rec?.note ?? null);
+                      setScore(materialId, q.question_id, next, rec?.note ?? null);
                       setOpenId(null);
                     }}
                   />

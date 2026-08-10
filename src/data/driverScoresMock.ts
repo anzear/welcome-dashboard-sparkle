@@ -54,7 +54,7 @@ function buildSeed(): DriverScore[] {
     else coverage = 7 + Math.floor(rand() * 5);
     if (coverage === 0) return;
 
-    const order = DRIVER_QUESTIONS.map((q) => q.id);
+    const order = DRIVER_QUESTIONS.map((q) => q.question_id);
     // Stable shuffle of which questions got answered.
     for (let i = order.length - 1; i > 0; i--) {
       const j = Math.floor(rand() * (i + 1));
@@ -68,8 +68,8 @@ function buildSeed(): DriverScore[] {
 
     const values: Record<string, number> = {};
     DRIVER_QUESTIONS.forEach((q) => {
-      if (!chosen.has(q.id)) return;
-      values[q.id] = clamp(TENDENCY[q.id] + (rand() * 4 - 2));
+      if (!chosen.has(q.question_id)) return;
+      values[q.question_id] = clamp(TENDENCY[q.question_id] + (rand() * 4 - 2));
     });
 
     // Realistic tensions: forced by regulation but not ready; wanted but costly.

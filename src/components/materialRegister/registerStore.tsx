@@ -616,7 +616,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
    * A material with nothing scored has null counts, not zeroes.
    */
   const countsFor = (materialId: string): DriverCounts => {
-    const values = DRIVER_QUESTIONS.map((q) => scores[scoreKey(materialId, q.id)]?.score ?? null).filter(
+    const values = DRIVER_QUESTIONS.map((q) => scores[scoreKey(materialId, q.question_id)]?.score ?? null).filter(
       (v): v is number => v !== null,
     );
     if (values.length === 0) {
