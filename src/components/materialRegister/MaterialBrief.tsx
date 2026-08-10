@@ -84,7 +84,7 @@ const DataRow: React.FC<{
       onClick && "cursor-pointer hover:bg-muted/50",
     )}
   >
-    <div className="min-w-0">
+    <div className="min-w-[7rem]">
       <div className="text-[11px] leading-snug text-muted-foreground">
         {label}
         {onClick && (
@@ -95,7 +95,7 @@ const DataRow: React.FC<{
       </div>
       <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
     </div>
-    <div className="justify-self-end text-right">{value}</div>
+    <div className="max-w-[65%] justify-self-end break-words text-right">{value}</div>
     {children}
   </div>
 );
@@ -889,7 +889,7 @@ export const MaterialBrief: React.FC = () => {
           </Section>
 
           <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
-            <div className="grid sm:grid-cols-2 sm:gap-x-8">
+            <div>
               <DerivedField
                 label="Name"
                 value={m.name}
