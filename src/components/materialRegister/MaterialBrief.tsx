@@ -390,6 +390,148 @@ export const MaterialBrief: React.FC = () => {
 
       <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
         <div className="space-y-4 lg:col-span-2">
+        {/* Section 2 — Classification (editable) */}
+        <section className="rounded-md border border-border">
+          <div className="px-3 pt-3">
+            <SectionTitle note="Identity and classification. Corrections are written to the event log.">
+              Classification
+            </SectionTitle>
+          </div>
+          <div className="grid sm:grid-cols-2">
+            <DerivedField
+              label="Name"
+              value={m.name}
+              provenance={m.provenance.name}
+              note="Source: not recorded"
+              placeholder="Material name"
+              onSave={(v) =>
+                v &&
+                v !== m.name &&
+                updateMaterial(m.material_id, { name: v }, ["name"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "name",
+                    from_value: m.name,
+                    to_value: v,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="CAS number — Derived by VCG"
+              value={m.cas_number}
+              provenance={m.provenance.cas_number}
+              placeholder="e.g. 13463-67-7"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "cas_number",
+                    from_value: m.cas_number,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="Material class — Derived by VCG"
+              value={m.material_class}
+              provenance={m.provenance.material_class}
+              placeholder="Material class"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "material_class",
+                    from_value: m.material_class,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <DerivedField
+              label="Customer material group"
+              value={m.customer_material_group}
+              provenance={m.provenance.customer_material_group}
+              note="Source: not recorded"
+              placeholder="Group"
+              onSave={(v) =>
+                updateMaterial(m.material_id, { customer_material_group: v || null }, ["customer_material_group"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "customer_material_group",
+                    from_value: m.customer_material_group,
+                    to_value: v || null,
+                  },
+                ])
+              }
+            />
+            <TagsField
+              label="Application categories"
+              values={m.application_categories}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { application_categories: v }, ["application_categories"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "application_categories",
+                    from_value: m.application_categories.join(", ") || null,
+                    to_value: v.join(", ") || null,
+                  },
+                ])
+              }
+            />
+            <TagsField
+              label="Product categories"
+              values={m.product_categories}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "product_categories",
+                    from_value: m.product_categories.join(", ") || null,
+                    to_value: v.join(", ") || null,
+                  },
+                ])
+              }
+            />
+            <div className="border-t border-border/60 px-3 py-2">
+              <div className="text-[11px] text-muted-foreground">Entry type</div>
+              <Select
+                value={m.entry_type}
+                onValueChange={(v) => {
+                  if (v === m.entry_type) return;
+                  updateMaterial(m.material_id, { entry_type: v as Material["entry_type"] }, ["entry_type"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "entry_type",
+                      from_value: ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type,
+                      to_value: ENTRY_TYPE_LABEL[v as Material["entry_type"]] ?? v,
+                    },
+                  ]);
+                }}
+              >
+                <SelectTrigger className="mt-1 h-7 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
+                    <SelectItem key={k} value={k} className="text-xs">
+                      {ENTRY_TYPE_LABEL[k]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </section>
+
         {/* Section 5 — Where it stands */}
         <section className="rounded-md border border-border p-3">
           <SectionTitle note="Recorded judgement. Every change is written to the event log.">
