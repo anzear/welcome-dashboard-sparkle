@@ -134,7 +134,9 @@ const DerivedField: React.FC<{
 };
 
 export const MaterialBrief: React.FC = () => {
-  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial } = useRegister();
+  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
+    useRegister();
+
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
@@ -362,7 +364,7 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Step cards — content filled in later */}
         <div className="lg:col-span-2">
-          <BriefStepCards />
+          <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
         </div>
 
 
