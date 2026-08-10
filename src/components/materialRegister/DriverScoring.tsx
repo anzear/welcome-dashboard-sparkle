@@ -338,11 +338,12 @@ const DriverScoring: React.FC = () => {
                   <th
                     className={cn(
                       HEAD,
-                      "sticky right-0 z-30 border-b border-l border-border bg-background px-2 py-2 text-right",
+                      "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-background px-2 py-2 text-right",
                     )}
                   >
                     Scored
                   </th>
+
                 </tr>
               </thead>
               <tbody>
