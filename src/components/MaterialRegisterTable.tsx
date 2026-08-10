@@ -474,7 +474,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 </th>
               )}
               {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
+              {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
