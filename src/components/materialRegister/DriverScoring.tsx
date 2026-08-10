@@ -244,136 +244,168 @@ const DriverScoring: React.FC = () => {
         </p>
       )}
 
-      {/* Matrix */}
-      <div className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
-        <table className="w-full border-separate border-spacing-0 text-[11px]">
-          <thead className="sticky top-0 z-20">
-            <tr>
-              <th
-                className={cn(
-                  HEAD,
-                  "sticky left-0 z-30 min-w-[220px] border-b border-r border-border bg-background px-3 py-2 text-left",
-                )}
-              >
-                Material
-              </th>
-              {questions.map((q) => {
-                const cov = questionCoverage(q.question_id, rows);
-                const active = mode === "by_question" && focusQuestion === q.question_id;
-                return (
+      {/* Matrix — axes follow the entry mode */}
+      {(() => {
+        const transposed = mode === "by_material";
+        // Rows carry the entity being worked through; columns carry the other axis.
+        const rowItems = transposed
+          ? questions.map((q) => ({ id: q.question_id, label: q.label, short: q.short, helper: q.helper }))
+          : rows.map((m) => ({ id: m.material_id, label: m.name, short: m.name, helper: "" }));
+        const colItems = transposed
+          ? rows.map((m) => ({ id: m.material_id, label: m.name, short: m.name, helper: "" }))
+          : questions.map((q) => ({ id: q.question_id, label: q.label, short: q.short, helper: q.helper }));
+
+        const focusId = transposed ? focusMaterial : focusQuestion;
+        const rowMode: Mode = transposed ? "by_material" : "by_question";
+        const scoreAt = (rowId: string, colId: string) =>
+          transposed ? scoreFor(colId, rowId) : scoreFor(rowId, colId);
+        const cellTitleParts = (rowId: string, colId: string) => {
+          const materialId = transposed ? colId : rowId;
+          const questionId = transposed ? rowId : colId;
+          const m = rows.find((x) => x.material_id === materialId);
+          return { name: m?.name ?? materialId, qLabel: questionLabel(questionId), materialId, questionId };
+        };
+
+        return (
+          <div className="relative max-h-[70vh] overflow-auto rounded-md border border-border">
+            <table className="w-full border-separate border-spacing-0 text-[11px]">
+              <thead className="sticky top-0 z-20">
+                <tr>
                   <th
-                    key={q.question_id}
-                    title={q.helper ? `${q.label} — ${q.helper}` : q.label}
                     className={cn(
-                      "border-b border-border bg-background px-1 py-1.5 align-bottom",
-                      active && "bg-primary/5",
+                      HEAD,
+                      "sticky left-0 z-30 min-w-[220px] border-b border-r border-border bg-background px-3 py-2 text-left",
                     )}
                   >
-                    <button
-                      type="button"
-                      onClick={() => openRun("by_question", q.question_id)}
-                      className="flex w-full flex-col items-center gap-0.5"
-                    >
-                      <span
-                        className={cn(
-                          HEAD,
-                          "hover:text-foreground",
-                          active && "text-primary",
-                        )}
-                      >
-                        {q.short}
-                      </span>
-                      <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
-                        {cov}/{rows.length}
-                      </span>
-                    </button>
+                    {transposed ? "Question" : "Material"}
                   </th>
-                );
-              })}
-              <th className={cn(HEAD, "border-b border-l border-border bg-background px-2 py-2 text-right")}>
-                Scored
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((m) => {
-              const counts = countsFor(m.material_id);
-              const activeRow = mode === "by_material" && focusMaterial === m.material_id;
-              return (
-                <tr key={m.material_id} className={cn("hover:bg-muted/40", activeRow && "bg-primary/5")}>
-                  <td
-                    className={cn(
-                      "sticky left-0 z-10 border-b border-r border-border bg-background px-3 py-1 align-middle",
-                      activeRow && "bg-primary/5",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => openRun("by_material", m.material_id)}
-                      className="block max-w-[200px] truncate text-left hover:text-primary"
-                      title={m.name}
-                    >
-                      <span className={cn("leading-tight", activeRow && "text-primary")}>{m.name}</span>
-                    </button>
-                    {counts.scored_count !== null && (
-                      <span className="block text-[9px] leading-tight text-muted-foreground">
-                        {counts.strong_drivers} strong {counts.strong_drivers === 1 ? "driver" : "drivers"},{" "}
-                        {counts.strong_constraints} strong{" "}
-                        {counts.strong_constraints === 1 ? "constraint" : "constraints"}
-                      </span>
-                    )}
-                  </td>
-                  {questions.map((q) => {
-                    const rec = scoreFor(m.material_id, q.question_id);
-                    const v = rec?.score ?? null;
-                    const activeCol = mode === "by_question" && focusQuestion === q.question_id;
+                  {colItems.map((c) => {
+                    const active = transposed ? false : mode === "by_question" && focusQuestion === c.id;
+                    const cov = transposed
+                      ? questions.filter(
+                          (q) => (scoreFor(c.id, q.question_id)?.score ?? null) !== null,
+                        ).length
+                      : questionCoverage(c.id, rows);
+                    const denom = transposed ? questions.length : rows.length;
                     return (
-                      <td
-                        key={q.question_id}
-                        className={cn("border-b border-border px-1 py-1 text-center", activeCol && "bg-primary/5")}
+                      <th
+                        key={c.id}
+                        title={c.helper ? `${c.label} — ${c.helper}` : c.label}
+                        className={cn(
+                          "border-b border-border bg-background px-1 py-1.5 align-bottom",
+                          active && "bg-primary/5",
+                        )}
                       >
                         <button
                           type="button"
-                          onClick={() => {
-                            openRun(mode, mode === "by_question" ? q.question_id : m.material_id);
-                            setIndex(
-                              mode === "by_question"
-                                ? rows.findIndex((r) => r.material_id === m.material_id)
-                                : questions.findIndex((x) => x.question_id === q.question_id),
-                            );
-                          }}
-                          title={
-                            v === null
-                              ? `${m.name} · ${q.label} — not scored`
-                              : `${m.name} · ${q.label} — ${signed(v)}${rec?.note ? ` · ${rec.note}` : ""}${
-                                  rec ? ` · ${rec.scored_by} on ${rec.scored_at.slice(0, 10)}` : ""
-                                }`
-                          }
-                          className={cn(
-                            "mx-auto flex h-5 w-7 items-center justify-center rounded-[3px] font-mono text-[10px] tabular-nums",
-                            scoreTone(v),
-                          )}
+                          onClick={() => openRun(transposed ? "by_material" : "by_question", c.id)}
+                          className="flex w-full flex-col items-center gap-0.5"
                         >
-                          {v === null ? "·" : signed(v)}
+                          <span
+                            className={cn(
+                              HEAD,
+                              "hover:text-foreground",
+                              transposed && "max-w-[80px] truncate",
+                              active && "text-primary",
+                            )}
+                          >
+                            {c.short}
+                          </span>
+                          <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
+                            {cov}/{denom}
+                          </span>
                         </button>
-                      </td>
+                      </th>
                     );
                   })}
-                  <td className="border-b border-l border-border px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
-                    {counts.scored_count === null ? (
-                      <span className="text-muted-foreground/60" title="No judgements recorded">
-                        —
-                      </span>
-                    ) : (
-                      `${counts.scored_count}/12`
-                    )}
-                  </td>
+                  <th className={cn(HEAD, "border-b border-l border-border bg-background px-2 py-2 text-right")}>
+                    Scored
+                  </th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {rowItems.map((r) => {
+                  const activeRow = focusId === r.id;
+                  const counts = transposed ? null : countsFor(r.id);
+                  const rowScored = transposed
+                    ? rows.filter((m) => (scoreFor(m.material_id, r.id)?.score ?? null) !== null).length
+                    : (counts?.scored_count ?? null);
+                  const rowDenom = transposed ? rows.length : questions.length;
+                  return (
+                    <tr key={r.id} className={cn("hover:bg-muted/40", activeRow && "bg-primary/5")}>
+                      <td
+                        className={cn(
+                          "sticky left-0 z-10 border-b border-r border-border bg-background px-3 py-1 align-middle",
+                          activeRow && "bg-primary/5",
+                        )}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => openRun(rowMode, r.id)}
+                          className="block max-w-[200px] truncate text-left hover:text-primary"
+                          title={r.helper ? `${r.label} — ${r.helper}` : r.label}
+                        >
+                          <span className={cn("leading-tight", activeRow && "text-primary")}>{r.label}</span>
+                        </button>
+                        {!transposed && counts && counts.scored_count !== null && (
+                          <span className="block text-[9px] leading-tight text-muted-foreground">
+                            {counts.strong_drivers} strong {counts.strong_drivers === 1 ? "driver" : "drivers"},{" "}
+                            {counts.strong_constraints} strong{" "}
+                            {counts.strong_constraints === 1 ? "constraint" : "constraints"}
+                          </span>
+                        )}
+                      </td>
+                      {colItems.map((c) => {
+                        const rec = scoreAt(r.id, c.id);
+                        const v = rec?.score ?? null;
+                        const activeCol = !transposed && mode === "by_question" && focusQuestion === c.id;
+                        const t = cellTitleParts(r.id, c.id);
+                        return (
+                          <td
+                            key={c.id}
+                            className={cn("border-b border-border px-1 py-1 text-center", activeCol && "bg-primary/5")}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => {
+                                openRun(rowMode, r.id);
+                                setIndex(colItems.findIndex((x) => x.id === c.id));
+                              }}
+                              title={
+                                v === null
+                                  ? `${t.name} · ${t.qLabel} — not scored`
+                                  : `${t.name} · ${t.qLabel} — ${signed(v)}${rec?.note ? ` · ${rec.note}` : ""}${
+                                      rec ? ` · ${rec.scored_by} on ${rec.scored_at.slice(0, 10)}` : ""
+                                    }`
+                              }
+                              className={cn(
+                                "mx-auto flex h-5 w-7 items-center justify-center rounded-[3px] font-mono text-[10px] tabular-nums",
+                                scoreTone(v),
+                              )}
+                            >
+                              {v === null ? "·" : signed(v)}
+                            </button>
+                          </td>
+                        );
+                      })}
+                      <td className="border-b border-l border-border px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
+                        {rowScored === null ? (
+                          <span className="text-muted-foreground/60" title="No judgements recorded">
+                            —
+                          </span>
+                        ) : (
+                          `${rowScored}/${rowDenom}`
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        );
+      })()}
+
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
