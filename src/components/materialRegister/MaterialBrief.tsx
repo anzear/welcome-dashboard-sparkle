@@ -240,9 +240,9 @@ export const MaterialBrief: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-16">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border bg-background pb-3">
         <div className="space-y-1.5">
           <div className="flex items-center gap-3">
             <button
@@ -313,177 +313,15 @@ export const MaterialBrief: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        {/* Section 1 — Figures */}
-        <section className="rounded-md border border-border lg:col-span-2">
-          <div className="px-3 pt-3">
-            <SectionTitle note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero.">
-              Figures
-            </SectionTitle>
-          </div>
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3">
-            <Figure
-              label="Annual volume (t/yr)"
-              value={m.annual_volume}
-              provenance={m.provenance.annual_volume}
-            />
-            <Figure
-              label="Unit price (EUR/kg)"
-              value={m.unit_price}
-              decimals={2}
-              provenance={m.provenance.unit_price}
-            />
-            <Figure
-              label="Annual spend (EUR)"
-              value={m.annual_spend}
-              provenance={m.provenance.annual_spend}
-              computedInputs="volume x price"
-            />
-            <Figure
-              label="GHG emission factor (kgCO2e/kg)"
-              value={m.ghg_emission_factor}
-              decimals={2}
-              provenance={m.provenance.ghg_emission_factor}
-            />
-            <Figure
-              label="GHG contribution (tCO2e/yr)"
-              value={m.ghg_contribution}
-              provenance={m.provenance.ghg_contribution}
-              computedInputs="volume x emission factor"
-            />
-            <Figure label="GHG boundary" value={m.ghg_boundary} provenance={m.provenance.ghg_boundary} />
-            <Figure label="GHG data basis" value={m.ghg_data_basis} provenance={m.provenance.ghg_data_basis} />
-            <Figure label="Suppliers" value={m.supplier_count} provenance={m.provenance.supplier_count} />
-            <Figure
-              label="Supplier countries"
-              value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
-              provenance={m.provenance.supplier_countries}
-            />
-          </div>
-        </section>
-
-        {/* Step cards — content filled in later */}
-        <div className="lg:col-span-2">
+        {/* Step cards — the workflow, first thing you see */}
+        <div >
           <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
         </div>
 
-
-        {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
-        <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
-          <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
-          <BriefDriverScores materialId={m.material_id} />
-        </section>
-
-
-        {/* Section 2 — Classification */}
-        <section className="rounded-md border border-border lg:col-span-2">
-          <div className="px-3 pt-3">
-            <SectionTitle>Classification</SectionTitle>
-          </div>
-          <div className="grid sm:grid-cols-2">
-            <Figure label="Name" value={m.name} provenance={m.provenance.name} />
-            <DerivedField
-              label="CAS number — Derived by VCG"
-              value={m.cas_number}
-              provenance={m.provenance.cas_number}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "cas_number",
-                    from_value: m.cas_number,
-                    to_value: v || null,
-                  },
-                ])
-              }
-
-            />
-            <DerivedField
-              label="Material class — Derived by VCG"
-              value={m.material_class}
-              provenance={m.provenance.material_class}
-              onSave={(v) =>
-                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "field_correction",
-                    field: "material_class",
-                    from_value: m.material_class,
-                    to_value: v || null,
-                  },
-                ])
-              }
-
-            />
-            <Figure
-              label="Customer material group"
-              value={m.customer_material_group}
-              provenance={m.provenance.customer_material_group}
-            />
-            <div className="border-t border-border/60 px-3 py-2">
-              <div className="text-[11px] text-muted-foreground">Application categories</div>
-              <div className="flex flex-wrap gap-1 pt-1">
-                {m.application_categories.length > 0 ? (
-                  m.application_categories.map((c) => <Chip key={c}>{c}</Chip>)
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
-                )}
-              </div>
-            </div>
-            <div className="border-t border-border/60 px-3 py-2">
-              <div className="text-[11px] text-muted-foreground">Product categories</div>
-              <div className="flex flex-wrap gap-1 pt-1">
-                {m.product_categories.length > 0 ? (
-                  m.product_categories.map((c) => <Chip key={c}>{c}</Chip>)
-                ) : (
-                  <span className="text-[10px] text-muted-foreground/50">—</span>
-                )}
-              </div>
-            </div>
-            <Figure
-              label="Entry type"
-              value={ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
-              provenance={m.provenance.entry_type}
-            />
-          </div>
-        </section>
-
-        {/* Section 4 — Position */}
-        <section className="rounded-md border border-border p-3">
-          <SectionTitle note="Four separate positions. Never combined into one score.">Position</SectionTitle>
-          <div className="space-y-1.5">
-            {MEASURES.map((mm) => {
-              const rank = rankTables[mm.id].ranks[m.material_id] ?? null;
-              const amber = row?.gapMeasure === mm.id || (row?.gapMeasure && mm.id === measureId);
-              return (
-                <div
-                  key={mm.id}
-                  className={cn(
-                    "flex items-baseline justify-between gap-2 rounded-sm px-1.5 py-1 text-[11px]",
-                    amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground",
-                  )}
-                >
-                  <span>{mm.label}</span>
-                  <span className="font-mono tabular-nums">
-                    {rank === null ? (
-                      <span className="text-muted-foreground/50">— No figure</span>
-                    ) : (
-                      <>
-                        <span className={cn("text-xs", amber ? "font-medium" : "text-foreground")}>{rank}</span> of{" "}
-                        {rankTables[mm.id].rankedCount} ranked
-                      </>
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
-        </section>
-
+      <div className="grid gap-4 lg:grid-cols-3 lg:items-start">
+        <div className="space-y-4 lg:col-span-2">
         {/* Section 5 — Where it stands */}
-        <section className="rounded-md border border-border p-3 lg:col-span-2">
+        <section className="rounded-md border border-border p-3">
           <SectionTitle note="Recorded judgement. Every change is written to the event log.">
             Where it stands
           </SectionTitle>
@@ -639,12 +477,178 @@ export const MaterialBrief: React.FC = () => {
           )}
         </section>
 
+        {/* Section 1 — Figures */}
+        <section className="rounded-md border border-border">
+          <div className="px-3 pt-3">
+            <SectionTitle note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero.">
+              Figures
+            </SectionTitle>
+          </div>
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3">
+            <Figure
+              label="Annual volume (t/yr)"
+              value={m.annual_volume}
+              provenance={m.provenance.annual_volume}
+            />
+            <Figure
+              label="Unit price (EUR/kg)"
+              value={m.unit_price}
+              decimals={2}
+              provenance={m.provenance.unit_price}
+            />
+            <Figure
+              label="Annual spend (EUR)"
+              value={m.annual_spend}
+              provenance={m.provenance.annual_spend}
+              computedInputs="volume x price"
+            />
+            <Figure
+              label="GHG emission factor (kgCO2e/kg)"
+              value={m.ghg_emission_factor}
+              decimals={2}
+              provenance={m.provenance.ghg_emission_factor}
+            />
+            <Figure
+              label="GHG contribution (tCO2e/yr)"
+              value={m.ghg_contribution}
+              provenance={m.provenance.ghg_contribution}
+              computedInputs="volume x emission factor"
+            />
+            <Figure label="GHG boundary" value={m.ghg_boundary} provenance={m.provenance.ghg_boundary} />
+            <Figure label="GHG data basis" value={m.ghg_data_basis} provenance={m.provenance.ghg_data_basis} />
+            <Figure label="Suppliers" value={m.supplier_count} provenance={m.provenance.supplier_count} />
+            <Figure
+              label="Supplier countries"
+              value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
+              provenance={m.provenance.supplier_countries}
+            />
+          </div>
+        </section>
+
+        {/* Section 2 — Classification */}
+        <section className="rounded-md border border-border">
+          <div className="px-3 pt-3">
+            <SectionTitle>Classification</SectionTitle>
+          </div>
+          <div className="grid sm:grid-cols-2">
+            <Figure label="Name" value={m.name} provenance={m.provenance.name} />
+            <DerivedField
+              label="CAS number — Derived by VCG"
+              value={m.cas_number}
+              provenance={m.provenance.cas_number}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "cas_number",
+                    from_value: m.cas_number,
+                    to_value: v || null,
+                  },
+                ])
+              }
+
+            />
+            <DerivedField
+              label="Material class — Derived by VCG"
+              value={m.material_class}
+              provenance={m.provenance.material_class}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "material_class",
+                    from_value: m.material_class,
+                    to_value: v || null,
+                  },
+                ])
+              }
+
+            />
+            <Figure
+              label="Customer material group"
+              value={m.customer_material_group}
+              provenance={m.provenance.customer_material_group}
+            />
+            <div className="border-t border-border/60 px-3 py-2">
+              <div className="text-[11px] text-muted-foreground">Application categories</div>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {m.application_categories.length > 0 ? (
+                  m.application_categories.map((c) => <Chip key={c}>{c}</Chip>)
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-border/60 px-3 py-2">
+              <div className="text-[11px] text-muted-foreground">Product categories</div>
+              <div className="flex flex-wrap gap-1 pt-1">
+                {m.product_categories.length > 0 ? (
+                  m.product_categories.map((c) => <Chip key={c}>{c}</Chip>)
+                ) : (
+                  <span className="text-[10px] text-muted-foreground/50">—</span>
+                )}
+              </div>
+            </div>
+            <Figure
+              label="Entry type"
+              value={ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+              provenance={m.provenance.entry_type}
+            />
+          </div>
+        </section>
+
+        </div>
+
+        <aside className="space-y-4">
+        {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
+        <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3 lg:max-h-[560px] lg:overflow-y-auto">
+          <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
+          <BriefDriverScores materialId={m.material_id} />
+        </section>
+
+
+
+        {/* Section 4 — Position */}
+        <section className="rounded-md border border-border p-3">
+          <SectionTitle note="Four separate positions. Never combined into one score.">Position</SectionTitle>
+          <div className="space-y-1.5">
+            {MEASURES.map((mm) => {
+              const rank = rankTables[mm.id].ranks[m.material_id] ?? null;
+              const amber = row?.gapMeasure === mm.id || (row?.gapMeasure && mm.id === measureId);
+              return (
+                <div
+                  key={mm.id}
+                  className={cn(
+                    "flex items-baseline justify-between gap-2 rounded-sm px-1.5 py-1 text-[11px]",
+                    amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground",
+                  )}
+                >
+                  <span>{mm.label}</span>
+                  <span className="font-mono tabular-nums">
+                    {rank === null ? (
+                      <span className="text-muted-foreground/50">— No figure</span>
+                    ) : (
+                      <>
+                        <span className={cn("text-xs", amber ? "font-medium" : "text-foreground")}>{rank}</span> of{" "}
+                        {rankTables[mm.id].rankedCount} ranked
+                      </>
+                    )}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
+        </section>
+
         {/* Section 6 — History */}
         <section className="rounded-md border border-border p-3">
           <SectionTitle note="The record of decisions. Newest first.">History</SectionTitle>
           <MaterialHistory materialId={m.material_id} />
         </section>
-
+        </aside>
       </div>
     </div>
   );
