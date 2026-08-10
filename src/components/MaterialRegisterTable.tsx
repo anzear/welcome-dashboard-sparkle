@@ -35,16 +35,40 @@ const STICK = "sticky bg-muted/60";
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
-type OptionalColumn = "tags" | "priority" | "target" | "intelligence" | "lastChange";
+type OptionalColumn =
+  | "rank"
+  | "position"
+  | "volume"
+  | "price"
+  | "spend"
+  | "emissions"
+  | "suppliers"
+  | "status"
+  | "owner"
+  | "tags"
+  | "priority"
+  | "target"
+  | "intelligence"
+  | "lastChange";
 
-/** Columns a reader can switch off, each with the reason it exists. */
+/** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
+  ["rank", "Rank", "Position under the active ranking measure"],
+  ["position", "Position", "Rank under all four measures"],
+  ["volume", "Annual volume", "Tonnes per year"],
+  ["price", "Unit price", "EUR per kg"],
+  ["spend", "Annual spend", "EUR per year"],
+  ["emissions", "GHG contribution", "tCO2e per year"],
+  ["suppliers", "Suppliers", "Count of qualified suppliers"],
+  ["status", "Status", "Where the material sits in the journey"],
+  ["owner", "Owner", "Person accountable"],
   ["tags", "Tags", "Customer tags on the material"],
   ["priority", "Priority", "Selected for a period"],
   ["target", "Target date", "Date the replacement is needed by"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
+
 
 
 
