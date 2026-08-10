@@ -35,16 +35,40 @@ const STICK = "sticky bg-muted/60";
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
-type OptionalColumn = "tags" | "priority" | "target" | "intelligence" | "lastChange";
+type OptionalColumn =
+  | "rank"
+  | "position"
+  | "volume"
+  | "price"
+  | "spend"
+  | "emissions"
+  | "suppliers"
+  | "status"
+  | "owner"
+  | "tags"
+  | "priority"
+  | "target"
+  | "intelligence"
+  | "lastChange";
 
-/** Columns a reader can switch off, each with the reason it exists. */
+/** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
+  ["rank", "Rank", "Position under the active ranking measure"],
+  ["position", "Position", "Rank under all four measures"],
+  ["volume", "Annual volume", "Tonnes per year"],
+  ["price", "Unit price", "EUR per kg"],
+  ["spend", "Annual spend", "EUR per year"],
+  ["emissions", "GHG contribution", "tCO2e per year"],
+  ["suppliers", "Suppliers", "Count of qualified suppliers"],
+  ["status", "Status", "Where the material sits in the journey"],
+  ["owner", "Owner", "Person accountable"],
   ["tags", "Tags", "Customer tags on the material"],
   ["priority", "Priority", "Selected for a period"],
   ["target", "Target date", "Date the replacement is needed by"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
+
 
 
 
@@ -101,13 +125,13 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
   const [addOpen, setAddOpen] = useState(false);
-  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>({
-    tags: true,
-    priority: true,
-    target: true,
-    intelligence: true,
-    lastChange: true,
-  });
+  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>(
+    () =>
+      Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])) as Record<
+        OptionalColumn,
+        boolean
+      >,
+  );
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
@@ -154,10 +178,14 @@ export const MaterialRegisterTable: React.FC = () => {
   /** The active measure is marked once per column: header accent plus a faint tint. */
   const colTint = (id: MeasureId) => (activeCol(id) ? "bg-primary/[0.05]" : undefined);
 
-  // Base columns: checkbox, rank, material, position, volume, price, spend, GHG, suppliers, status, owner.
-  const colCount = 11;
+  // Always present: checkbox and Material. Everything else is switchable.
+  const colCount = 2;
   const extraCols =
     (activeCol("applications") ? 1 : 0) + OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
+
+  /** Pinned offsets shift when the rank column is switched off. */
+  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+  const positionLeft = cols.rank ? "left-[19rem]" : "left-[16rem]";
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -254,7 +282,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 <SlidersHorizontal className="h-3 w-3" /> Columns
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-56 p-2">
+            <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
               <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
                 Optional columns
               </div>
@@ -380,49 +408,63 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              {cols.rank && (
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              )}
               <th
                 className={cn(
                   HEAD,
                   STICK,
-                  "left-[5rem] z-30 w-56 border-r border-border px-3 py-2 text-left",
+                  materialLeft,
+                  "z-30 w-56 border-r border-border px-3 py-2 text-left",
                 )}
               >
                 Material
               </th>
-              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
-                <div className="leading-none">Position</div>
-                {/* Key letters only — one per bar slot, aligned to their positions */}
-                <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
-                  <span title="Spend">S</span>
-                  <span title="Emissions">E</span>
-                  <span title="Volume">V</span>
-                  <span title="Applications">A</span>
-                </div>
-              </th>
+              {cols.position && (
+                <th className={cn(HEAD, STICK, positionLeft, "z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
+                  <div className="leading-none">Position</div>
+                  {/* Key letters only — one per bar slot, aligned to their positions */}
+                  <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
+                    <span title="Spend">S</span>
+                    <span title="Emissions">E</span>
+                    <span title="Volume">V</span>
+                    <span title="Applications">A</span>
+                  </div>
+                </th>
+              )}
 
 
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
-                Annual volume
-                <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>
-                Unit price
-                <div className={UNIT}>(EUR/kg)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
-                Annual spend
-                <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
-                GHG contribution
-                <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
-              </th>
+              {cols.volume && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                  Annual volume
+                  <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+                </th>
+              )}
+              {cols.price && (
+                <th className={cn(HEAD, "px-3 py-2 text-right")}>
+                  Unit price
+                  <div className={UNIT}>(EUR/kg)</div>
+                </th>
+              )}
+              {cols.spend && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                  Annual spend
+                  <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+                </th>
+              )}
+              {cols.emissions && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
+                  GHG contribution
+                  <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+                </th>
+              )}
               {activeCol("applications") && (
                 <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
               )}
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
+
               {cols.tags && <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>}
               {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
               {cols.target && (
@@ -432,7 +474,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 </th>
               )}
               {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
+              {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
@@ -501,18 +543,21 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
+                    {cols.rank && (
+                      <td
+                        className={cn(
+                          STICK,
+                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                        )}
+                      >
+                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
+                      </td>
+                    )}
                     <td
                       className={cn(
                         STICK,
-                        "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
-                      )}
-                    >
-                      {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
-                    </td>
-                    <td
-                      className={cn(
-                        STICK,
-                        "left-[5rem] z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        materialLeft,
+                        "z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <div
@@ -527,43 +572,54 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td
-                      className={cn(
-                        STICK,
-                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
-                      )}
-                    >
-                      <PositionBlock
-                        materialId={m.material_id}
-                        gapMeasure={row.gapMeasure}
-                        gapSize={row.gapSize}
-                      />
-                    </td>
+                    {cols.position && (
+                      <td
+                        className={cn(
+                          STICK,
+                          positionLeft,
+                          "z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        )}
+                      >
+                        <PositionBlock
+                          materialId={m.material_id}
+                          gapMeasure={row.gapMeasure}
+                          gapSize={row.gapSize}
+                        />
+                      </td>
+                    )}
 
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
-                      <NumCell
-                        value={m.annual_volume}
-                        provenance={m.provenance.annual_volume}
-                        emphasis={activeCol("volume")}
-                      />
-                    </td>
-                    <td className="px-3 py-2 text-right align-middle">
-                      <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
-                    </td>
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
-                      <NumCell
-                        value={m.annual_spend}
-                        provenance={m.provenance.annual_spend}
-                        emphasis={activeCol("spend")}
-                      />
-                    </td>
-                    <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
-                      <NumCell
-                        value={m.ghg_contribution}
-                        provenance={m.provenance.ghg_contribution}
-                        emphasis={activeCol("emissions")}
-                      />
-                    </td>
+                    {cols.volume && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
+                        <NumCell
+                          value={m.annual_volume}
+                          provenance={m.provenance.annual_volume}
+                          emphasis={activeCol("volume")}
+                        />
+                      </td>
+                    )}
+                    {cols.price && (
+                      <td className="px-3 py-2 text-right align-middle">
+                        <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
+                      </td>
+                    )}
+                    {cols.spend && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
+                        <NumCell
+                          value={m.annual_spend}
+                          provenance={m.provenance.annual_spend}
+                          emphasis={activeCol("spend")}
+                        />
+                      </td>
+                    )}
+                    {cols.emissions && (
+                      <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
+                        <NumCell
+                          value={m.ghg_contribution}
+                          provenance={m.provenance.ghg_contribution}
+                          emphasis={activeCol("emissions")}
+                        />
+                      </td>
+                    )}
                     {activeCol("applications") && (
                       <td className={cn("px-3 py-2 text-right align-middle", colTint("applications"))}>
                         {m.application_categories && m.application_categories.length > 0 ? (
@@ -579,15 +635,20 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    <td className="px-3 py-2 text-right align-middle">
-                      <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
-                    </td>
-                    <td className="px-3 py-2 align-middle">
-                      <StatusPill
-                        status={m.journey_status}
-                        entered={m.provenance.journey_status?.origin === "entered"}
-                      />
-                    </td>
+                    {cols.suppliers && (
+                      <td className="px-3 py-2 text-right align-middle">
+                        <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
+                      </td>
+                    )}
+                    {cols.status && (
+                      <td className="px-3 py-2 align-middle">
+                        <StatusPill
+                          status={m.journey_status}
+                          entered={m.provenance.journey_status?.origin === "entered"}
+                        />
+                      </td>
+                    )}
+
                     {cols.tags && (
                       <td className="px-3 py-2 align-middle">
                         <TagsCell tags={m.tags} />
@@ -636,18 +697,20 @@ export const MaterialRegisterTable: React.FC = () => {
                         </span>
                       </td>
                     )}
-                    <td className="px-3 py-2 align-middle">
-                      {m.owner ? (
-                        <span>
-                          {m.provenance.owner?.origin === "entered" && (
-                            <span className="mr-0.5 text-muted-foreground/70">^</span>
-                          )}
-                          {m.owner}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/60">Unassigned</span>
-                      )}
-                    </td>
+                    {cols.owner && (
+                      <td className="px-3 py-2 align-middle">
+                        {m.owner ? (
+                          <span>
+                            {m.provenance.owner?.origin === "entered" && (
+                              <span className="mr-0.5 text-muted-foreground/70">^</span>
+                            )}
+                            {m.owner}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground/60">Unassigned</span>
+                        )}
+                      </td>
+                    )}
                     {cols.lastChange && (
                       <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
                         {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
