@@ -382,7 +382,7 @@ const PrioritisationGrid: React.FC = () => {
 
       <FilterChips />
 
-      <GridFindings rows={rows} measure={measure} />
+
 
       {/* Selection bar */}
       {picked.size > 0 && (
