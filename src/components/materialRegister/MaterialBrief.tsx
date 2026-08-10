@@ -15,6 +15,7 @@ import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDial
 import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
+import BriefStepCards from "@/components/materialRegister/BriefStepCards";
 
 import {
   CURRENT_USER,
@@ -358,6 +359,12 @@ export const MaterialBrief: React.FC = () => {
             />
           </div>
         </section>
+
+        {/* Step cards — content filled in later */}
+        <div className="lg:col-span-2">
+          <BriefStepCards />
+        </div>
+
 
         {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
         <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
