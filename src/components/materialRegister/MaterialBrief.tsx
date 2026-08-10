@@ -362,17 +362,17 @@ export const MaterialBrief: React.FC = () => {
           </div>
         </section>
 
-        {/* Step cards — content filled in later */}
-        <div className="lg:col-span-2">
+        {/* Step cards — the workflow, first thing you see */}
+        <div className="order-1 lg:col-span-3">
           <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
         </div>
 
-
         {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
-        <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
+        <section className="order-3 rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
           <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
           <BriefDriverScores materialId={m.material_id} />
         </section>
+
 
 
         {/* Section 2 — Classification */}
