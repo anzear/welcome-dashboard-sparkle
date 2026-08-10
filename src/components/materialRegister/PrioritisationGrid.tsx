@@ -123,6 +123,7 @@ const PrioritisationGrid: React.FC = () => {
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [prioritySetOnly, setPrioritySetOnly] = useState(false);
+  const [activeView, setActiveView] = useState<string | null>(null);
   const [dialog, setDialog] = useState<{ add: boolean } | null>(null);
   const [hover, setHover] = useState<{ dot: Dot; left: number; top: number } | null>(null);
   const [lasso, setLasso] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
