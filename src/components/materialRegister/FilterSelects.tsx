@@ -10,7 +10,6 @@ import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   ENTRY_TYPE_LABEL,
-  NO_BLOCKER,
   NO_PRIORITY,
   TARGET_DATE_BANDS,
   UNASSIGNED_OWNER,
@@ -26,7 +25,6 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
     const uniq = (vals: (string | null)[]) =>
       [...new Set(vals.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b));
     return {
-      classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
       statuses: (Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((s) => ({
         value: s,
         label: JOURNEY_STATUS_LABEL[s],
@@ -68,28 +66,11 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         }).length;
         return { value: b.value, label: `${b.label} (${count})` };
       }),
-      blockers: [
-        ...uniq(data.map((m) => m.blocker_category)).map((v) => ({
-          value: v,
-          label: `${v} (${data.filter((m) => m.blocker_category === v).length})`,
-        })),
-        { value: NO_BLOCKER, label: `No blocker (${data.filter((m) => !m.blocker_category).length})` },
-      ],
-      countries: uniq(data.flatMap((m) => m.supplier_countries ?? [])).map((v) => ({
-        value: v,
-        label: `${v} (${data.filter((m) => (m.supplier_countries ?? []).includes(v)).length})`,
-      })),
     };
   }, [data]);
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <MultiSelectFilter
-        label="Class"
-        options={options.classes}
-        selected={filters.classes}
-        onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-      />
       <MultiSelectFilter
         label="Status"
         options={options.statuses}
@@ -137,18 +118,6 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         options={options.targetDates}
         selected={filters.targetDates}
         onChange={(v) => setFilters((f) => ({ ...f, targetDates: v }))}
-      />
-      <MultiSelectFilter
-        label="Blocker"
-        options={options.blockers}
-        selected={filters.blockers}
-        onChange={(v) => setFilters((f) => ({ ...f, blockers: v }))}
-      />
-      <MultiSelectFilter
-        label="Supplier country"
-        options={options.countries}
-        selected={filters.countries}
-        onChange={(v) => setFilters((f) => ({ ...f, countries: v }))}
       />
     </div>
   );
