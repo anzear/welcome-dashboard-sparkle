@@ -511,7 +511,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <td
                       className={cn(
                         STICK,
-                        "left-[19rem] z-10 w-[216px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                        "left-[19rem] z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
                       )}
                     >
                       <PositionBlock
