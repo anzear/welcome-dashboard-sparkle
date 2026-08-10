@@ -51,6 +51,8 @@ export interface Material {
   supplier_count: number | null;
   supplier_countries: string[];
   journey_status: JourneyStatus;
+  /** null when no requirement has been stated at all. */
+  requirements: MaterialRequirements | null;
   blocker_category: string | null;
   blocker_detail: string | null;
   blocker_date: string | null;
