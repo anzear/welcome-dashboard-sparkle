@@ -659,7 +659,7 @@ export const MaterialBrief: React.FC = () => {
 
             {!stuck && (
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Their IDs</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">IDs</span>
                 {m.customer_material_ids.length > 0 ? (
                   m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
                 ) : (
