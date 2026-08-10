@@ -450,7 +450,7 @@ export const MaterialBrief: React.FC = () => {
         </section>
 
         {/* Section 4 — Position */}
-        <section className="rounded-md border border-border p-3">
+        <section className="order-5 rounded-md border border-border p-3">
           <SectionTitle note="Four separate positions. Never combined into one score.">Position</SectionTitle>
           <div className="space-y-1.5">
             {MEASURES.map((mm) => {
