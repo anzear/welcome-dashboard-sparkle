@@ -502,24 +502,6 @@ const PrioritisationGrid: React.FC = () => {
             ))}
 
             {/* equal-position reference */}
-            {equalLine && (
-              <>
-                <polyline
-                  points={equalLine}
-                  fill="none"
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.28}
-                  strokeWidth={1}
-                />
-                <text
-                  x={xMedian !== null ? sx(xMedian) + 8 : PAD.l + 8}
-                  y={yMedian !== null ? sy(yMedian) - 8 : PAD.t + 12}
-                  className="fill-muted-foreground/70 text-[9px]"
-                >
-                  equal position on both measures
-                </text>
-              </>
-            )}
 
             {/* median splits */}
             {xMedian !== null && (
