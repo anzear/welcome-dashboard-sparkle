@@ -1,12 +1,23 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { materials } from "@/data/materialPrioritisationMock";
+import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
 import {
   JOURNEY_STATUS_LABEL,
+  type EntryType,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
 } from "@/types/materialPrioritisation";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
+import BulkActionDialog, {
+  type BulkKind,
+  type BulkPayload,
+} from "@/components/materialRegister/BulkActionDialog";
+import { X } from "lucide-react";
+
+const CURRENT_USER = "You";
 
 const nf = (decimals = 0) =>
   new Intl.NumberFormat("en-GB", {
@@ -67,13 +78,15 @@ const STATUS_STYLES: Record<JourneyStatus, string> = {
   rejected: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
-const StatusPill: React.FC<{ status: JourneyStatus }> = ({ status }) => (
+const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (
   <span
     className={cn(
       "inline-flex items-center whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-medium",
       STATUS_STYLES[status],
     )}
+    title={entered ? "entered judgement" : undefined}
   >
+    {entered && <span className="mr-0.5 text-primary/70">^</span>}
     {JOURNEY_STATUS_LABEL[status]}
   </span>
 );
@@ -109,10 +122,16 @@ const MEASURES: Measure[] = [
 /** A gap counts as divergent at or above this share of the ranked population. */
 export const DIVERGENCE_THRESHOLD_RATIO = 0.25;
 
+const ENTRY_TYPE_LABEL: Record<EntryType, string> = {
+  substitute_material_source: "Substitute material source",
+  new_material: "New material",
+};
+
+const UNASSIGNED_OWNER = "__unassigned__";
+
 interface RankTable {
   ranks: Record<string, number | null>;
   rankedCount: number;
-  /** ranked materials, descending, in rank order */
   order: Material[];
   unranked: Material[];
 }
@@ -149,22 +168,103 @@ interface RankedRow {
   m: Material;
   rank: number | null;
   ranks: Record<MeasureId, number | null>;
-  /** measure driving the largest gap vs. the active rank, when significant */
   gapMeasure: MeasureId | null;
   gapSize: number;
 }
 
-export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = materials }) => {
+interface Filters {
+  search: string;
+  classes: string[];
+  statuses: string[];
+  owners: string[];
+  entryTypes: string[];
+  groups: string[];
+}
+
+const EMPTY_FILTERS: Filters = {
+  search: "",
+  classes: [],
+  statuses: [],
+  owners: [],
+  entryTypes: [],
+  groups: [],
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = seedMaterials }) => {
+  const [data, setData] = useState<Material[]>(rows);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [onlyUnranked, setOnlyUnranked] = useState(false);
   const [onlyDivergent, setOnlyDivergent] = useState(false);
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [onlySelected, setOnlySelected] = useState(false);
+  const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
+  const [toast, setToast] = useState<{ message: string; snapshot: Material[] } | null>(null);
 
   const measure = MEASURES.find((x) => x.id === measureId)!;
+
+  // ---- filter option sets, from the data itself
+  const options = useMemo(() => {
+    const uniq = (vals: (string | null)[]) =>
+      [...new Set(vals.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b));
+    return {
+      classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
+      statuses: (Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((s) => ({
+        value: s,
+        label: JOURNEY_STATUS_LABEL[s],
+      })),
+      owners: [
+        ...uniq(data.map((m) => m.owner)).map((v) => ({ value: v, label: v })),
+        { value: UNASSIGNED_OWNER, label: "Unassigned" },
+      ],
+      entryTypes: uniq(data.map((m) => m.entry_type)).map((v) => ({
+        value: v,
+        label: ENTRY_TYPE_LABEL[v as EntryType] ?? v,
+      })),
+      groups: uniq(data.map((m) => m.customer_material_group)).map((v) => ({ value: v, label: v })),
+    };
+  }, [data]);
+
+  const ownerNames = useMemo(
+    () => options.owners.filter((o) => o.value !== UNASSIGNED_OWNER).map((o) => o.value),
+    [options.owners],
+  );
+
+  const filtersActive =
+    filters.search.trim() !== "" ||
+    filters.classes.length > 0 ||
+    filters.statuses.length > 0 ||
+    filters.owners.length > 0 ||
+    filters.entryTypes.length > 0 ||
+    filters.groups.length > 0;
+
+  const filtered = useMemo(() => {
+    const q = filters.search.trim().toLowerCase();
+    return data.filter((m) => {
+      if (q) {
+        const hay = [m.name, m.cas_number ?? "", ...(m.customer_material_ids ?? [])]
+          .join(" ")
+          .toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
+      if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
+      if (filters.owners.length) {
+        const key = m.owner ?? UNASSIGNED_OWNER;
+        if (!filters.owners.includes(key)) return false;
+      }
+      if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
+      if (filters.groups.length && !filters.groups.includes(m.customer_material_group ?? "")) return false;
+      return true;
+    });
+  }, [data, filters]);
 
   const { ordered, rankedCount, total, rankTables } = useMemo(() => {
     const tables = {} as Record<MeasureId, RankTable>;
     MEASURES.forEach((mm) => {
-      tables[mm.id] = computeRanks(rows, mm);
+      tables[mm.id] = computeRanks(filtered, mm);
     });
 
     const active = tables[measureId];
@@ -203,10 +303,10 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
     return {
       ordered: orderedRows,
       rankedCount: active.rankedCount,
-      total: rows.length,
+      total: filtered.length,
       rankTables: tables,
     };
-  }, [rows, measureId]);
+  }, [filtered, measureId]);
 
   const missingCount = total - rankedCount;
   const divergentCount = ordered.filter((r) => r.gapMeasure !== null).length;
@@ -215,18 +315,106 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
   const visible = bothFilters
     ? []
     : ordered.filter(
-        (r) => (!onlyUnranked || r.rank === null) && (!onlyDivergent || r.gapMeasure !== null),
+        (r) =>
+          (!onlyUnranked || r.rank === null) &&
+          (!onlyDivergent || r.gapMeasure !== null) &&
+          (!onlySelected || selected.has(r.m.material_id)),
       );
 
   const firstUnrankedId =
-    onlyUnranked || onlyDivergent ? null : ordered.find((r) => r.rank === null)?.m.material_id ?? null;
+    onlyUnranked || onlyDivergent ? null : visible.find((r) => r.rank === null)?.m.material_id ?? null;
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
 
-  const colCount = 10;
+  const colCount = 11;
 
   const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
+
+  // ---- selection
+  const visibleIds = visible.map((r) => r.m.material_id);
+  const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
+  const headerChecked: boolean | "indeterminate" =
+    visibleIds.length > 0 && visibleSelectedCount === visibleIds.length
+      ? true
+      : visibleSelectedCount > 0
+        ? "indeterminate"
+        : false;
+
+  const toggleAllVisible = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (visibleSelectedCount === visibleIds.length) {
+        visibleIds.forEach((id) => next.delete(id));
+      } else {
+        visibleIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  const selectedMaterials = data.filter((m) => selected.has(m.material_id));
+  const hiddenSelectedCount = selectedMaterials.filter(
+    (m) => !visibleIds.includes(m.material_id),
+  ).length;
+
+  // ---- bulk write
+  const entered = (): FieldProvenance => ({ origin: "entered", source: CURRENT_USER, date: today() });
+
+  const applyBulk = (payload: BulkPayload) => {
+    const ids = new Set(selected);
+    const snapshot = data.filter((m) => ids.has(m.material_id)).map((m) => ({ ...m }));
+    const stamp = today();
+
+    setData((prev) =>
+      prev.map((m) => {
+        if (!ids.has(m.material_id)) return m;
+        const next: Material = {
+          ...m,
+          provenance: { ...m.provenance },
+          last_status_change_date: stamp,
+          last_status_user: CURRENT_USER,
+          last_change_batch_origin: "real_transition",
+        };
+
+        if (payload.kind === "status") {
+          next.journey_status = payload.value as JourneyStatus;
+          next.provenance.journey_status = entered();
+          if (payload.blocker_category) {
+            next.blocker_category = payload.blocker_category;
+            next.blocker_detail = payload.blocker_detail ?? null;
+            next.blocker_date = stamp;
+            next.provenance.blocker_category = entered();
+          }
+        } else if (payload.kind === "owner") {
+          next.owner = payload.value;
+          next.provenance.owner = entered();
+        } else {
+          next.customer_material_group = payload.value;
+          next.provenance.customer_material_group = entered();
+        }
+        return next;
+      }),
+    );
+
+    const noun = payload.kind === "status" ? "Status" : payload.kind === "owner" ? "Owner" : "Tag";
+    setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot });
+    setBulkKind(null);
+  };
+
+  const undo = () => {
+    if (!toast) return;
+    const byId = new Map(toast.snapshot.map((m) => [m.material_id, m]));
+    setData((prev) => prev.map((m) => byId.get(m.material_id) ?? m));
+    setToast(null);
+  };
 
   const chipTooltip = (row: RankedRow, mm: Measure) => {
     const other = row.ranks[mm.id];
@@ -241,6 +429,21 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
     }
     return `${mm.label}: rank ${other} of ${rankTables[mm.id].rankedCount} ranked`;
   };
+
+  const labelFor = (kind: keyof Filters, value: string) => {
+    if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
+    if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
+    if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
+    return value;
+  };
+
+  const activeChips: { kind: keyof Filters; value: string; label: string }[] = [];
+  (["classes", "statuses", "owners", "entryTypes", "groups"] as const).forEach((k) => {
+    filters[k].forEach((v) => activeChips.push({ kind: k, value: v, label: labelFor(k, v) }));
+  });
+
+  const removeChip = (kind: keyof Filters, value: string) =>
+    setFilters((f) => ({ ...f, [kind]: (f[kind] as string[]).filter((v) => v !== value) }));
 
   return (
     <div className="w-full">
@@ -272,6 +475,7 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
           <span>
             Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
             <span className="font-mono tabular-nums">{total}</span>
+            {filtersActive ? " filtered" : ""}
           </span>
           {missingCount > 0 && (
             <button
@@ -299,9 +503,142 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
         </button>
       </div>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2 pb-2">
+      {/* Filter bar */}
+      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
+        <Input
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          placeholder="Search name, CAS, customer ID"
+          className="h-7 w-56 text-[11px]"
+        />
+        <MultiSelectFilter
+          label="Class"
+          options={options.classes}
+          selected={filters.classes}
+          onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
+        />
+        <MultiSelectFilter
+          label="Status"
+          options={options.statuses}
+          selected={filters.statuses}
+          onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
+        />
+        <MultiSelectFilter
+          label="Owner"
+          options={options.owners}
+          selected={filters.owners}
+          onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
+        />
+        <MultiSelectFilter
+          label="Entry type"
+          options={options.entryTypes}
+          selected={filters.entryTypes}
+          onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+        />
+        <MultiSelectFilter
+          label="Group"
+          options={options.groups}
+          selected={filters.groups}
+          onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
+        />
+      </div>
+
+      {(activeChips.length > 0 || filters.search.trim() !== "") && (
+        <div className="flex flex-wrap items-center gap-1.5 pt-2">
+          {filters.search.trim() !== "" && (
+            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]">
+              “{filters.search}”
+              <button type="button" onClick={() => setFilters((f) => ({ ...f, search: "" }))}>
+                <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+              </button>
+            </span>
+          )}
+          {activeChips.map((c) => (
+            <span
+              key={`${c.kind}-${c.value}`}
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+            >
+              {c.label}
+              <button type="button" onClick={() => removeChip(c.kind, c.value)}>
+                <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+              </button>
+            </span>
+          ))}
+          <button
+            type="button"
+            onClick={() => setFilters(EMPTY_FILTERS)}
+            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Clear all
+          </button>
+        </div>
+      )}
+
+      {/* Selection bar */}
+      {selected.size > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
+          <span className="font-medium text-foreground">
+            <span className="font-mono tabular-nums">{selected.size}</span> selected
+            {hiddenSelectedCount > 0 && (
+              <span className="text-amber-700">
+                {" "}
+                — <span className="font-mono tabular-nums">{hiddenSelectedCount}</span> hidden by current
+                filters
+              </span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setOnlySelected((v) => !v)}
+            className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {onlySelected ? "Show all rows" : "Show selected"}
+          </button>
+          <span className="ml-auto flex items-center gap-1.5">
+            {(["status", "owner", "tag"] as BulkKind[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setBulkKind(k)}
+                className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
+              >
+                Set {k}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(new Set());
+                setOnlySelected(false);
+              }}
+              className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              Clear selection
+            </button>
+          </span>
+        </div>
+      )}
+
+      {toast && (
+        <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
+          <span>{toast.message}</span>
+          <button
+            type="button"
+            onClick={undo}
+            className="underline decoration-dotted underline-offset-2 hover:opacity-80"
+          >
+            Undo
+          </button>
+          <button type="button" onClick={() => setToast(null)} className="ml-auto">
+            <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+          </button>
+        </div>
+      )}
+
+      <div className="flex flex-wrap items-baseline justify-between gap-2 py-2">
         <div className="text-xs font-medium text-foreground">
-          <span className="font-mono tabular-nums">{visible.length}</span> materials
+          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
+          <span className="font-mono tabular-nums">{data.length}</span> materials
         </div>
         <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
           <span className="inline-flex items-center gap-1">
@@ -323,6 +660,14 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr>
+              <th className={cn(HEAD, "w-8 px-2 py-2")}>
+                <Checkbox
+                  checked={headerChecked}
+                  onCheckedChange={toggleAllVisible}
+                  aria-label="Select all visible"
+                  className="h-3.5 w-3.5"
+                />
+              </th>
               <th className={cn(HEAD, "w-10 px-2 py-2 text-right")}>#</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Material</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Other rankings</th>
@@ -352,8 +697,19 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
                 </td>
               </tr>
             )}
+            {!bothFilters && visible.length === 0 && (
+              <tr>
+                <td
+                  colSpan={colCount + (activeCol("multi_application") ? 1 : 0)}
+                  className="px-3 py-6 text-center text-[11px] text-muted-foreground"
+                >
+                  No materials match the current filters.
+                </td>
+              </tr>
+            )}
             {visible.map((row) => {
               const { m, rank } = row;
+              const isSelected = selected.has(m.material_id);
               return (
                 <React.Fragment key={m.material_id}>
                   {m.material_id === firstUnrankedId && (
@@ -369,8 +725,17 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
                     className={cn(
                       "border-b border-border/60 last:border-0 hover:bg-muted/40",
                       rank === null && "text-muted-foreground",
+                      isSelected && "bg-primary/5",
                     )}
                   >
+                    <td className="px-2 py-1.5 align-top">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleRow(m.material_id)}
+                        aria-label={`Select ${m.name}`}
+                        className="h-3.5 w-3.5"
+                      />
+                    </td>
                     <td className="px-2 py-1.5 text-right align-top font-mono tabular-nums text-muted-foreground">
                       {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
                     </td>
@@ -393,9 +758,7 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
                               title={chipTooltip(row, mm)}
                               className={cn(
                                 "inline-flex items-center gap-1 rounded-sm px-1 py-0.5 font-mono text-[10px] tabular-nums",
-                                amber
-                                  ? "bg-amber-500/10 text-amber-700"
-                                  : "text-muted-foreground/70",
+                                amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground/70",
                               )}
                             >
                               <span>{mm.short}</span>
@@ -451,10 +814,22 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
                       <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
                     </td>
                     <td className="px-3 py-1.5 align-top">
-                      <StatusPill status={m.journey_status} />
+                      <StatusPill
+                        status={m.journey_status}
+                        entered={m.provenance.journey_status?.origin === "entered"}
+                      />
                     </td>
                     <td className="px-3 py-1.5 align-top">
-                      {m.owner ?? <span className="text-muted-foreground/60">Unassigned</span>}
+                      {m.owner ? (
+                        <span className={m.provenance.owner?.origin === "entered" ? "italic" : undefined}>
+                          {m.provenance.owner?.origin === "entered" && (
+                            <span className="mr-0.5 not-italic text-primary/70">^</span>
+                          )}
+                          {m.owner}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/60">Unassigned</span>
+                      )}
                     </td>
                   </tr>
                 </React.Fragment>
@@ -463,6 +838,15 @@ export const MaterialRegisterTable: React.FC<{ rows?: Material[] }> = ({ rows = 
           </tbody>
         </table>
       </div>
+
+      <BulkActionDialog
+        kind={bulkKind}
+        materials={selectedMaterials}
+        hiddenCount={hiddenSelectedCount}
+        ownerOptions={ownerNames}
+        onCancel={() => setBulkKind(null)}
+        onApply={applyBulk}
+      />
     </div>
   );
 };
