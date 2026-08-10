@@ -3,6 +3,8 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import FilterSelects from "@/components/materialRegister/FilterSelects";
+import FilterChips from "@/components/materialRegister/FilterChips";
 import { ScoreScale, scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
