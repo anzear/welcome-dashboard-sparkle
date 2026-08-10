@@ -474,9 +474,8 @@ const PrioritisationGrid: React.FC = () => {
                   strokeWidth={1}
                 />
                 <text
-                  x={PAD.l + PW - 6}
-                  y={PAD.t + 12}
-                  textAnchor="end"
+                  x={xMedian !== null ? sx(xMedian) + 8 : PAD.l + 8}
+                  y={yMedian !== null ? sy(yMedian) - 8 : PAD.t + 12}
                   className="fill-muted-foreground/70 text-[9px]"
                 >
                   equal position on both measures
