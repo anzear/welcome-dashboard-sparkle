@@ -1,12 +1,15 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
+import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
 import {
   JOURNEY_STATUS_LABEL,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
+  type MaterialEvent,
+  type MaterialEventType,
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
+
 
 export const CURRENT_USER = "You";
 
@@ -115,7 +118,23 @@ export const enteredProvenance = (): FieldProvenance => ({
   date: today(),
 });
 
+/** What a caller supplies; the store stamps id, user, timestamp and origin. */
+export interface EventInput {
+  material_id: string;
+  event_type: MaterialEventType;
+  field: string;
+  from_value: string | null;
+  to_value: string | null;
+  reason?: string | null;
+  blocker_category?: string | null;
+  blocker_detail?: string | null;
+  blocker_condition?: string | null;
+  batch_id?: string | null;
+  changed_by?: string;
+}
+
 interface Store {
+
   data: Material[];
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
@@ -143,11 +162,22 @@ interface Store {
   openId: string | null;
   openBrief: (id: string) => void;
   closeBrief: () => void;
-  updateMaterial: (id: string, patch: Partial<Material>, enteredFields?: string[]) => void;
+  updateMaterial: (
+    id: string,
+    patch: Partial<Material>,
+    enteredFields?: string[],
+    events?: EventInput[],
+  ) => void;
   applyBulk: (payload: BulkPayload, ids: Set<string>) => void;
-  toast: { message: string; snapshot: Material[] } | null;
-  setToast: React.Dispatch<React.SetStateAction<{ message: string; snapshot: Material[] } | null>>;
+  events: MaterialEvent[];
+  eventsFor: (id: string) => MaterialEvent[];
+  recordEvents: (inputs: EventInput[]) => void;
+  toast: { message: string; snapshot: Material[]; batchId?: string } | null;
+  setToast: React.Dispatch<
+    React.SetStateAction<{ message: string; snapshot: Material[]; batchId?: string } | null>
+  >;
   undo: () => void;
+
 }
 
 const Ctx = createContext<Store | null>(null);
@@ -159,18 +189,25 @@ export const useRegister = () => {
 };
 
 export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.ReactNode }> = ({
-  rows = seedMaterials,
+  rows = seedMaterialsWithHistory,
   children,
 }) => {
   const [data, setData] = useState<Material[]>(rows);
+  const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
+
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
   const [onlyUnranked, setOnlyUnranked] = useState(false);
   const [onlyDivergent, setOnlyDivergent] = useState(false);
   const [onlySelected, setOnlySelected] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; snapshot: Material[] } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    snapshot: Material[];
+    batchId?: string;
+  } | null>(null);
+
 
   const measure = MEASURES.find((x) => x.id === measureId)!;
 
@@ -255,7 +292,58 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           (!onlySelected || selected.has(r.m.material_id)),
       );
 
-  const updateMaterial = (id: string, patch: Partial<Material>, enteredFields: string[] = []) => {
+  const eventsFor = (id: string) =>
+    events
+      .filter((e) => e.material_id === id)
+      .sort((a, b) => b.changed_at.localeCompare(a.changed_at));
+
+  let eventSeq = 0;
+  const buildEvent = (input: EventInput, at: string): MaterialEvent => ({
+    event_id: `EVT-L-${Date.now()}-${eventSeq++}`,
+    material_id: input.material_id,
+    event_type: input.event_type,
+    field: input.field,
+    from_value: input.from_value,
+    to_value: input.to_value,
+    reason: input.reason?.trim() ? input.reason.trim() : null,
+    blocker_category: input.blocker_category ?? null,
+    blocker_detail: input.blocker_detail ?? null,
+    blocker_condition: input.blocker_condition ?? null,
+    changed_by: input.changed_by ?? CURRENT_USER,
+    changed_at: at,
+    batch_origin: "real_transition",
+    batch_id: input.batch_id ?? null,
+  });
+
+  /** Appends events and re-stamps each material's last-change fields from them. */
+  const recordEvents = (inputs: EventInput[]) => {
+    if (inputs.length === 0) return;
+    const at = new Date().toISOString();
+    const written = inputs.map((i) => buildEvent(i, at));
+    setEvents((prev) => [...prev, ...written]);
+
+    const byMaterial = new Map<string, MaterialEvent>();
+    written.forEach((e) => byMaterial.set(e.material_id, e));
+    setData((prev) =>
+      prev.map((m) => {
+        const e = byMaterial.get(m.material_id);
+        if (!e) return m;
+        return {
+          ...m,
+          last_status_change_date: e.changed_at,
+          last_status_user: e.changed_by,
+          last_change_batch_origin: e.batch_origin,
+        };
+      }),
+    );
+  };
+
+  const updateMaterial = (
+    id: string,
+    patch: Partial<Material>,
+    enteredFields: string[] = [],
+    eventInputs: EventInput[] = [],
+  ) => {
     setData((prev) =>
       prev.map((m) => {
         if (m.material_id !== id) return m;
@@ -266,11 +354,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         return { ...m, ...patch, provenance };
       }),
     );
+    recordEvents(eventInputs);
   };
 
   const applyBulk = (payload: BulkPayload, ids: Set<string>) => {
     const snapshot = data.filter((m) => ids.has(m.material_id)).map((m) => ({ ...m }));
     const stamp = today();
+    const batchId = `BATCH-${Date.now()}`;
 
     setData((prev) =>
       prev.map((m) => {
@@ -303,16 +393,56 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }),
     );
 
+    // One event per affected material, all sharing this batch_id.
+    recordEvents(
+      snapshot.map((m) => {
+        if (payload.kind === "status") {
+          return {
+            material_id: m.material_id,
+            event_type: payload.blocker_category ? "blocker_set" : "status_change",
+            field: "journey_status",
+            from_value: m.journey_status,
+            to_value: payload.value,
+            blocker_category: payload.blocker_category ?? null,
+            blocker_detail: payload.blocker_detail ?? null,
+            blocker_condition: null,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        if (payload.kind === "owner") {
+          return {
+            material_id: m.material_id,
+            event_type: "owner_change",
+            field: "owner",
+            from_value: m.owner,
+            to_value: payload.value,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        return {
+          material_id: m.material_id,
+          event_type: "field_correction",
+          field: "customer_material_group",
+          from_value: m.customer_material_group,
+          to_value: payload.value,
+          batch_id: batchId,
+        } as EventInput;
+      }),
+    );
+
     const noun = payload.kind === "status" ? "Status" : payload.kind === "owner" ? "Owner" : "Tag";
-    setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot });
+    setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 
+  /** Undo removes the batch's events rather than writing compensating ones. */
   const undo = () => {
     if (!toast) return;
     const byId = new Map(toast.snapshot.map((m) => [m.material_id, m]));
     setData((prev) => prev.map((m) => byId.get(m.material_id) ?? m));
+    if (toast.batchId) setEvents((prev) => prev.filter((e) => e.batch_id !== toast.batchId));
     setToast(null);
   };
+
 
   const value: Store = {
     data,
@@ -343,6 +473,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     closeBrief: () => setOpenId(null),
     updateMaterial,
     applyBulk,
+    events,
+    eventsFor,
+    recordEvents,
+
     toast,
     setToast,
     undo,
