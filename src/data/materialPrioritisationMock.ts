@@ -34,7 +34,6 @@ const rows: Row[] = [
   ["Cocamidopropyl betaine", "61789-40-0", "Amphoteric betaine", "Surfactants", 1850, 1.68, 2.2, 3, ["DE", "MY"], "not_started", null],
   ["C12-C14 fatty alcohol", "80206-82-2", "C12-C14 fatty alcohol", "Surfactants", 2400, 1.95, 2.85, 3, ["MY", "ID", "DE"], "sourcing", "K. Brandt"],
   ["Nonylphenol ethoxylate", "9016-45-9", "Alkylphenol ethoxylate", "Surfactants", 210, 2.05, 3.4, 1, ["CN"], "parked", "K. Brandt"],
-  ["Sorbitan monostearate", "1338-41-6", "Sorbitan ester", "Surfactants", 340, 3.1, null, 2, ["FR", "IN"], "not_started", null],
 
   // Plasticisers
   ["Diisononyl phthalate", "28553-12-0", "Phthalate ester", "Plasticisers", 5400, 1.62, 2.75, 3, ["DE", "PL"], "under_evaluation", "R. Delacroix"],
