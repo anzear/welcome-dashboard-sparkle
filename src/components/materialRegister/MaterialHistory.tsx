@@ -7,11 +7,19 @@ import {
   type MaterialEvent,
 } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import { DRIVER_QUESTION_LABEL } from "@/config/driverQuestions";
 
 const statusLabel = (v: string | null) =>
   v && v in JOURNEY_STATUS_LABEL ? JOURNEY_STATUS_LABEL[v as JourneyStatus] : (v ?? "—");
 
-const fieldLabel = (f: string) => EVENT_FIELD_LABEL[f] ?? f;
+const fieldLabel = (f: string) => EVENT_FIELD_LABEL[f] ?? DRIVER_QUESTION_LABEL[f] ?? f;
+
+const signedValue = (v: string | null) => {
+  if (v === null || v === "") return "no score";
+  const n = Number(v);
+  if (Number.isNaN(n)) return v;
+  return n > 0 ? `+${n}` : String(n);
+};
 
 /** One plain sentence per event. No counts, no aggregates, no per-person metrics. */
 export function eventSentence(e: MaterialEvent): string {
@@ -28,6 +36,10 @@ export function eventSentence(e: MaterialEvent): string {
         : "Removed from priority";
     case "blocker_set":
       return `Blocker recorded on ${statusLabel(e.from_value) !== "—" ? "status change" : "this material"}`;
+    case "score_change":
+      return e.from_value === null
+        ? `${fieldLabel(e.field)} scored ${signedValue(e.to_value)}`
+        : `${fieldLabel(e.field)} changed from ${signedValue(e.from_value)} to ${signedValue(e.to_value)}`;
     case "field_correction":
       return `${fieldLabel(e.field)} corrected from ${e.from_value ?? "no value"} to ${e.to_value ?? "no value"}`;
     default:
