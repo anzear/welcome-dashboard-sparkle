@@ -39,18 +39,23 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ title, note, children, className }) => (
-  <section className={cn("space-y-2", className)}>
-    <div>
-      <h2 className="text-[13px] font-medium tracking-tight text-foreground">{title}</h2>
-      {note && <p className="text-[10px] leading-snug text-muted-foreground/70">{note}</p>}
+  <section className={cn("space-y-3", className)}>
+    <div className="border-b border-border/60 pb-1.5">
+      <h2 className="text-[14px] font-semibold tracking-tight text-foreground">{title}</h2>
+      {note && <p className="pt-0.5 text-[11px] leading-snug text-muted-foreground/60">{note}</p>}
     </div>
     {children}
   </section>
 );
 
 const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
-  <div className={cn("pb-1", first ? "" : "mt-3 border-t border-border/50 pt-3")}>
-    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">{children}</span>
+  <div
+    className={cn(
+      "sm:col-span-2",
+      first ? "" : "mt-2 border-t border-border/50 pt-4",
+    )}
+  >
+    <span className="text-[12px] font-medium text-muted-foreground">{children}</span>
   </div>
 );
 
@@ -67,7 +72,8 @@ const DataRow: React.FC<{
   value: React.ReactNode;
   onClick?: () => void;
   children?: React.ReactNode;
-}> = ({ label, provenance, value, onClick, children }) => (
+  wide?: boolean;
+}> = ({ label, provenance, value, onClick, children, wide }) => (
   <div
     role={onClick ? "button" : undefined}
     tabIndex={onClick ? 0 : undefined}
@@ -80,12 +86,13 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[minmax(7rem,1fr)_auto] items-baseline gap-4 rounded-sm px-1 py-1.5",
-      onClick && "cursor-pointer hover:bg-muted/50",
+      "group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
+      wide && "sm:col-span-2",
+      onClick && "cursor-pointer hover:bg-muted/40",
     )}
   >
     <div className="min-w-0">
-      <div className="text-[11px] leading-snug text-muted-foreground">
+      <div className="text-[13px] leading-snug text-muted-foreground">
         {label}
         {onClick && (
           <span className="ml-1.5 text-[10px] text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/70">
@@ -93,7 +100,7 @@ const DataRow: React.FC<{
           </span>
         )}
       </div>
-      <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
+      <div className="text-[11px] leading-snug text-muted-foreground/50">{provenance}</div>
     </div>
     <div className="justify-self-end text-right">{value}</div>
     {children}
@@ -110,7 +117,7 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
   return (
     <span
       className={cn(
-        "font-mono text-sm tabular-nums",
+        "font-mono text-[15px] font-medium tabular-nums",
         hasValue ? "text-foreground" : "text-muted-foreground/50",
         hasValue && computed && "border-b border-dotted border-muted-foreground/60",
       )}
@@ -128,10 +135,12 @@ const Figure: React.FC<{
   decimals?: number;
   provenance?: FieldProvenance;
   computedInputs?: string;
-}> = ({ label, value, decimals = 0, provenance, computedInputs }) => {
+  wide?: boolean;
+}> = ({ label, value, decimals = 0, provenance, computedInputs, wide }) => {
   const hasValue = value !== null && value !== undefined && value !== "";
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provenanceLine(provenance, hasValue, computedInputs)}
       value={
@@ -152,8 +161,9 @@ const EditableFigure: React.FC<{
   decimals?: number;
   provenance?: FieldProvenance;
   placeholder?: string;
+  wide?: boolean;
   onSave: (raw: string) => void;
-}> = ({ label, value, decimals = 0, provenance, placeholder, onSave }) => {
+}> = ({ label, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const hasValue = value !== null && value !== undefined && value !== "";
@@ -170,8 +180,8 @@ const EditableFigure: React.FC<{
 
   if (editing) {
     return (
-      <div className="px-1 py-1.5">
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
+        <div className="text-[13px] text-muted-foreground">{label}</div>
         <div className="flex items-center gap-1 pt-1">
           <Input
             autoFocus
@@ -182,7 +192,7 @@ const EditableFigure: React.FC<{
               if (e.key === "Enter") commit();
               if (e.key === "Escape") setEditing(false);
             }}
-            className="h-7 text-right font-mono text-xs tabular-nums"
+            className="h-8 text-right font-mono text-xs tabular-nums"
           />
           <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
             Save
@@ -191,13 +201,14 @@ const EditableFigure: React.FC<{
             Cancel
           </Button>
         </div>
-        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provenanceLine(provenance, hasValue)}</div>
+        <div className="pt-0.5 text-[11px] text-muted-foreground/50">{provenanceLine(provenance, hasValue)}</div>
       </div>
     );
   }
 
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provenanceLine(provenance, hasValue)}
       onClick={begin}
@@ -220,7 +231,8 @@ const DerivedField: React.FC<{
   onSave: (v: string) => void;
   note?: string;
   placeholder?: string;
-}> = ({ label, value, provenance, onSave, note, placeholder }) => {
+  wide?: boolean;
+}> = ({ label, value, provenance, onSave, note, placeholder, wide }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
@@ -236,8 +248,8 @@ const DerivedField: React.FC<{
 
   if (editing) {
     return (
-      <div className="px-1 py-1.5">
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
+        <div className="text-[13px] text-muted-foreground">{label}</div>
         <div className="flex items-center gap-1 pt-1">
           <Input
             autoFocus
@@ -257,13 +269,14 @@ const DerivedField: React.FC<{
             Cancel
           </Button>
         </div>
-        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provText}</div>
+        <div className="pt-0.5 text-[11px] text-muted-foreground/50">{provText}</div>
       </div>
     );
   }
 
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provText}
       onClick={() => {
@@ -293,9 +306,9 @@ const TagsField: React.FC<{
     setDraft("");
   };
   return (
-    <div className="group px-1 py-1.5">
+    <div className="group px-1 py-1 sm:col-span-2">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
+        <span className="text-[13px] text-muted-foreground">{label}</span>
         {!open && (
           <button
             type="button"
@@ -327,7 +340,7 @@ const TagsField: React.FC<{
             </span>
           ))
         ) : (
-          <span className="font-mono text-sm text-muted-foreground/50">—</span>
+          <span className="font-mono text-[15px] text-muted-foreground/50">—</span>
         )}
       </div>
       {open && (
@@ -365,7 +378,7 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
   className,
 }) => (
   <div className={cn("min-w-0 space-y-1", className)}>
-    <div className="text-[10px] text-muted-foreground">{label}</div>
+    <div className="text-[11px] text-muted-foreground">{label}</div>
     {children}
   </div>
 );
