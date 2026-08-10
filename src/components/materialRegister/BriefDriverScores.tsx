@@ -5,17 +5,20 @@ import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitive
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 
 /** Thin read-only -5..+5 track with a centre tick and one filled marker. */
+const RAIL = "w-[128px]";
+
+/** Fixed-width -5..+5 rail. Zero ticks align down the block. */
 const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
   const pct = value === null ? null : ((value + 5) / 10) * 100;
   const negative = value !== null && value < 0;
   return (
-    <div className="relative h-3 w-full min-w-[72px]">
+    <div className={cn("relative h-3.5", RAIL)}>
       <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
       {value !== null && value !== 0 && (
         <div
           className={cn(
             "absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full",
-            negative ? "bg-orange-600/70" : "bg-teal-600/70",
+            negative ? "bg-orange-600/80" : "bg-teal-600/80",
           )}
           style={
             negative
@@ -24,13 +27,13 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
           }
         />
       )}
-      <div className="absolute left-1/2 top-1/2 h-2 w-px -translate-x-1/2 -translate-y-1/2 bg-border" />
+      <div className="absolute left-1/2 top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-muted-foreground/50" />
       {value !== null && (
         <div
           className={cn(
             "absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full",
             value === 0
-              ? "bg-muted-foreground/60"
+              ? "border border-muted-foreground/70 bg-background"
               : negative
                 ? "bg-orange-600"
                 : "bg-teal-600",
@@ -69,6 +72,16 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
         )}
       </p>
 
+      <div className="grid grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 px-1 pt-1 text-[10px] text-muted-foreground/60">
+        <span />
+        <span className="flex justify-between">
+          <span>-5 constraint</span>
+          <span>0</span>
+          <span>+5 driver</span>
+        </span>
+        <span />
+      </div>
+
       <div className="divide-y divide-primary/10">
         {questions.map((q) => {
           const rec = scoreFor(materialId, q.question_id);
@@ -79,16 +92,14 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
               <button
                 type="button"
                 onClick={() => setOpenId(expanded ? null : q.question_id)}
-                className="grid w-full grid-cols-[1fr_auto_2.25rem] items-center gap-2 rounded-sm px-1 text-left hover:bg-primary/5"
+                className="grid w-full grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 rounded-sm px-1 py-0.5 text-left hover:bg-primary/10"
                 title={q.helper ?? undefined}
               >
-                <span className="text-[11px] leading-snug text-foreground">{q.label}</span>
-                <span className="w-24 sm:w-28">
-                  <ScoreTrack value={v} />
-                </span>
+                <span className="text-[13px] leading-snug text-muted-foreground">{q.label}</span>
+                <ScoreTrack value={v} />
                 <span
                   className={cn(
-                    "text-right font-mono text-[11px] tabular-nums",
+                    "text-right font-mono text-[15px] font-medium tabular-nums",
                     v === null ? "text-muted-foreground/50" : "text-foreground",
                   )}
                 >
