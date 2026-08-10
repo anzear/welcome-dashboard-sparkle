@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/types/materialPrioritisation";
 import { CURRENT_USER, useRegister } from "@/components/materialRegister/registerStore";
+import { cleanTags, tagVocabulary } from "@/components/materialRegister/tags";
 import {
   AutocompleteField,
   Field,
@@ -61,7 +62,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const [lookupAccepted, setLookupAccepted] = useState(false);
   const [materialClass, setMaterialClass] = useState<string | null>(null);
   const [customerIds, setCustomerIds] = useState<string[]>([""]);
-  const [group, setGroup] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>([]);
   const [applications, setApplications] = useState<string[]>([]);
   const [products, setProducts] = useState<string[]>([]);
   const [owner, setOwner] = useState<string | null>(null);
@@ -89,7 +90,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     const uniq = (vals: (string | null)[]) =>
       [...new Set(vals.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b));
     return {
-      groups: uniq(data.map((m) => m.customer_material_group)),
+      tags: tagVocabulary(data).map((t) => t.tag),
       applications: uniq(data.flatMap((m) => m.application_categories)),
       products: uniq(data.flatMap((m) => m.product_categories)),
       owners: uniq(data.map((m) => m.owner)),
@@ -167,7 +168,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       cas_number: toNullString(cas),
       material_class: toNullString(materialClass),
       customer_material_ids: customerIds.map((v) => v.trim()).filter(Boolean),
-      customer_material_group: toNullString(group),
+      tags: cleanTags(tags),
       application_categories: applications,
       product_categories: products,
       owner: toNullString(owner),
@@ -280,12 +281,13 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             suggestions={suggestions.classes}
             placeholder="Unclassified"
           />
-          <AutocompleteField
-            label="Customer material group"
-            value={group}
-            onChange={setGroup}
-            suggestions={suggestions.groups}
+          <TagInput
+            label="Tags"
+            values={tags}
+            onChange={(v) => setTags(cleanTags(v))}
+            suggestions={suggestions.tags}
             placeholder="e.g. Solvents"
+            hint="Free text, your own labels. Nothing is derived from tags."
           />
 
           <div className="space-y-1">
