@@ -582,6 +582,16 @@ export const MaterialRegisterTable: React.FC = () => {
                       />
                     </td>
                     <td className="px-3 py-2 align-top">
+                      {inPrioritySet(m) ? (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                          {priorityPeriod || "Priority set"}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-top">
                       {m.owner ? (
                         <span>
                           {m.provenance.owner?.origin === "entered" && (
