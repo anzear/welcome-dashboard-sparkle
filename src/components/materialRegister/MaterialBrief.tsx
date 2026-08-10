@@ -359,6 +359,12 @@ export const MaterialBrief: React.FC = () => {
           </div>
         </section>
 
+        {/* Step cards — content filled in later */}
+        <div className="lg:col-span-2">
+          <BriefStepCards />
+        </div>
+
+
         {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
         <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
           <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
