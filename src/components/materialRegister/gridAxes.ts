@@ -160,13 +160,29 @@ export const SIZE_MAX = 11;
 export const sizeRadius = (count: number | null) =>
   count === null ? SIZE_MIN : SIZE_MIN + (Math.min(Math.max(count, 0), 12) / 12) * (SIZE_MAX - SIZE_MIN);
 
-/** Quadrant readings, stated as what the pairing means rather than as a verdict. */
-export const quadrantReadings = (x: AxisVar, y: AxisVar) => {
-  const both = x.id === "spend" && y.id === "emissions";
-  return {
-    topRight: `high ${x.noun}, high ${y.noun}${both ? " — both cases hold" : ""}`,
-    topLeft: `low ${x.noun}, high ${y.noun}${both ? " — the sustainability case alone" : ""}`,
-    bottomRight: `high ${x.noun}, low ${y.noun}${both ? " — the procurement case alone" : ""}`,
-    bottomLeft: `low on both`,
-  };
+/** Two- or three-word corner readings. Orientation, not a verdict. */
+export const quadrantReadings = (x: AxisVar, y: AxisVar) => ({
+  topRight: "both high",
+  topLeft: `${y.noun} only`,
+  bottomRight: `${x.noun} only`,
+  bottomLeft: "low on both",
+});
+
+/** Round tick step from the 1 / 2 / 2.5 / 5 x 10^n series. */
+export const niceStep = (range: number, count = 4) => {
+  const raw = Math.max(range, Number.EPSILON) / count;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const norm = raw / mag;
+  const mult = [1, 2, 2.5, 5, 10].find((m) => norm <= m) ?? 10;
+  return mult * mag;
 };
+
+/** Axis scale that ends on a round maximum, with round intermediate ticks. */
+export const niceScale = (dataMax: number, count = 4) => {
+  const step = niceStep(dataMax, count);
+  const max = Math.ceil(dataMax / step) * step;
+  const ticks: number[] = [];
+  for (let t = 0; t <= max + step / 2; t += step) ticks.push(Number(t.toFixed(10)));
+  return { max, step, ticks };
+};
+
