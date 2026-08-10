@@ -546,10 +546,10 @@ export const MaterialBrief: React.FC = () => {
   const gapSentence = () => {
     if (!row || row.gapMeasure === null || row.rank === null) return null;
     const active = MEASURES.find((x) => x.id === measureId)!;
-    const other = MEASURES.find((x) => x.id === row.gapMeasure)!;
-    const otherRank = row.ranks[other.id]!;
-    const first = otherRank < row.rank ? { m: other, r: otherRank } : { m: active, r: row.rank };
-    const second = otherRank < row.rank ? { m: active, r: row.rank } : { m: other, r: otherRank };
+    const divergent = MEASURES.find((x) => x.id === row.gapMeasure)!;
+    const divergentRank = row.ranks[divergent.id]!;
+    const first = divergentRank < row.rank ? { m: divergent, r: divergentRank } : { m: active, r: row.rank };
+    const second = divergentRank < row.rank ? { m: active, r: row.rank } : { m: divergent, r: divergentRank };
     return `Ranks ${first.r} on ${first.m.noun} but ${second.r} on ${second.m.noun}. ${row.gapSize} positions apart.`;
   };
 
