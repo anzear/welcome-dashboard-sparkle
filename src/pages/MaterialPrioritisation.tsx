@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import DriverScoring from "@/components/materialRegister/DriverScoring";
+import PrioritisationGrid from "@/components/materialRegister/PrioritisationGrid";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 
 const TABS = [
@@ -12,12 +13,6 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
-
-const Placeholder: React.FC<{ label: string }> = ({ label }) => (
-  <div className="flex min-h-[280px] items-center justify-center rounded-md border border-dashed border-border">
-    <p className="text-xs text-muted-foreground">{label} — coming in a later round.</p>
-  </div>
-);
 
 const Inner: React.FC = () => {
   const [tab, setTab] = useState<TabId>("register");
@@ -55,7 +50,7 @@ const Inner: React.FC = () => {
       </div>
 
       {tab === "register" && <MaterialRegisterTable />}
-      {tab === "grid" && <Placeholder label="Prioritisation Grid" />}
+      {tab === "grid" && <PrioritisationGrid />}
       {tab === "scoring" && <DriverScoring />}
     </div>
   );
