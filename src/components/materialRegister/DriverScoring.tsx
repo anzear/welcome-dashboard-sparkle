@@ -263,7 +263,7 @@ const DriverScoring: React.FC = () => {
                 return (
                   <th
                     key={q.question_id}
-                    title={`${q.label} — ${q.helper}`}
+                    title={q.helper ? `${q.label} — ${q.helper}` : q.label}
                     className={cn(
                       "border-b border-border bg-background px-1 py-1.5 align-bottom",
                       active && "bg-primary/5",

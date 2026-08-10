@@ -80,7 +80,7 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
                 type="button"
                 onClick={() => setOpenId(expanded ? null : q.question_id)}
                 className="grid w-full grid-cols-[1fr_auto_2.25rem] items-center gap-2 rounded-sm px-1 text-left hover:bg-primary/5"
-                title={q.helper}
+                title={q.helper ?? undefined}
               >
                 <span className="text-[11px] leading-snug text-foreground">{q.label}</span>
                 <span className="w-24 sm:w-28">
