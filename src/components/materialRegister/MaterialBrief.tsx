@@ -80,7 +80,9 @@ const DerivedField: React.FC<{
   value: string | null;
   provenance?: FieldProvenance;
   onSave: (v: string) => void;
-}> = ({ label, value, provenance, onSave }) => {
+  note?: string;
+  placeholder?: string;
+}> = ({ label, value, provenance, onSave, note, placeholder }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
@@ -97,13 +99,18 @@ const DerivedField: React.FC<{
             }}
             className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
           >
-            <Pencil className="h-3 w-3" /> Correct this
+            <Pencil className="h-3 w-3" /> Edit
           </button>
         )}
       </div>
       {editing ? (
         <div className="flex items-center gap-1 pt-1">
-          <Input value={draft} onChange={(e) => setDraft(e.target.value)} className="h-7 text-xs" />
+          <Input
+            value={draft}
+            placeholder={placeholder}
+            onChange={(e) => setDraft(e.target.value)}
+            className="h-7 text-xs"
+          />
           <Button
             size="sm"
             className="h-7 text-[11px]"
@@ -127,11 +134,74 @@ const DerivedField: React.FC<{
       <div className="pt-0.5 text-[10px] text-muted-foreground/80">
         {provenance?.origin === "entered"
           ? `Entered by ${provenance.source ?? CURRENT_USER}${provenance.date ? ` · ${provenance.date}` : ""}`
-          : "Derived by VCG from our ontology"}
+          : (note ?? "Derived by VCG from our ontology")}
       </div>
     </div>
   );
 };
+
+/** Editable list of tags (application / product categories). */
+const TagsField: React.FC<{
+  label: string;
+  values: string[];
+  onSave: (v: string[]) => void;
+}> = ({ label, values, onSave }) => {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const v = draft.trim();
+    if (!v || values.includes(v)) {
+      setDraft("");
+      return;
+    }
+    onSave([...values, v]);
+    setDraft("");
+  };
+  return (
+    <div className="border-t border-border/60 px-3 py-2">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="flex flex-wrap items-center gap-1 pt-1">
+        {values.length > 0 ? (
+          values.map((c) => (
+            <span
+              key={c}
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+            >
+              {c}
+              <button
+                type="button"
+                aria-label={`Remove ${c}`}
+                onClick={() => onSave(values.filter((x) => x !== c))}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </span>
+          ))
+        ) : (
+          <span className="text-[10px] text-muted-foreground/50">—</span>
+        )}
+      </div>
+      <div className="flex items-center gap-1 pt-1.5">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              add();
+            }
+          }}
+          placeholder="Add…"
+          className="h-7 max-w-[180px] text-xs"
+        />
+        <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={add}>
+          Add
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 
 export const MaterialBrief: React.FC = () => {
   const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
