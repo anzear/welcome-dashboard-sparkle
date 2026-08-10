@@ -107,6 +107,14 @@ export const MaterialRegisterTable: React.FC = () => {
         value: v,
         label: ENTRY_TYPE_LABEL[v] ?? v,
       })),
+      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+        value: v,
+        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+      })),
+      applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
+        value: v,
+        label: `${v} (${data.filter((m) => (m.application_categories ?? []).includes(v)).length})`,
+      })),
       tags: [
         ...tagVocabulary(data).map((t) => ({ value: t.tag, label: `${t.tag} (${t.count})` })),
         {
@@ -163,7 +171,7 @@ export const MaterialRegisterTable: React.FC = () => {
   };
 
   const activeChips: { kind: keyof Filters; value: string; label: string }[] = [];
-  (["classes", "statuses", "owners", "entryTypes", "tags"] as const).forEach((k) => {
+  (["classes", "statuses", "owners", "entryTypes", "products", "applications", "tags"] as const).forEach((k) => {
     filters[k].forEach((v) => activeChips.push({ kind: k, value: v, label: labelFor(k, v) }));
   });
 
@@ -262,6 +270,18 @@ export const MaterialRegisterTable: React.FC = () => {
               options={options.entryTypes}
               selected={filters.entryTypes}
               onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+            />
+            <MultiSelectFilter
+              label="Product (any)"
+              options={options.products}
+              selected={filters.products}
+              onChange={(v) => setFilters((f) => ({ ...f, products: v }))}
+            />
+            <MultiSelectFilter
+              label="Application (any)"
+              options={options.applications}
+              selected={filters.applications}
+              onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
             />
             <MultiSelectFilter
               label="Tags (any)"
