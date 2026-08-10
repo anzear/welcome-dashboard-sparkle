@@ -479,7 +479,7 @@ const PrioritisationGrid: React.FC = () => {
                       textAnchor="end"
                       className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                     >
-                      {isCount ? t : compact(t)}
+                      {tickLabel(t, yScale.step)}
                     </text>
                   )}
                 </g>
