@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { DRIVER_QUESTIONS } from "@/config/driverQuestions";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale, scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
@@ -18,7 +17,7 @@ interface EntryTarget {
 }
 
 const DriverScoring: React.FC = () => {
-  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive } = useRegister();
+  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions } = useRegister();
   const rows = useMemo(() => ordered.map((r) => r.m), [ordered]);
 
   const [mode, setMode] = useState<Mode>("by_question");
@@ -28,12 +27,12 @@ const DriverScoring: React.FC = () => {
   const [note, setNote] = useState("");
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const totalCells = rows.length * DRIVER_QUESTIONS.length;
+  const totalCells = rows.length * questions.length;
   const scoredCells = useMemo(
     () =>
       rows.reduce(
         (acc, m) =>
-          acc + DRIVER_QUESTIONS.filter((q) => (scoreFor(m.material_id, q.id)?.score ?? null) !== null).length,
+          acc + questions.filter((q) => (scoreFor(m.material_id, q.question_id)?.score ?? null) !== null).length,
         0,
       ),
     [rows, scoreFor],
@@ -48,7 +47,7 @@ const DriverScoring: React.FC = () => {
     if (mode === "by_material" && focusMaterial) {
       const m = rows.find((x) => x.material_id === focusMaterial);
       if (!m) return [];
-      return DRIVER_QUESTIONS.map((q) => ({ material: m, questionId: q.id }));
+      return questions.map((q) => ({ material: m, questionId: q.question_id }));
     }
     return [];
   }, [mode, focusQuestion, focusMaterial, rows]);
@@ -126,8 +125,8 @@ const DriverScoring: React.FC = () => {
   };
 
   const negativeNext = useRef(false);
-  const questionLabel = (id: string) => DRIVER_QUESTIONS.find((q) => q.id === id)?.label ?? id;
-  const questionHelper = (id: string) => DRIVER_QUESTIONS.find((q) => q.id === id)?.helper ?? "";
+  const questionLabel = (id: string) => questions.find((q) => q.question_id === id)?.label ?? id;
+  const questionHelper = (id: string) => questions.find((q) => q.question_id === id)?.helper ?? "";
 
   return (
     <div className="space-y-3">
@@ -258,13 +257,13 @@ const DriverScoring: React.FC = () => {
               >
                 Material
               </th>
-              {DRIVER_QUESTIONS.map((q) => {
-                const cov = questionCoverage(q.id, rows);
-                const active = mode === "by_question" && focusQuestion === q.id;
+              {questions.map((q) => {
+                const cov = questionCoverage(q.question_id, rows);
+                const active = mode === "by_question" && focusQuestion === q.question_id;
                 return (
                   <th
-                    key={q.id}
-                    title={`${q.label} — ${q.helper}`}
+                    key={q.question_id}
+                    title={q.helper ? `${q.label} — ${q.helper}` : q.label}
                     className={cn(
                       "border-b border-border bg-background px-1 py-1.5 align-bottom",
                       active && "bg-primary/5",
@@ -272,7 +271,7 @@ const DriverScoring: React.FC = () => {
                   >
                     <button
                       type="button"
-                      onClick={() => openRun("by_question", q.id)}
+                      onClick={() => openRun("by_question", q.question_id)}
                       className="flex w-full flex-col items-center gap-0.5"
                     >
                       <span
@@ -324,23 +323,23 @@ const DriverScoring: React.FC = () => {
                       </span>
                     )}
                   </td>
-                  {DRIVER_QUESTIONS.map((q) => {
-                    const rec = scoreFor(m.material_id, q.id);
+                  {questions.map((q) => {
+                    const rec = scoreFor(m.material_id, q.question_id);
                     const v = rec?.score ?? null;
-                    const activeCol = mode === "by_question" && focusQuestion === q.id;
+                    const activeCol = mode === "by_question" && focusQuestion === q.question_id;
                     return (
                       <td
-                        key={q.id}
+                        key={q.question_id}
                         className={cn("border-b border-border px-1 py-1 text-center", activeCol && "bg-primary/5")}
                       >
                         <button
                           type="button"
                           onClick={() => {
-                            openRun(mode, mode === "by_question" ? q.id : m.material_id);
+                            openRun(mode, mode === "by_question" ? q.question_id : m.material_id);
                             setIndex(
                               mode === "by_question"
                                 ? rows.findIndex((r) => r.material_id === m.material_id)
-                                : DRIVER_QUESTIONS.findIndex((x) => x.id === q.id),
+                                : questions.findIndex((x) => x.question_id === q.question_id),
                             );
                           }}
                           title={
