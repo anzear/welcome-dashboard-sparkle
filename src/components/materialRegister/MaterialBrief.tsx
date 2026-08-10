@@ -86,7 +86,7 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
+      "group grid grid-cols-[minmax(4.5rem,auto)_minmax(0,1fr)] items-baseline gap-3 rounded-sm px-1 py-1",
       wide && "sm:col-span-2",
       onClick && "cursor-pointer hover:bg-muted/40",
     )}
@@ -856,7 +856,6 @@ export const MaterialBrief: React.FC = () => {
                 computedInputs="volume x emission factor"
               />
               <EditableFigure
-                wide
                 label="GHG boundary"
                 value={m.ghg_boundary}
                 provenance={m.provenance.ghg_boundary}
@@ -864,7 +863,6 @@ export const MaterialBrief: React.FC = () => {
                 onSave={(raw) => saveText("ghg_boundary", raw)}
               />
               <EditableFigure
-                wide
                 label="GHG data basis"
                 value={m.ghg_data_basis}
                 provenance={m.provenance.ghg_data_basis}
@@ -908,7 +906,6 @@ export const MaterialBrief: React.FC = () => {
           <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
             <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <DerivedField
-                wide
                 label="Name"
                 value={m.name}
                 provenance={m.provenance.name}
@@ -946,7 +943,6 @@ export const MaterialBrief: React.FC = () => {
                 }
               />
               <DerivedField
-                wide
                 label="Material class"
                 value={m.material_class}
                 provenance={m.provenance.material_class}
