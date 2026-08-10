@@ -152,124 +152,115 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Rank control */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Ranked by</span>
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-            {MEASURES.map((mm) => (
+      {/* Control band — one tint, one hairline beneath */}
+      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">Ranked by</span>
+            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+              {MEASURES.map((mm) => (
+                <button
+                  key={mm.id}
+                  type="button"
+                  aria-pressed={measureId === mm.id}
+                  onClick={() => setMeasureId(mm.id)}
+                  className={cn(
+                    "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    measureId === mm.id
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {mm.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
+            <span>
+              Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
+              <span className="font-mono tabular-nums">{filteredTotal}</span>
+              {filtersActive ? " filtered" : ""}
+            </span>
+            {missingCount > 0 && (
               <button
-                key={mm.id}
                 type="button"
-                aria-pressed={measureId === mm.id}
-                onClick={() => setMeasureId(mm.id)}
-                className={cn(
-                  "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-                  measureId === mm.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+                onClick={() => setOnlyUnranked((v) => !v)}
+                className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
               >
-                {mm.label}
+                {onlyUnranked ? "Show all" : `${missingCount} missing`}
               </button>
-            ))}
+            )}
+          </div>
+
+          <button
+            type="button"
+            aria-pressed={onlyDivergent}
+            onClick={() => setOnlyDivergent((v) => !v)}
+            className={cn(
+              "rounded-sm border bg-background px-2 py-1 text-[11px] font-medium transition-colors",
+              onlyDivergent
+                ? "border-amber-400/60 text-amber-700"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
+          </button>
+
+          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={showLastChange}
+              onChange={(e) => setShowLastChange(e.target.checked)}
+              className="h-3 w-3"
+            />
+            Last change
+          </label>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <MultiSelectFilter
+              label="Class"
+              options={options.classes}
+              selected={filters.classes}
+              onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
+            />
+            <MultiSelectFilter
+              label="Status"
+              options={options.statuses}
+              selected={filters.statuses}
+              onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
+            />
+            <MultiSelectFilter
+              label="Owner"
+              options={options.owners}
+              selected={filters.owners}
+              onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
+            />
+            <MultiSelectFilter
+              label="Entry type"
+              options={options.entryTypes}
+              selected={filters.entryTypes}
+              onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+            />
+            <MultiSelectFilter
+              label="Group"
+              options={options.groups}
+              selected={filters.groups}
+              onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
+            />
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setAddOpen(true)}
-          className="inline-flex items-center gap-1 rounded-sm border border-primary/40 bg-primary/5 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/10"
-        >
-          <Plus className="h-3 w-3" /> Add material
-        </button>
-
-        <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
-          <span>
-            Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
-            <span className="font-mono tabular-nums">{filteredTotal}</span>
-            {filtersActive ? " filtered" : ""}
-          </span>
-          {missingCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setOnlyUnranked((v) => !v)}
-              className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              {onlyUnranked ? "Show all" : `${missingCount} missing`}
-            </button>
-          )}
-        </div>
-
-        <button
-          type="button"
-          aria-pressed={onlyDivergent}
-          onClick={() => setOnlyDivergent((v) => !v)}
-          className={cn(
-            "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
-            onlyDivergent
-              ? "border-amber-500/40 bg-amber-500/10 text-amber-700"
-              : "border-border text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
-        </button>
-
-        <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={showLastChange}
-            onChange={(e) => setShowLastChange(e.target.checked)}
-            className="h-3 w-3 accent-[hsl(var(--primary))]"
+        <div className="flex flex-wrap items-center gap-2">
+          <Input
+            value={filters.search}
+            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+            placeholder="Search name, CAS, customer ID"
+            className="h-7 w-56 bg-background text-[11px]"
           />
-          Last change
-        </label>
-      </div>
-
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
-        <Input
-          value={filters.search}
-          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-          placeholder="Search name, CAS, customer ID"
-          className="h-7 w-56 text-[11px]"
-        />
-        <MultiSelectFilter
-          label="Class"
-          options={options.classes}
-          selected={filters.classes}
-          onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-        />
-        <MultiSelectFilter
-          label="Status"
-          options={options.statuses}
-          selected={filters.statuses}
-          onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
-        />
-        <MultiSelectFilter
-          label="Owner"
-          options={options.owners}
-          selected={filters.owners}
-          onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
-        />
-        <MultiSelectFilter
-          label="Entry type"
-          options={options.entryTypes}
-          selected={filters.entryTypes}
-          onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
-        />
-        <MultiSelectFilter
-          label="Group"
-          options={options.groups}
-          selected={filters.groups}
-          onChange={(v) => setFilters((f) => ({ ...f, groups: v }))}
-        />
-      </div>
-
-      {(activeChips.length > 0 || filters.search.trim() !== "") && (
-        <div className="flex flex-wrap items-center gap-1.5 pt-2">
           {filters.search.trim() !== "" && (
-            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]">
+            <span className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]">
               “{filters.search}”
               <button type="button" onClick={() => setFilters((f) => ({ ...f, search: "" }))}>
                 <X className="h-3 w-3 opacity-60 hover:opacity-100" />
@@ -279,7 +270,7 @@ export const MaterialRegisterTable: React.FC = () => {
           {activeChips.map((c) => (
             <span
               key={`${c.kind}-${c.value}`}
-              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+              className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-1.5 py-0.5 text-[10px]"
             >
               {c.label}
               <button type="button" onClick={() => removeChip(c.kind, c.value)}>
@@ -287,15 +278,18 @@ export const MaterialRegisterTable: React.FC = () => {
               </button>
             </span>
           ))}
-          <button
-            type="button"
-            onClick={() => setFilters(EMPTY_FILTERS)}
-            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            Clear all
-          </button>
+          {(activeChips.length > 0 || filters.search.trim() !== "") && (
+            <button
+              type="button"
+              onClick={() => setFilters(EMPTY_FILTERS)}
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              Clear all
+            </button>
+          )}
         </div>
-      )}
+      </div>
+
 
       {/* Selection bar */}
       {selected.size > 0 && (
