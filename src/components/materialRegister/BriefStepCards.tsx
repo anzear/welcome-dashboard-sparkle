@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Upload } from "lucide-react";
+import { Paperclip } from "lucide-react";
 import type { Material } from "@/types/materialPrioritisation";
 import MaterialRequirementsDialog, {
   EVIDENCE_SLOTS,
@@ -12,83 +12,47 @@ import MaterialRequirementsDialog, {
 export type StepState = "completed" | "in_progress" | "not_started";
 
 const STATE_LABEL: Record<StepState, string> = {
-  completed: "Completed",
+  completed: "Complete",
   in_progress: "In progress",
   not_started: "Not started",
 };
 
-const StepCard: React.FC<{
-  title: string;
-  description: string;
-  state: StepState;
-  icon: React.ComponentType<{ className?: string }>;
-  onClick?: () => void;
-}> = ({ title, description, state, icon: Icon, onClick }) => {
-  const done = state === "completed";
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={!onClick}
-      className={cn(
-        "rounded-lg border border-border p-4 text-left transition-colors",
-        done ? "bg-muted/40" : "bg-card",
-        onClick ? "hover:border-foreground/30 hover:bg-muted/60" : "cursor-default",
-      )}
-    >
-      <div className="flex items-start justify-between">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
-          <Icon className="h-4 w-4 text-foreground" />
-        </div>
-
-      </div>
-
-      <div className="mt-4">
-        <div className="text-sm font-semibold text-foreground">{title}</div>
-        <div className="mt-0.5 text-[12px] text-muted-foreground">{description}</div>
-      </div>
-
-      <div className="mt-3">
-        {done ? (
-          <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-foreground">
-            <CheckCircle2 className="h-3 w-3" />
-            {STATE_LABEL[state]}
-          </span>
-        ) : (
-          <span className="inline-flex items-center text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            {STATE_LABEL[state]}
-          </span>
-        )}
-      </div>
-    </button>
-  );
-};
-
-const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = ({
-  material,
-  scoredCount = 0,
-}) => {
+/**
+ * Requirements and documents. A quiet single row while empty — an empty state
+ * never outranks populated content. Opens the full drop zone on click.
+ */
+const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = ({ material }) => {
   const [reqOpen, setReqOpen] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceState>(emptyEvidence());
 
-  const filledEvidence = evidenceFilledCount(evidence);
-  const reqState: StepState =
-    filledEvidence === EVIDENCE_SLOTS.length
-      ? "completed"
-      : filledEvidence > 0
-        ? "in_progress"
-        : "not_started";
+  const filled = evidenceFilledCount(evidence);
+  const state: StepState =
+    filled === EVIDENCE_SLOTS.length ? "completed" : filled > 0 ? "in_progress" : "not_started";
 
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <StepCard
-          title="Material Requirements"
-          description="Upload supporting docs & evidence"
-          state={reqState}
-          icon={Upload}
-          onClick={() => setReqOpen(true)}
-        />
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setReqOpen(true)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") setReqOpen(true);
+        }}
+        className="group flex cursor-pointer items-center gap-2 rounded-sm py-1.5 text-[11px] hover:bg-muted/50"
+      >
+        <Paperclip className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        <span className="text-foreground">Material requirements</span>
+        <span className={cn("text-muted-foreground", state === "completed" && "text-foreground")}>
+          · {STATE_LABEL[state]}
+        </span>
+        {filled > 0 && (
+          <span className="font-mono tabular-nums text-muted-foreground">
+            {filled} of {EVIDENCE_SLOTS.length}
+          </span>
+        )}
+        <span className="ml-auto text-muted-foreground underline decoration-dotted underline-offset-2 group-hover:text-foreground">
+          Upload
+        </span>
       </div>
 
       {reqOpen && (

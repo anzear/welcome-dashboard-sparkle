@@ -124,7 +124,7 @@ export const MaterialHistory: React.FC<{ materialId: string }> = ({ materialId }
         </p>
       )}
 
-      <div className="max-h-[22rem] space-y-3 overflow-auto pr-1">
+      <div className="space-y-3">
         {groups.map((g) => (
           <div key={g.key}>
             <div className="sticky top-0 bg-background/90 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground backdrop-blur-sm">
