@@ -39,6 +39,7 @@ import SuperAdmin from "./pages/SuperAdmin";
 import Settings from "./pages/Settings";
 import MaterialPipeline from "./pages/MaterialPipeline";
 import MaterialInventory from "./pages/MaterialInventory";
+import MaterialPrioritisation from "./pages/MaterialPrioritisation";
 import MaterialBrief from "./pages/MaterialBrief";
 import DecisionsSpace from "./pages/DecisionsSpace";
 import ValidationSpace from "./pages/ValidationSpace";
@@ -173,6 +174,7 @@ const ContentArea = ({ location }: { location: ReturnType<typeof useLocation> })
           <Route path="/" element={<Index />} />
           <Route path="/material-pipeline" element={<MaterialPipeline />} />
           <Route path="/material-inventory" element={<MaterialPipeline />} />
+          <Route path="/material-prioritisation" element={<MaterialPrioritisation />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/saved-companies" element={<SavedCompanies />} />
           <Route path="/projects" element={<Projects />} />
