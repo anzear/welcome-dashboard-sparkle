@@ -1,3 +1,4 @@
+import { cleanTags } from "@/components/materialRegister/tags";
 import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
 import type {
   EntryType,
