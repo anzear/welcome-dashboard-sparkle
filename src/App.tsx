@@ -172,8 +172,8 @@ const ContentArea = ({ location }: { location: ReturnType<typeof useLocation> })
       >
         <Routes location={location}>
           <Route path="/" element={<Index />} />
-          <Route path="/material-pipeline" element={<MaterialPipeline />} />
-          <Route path="/material-inventory" element={<MaterialPipeline />} />
+          <Route path="/material-pipeline" element={<MaterialPrioritisation />} />
+          <Route path="/material-inventory" element={<MaterialPrioritisation />} />
           <Route path="/material-prioritisation" element={<MaterialPrioritisation />} />
           <Route path="/workspace" element={<Workspace />} />
           <Route path="/saved-companies" element={<SavedCompanies />} />
