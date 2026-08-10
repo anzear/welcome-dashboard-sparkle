@@ -619,7 +619,24 @@ export const MaterialRegisterTable: React.FC = () => {
         </table>
       </div>
 
+      {/* Reference, not chrome. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 text-[10px] text-muted-foreground/70">
+        <span className="inline-flex items-center gap-1">
+          <span className="border-b border-dotted border-muted-foreground/60 font-mono">1 234</span> computed
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-muted-foreground">^</span> entered
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="font-mono text-amber-700">GHG 6</span> rank divergence
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="text-muted-foreground/50">—</span> no value (unranked)
+        </span>
+      </div>
+
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
 
       <BulkActionDialog
         kind={bulkKind}
