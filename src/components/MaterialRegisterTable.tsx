@@ -25,7 +25,14 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, X } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border";
+  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
+
+/** Pinned identity columns: they hold while the measures scroll. */
+const STICK = "sticky bg-muted/60";
+
+/** Units live in the header, second line, faintest tier. */
+const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+
 
 export const MaterialRegisterTable: React.FC = () => {
   const {
