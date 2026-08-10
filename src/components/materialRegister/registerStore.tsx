@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
+import { seedDriverScores } from "@/data/driverScoresMock";
+import { DRIVER_QUESTIONS, scoreKey } from "@/config/driverQuestions";
 import {
   JOURNEY_STATUS_LABEL,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
+  type DriverCounts,
+  type DriverScore,
   type MaterialEvent,
   type MaterialEventType,
 } from "@/types/materialPrioritisation";
@@ -172,6 +176,12 @@ interface Store {
   events: MaterialEvent[];
   eventsFor: (id: string) => MaterialEvent[];
   recordEvents: (inputs: EventInput[]) => void;
+  /** Sparse judgement map. A missing key means no judgement, never a zero. */
+  scores: Record<string, DriverScore>;
+  scoreFor: (materialId: string, questionId: string) => DriverScore | null;
+  setScore: (materialId: string, questionId: string, score: number, note: string | null) => void;
+  countsFor: (materialId: string) => DriverCounts;
+  questionCoverage: (questionId: string, rows: Material[]) => number;
   toast: { message: string; snapshot: Material[]; batchId?: string } | null;
   setToast: React.Dispatch<
     React.SetStateAction<{ message: string; snapshot: Material[]; batchId?: string } | null>
@@ -194,6 +204,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 }) => {
   const [data, setData] = useState<Material[]>(rows);
   const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
+  const [scores, setScores] = useState<Record<string, DriverScore>>(seedDriverScores);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -444,6 +455,57 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
 
+  const scoreFor = (materialId: string, questionId: string) =>
+    scores[scoreKey(materialId, questionId)] ?? null;
+
+  /**
+   * Counts of judgements only. Never summed, averaged or weighted into an index.
+   * A material with nothing scored has null counts, not zeroes.
+   */
+  const countsFor = (materialId: string): DriverCounts => {
+    const values = DRIVER_QUESTIONS.map((q) => scores[scoreKey(materialId, q.id)]?.score ?? null).filter(
+      (v): v is number => v !== null,
+    );
+    if (values.length === 0) {
+      return { strong_drivers: null, strong_constraints: null, scored_count: null };
+    }
+    return {
+      strong_drivers: values.filter((v) => v >= 3).length,
+      strong_constraints: values.filter((v) => v <= -3).length,
+      scored_count: values.length,
+    };
+  };
+
+  const questionCoverage = (questionId: string, rows: Material[]) =>
+    rows.filter((m) => (scores[scoreKey(m.material_id, questionId)]?.score ?? null) !== null).length;
+
+  const setScore = (materialId: string, questionId: string, score: number, note: string | null) => {
+    const key = scoreKey(materialId, questionId);
+    const previous = scores[key]?.score ?? null;
+    setScores((prev) => ({
+      ...prev,
+      [key]: {
+        material_id: materialId,
+        question_id: questionId,
+        score,
+        note: note && note.trim() ? note.trim() : null,
+        scored_by: CURRENT_USER,
+        scored_at: new Date().toISOString(),
+      },
+    }));
+    if (previous === score) return;
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "score_change",
+        field: questionId,
+        from_value: previous === null ? null : String(previous),
+        to_value: String(score),
+        reason: note && note.trim() ? note.trim() : null,
+      },
+    ]);
+  };
+
   const value: Store = {
     data,
     measureId,
@@ -476,6 +538,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     events,
     eventsFor,
     recordEvents,
+    scores,
+    scoreFor,
+    setScore,
+    countsFor,
+    questionCoverage,
 
     toast,
     setToast,

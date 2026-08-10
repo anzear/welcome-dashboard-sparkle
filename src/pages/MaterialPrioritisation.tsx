@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
+import DriverScoring from "@/components/materialRegister/DriverScoring";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 
 const TABS = [
@@ -55,7 +56,7 @@ const Inner: React.FC = () => {
 
       {tab === "register" && <MaterialRegisterTable />}
       {tab === "grid" && <Placeholder label="Prioritisation Grid" />}
-      {tab === "scoring" && <Placeholder label="Driver Scoring" />}
+      {tab === "scoring" && <DriverScoring />}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
+import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
 
 import {
   CURRENT_USER,
@@ -358,16 +359,12 @@ export const MaterialBrief: React.FC = () => {
           </div>
         </section>
 
-        {/* Section 3 — Scores (judgement) */}
+        {/* Section 3 — Scores (judgement, never typeset like the figures above) */}
         <section className="rounded-md border border-dashed border-primary/30 bg-primary/5 p-3">
           <SectionTitle note="These are judgements recorded by your team, not measured data.">Scores</SectionTitle>
-          <div className="rounded-sm border border-dashed border-primary/30 bg-background/60 px-3 py-6 text-center">
-            <p className="text-[11px] text-muted-foreground">No driver scores recorded yet.</p>
-            <button type="button" className="mt-1 text-[11px] text-primary underline underline-offset-2">
-              Score this material
-            </button>
-          </div>
+          <BriefDriverScores materialId={m.material_id} />
         </section>
+
 
         {/* Section 2 — Classification */}
         <section className="rounded-md border border-border lg:col-span-2">
