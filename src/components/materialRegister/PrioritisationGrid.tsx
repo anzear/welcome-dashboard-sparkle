@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
-import { MEASURES, useRegister } from "@/components/materialRegister/registerStore";
+import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import GridFindings from "@/components/materialRegister/GridFindings";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
@@ -11,9 +11,20 @@ import {
   Expandable,
   STATUS_DOT,
   StatusLegend,
-  fmtMeasure,
   median,
+  ordinal,
 } from "@/components/materialRegister/gridPrimitives";
+import {
+  AXIS_PRESETS,
+  AXIS_VARS,
+  DEFAULT_PRESET,
+  SIZE_MIN,
+  axisVar,
+  quadrantReadings,
+  sizeRadius,
+  type AxisVarId,
+  type SizeVarId,
+} from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
 
 const W = 780;
@@ -21,7 +32,6 @@ const H = 460;
 const PAD = { l: 78, r: 52, t: 22, b: 52 };
 const PW = W - PAD.l - PAD.r;
 const PH = H - PAD.t - PAD.b;
-const Y_MAX = 12;
 
 /** Deterministic jitter so overlapping dots stay individually clickable. */
 const jitter = (id: string) => {
@@ -37,18 +47,44 @@ interface Dot {
   cx: number;
   cy: number;
   r: number;
-  drivers: number;
-  constraints: number;
+  /** Count behind the bubble size, or null when nothing has been scored. */
+  sizeCount: number | null;
+  scored: boolean;
 }
+
+const compact = (x: number) =>
+  x >= 1_000_000 ? `${(x / 1_000_000).toFixed(1)}M` : x >= 10_000 ? `${(x / 1000).toFixed(0)}k` : nf(0).format(x);
+
+const AxisSelect: React.FC<{
+  label: string;
+  value: string;
+  options: { id: string; label: string; kind?: string }[];
+  onChange: (id: string) => void;
+}> = ({ label, value, options, onChange }) => (
+  <label className="flex items-center gap-1.5">
+    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-7 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
+      aria-label={label}
+    >
+      {options.map((o) => (
+        <option key={o.id} value={o.id}>
+          {o.label}
+        </option>
+      ))}
+    </select>
+  </label>
+);
 
 const PrioritisationGrid: React.FC = () => {
   const {
-    measureId,
     setMeasureId,
     measure,
     ordered,
     data,
-    filtersActive,
+    rankTables,
     countsFor,
     openBrief,
     priorityPeriod,
@@ -60,6 +96,30 @@ const PrioritisationGrid: React.FC = () => {
     setToast,
     undo,
   } = useRegister();
+
+  const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
+  const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
+  const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
+
+  const xv = axisVar(xId);
+  const yv = axisVar(yId);
+  const sizeVar = axisVar(sizeId);
+
+  /** The register's ranking measure follows the X axis so the findings stay coherent. */
+  const pickX = (id: AxisVarId) => {
+    setXId(id);
+    const v = axisVar(id);
+    if (v.measureId) setMeasureId(v.measureId);
+  };
+
+  const applyPreset = (presetId: string) => {
+    const p = AXIS_PRESETS.find((x) => x.id === presetId)!;
+    pickX(p.x);
+    setYId(p.y);
+    setSizeId(p.size);
+  };
+
+  const activePreset = AXIS_PRESETS.find((p) => p.x === xId && p.y === yId && p.size === sizeId) ?? null;
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [prioritySetOnly, setPrioritySetOnly] = useState(false);
@@ -74,39 +134,40 @@ const PrioritisationGrid: React.FC = () => {
   );
 
   const classified = useMemo(() => {
-    const plotted: { m: Material; x: number; y: number; constraints: number }[] = [];
+    const plotted: { m: Material; x: number; y: number; sizeCount: number | null; scored: boolean }[] = [];
     const noFigure: Material[] = [];
     const notScored: Material[] = [];
     rows.forEach(({ m }) => {
-      const x = measure.value(m);
       const counts = countsFor(m.material_id);
-      if (x === null) {
-        noFigure.push(m);
-        return;
-      }
-      if (counts.scored_count === null) {
-        notScored.push(m);
+      const x = xv.value(m, counts);
+      const y = yv.value(m, counts);
+      if (x === null || y === null) {
+        const missingJudgement =
+          (xv.kind === "judgement" && x === null) || (yv.kind === "judgement" && y === null);
+        (missingJudgement ? notScored : noFigure).push(m);
         return;
       }
       plotted.push({
         m,
         x,
-        y: counts.strong_drivers as number,
-        constraints: counts.strong_constraints as number,
+        y,
+        sizeCount: counts.scored_count === null ? null : (sizeVar.value(m, counts) as number),
+        scored: counts.scored_count !== null,
       });
     });
     const byName = (a: Material, b: Material) => a.name.localeCompare(b.name);
     return { plotted, noFigure: noFigure.sort(byName), notScored: notScored.sort(byName) };
-  }, [rows, measure, countsFor]);
+  }, [rows, xv, yv, sizeVar, countsFor]);
 
   const { plotted, noFigure, notScored } = classified;
 
-  const xMax = Math.max(1, ...plotted.map((p) => p.x));
+  const xMax = xv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.x));
+  const yMax = yv.fixedMax ?? Math.max(1, ...plotted.map((p) => p.y));
   const xMedian = median(plotted.map((p) => p.x));
   const yMedian = median(plotted.map((p) => p.y));
 
   const sx = (v: number) => PAD.l + (v / xMax) * PW;
-  const sy = (v: number) => PAD.t + PH - (v / Y_MAX) * PH;
+  const sy = (v: number) => PAD.t + PH - (v / yMax) * PH;
 
   const dots: Dot[] = plotted.map((p) => {
     const j = jitter(p.m.material_id);
@@ -114,13 +175,41 @@ const PrioritisationGrid: React.FC = () => {
       ...p,
       cx: sx(p.x) + j.dx,
       cy: sy(p.y) + j.dy,
-      r: 3.4 + Math.min(p.constraints, 6) * 1.35,
-      drivers: p.y,
+      r: p.scored ? sizeRadius(p.sizeCount) : SIZE_MIN,
     };
   });
 
+  /**
+   * Equal-position reference: the path where a material's position on X matches its
+   * position on Y. Drawn through matching quantiles of the two distributions, so the
+   * two units are never blended into one number.
+   */
+  const equalLine = useMemo(() => {
+    if (plotted.length < 4) return null;
+    const xs = plotted.map((p) => p.x).sort((a, b) => a - b);
+    const ys = plotted.map((p) => p.y).sort((a, b) => a - b);
+    const at = (arr: number[], f: number) => arr[Math.min(arr.length - 1, Math.round(f * (arr.length - 1)))];
+    return Array.from({ length: 21 }, (_, i) => i / 20)
+      .map((f) => `${sx(at(xs, f)).toFixed(1)},${sy(at(ys, f)).toFixed(1)}`)
+      .join(" ");
+  }, [plotted, xMax, yMax]);
+
+  const rankOf = (m: Material, id: AxisVarId) => {
+    const v = axisVar(id);
+    if (!v.measureId) return null;
+    return rankTables[v.measureId]?.ranks[m.material_id] ?? null;
+  };
+
+  const rankSentence = (m: Material) => {
+    const rx = rankOf(m, xId);
+    const ry = rankOf(m, yId);
+    if (rx === null || ry === null) return null;
+    return `${rx}${ordinal(rx)} on ${xv.noun}, ${ry}${ordinal(ry)} on ${yv.noun}.`;
+  };
+
   const unplottedTotal = noFigure.length + notScored.length;
   const statusesPresent = [...new Set(plotted.map((p) => p.m.journey_status))] as JourneyStatus[];
+  const readings = quadrantReadings(xv, yv);
 
   const pickedMaterials = data.filter((m) => picked.has(m.material_id));
 
@@ -161,32 +250,61 @@ const PrioritisationGrid: React.FC = () => {
   };
 
   const xTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => f * xMax);
+  const yTicks =
+    yv.fixedMax !== undefined
+      ? Array.from({ length: yv.fixedMax + 1 }, (_, i) => i)
+      : [0, 0.25, 0.5, 0.75, 1].map((f) => f * yMax);
 
   return (
     <div className="w-full space-y-2">
-      {/* Controls */}
+      {/* Axis presets */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Presets</span>
+        {AXIS_PRESETS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            aria-pressed={activePreset?.id === p.id}
+            onClick={() => applyPreset(p.id)}
+            title={p.reading}
+            className={cn(
+              "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
+              activePreset?.id === p.id
+                ? "border-primary/40 bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {p.label}
+          </button>
+        ))}
+        {activePreset && (
+          <span className="text-[10px] text-muted-foreground">— {activePreset.reading}</span>
+        )}
+      </div>
+
+      {/* Axis controls */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Exposure</span>
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-            {MEASURES.map((mm) => (
-              <button
-                key={mm.id}
-                type="button"
-                aria-pressed={measureId === mm.id}
-                onClick={() => setMeasureId(mm.id)}
-                className={cn(
-                  "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-                  measureId === mm.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {mm.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <AxisSelect
+          label="X"
+          value={xId}
+          options={AXIS_VARS.map((v) => ({ id: v.id, label: `${v.label} (${v.unit})` }))}
+          onChange={(id) => pickX(id as AxisVarId)}
+        />
+        <AxisSelect
+          label="Y"
+          value={yId}
+          options={AXIS_VARS.map((v) => ({ id: v.id, label: `${v.label} (${v.unit})` }))}
+          onChange={(id) => setYId(id as AxisVarId)}
+        />
+        <AxisSelect
+          label="Size"
+          value={sizeId}
+          options={[
+            { id: "drivers", label: "Strong drivers (count)" },
+            { id: "constraints", label: "Strong constraints (count)" },
+          ]}
+          onChange={(id) => setSizeId(id as SizeVarId)}
+        />
 
         <div className="flex items-center gap-2">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -302,29 +420,33 @@ const PrioritisationGrid: React.FC = () => {
             <line x1={PAD.l} y1={PAD.t + PH} x2={PAD.l + PW} y2={PAD.t + PH} stroke="hsl(var(--border))" />
             <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + PH} stroke="hsl(var(--border))" />
 
-            {/* y ticks: integer count axis */}
-            {Array.from({ length: Y_MAX + 1 }, (_, i) => i).map((i) => (
-              <g key={i}>
-                <line
-                  x1={PAD.l - 4}
-                  y1={sy(i)}
-                  x2={PAD.l + PW}
-                  y2={sy(i)}
-                  stroke="hsl(var(--border))"
-                  strokeOpacity={i % 2 === 0 ? 0.5 : 0.2}
-                />
-                {i % 2 === 0 && (
-                  <text
-                    x={PAD.l - 8}
-                    y={sy(i) + 3}
-                    textAnchor="end"
-                    className="fill-muted-foreground font-mono text-[9px] tabular-nums"
-                  >
-                    {i}
-                  </text>
-                )}
-              </g>
-            ))}
+            {/* y ticks */}
+            {yTicks.map((t, i) => {
+              const isCount = yv.fixedMax !== undefined;
+              const labelled = !isCount || i % 2 === 0;
+              return (
+                <g key={i}>
+                  <line
+                    x1={PAD.l - 4}
+                    y1={sy(t)}
+                    x2={PAD.l + PW}
+                    y2={sy(t)}
+                    stroke="hsl(var(--border))"
+                    strokeOpacity={labelled ? 0.5 : 0.2}
+                  />
+                  {labelled && (
+                    <text
+                      x={PAD.l - 8}
+                      y={sy(t) + 3}
+                      textAnchor="end"
+                      className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                    >
+                      {isCount ? t : compact(t)}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
 
             {/* x ticks */}
             {xTicks.map((t, i) => (
@@ -336,60 +458,61 @@ const PrioritisationGrid: React.FC = () => {
                   textAnchor="middle"
                   className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                 >
-                  {nf(0).format(Math.round(t))}
+                  {xv.fixedMax !== undefined ? Math.round(t) : compact(t)}
                 </text>
               </g>
             ))}
 
-            {/* median splits */}
-            {xMedian !== null && (
+            {/* equal-position reference */}
+            {equalLine && (
               <>
-                <line
-                  x1={sx(xMedian)}
-                  y1={PAD.t}
-                  x2={sx(xMedian)}
-                  y2={PAD.t + PH}
+                <polyline
+                  points={equalLine}
+                  fill="none"
                   stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.35}
-                  strokeDasharray="3 3"
+                  strokeOpacity={0.28}
+                  strokeWidth={1}
                 />
                 <text
-                  x={sx(xMedian) + 4}
-                  y={PAD.t + 10}
-                  className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                  x={xMedian !== null ? sx(xMedian) + 8 : PAD.l + 8}
+                  y={yMedian !== null ? sy(yMedian) - 8 : PAD.t + 12}
+                  className="fill-muted-foreground/70 text-[9px]"
                 >
-                  median {nf(0).format(Math.round(xMedian))}
-                </text>
-              </>
-            )}
-            {yMedian !== null && (
-              <>
-                <line
-                  x1={PAD.l}
-                  y1={sy(yMedian)}
-                  x2={PAD.l + PW}
-                  y2={sy(yMedian)}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.35}
-                  strokeDasharray="3 3"
-                />
-                <text
-                  x={PAD.l + PW - 2}
-                  y={sy(yMedian) - 4}
-                  textAnchor="end"
-                  className="fill-muted-foreground font-mono text-[9px] tabular-nums"
-                >
-                  median {yMedian}
+                  equal position on both measures
                 </text>
               </>
             )}
 
-            {/* quadrant orientation labels */}
-            <text x={PAD.l + PW - 6} y={PAD.t + 24} textAnchor="end" className="fill-muted-foreground/60 text-[10px]">
-              Act now
+            {/* median splits */}
+            {xMedian !== null && (
+              <line
+                x1={sx(xMedian)}
+                y1={PAD.t}
+                x2={sx(xMedian)}
+                y2={PAD.t + PH}
+                stroke="hsl(var(--muted-foreground))"
+                strokeOpacity={0.35}
+                strokeDasharray="3 3"
+              />
+            )}
+            {yMedian !== null && (
+              <line
+                x1={PAD.l}
+                y1={sy(yMedian)}
+                x2={PAD.l + PW}
+                y2={sy(yMedian)}
+                stroke="hsl(var(--muted-foreground))"
+                strokeOpacity={0.35}
+                strokeDasharray="3 3"
+              />
+            )}
+
+            {/* quadrant readings */}
+            <text x={PAD.l + PW - 6} y={PAD.t + 28} textAnchor="end" className="fill-muted-foreground/60 text-[10px]">
+              {readings.topRight}
             </text>
-            <text x={PAD.l + 6} y={PAD.t + 24} className="fill-muted-foreground/60 text-[10px]">
-              Watch
+            <text x={PAD.l + 6} y={PAD.t + 28} className="fill-muted-foreground/60 text-[10px]">
+              {readings.topLeft}
             </text>
             <text
               x={PAD.l + PW - 6}
@@ -397,10 +520,10 @@ const PrioritisationGrid: React.FC = () => {
               textAnchor="end"
               className="fill-muted-foreground/60 text-[10px]"
             >
-              Exposed, no case yet
+              {readings.bottomRight}
             </text>
             <text x={PAD.l + 6} y={PAD.t + PH - 8} className="fill-muted-foreground/60 text-[10px]">
-              Low priority
+              {readings.bottomLeft}
             </text>
 
             {/* axis titles */}
@@ -410,19 +533,34 @@ const PrioritisationGrid: React.FC = () => {
               textAnchor="middle"
               className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
             >
-              {measure.label} ({measure.unit}) — measured
+              {xv.label} ({xv.unit}) — {xv.kind}
             </text>
             <text
               transform={`translate(14 ${PAD.t + PH / 2}) rotate(-90)`}
               textAnchor="middle"
               className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
             >
-              Strong drivers (count)
+              {yv.label} ({yv.unit}) — {yv.kind}
             </text>
 
             {/* dots */}
             {dots.map((d) => {
               const isPicked = picked.has(d.m.material_id);
+              const enter = (e: React.MouseEvent) => {
+                const rect = svgRef.current!.getBoundingClientRect();
+                setHover({ dot: d, left: (d.cx / W) * rect.width, top: (d.cy / H) * rect.height });
+              };
+              const click = (e: React.MouseEvent) => {
+                if (e.shiftKey) {
+                  setPicked((prev) => {
+                    const next = new Set(prev);
+                    next.has(d.m.material_id) ? next.delete(d.m.material_id) : next.add(d.m.material_id);
+                    return next;
+                  });
+                  return;
+                }
+                openBrief(d.m.material_id);
+              };
               return (
                 <g key={d.m.material_id}>
                   {inPrioritySet(d.m) && (
@@ -441,30 +579,14 @@ const PrioritisationGrid: React.FC = () => {
                     cy={d.cy}
                     r={d.r}
                     className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
-                    fill="currentColor"
-                    fillOpacity={0.75}
-                    stroke={isPicked ? "hsl(var(--primary))" : "hsl(var(--background))"}
-                    strokeWidth={isPicked ? 2 : 0.8}
-                    onMouseEnter={(e) => {
-                      const rect = svgRef.current!.getBoundingClientRect();
-                      setHover({
-                        dot: d,
-                        left: ((d.cx / W) * rect.width) as number,
-                        top: ((d.cy / H) * rect.height) as number,
-                      });
-                    }}
+                    fill={d.scored ? "currentColor" : "none"}
+                    fillOpacity={d.scored ? 0.75 : 0}
+                    stroke={isPicked ? "hsl(var(--primary))" : d.scored ? "hsl(var(--background))" : "currentColor"}
+                    strokeWidth={isPicked ? 2 : d.scored ? 0.8 : 1.3}
+                    strokeDasharray={d.scored ? undefined : "2 1.6"}
+                    onMouseEnter={enter}
                     onMouseLeave={() => setHover(null)}
-                    onClick={(e) => {
-                      if (e.shiftKey) {
-                        setPicked((prev) => {
-                          const next = new Set(prev);
-                          next.has(d.m.material_id) ? next.delete(d.m.material_id) : next.add(d.m.material_id);
-                          return next;
-                        });
-                        return;
-                      }
-                      openBrief(d.m.material_id);
-                    }}
+                    onClick={click}
                   />
                 </g>
               );
@@ -487,7 +609,7 @@ const PrioritisationGrid: React.FC = () => {
 
           {hover && (
             <div
-              className="pointer-events-none absolute z-20 w-56 rounded-md border border-border bg-popover p-2 text-[10px] shadow-md"
+              className="pointer-events-none absolute z-20 w-60 rounded-md border border-border bg-popover p-2 text-[10px] shadow-md"
               style={{
                 left: Math.min(hover.left + 12, 9999),
                 top: Math.max(hover.top - 10, 0),
@@ -496,11 +618,15 @@ const PrioritisationGrid: React.FC = () => {
             >
               <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
               <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
-              <p className="mt-1 font-mono tabular-nums text-foreground">
-                {fmtMeasure(hover.dot.x, measure)}
-              </p>
-              <p className="text-muted-foreground">
-                {hover.dot.drivers} strong drivers · {hover.dot.constraints} strong constraints
+              <p className="mt-1 font-mono tabular-nums text-foreground">{xv.fmt(hover.dot.x)}</p>
+              <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
+              {rankSentence(hover.dot.m) && (
+                <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>
+              )}
+              <p className="mt-1 text-muted-foreground">
+                {hover.dot.scored
+                  ? `${hover.dot.sizeCount} ${sizeVar.noun}`
+                  : "Not yet scored — no judgement to size by"}
               </p>
               <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
             </div>
@@ -513,17 +639,26 @@ const PrioritisationGrid: React.FC = () => {
                 <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
                 <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
               </svg>
-              Dot size = strong constraints (count). Bigger dot, more barriers.
+              Bubble size = {sizeVar.noun} (count, 0 to 12)
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <svg width="14" height="14" viewBox="0 0 14 14" className="text-muted-foreground/70">
+                <circle cx="7" cy="7" r="3.4" fill="none" stroke="currentColor" strokeDasharray="2 1.6" />
+              </svg>
+              Hollow ring: not yet scored.
             </span>
             <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
               <svg width="14" height="14" viewBox="0 0 14 14">
                 <circle cx="7" cy="7" r="6" fill="none" stroke="hsl(var(--foreground))" strokeOpacity={0.55} />
                 <circle cx="7" cy="7" r="3.2" fill="currentColor" fillOpacity={0.6} />
               </svg>
-              Ring = already in the {priorityPeriod} priority set
+              Solid outer ring = in the {priorityPeriod} priority set
             </span>
             <span className="text-[10px] text-muted-foreground">
-              X is measured. Y and dot size are counts of judgements — never combined into a score or a ranking.
+              Axes: measured figures. Bubble size: your team's judgement.
+            </span>
+            <span className="text-[10px] text-muted-foreground">
+              Two axes, two units, one size encoding — never blended into a score.
             </span>
             <span className="text-[10px] text-muted-foreground">
               Shift-click or drag a box to select. Click a dot to open its brief.
@@ -539,12 +674,12 @@ const PrioritisationGrid: React.FC = () => {
               <span className="font-mono tabular-nums">{unplottedTotal}</span> materials not plotted
             </p>
             <p className="text-[10px] text-muted-foreground">
-              A missing figure or no judgement at all cannot be a position. None of these sits at zero.
+              A missing figure on either axis cannot be a position. None of these sits at zero.
             </p>
           </div>
 
           {unplottedTotal === 0 ? (
-            <p className="text-[11px] text-muted-foreground">Everything in scope has a figure and a judgement.</p>
+            <p className="text-[11px] text-muted-foreground">Everything in scope has a figure on both axes.</p>
           ) : (
             <div className="space-y-2">
               {noFigure.length > 0 && (
@@ -552,7 +687,7 @@ const PrioritisationGrid: React.FC = () => {
                   count={noFigure.length}
                   summary={
                     <>
-                      <span className="font-mono tabular-nums">{noFigure.length}</span> no {measure.noun} figure
+                      <span className="font-mono tabular-nums">{noFigure.length}</span> missing {xv.noun} or {yv.noun}
                     </>
                   }
                 >
@@ -576,7 +711,7 @@ const PrioritisationGrid: React.FC = () => {
                 </Expandable>
               )}
               <p className="text-[10px] text-muted-foreground">
-                Scoring or a figure moves a material onto the plot. This is a task list, not an error.
+                A figure or a judgement moves a material onto the plot. This is a task list, not an error.
               </p>
             </div>
           )}
