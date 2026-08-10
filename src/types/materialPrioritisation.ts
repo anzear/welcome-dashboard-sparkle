@@ -61,3 +61,43 @@ export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
   parked: "Parked",
   rejected: "Rejected",
 };
+
+export type MaterialEventType =
+  | "status_change"
+  | "owner_change"
+  | "priority_change"
+  | "blocker_set"
+  | "field_correction";
+
+export type BatchOrigin = "baselining" | "real_transition";
+
+/**
+ * One row per change. Never a field on Material — the register holds the current
+ * position, the event log holds the decisions that got it there.
+ */
+export interface MaterialEvent {
+  event_id: string;
+  material_id: string;
+  event_type: MaterialEventType;
+  field: string;
+  from_value: string | null;
+  to_value: string | null;
+  reason: string | null;
+  blocker_category: string | null;
+  blocker_detail: string | null;
+  blocker_condition: string | null;
+  changed_by: string;
+  changed_at: string;
+  batch_origin: BatchOrigin;
+  batch_id: string | null;
+}
+
+export const EVENT_FIELD_LABEL: Record<string, string> = {
+  journey_status: "Status",
+  owner: "Owner",
+  priority_selected: "Priority",
+  blocker_category: "Blocker",
+  cas_number: "CAS number",
+  material_class: "Material class",
+  customer_material_group: "Material group",
+};

@@ -59,6 +59,7 @@ export const MaterialRegisterTable: React.FC = () => {
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
+  const [showLastChange, setShowLastChange] = useState(true);
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
@@ -89,6 +90,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
   const colCount = 11;
+  const extraCols = (activeCol("multi_application") ? 1 : 0) + (showLastChange ? 1 : 0);
   const otherMeasures = MEASURES.filter((mm) => mm.id !== measureId);
 
   const visibleIds = visible.map((r) => r.m.material_id);
@@ -201,6 +203,16 @@ export const MaterialRegisterTable: React.FC = () => {
         >
           Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
         </button>
+
+        <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={showLastChange}
+            onChange={(e) => setShowLastChange(e.target.checked)}
+            className="h-3 w-3 accent-[hsl(var(--primary))]"
+          />
+          Last change
+        </label>
       </div>
 
       {/* Filter bar */}
@@ -382,13 +394,14 @@ export const MaterialRegisterTable: React.FC = () => {
               <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
               <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>
+              {showLastChange && <th className={cn(HEAD, "px-3 py-2 text-left")}>Last change</th>}
             </tr>
           </thead>
           <tbody>
             {bothFilters && (
               <tr>
                 <td
-                  colSpan={colCount + (activeCol("multi_application") ? 1 : 0)}
+                  colSpan={colCount + extraCols}
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
                   No material can be both unranked and divergent — an unranked material has no {measure.noun}{" "}
@@ -399,7 +412,7 @@ export const MaterialRegisterTable: React.FC = () => {
             {!bothFilters && visible.length === 0 && (
               <tr>
                 <td
-                  colSpan={colCount + (activeCol("multi_application") ? 1 : 0)}
+                  colSpan={colCount + extraCols}
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
                   No materials match the current filters.
@@ -413,7 +426,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 <React.Fragment key={m.material_id}>
                   {m.material_id === firstUnrankedId && (
                     <tr>
-                      <td colSpan={colCount + (activeCol("multi_application") ? 1 : 0)} className="p-0">
+                      <td colSpan={colCount + extraCols} className="p-0">
                         <div className="border-t border-border px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
                           Unranked — no {measure.noun} figure
                         </div>
@@ -536,6 +549,27 @@ export const MaterialRegisterTable: React.FC = () => {
                         <span className="text-muted-foreground/60">Unassigned</span>
                       )}
                     </td>
+                    {showLastChange && (
+                      <td className="whitespace-nowrap px-3 py-1.5 align-top">
+                        {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
+                          <>
+                            <div
+                              className="leading-tight text-foreground/80"
+                              title={m.last_status_change_date}
+                            >
+                              {relativeAge(m.last_status_change_date)}
+                            </div>
+                            <div className="text-[10px] leading-tight text-muted-foreground">
+                              {m.last_status_user ?? "—"}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-muted-foreground/60" title="Only a baselining event on record">
+                            Never changed
+                          </span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 </React.Fragment>
               );
@@ -558,6 +592,19 @@ export const MaterialRegisterTable: React.FC = () => {
     </div>
   );
 };
+
+/** Relative age of a change. Never aggregated, never counted per person. */
+function relativeAge(iso: string) {
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return iso;
+  const days = Math.max(0, Math.floor((Date.now() - t) / 86400000));
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 730) return `${Math.round(days / 30)} months ago`;
+  return `${Math.round(days / 365)} years ago`;
+}
 
 function ordinal(n: number) {
   const r10 = n % 10;

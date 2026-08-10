@@ -13,6 +13,8 @@ import {
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
+import MaterialHistory from "@/components/materialRegister/MaterialHistory";
+
 import {
   CURRENT_USER,
   ENTRY_TYPE_LABEL,
@@ -136,8 +138,12 @@ export const MaterialBrief: React.FC = () => {
   const row = index >= 0 ? visible[index] : null;
   const material = data.find((m) => m.material_id === openId) ?? row?.m ?? null;
 
+  const [draftStatus, setDraftStatus] = useState<JourneyStatus | null>(null);
   const [statusReason, setStatusReason] = useState("");
-  const [pendingStatus, setPendingStatus] = useState<JourneyStatus | null>(null);
+  const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
+  const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
+  const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
+
 
   const ownerNames = useMemo(
     () => [...new Set(data.map((m) => m.owner).filter((o): o is string => Boolean(o)))].sort(),
@@ -160,49 +166,64 @@ export const MaterialBrief: React.FC = () => {
   }
 
   const m: Material = material;
-  const needsBlocker = m.journey_status === "parked" || m.journey_status === "rejected";
+  const draftNeedsBlocker = draftStatus === "parked" || draftStatus === "rejected";
+  const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
 
-  const commitStatus = (next: JourneyStatus) => {
-    if ((next === "parked" || next === "rejected") && !m.blocker_category) {
-      setPendingStatus(next);
+  const beginStatusChange = (next: JourneyStatus) => {
+    if (next === m.journey_status) {
+      setDraftStatus(null);
       return;
     }
-    setPendingStatus(null);
-    updateMaterial(
-      m.material_id,
-      {
-        journey_status: next,
-        last_status_change_date: today(),
-        last_status_user: CURRENT_USER,
-        last_change_batch_origin: "real_transition",
-        blocker_detail: statusReason.trim() ? statusReason.trim() : m.blocker_detail,
-      },
-      ["journey_status"],
-    );
+    setDraftStatus(next);
+    setStatusReason("");
+    setDraftBlockerCategory(next === "parked" || next === "rejected" ? (m.blocker_category ?? "") : "");
+    setDraftBlockerDetail(m.blocker_detail ?? "");
+    setDraftBlockerCondition(m.blocker_condition ?? "");
+  };
+
+  const cancelStatusChange = () => {
+    setDraftStatus(null);
     setStatusReason("");
   };
 
-  const setBlocker = (category: string) => {
+  /** One Save. No modal, no wizard, no confirmation step. */
+  const saveStatusChange = () => {
+    if (!draftStatus || !canSaveStatus) return;
+    const stamp = today();
+    const blockerFields = draftNeedsBlocker
+      ? {
+          blocker_category: draftBlockerCategory,
+          blocker_detail: draftBlockerDetail.trim() || null,
+          blocker_condition: draftBlockerCondition.trim() || null,
+          blocker_date: stamp,
+        }
+      : {};
+
     updateMaterial(
       m.material_id,
-      { blocker_category: category, blocker_date: today() },
-      ["blocker_category"],
-    );
-    if (pendingStatus) {
-      const next = pendingStatus;
-      setPendingStatus(null);
-      updateMaterial(
-        m.material_id,
+      {
+        journey_status: draftStatus,
+        ...blockerFields,
+      },
+      draftNeedsBlocker ? ["journey_status", "blocker_category"] : ["journey_status"],
+      [
         {
-          journey_status: next,
-          last_status_change_date: today(),
-          last_status_user: CURRENT_USER,
-          last_change_batch_origin: "real_transition",
+          material_id: m.material_id,
+          event_type: draftNeedsBlocker ? "blocker_set" : "status_change",
+          field: "journey_status",
+          from_value: m.journey_status,
+          to_value: draftStatus,
+          reason: statusReason,
+          blocker_category: draftNeedsBlocker ? draftBlockerCategory : null,
+          blocker_detail: draftNeedsBlocker ? draftBlockerDetail.trim() || null : null,
+          blocker_condition: draftNeedsBlocker ? draftBlockerCondition.trim() || null : null,
         },
-        ["journey_status"],
-      );
-    }
+      ],
+    );
+    setDraftStatus(null);
+    setStatusReason("");
   };
+
 
   const gapSentence = () => {
     if (!row || row.gapMeasure === null || row.rank === null) return null;
@@ -359,13 +380,35 @@ export const MaterialBrief: React.FC = () => {
               label="CAS number — Derived by VCG"
               value={m.cas_number}
               provenance={m.provenance.cas_number}
-              onSave={(v) => updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"])}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { cas_number: v || null }, ["cas_number"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "cas_number",
+                    from_value: m.cas_number,
+                    to_value: v || null,
+                  },
+                ])
+              }
+
             />
             <DerivedField
               label="Material class — Derived by VCG"
               value={m.material_class}
               provenance={m.provenance.material_class}
-              onSave={(v) => updateMaterial(m.material_id, { material_class: v || null }, ["material_class"])}
+              onSave={(v) =>
+                updateMaterial(m.material_id, { material_class: v || null }, ["material_class"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "field_correction",
+                    field: "material_class",
+                    from_value: m.material_class,
+                    to_value: v || null,
+                  },
+                ])
+              }
+
             />
             <Figure
               label="Customer material group"
@@ -435,11 +478,16 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Section 5 — Where it stands */}
         <section className="rounded-md border border-border p-3 lg:col-span-2">
-          <SectionTitle note="Recorded judgement. Changes save immediately.">Where it stands</SectionTitle>
+          <SectionTitle note="Recorded judgement. Every change is written to the event log.">
+            Where it stands
+          </SectionTitle>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Status</div>
-              <Select value={m.journey_status} onValueChange={(v) => commitStatus(v as JourneyStatus)}>
+              <Select
+                value={draftStatus ?? m.journey_status}
+                onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
+              >
                 <SelectTrigger className="h-7 text-xs">
                   <SelectValue />
                 </SelectTrigger>
@@ -451,21 +499,30 @@ export const MaterialBrief: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Input
-                value={statusReason}
-                onChange={(e) => setStatusReason(e.target.value)}
-                placeholder="Reason for change (optional)"
-                className="h-7 text-[11px]"
-              />
+              {draftStatus === null && m.blocker_category && (
+                <div className="text-[10px] text-muted-foreground">
+                  Blocker on record: <span className="text-amber-700">{m.blocker_category}</span>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
               <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Owner</div>
               <Select
                 value={m.owner ?? UNASSIGNED}
-                onValueChange={(v) =>
-                  updateMaterial(m.material_id, { owner: v === UNASSIGNED ? null : v }, ["owner"])
-                }
+                onValueChange={(v) => {
+                  const next = v === UNASSIGNED ? null : v;
+                  if (next === m.owner) return;
+                  updateMaterial(m.material_id, { owner: next }, ["owner"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "owner_change",
+                      field: "owner",
+                      from_value: m.owner,
+                      to_value: next,
+                    },
+                  ]);
+                }}
               >
                 <SelectTrigger className="h-7 text-xs">
                   <SelectValue />
@@ -488,9 +545,23 @@ export const MaterialBrief: React.FC = () => {
               <label className="flex items-center gap-2 text-[11px]">
                 <Checkbox
                   checked={m.priority_selected}
-                  onCheckedChange={(c) =>
-                    updateMaterial(m.material_id, { priority_selected: Boolean(c) }, ["priority_selected"])
-                  }
+                  onCheckedChange={(c) => {
+                    const on = Boolean(c);
+                    updateMaterial(
+                      m.material_id,
+                      { priority_selected: on },
+                      ["priority_selected"],
+                      [
+                        {
+                          material_id: m.material_id,
+                          event_type: "priority_change",
+                          field: "priority_selected",
+                          from_value: on ? null : (m.priority_period ?? "current period"),
+                          to_value: on ? (m.priority_period ?? "current period") : null,
+                        },
+                      ],
+                    );
+                  }}
                   className="h-3.5 w-3.5"
                 />
                 Selected as priority
@@ -506,45 +577,57 @@ export const MaterialBrief: React.FC = () => {
             </div>
           </div>
 
-          {(needsBlocker || pendingStatus) && (
-            <div className="mt-3 space-y-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-amber-700">
-                Blocker {pendingStatus ? "— required to save this status" : ""}
+          {draftStatus !== null && (
+            <div className="mt-3 space-y-2 rounded-sm border border-border bg-muted/40 p-2">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
               </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <Select value={m.blocker_category ?? ""} onValueChange={setBlocker}>
-                  <SelectTrigger className="h-7 text-xs">
-                    <SelectValue placeholder="Blocker category (required)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BLOCKER_CATEGORIES.map((b) => (
-                      <SelectItem key={b} value={b} className="text-xs">
-                        {b}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={m.blocker_detail ?? ""}
-                  onChange={(e) =>
-                    updateMaterial(m.material_id, { blocker_detail: e.target.value || null }, ["blocker_detail"])
-                  }
-                  placeholder="Blocker detail"
-                  className="h-7 text-[11px]"
-                />
-                <Input
-                  value={m.blocker_condition ?? ""}
-                  onChange={(e) =>
-                    updateMaterial(m.material_id, { blocker_condition: e.target.value || null }, [
-                      "blocker_condition",
-                    ])
-                  }
-                  placeholder="What would have to change"
-                  className="h-7 text-[11px]"
-                />
-                <div className="self-center font-mono text-[10px] text-muted-foreground">
-                  Blocker date: {m.blocker_date ?? "—"}
+              <Input
+                value={statusReason}
+                onChange={(e) => setStatusReason(e.target.value)}
+                placeholder="Reason for change (optional)"
+                className="h-7 text-[11px]"
+              />
+
+              {draftNeedsBlocker && (
+                <div className="grid gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2 sm:grid-cols-3">
+                  <Select value={draftBlockerCategory} onValueChange={setDraftBlockerCategory}>
+                    <SelectTrigger className="h-7 text-xs">
+                      <SelectValue placeholder="Blocker category (required)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BLOCKER_CATEGORIES.map((b) => (
+                        <SelectItem key={b} value={b} className="text-xs">
+                          {b}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={draftBlockerDetail}
+                    onChange={(e) => setDraftBlockerDetail(e.target.value)}
+                    placeholder="Blocker detail (optional)"
+                    className="h-7 text-[11px]"
+                  />
+                  <Input
+                    value={draftBlockerCondition}
+                    onChange={(e) => setDraftBlockerCondition(e.target.value)}
+                    placeholder="What would have to change (optional)"
+                    className="h-7 text-[11px]"
+                  />
                 </div>
+              )}
+
+              <div className="flex items-center gap-2">
+                <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
+                  Save
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
+                  Cancel
+                </Button>
+                {draftNeedsBlocker && !draftBlockerCategory && (
+                  <span className="text-[10px] text-amber-700">A blocker category is required for this status.</span>
+                )}
               </div>
             </div>
           )}
@@ -552,9 +635,10 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Section 6 — History */}
         <section className="rounded-md border border-border p-3">
-          <SectionTitle>History</SectionTitle>
-          <p className="text-[11px] text-muted-foreground">No recorded changes yet.</p>
+          <SectionTitle note="The record of decisions. Newest first.">History</SectionTitle>
+          <MaterialHistory materialId={m.material_id} />
         </section>
+
       </div>
     </div>
   );
