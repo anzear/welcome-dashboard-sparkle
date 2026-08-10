@@ -207,6 +207,47 @@ const PrioritisationGrid: React.FC = () => {
   const statusesPresent = [...new Set(plotted.map((p) => p.m.journey_status))] as JourneyStatus[];
   const readings = quadrantReadings(xv, yv);
 
+  /** Saved readings of the same scope. Each one is a set of materials, never a score. */
+  const views = useMemo(() => {
+    const ranked = rows.filter((r) => r.rank !== null);
+    const cut = Math.ceil(ranked.length / 3);
+    const stalled = ranked
+      .filter((r) => (r.rank as number) <= cut && r.m.journey_status === "not_started" && !r.m.owner)
+      .map((r) => r.m.material_id);
+    const divergent = rows.filter((r) => r.gapMeasure !== null).map((r) => r.m.material_id);
+
+    const byClass = new Map<string, typeof rows>();
+    rows.forEach((r) => {
+      const key = r.m.material_class ?? "Unclassified";
+      byClass.set(key, [...(byClass.get(key) ?? []), r]);
+    });
+    const topClass = [...byClass.entries()]
+      .filter(([, group]) => group.length >= 3)
+      .map(([cls, group]) => ({
+        cls,
+        ids: group.map((r) => r.m.material_id),
+        combined: group.reduce((sum, r) => sum + (measure.value(r.m) ?? 0), 0),
+      }))
+      .sort((a, b) => b.combined - a.combined)[0];
+
+    const untouched = rows
+      .filter((r) => r.m.last_change_batch_origin !== "real_transition")
+      .map((r) => r.m.material_id);
+
+    return [
+      { id: "stalled", label: "Exposed, nobody working on it", ids: stalled },
+      { id: "divergent", label: "Ranks differently by measure", ids: divergent },
+      { id: "concentrated", label: "Concentrated by material class", ids: topClass?.ids ?? [] },
+      { id: "untouched", label: "Never touched since load", ids: untouched },
+    ].filter((v) => v.ids.length > 1);
+  }, [rows, measure]);
+
+  const activeIds = useMemo(
+    () => new Set(views.find((v) => v.id === activeView)?.ids ?? []),
+    [views, activeView],
+  );
+
+
   const pickedMaterials = data.filter((m) => picked.has(m.material_id));
 
   const toSvg = (e: React.MouseEvent) => {
