@@ -483,7 +483,7 @@ export const MaterialBrief: React.FC = () => {
         </section>
 
         {/* Section 5 — Where it stands */}
-        <section className="rounded-md border border-border p-3 lg:col-span-2">
+        <section className="order-2 rounded-md border border-border p-3 lg:col-span-2">
           <SectionTitle note="Recorded judgement. Every change is written to the event log.">
             Where it stands
           </SectionTitle>
