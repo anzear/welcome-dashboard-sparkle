@@ -18,13 +18,12 @@ const STATE_LABEL: Record<StepState, string> = {
 };
 
 const StepCard: React.FC<{
-  step: number;
   title: string;
   description: string;
   state: StepState;
   icon: React.ComponentType<{ className?: string }>;
   onClick?: () => void;
-}> = ({ step, title, description, state, icon: Icon, onClick }) => {
+}> = ({ title, description, state, icon: Icon, onClick }) => {
   const done = state === "completed";
   return (
     <button
@@ -41,12 +40,10 @@ const StepCard: React.FC<{
         <div className="flex h-9 w-9 items-center justify-center rounded-md bg-muted">
           <Icon className="h-4 w-4 text-foreground" />
         </div>
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Step {step}
-        </span>
+
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         <div className="text-sm font-semibold text-foreground">{title}</div>
         <div className="mt-0.5 text-[12px] text-muted-foreground">{description}</div>
       </div>
@@ -86,7 +83,6 @@ const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = (
     <>
       <div className="grid gap-3 sm:grid-cols-2">
         <StepCard
-          step={1}
           title="Material Requirements"
           description="Upload supporting docs & evidence"
           state={reqState}
