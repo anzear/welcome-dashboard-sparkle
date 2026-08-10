@@ -20,14 +20,14 @@ const Inner: React.FC = () => {
 
   if (openId) {
     return (
-      <div className="w-full p-4">
+      <div className="h-full w-full overflow-y-auto p-4">
         <MaterialBrief />
       </div>
     );
   }
 
   return (
-    <div className="w-full space-y-4 p-4">
+    <div className="h-full w-full space-y-4 overflow-y-auto p-4 pb-16">
       <header className="space-y-0.5">
         <h1 className="text-base font-semibold tracking-tight text-foreground">Material Prioritisation</h1>
         <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
