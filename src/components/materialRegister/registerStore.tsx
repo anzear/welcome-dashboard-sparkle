@@ -60,10 +60,9 @@ export const DIVERGENCE_THRESHOLD_RATIO = 0.25;
 
 export const UNASSIGNED_OWNER = "__unassigned__";
 
-export const ENTRY_TYPE_LABEL: Record<string, string> = {
-  substitute_material_source: "Substitute material source",
-  new_material: "New material",
-};
+export const ENTRY_TYPE_LABEL: Record<string, string> = Object.fromEntries(
+  ENTRY_TYPES.map((e) => [e.id, e.label]),
+);
 
 export interface RankTable {
   ranks: Record<string, number | null>;
