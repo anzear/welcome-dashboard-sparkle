@@ -39,18 +39,23 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ title, note, children, className }) => (
-  <section className={cn("space-y-2", className)}>
-    <div>
-      <h2 className="text-[13px] font-medium tracking-tight text-foreground">{title}</h2>
-      {note && <p className="text-[10px] leading-snug text-muted-foreground/70">{note}</p>}
+  <section className={cn("space-y-3", className)}>
+    <div className="border-b border-border/60 pb-1.5">
+      <h2 className="text-[14px] font-semibold tracking-tight text-foreground">{title}</h2>
+      {note && <p className="pt-0.5 text-[11px] leading-snug text-muted-foreground/60">{note}</p>}
     </div>
     {children}
   </section>
 );
 
 const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
-  <div className={cn("pb-1", first ? "" : "mt-3 border-t border-border/50 pt-3")}>
-    <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">{children}</span>
+  <div
+    className={cn(
+      "sm:col-span-2",
+      first ? "" : "mt-2 border-t border-border/50 pt-4",
+    )}
+  >
+    <span className="text-[12px] font-medium text-muted-foreground">{children}</span>
   </div>
 );
 
@@ -67,7 +72,8 @@ const DataRow: React.FC<{
   value: React.ReactNode;
   onClick?: () => void;
   children?: React.ReactNode;
-}> = ({ label, provenance, value, onClick, children }) => (
+  wide?: boolean;
+}> = ({ label, provenance, value, onClick, children, wide }) => (
   <div
     role={onClick ? "button" : undefined}
     tabIndex={onClick ? 0 : undefined}
@@ -80,12 +86,13 @@ const DataRow: React.FC<{
         : undefined
     }
     className={cn(
-      "group grid grid-cols-[minmax(7rem,1fr)_auto] items-baseline gap-4 rounded-sm px-1 py-1.5",
-      onClick && "cursor-pointer hover:bg-muted/50",
+      "group grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-3 rounded-sm px-1 py-1",
+      wide && "sm:col-span-2",
+      onClick && "cursor-pointer hover:bg-muted/40",
     )}
   >
     <div className="min-w-0">
-      <div className="text-[11px] leading-snug text-muted-foreground">
+      <div className="text-[13px] leading-snug text-muted-foreground">
         {label}
         {onClick && (
           <span className="ml-1.5 text-[10px] text-muted-foreground/0 transition-colors group-hover:text-muted-foreground/70">
@@ -93,9 +100,9 @@ const DataRow: React.FC<{
           </span>
         )}
       </div>
-      <div className="text-[10px] leading-snug text-muted-foreground/55">{provenance}</div>
+      <div className="text-[11px] leading-snug text-muted-foreground/50">{provenance}</div>
     </div>
-    <div className="justify-self-end text-right">{value}</div>
+    <div className="min-w-0 justify-self-end break-words text-right">{value}</div>
     {children}
   </div>
 );
@@ -110,7 +117,8 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
   return (
     <span
       className={cn(
-        "font-mono text-sm tabular-nums",
+        "font-mono font-medium tabular-nums",
+        typeof value === "number" ? "text-[15px]" : "text-[13px]",
         hasValue ? "text-foreground" : "text-muted-foreground/50",
         hasValue && computed && "border-b border-dotted border-muted-foreground/60",
       )}
@@ -128,10 +136,12 @@ const Figure: React.FC<{
   decimals?: number;
   provenance?: FieldProvenance;
   computedInputs?: string;
-}> = ({ label, value, decimals = 0, provenance, computedInputs }) => {
+  wide?: boolean;
+}> = ({ label, value, decimals = 0, provenance, computedInputs, wide }) => {
   const hasValue = value !== null && value !== undefined && value !== "";
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provenanceLine(provenance, hasValue, computedInputs)}
       value={
@@ -152,8 +162,9 @@ const EditableFigure: React.FC<{
   decimals?: number;
   provenance?: FieldProvenance;
   placeholder?: string;
+  wide?: boolean;
   onSave: (raw: string) => void;
-}> = ({ label, value, decimals = 0, provenance, placeholder, onSave }) => {
+}> = ({ label, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const hasValue = value !== null && value !== undefined && value !== "";
@@ -170,8 +181,8 @@ const EditableFigure: React.FC<{
 
   if (editing) {
     return (
-      <div className="px-1 py-1.5">
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
+        <div className="text-[13px] text-muted-foreground">{label}</div>
         <div className="flex items-center gap-1 pt-1">
           <Input
             autoFocus
@@ -182,7 +193,7 @@ const EditableFigure: React.FC<{
               if (e.key === "Enter") commit();
               if (e.key === "Escape") setEditing(false);
             }}
-            className="h-7 text-right font-mono text-xs tabular-nums"
+            className="h-8 text-right font-mono text-xs tabular-nums"
           />
           <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
             Save
@@ -191,13 +202,14 @@ const EditableFigure: React.FC<{
             Cancel
           </Button>
         </div>
-        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provenanceLine(provenance, hasValue)}</div>
+        <div className="pt-0.5 text-[11px] text-muted-foreground/50">{provenanceLine(provenance, hasValue)}</div>
       </div>
     );
   }
 
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provenanceLine(provenance, hasValue)}
       onClick={begin}
@@ -220,7 +232,8 @@ const DerivedField: React.FC<{
   onSave: (v: string) => void;
   note?: string;
   placeholder?: string;
-}> = ({ label, value, provenance, onSave, note, placeholder }) => {
+  wide?: boolean;
+}> = ({ label, value, provenance, onSave, note, placeholder, wide }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value ?? "");
 
@@ -236,8 +249,8 @@ const DerivedField: React.FC<{
 
   if (editing) {
     return (
-      <div className="px-1 py-1.5">
-        <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
+        <div className="text-[13px] text-muted-foreground">{label}</div>
         <div className="flex items-center gap-1 pt-1">
           <Input
             autoFocus
@@ -257,13 +270,14 @@ const DerivedField: React.FC<{
             Cancel
           </Button>
         </div>
-        <div className="pt-0.5 text-[10px] text-muted-foreground/55">{provText}</div>
+        <div className="pt-0.5 text-[11px] text-muted-foreground/50">{provText}</div>
       </div>
     );
   }
 
   return (
     <DataRow
+      wide={wide}
       label={label}
       provenance={provText}
       onClick={() => {
@@ -293,9 +307,9 @@ const TagsField: React.FC<{
     setDraft("");
   };
   return (
-    <div className="group px-1 py-1.5">
+    <div className="group px-1 py-1 sm:col-span-2">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">{label}</span>
+        <span className="text-[13px] text-muted-foreground">{label}</span>
         {!open && (
           <button
             type="button"
@@ -327,7 +341,7 @@ const TagsField: React.FC<{
             </span>
           ))
         ) : (
-          <span className="font-mono text-sm text-muted-foreground/50">—</span>
+          <span className="font-mono text-[15px] text-muted-foreground/50">—</span>
         )}
       </div>
       {open && (
@@ -365,7 +379,7 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
   className,
 }) => (
   <div className={cn("min-w-0 space-y-1", className)}>
-    <div className="text-[10px] text-muted-foreground">{label}</div>
+    <div className="text-[11px] text-muted-foreground">{label}</div>
     {children}
   </div>
 );
@@ -551,10 +565,10 @@ export const MaterialBrief: React.FC = () => {
           stuck ? "py-2" : "pb-4 pt-2",
         )}
       >
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
+        <div className="flex flex-nowrap items-start justify-between gap-4">
+          <div className="min-w-0 leading-tight">
             {!stuck && (
-              <div className="flex items-center gap-3 pb-1">
+              <div className="flex items-center gap-3 pb-0.5">
                 <button
                   type="button"
                   onClick={closeBrief}
@@ -599,12 +613,13 @@ export const MaterialBrief: React.FC = () => {
               {m.name}
             </h1>
 
-            <div className="font-mono text-[11px] text-muted-foreground">
+            <div className="font-mono text-[11px] leading-tight text-muted-foreground">
               {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
             </div>
 
             {!stuck && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Their IDs</span>
                 {m.customer_material_ids.length > 0 ? (
                   m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
                 ) : (
@@ -614,11 +629,11 @@ export const MaterialBrief: React.FC = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="h-7 text-[11px]">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+            <Button variant="outline" size="sm" className="h-8 text-[11px]">
               Export brief
             </Button>
-            <Button size="sm" className="h-7 text-[11px]">
+            <Button size="sm" className="h-8 text-[11px]">
               Order intelligence
             </Button>
           </div>
@@ -626,14 +641,14 @@ export const MaterialBrief: React.FC = () => {
       </header>
 
       {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 rounded-md border border-border bg-muted/30 px-3 py-2.5">
+      <div className="mt-4 border-b border-border bg-muted/30 px-3 py-3">
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <BarField label="Status" className="w-[168px]">
+          <BarField label="Status" className="w-[180px]">
             <Select
               value={draftStatus ?? m.journey_status}
               onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
             >
-              <SelectTrigger className="h-7 bg-background text-xs">
+              <SelectTrigger className="h-8 bg-background text-xs">
                 <SelectValue asChild>
                   <span>
                     <StatusPill
@@ -658,7 +673,7 @@ export const MaterialBrief: React.FC = () => {
             )}
           </BarField>
 
-          <BarField label="Owner" className="w-[150px]">
+          <BarField label="Owner" className="w-[180px]">
             <Select
               value={m.owner ?? UNASSIGNED}
               onValueChange={(v) => {
@@ -675,7 +690,7 @@ export const MaterialBrief: React.FC = () => {
                 ]);
               }}
             >
-              <SelectTrigger className="h-7 bg-background text-xs">
+              <SelectTrigger className="h-8 bg-background text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -691,7 +706,7 @@ export const MaterialBrief: React.FC = () => {
             </Select>
           </BarField>
 
-          <BarField label="Priority" className="w-[210px]">
+          <BarField label="Priority" className="w-[220px]">
             <div className="flex items-center gap-2">
               <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-foreground">
                 <Checkbox
@@ -723,14 +738,14 @@ export const MaterialBrief: React.FC = () => {
                   updateMaterial(m.material_id, { priority_period: e.target.value || null }, ["priority_period"])
                 }
                 placeholder="Period"
-                className="h-7 bg-background font-mono text-[11px]"
+                className="h-8 bg-background font-mono text-[11px]"
               />
             </div>
           </BarField>
 
-          <BarField label="Target date" className="w-[120px]">
-            <div className="flex h-7 items-center font-mono text-xs tabular-nums text-foreground">
-              {targetDate ?? <span className="text-muted-foreground/50">—</span>}
+          <BarField label="Target date" className="w-[140px]">
+            <div className="flex h-8 items-center font-mono text-[13px] tabular-nums text-foreground">
+              {targetDate ?? <span className="font-sans text-[12px] text-muted-foreground/60">Set date</span>}
             </div>
           </BarField>
 
@@ -761,7 +776,7 @@ export const MaterialBrief: React.FC = () => {
             {draftNeedsBlocker && (
               <div className="grid gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2 sm:grid-cols-3">
                 <Select value={draftBlockerCategory} onValueChange={setDraftBlockerCategory}>
-                  <SelectTrigger className="h-7 bg-background text-xs">
+                  <SelectTrigger className="h-8 bg-background text-xs">
                     <SelectValue placeholder="Blocker category (required)" />
                   </SelectTrigger>
                   <SelectContent>
@@ -795,14 +810,14 @@ export const MaterialBrief: React.FC = () => {
       </div>
 
       {/* Body — 62 / 38. Neither column scrolls. */}
-      <div className="mt-8 grid gap-x-10 gap-y-8 lg:grid-cols-[62fr_38fr] lg:items-start">
+      <div className="mt-8 grid items-start gap-x-10 gap-y-8 lg:grid-cols-[62fr_38fr]">
         {/* Left column */}
-        <div className="space-y-8">
+        <div className="space-y-10 self-start">
           <Section
             title="Figures"
             note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
           >
-            <div>
+            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <GroupLabel first>Volume and cost</GroupLabel>
               <EditableFigure
                 label="Annual volume (t/yr)"
@@ -865,6 +880,7 @@ export const MaterialBrief: React.FC = () => {
                 onSave={(raw) => saveFigure("supplier_count", raw)}
               />
               <EditableFigure
+                wide
                 label="Supplier countries"
                 value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
                 provenance={m.provenance.supplier_countries}
@@ -889,7 +905,7 @@ export const MaterialBrief: React.FC = () => {
           </Section>
 
           <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
-            <div>
+            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <DerivedField
                 label="Name"
                 value={m.name}
@@ -992,8 +1008,8 @@ export const MaterialBrief: React.FC = () => {
                   ])
                 }
               />
-              <div className="px-1 py-1.5">
-                <div className="text-[11px] text-muted-foreground">Entry type</div>
+              <div className="px-1 py-1 sm:col-span-2">
+                <div className="text-[13px] text-muted-foreground">Entry type</div>
                 <Select
                   value={m.entry_type}
                   onValueChange={(v) => {
@@ -1009,7 +1025,7 @@ export const MaterialBrief: React.FC = () => {
                     ]);
                   }}
                 >
-                  <SelectTrigger className="mt-1 h-7 text-xs">
+                  <SelectTrigger className="mt-1 h-8 max-w-[240px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1024,13 +1040,10 @@ export const MaterialBrief: React.FC = () => {
             </div>
           </Section>
 
-          <div className="border-t border-border/50 pt-2">
-            <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
-          </div>
         </div>
 
         {/* Right column */}
-        <div className="space-y-8">
+        <div className="space-y-10 self-start">
           <Section title="Position" note="Four separate positions. Never combined into one score.">
             <div>
               {MEASURES.map((mm) => {
@@ -1040,8 +1053,8 @@ export const MaterialBrief: React.FC = () => {
                   <div
                     key={mm.id}
                     className={cn(
-                      "flex items-baseline justify-between gap-3 rounded-sm px-1 py-1 text-[11px]",
-                      amber ? "bg-amber-500/10 text-amber-700" : "text-muted-foreground",
+                      "flex items-baseline justify-between gap-3 rounded-sm px-1 py-1.5 text-[13px]",
+                      amber ? "text-amber-700" : "text-muted-foreground",
                     )}
                   >
                     <span>{mm.label}</span>
@@ -1050,7 +1063,7 @@ export const MaterialBrief: React.FC = () => {
                         <span className="text-muted-foreground/50">— No figure</span>
                       ) : (
                         <>
-                          <span className={cn("text-sm", amber ? "font-medium" : "text-foreground")}>{rank}</span> of{" "}
+                          <span className={cn("text-[15px] font-medium", amber ? "" : "text-foreground")}>{rank}</span> of{" "}
                           {rankTables[mm.id].rankedCount} ranked
                         </>
                       )}
@@ -1059,10 +1072,10 @@ export const MaterialBrief: React.FC = () => {
                 );
               })}
             </div>
-            {gapSentence() && <p className="pt-1 text-[11px] text-amber-700">{gapSentence()}</p>}
+            {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
           </Section>
 
-          <div className="rounded-md border border-dashed border-primary/25 bg-primary/5 p-3">
+          <div className="-mx-3 rounded-md bg-primary/5 px-3 py-3">
             <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
               <BriefDriverScores materialId={m.material_id} />
             </Section>
@@ -1072,6 +1085,11 @@ export const MaterialBrief: React.FC = () => {
             <MaterialHistory materialId={m.material_id} />
           </Section>
         </div>
+      </div>
+
+      {/* Requirements — one quiet full-width row beneath both columns */}
+      <div className="mt-10 border-t border-border/60 pt-3">
+        <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
       </div>
     </div>
   );
