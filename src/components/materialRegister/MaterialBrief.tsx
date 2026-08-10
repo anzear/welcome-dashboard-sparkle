@@ -376,7 +376,7 @@ export const MaterialBrief: React.FC = () => {
 
 
         {/* Section 2 — Classification */}
-        <section className="rounded-md border border-border lg:col-span-2">
+        <section className="order-6 rounded-md border border-border lg:col-span-2">
           <div className="px-3 pt-3">
             <SectionTitle>Classification</SectionTitle>
           </div>
