@@ -408,49 +408,63 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              {cols.rank && (
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              )}
               <th
                 className={cn(
                   HEAD,
                   STICK,
-                  "left-[5rem] z-30 w-56 border-r border-border px-3 py-2 text-left",
+                  materialLeft,
+                  "z-30 w-56 border-r border-border px-3 py-2 text-left",
                 )}
               >
                 Material
               </th>
-              <th className={cn(HEAD, STICK, "left-[19rem] z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
-                <div className="leading-none">Position</div>
-                {/* Key letters only — one per bar slot, aligned to their positions */}
-                <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
-                  <span title="Spend">S</span>
-                  <span title="Emissions">E</span>
-                  <span title="Volume">V</span>
-                  <span title="Applications">A</span>
-                </div>
-              </th>
+              {cols.position && (
+                <th className={cn(HEAD, STICK, positionLeft, "z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
+                  <div className="leading-none">Position</div>
+                  {/* Key letters only — one per bar slot, aligned to their positions */}
+                  <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
+                    <span title="Spend">S</span>
+                    <span title="Emissions">E</span>
+                    <span title="Volume">V</span>
+                    <span title="Applications">A</span>
+                  </div>
+                </th>
+              )}
 
 
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
-                Annual volume
-                <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>
-                Unit price
-                <div className={UNIT}>(EUR/kg)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
-                Annual spend
-                <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
-              </th>
-              <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
-                GHG contribution
-                <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
-              </th>
+              {cols.volume && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                  Annual volume
+                  <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+                </th>
+              )}
+              {cols.price && (
+                <th className={cn(HEAD, "px-3 py-2 text-right")}>
+                  Unit price
+                  <div className={UNIT}>(EUR/kg)</div>
+                </th>
+              )}
+              {cols.spend && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                  Annual spend
+                  <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+                </th>
+              )}
+              {cols.emissions && (
+                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
+                  GHG contribution
+                  <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+                </th>
+              )}
               {activeCol("applications") && (
                 <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
               )}
-              <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>
-              <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>
+              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
+
               {cols.tags && <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>}
               {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
               {cols.target && (
