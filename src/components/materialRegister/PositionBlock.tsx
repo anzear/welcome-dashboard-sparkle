@@ -78,7 +78,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
                   e.isActive ? "text-primary/70" : e.isAmber ? "text-amber-700/70" : "text-muted-foreground/45",
                 )}
               >
-                {(!detail && compactLabel(e.mm.id)) || e.mm.label}
+                {labelFor(e.mm.id, !detail) || e.mm.label}
               </span>
               <span className={cn("font-mono tabular-nums", detail && "text-[14px]", tone)}>
                 {e.rank === null ? "—" : `#${e.rank}`}
