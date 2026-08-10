@@ -510,31 +510,17 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    <td className="min-w-[10rem] whitespace-nowrap px-3 py-2 align-top">
-                      <span className="flex items-baseline">
-                        {otherMeasures.map((mm) => {
-                          const other = row.ranks[mm.id];
-                          const amber = row.gapMeasure === mm.id;
-                          return (
-                            <span
-                              key={mm.id}
-                              title={chipTooltip(row, mm)}
-                              className="inline-flex w-[3.1rem] shrink-0 items-baseline gap-1 font-mono text-[10px] tabular-nums"
-                            >
-                              <span className={cn(amber ? "text-amber-700/70" : "text-muted-foreground/45")}>
-                                {mm.short}
-                              </span>
-                              {other === null ? (
-                                <span className="text-muted-foreground/50">—</span>
-                              ) : (
-                                <span className={amber ? "font-medium text-amber-700" : "text-muted-foreground/80"}>
-                                  {other}
-                                </span>
-                              )}
-                            </span>
-                          );
-                        })}
-                      </span>
+                    <td
+                      className={cn(
+                        STICK,
+                        "left-[19rem] z-10 w-[216px] border-r border-border/60 bg-background px-3 py-2 align-top group-hover:bg-muted/30",
+                      )}
+                    >
+                      <PositionBlock
+                        materialId={m.material_id}
+                        gapMeasure={row.gapMeasure}
+                        gapSize={row.gapSize}
+                      />
                     </td>
 
                     <td className="px-3 py-2 text-right align-top">
