@@ -399,6 +399,9 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
+              {cols.rank && (
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              )}
               <th
                 className={cn(
                   HEAD,
@@ -409,18 +412,7 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              {cols.position && (
-                <th className={cn(HEAD, STICK, positionLeft, "z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
-                  <div className="leading-none">Position</div>
-                  {/* Key letters only — one per bar slot, aligned to their positions */}
-                  <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
-                    <span title="Spend">S</span>
-                    <span title="Emissions">E</span>
-                    <span title="Volume">V</span>
-                    <span title="Applications">A</span>
-                  </div>
-                </th>
-              )}
+
               {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
               {cols.materialCategory && (
                 <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
