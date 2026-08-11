@@ -512,6 +512,16 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
+                    {cols.rank && (
+                      <td
+                        className={cn(
+                          STICK,
+                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                        )}
+                      >
+                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
+                      </td>
+                    )}
                     <td
                       className={cn(
                         STICK,
@@ -531,21 +541,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    {cols.position && (
-                      <td
-                        className={cn(
-                          STICK,
-                          positionLeft,
-                          "z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
-                        )}
-                      >
-                        <PositionBlock
-                          materialId={m.material_id}
-                          gapMeasure={row.gapMeasure}
-                          gapSize={row.gapSize}
-                        />
-                      </td>
-                    )}
+
                     {cols.materialType && (
                       <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
                         {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
