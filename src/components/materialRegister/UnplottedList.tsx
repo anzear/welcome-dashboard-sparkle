@@ -77,6 +77,8 @@ const UnplottedList: React.FC<{
   onSaved: (id: string) => void;
 }> = ({ groups, total, onSaved }) => {
   const { setScore, openBrief } = useRegister();
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const toggle = (k: string) => setOpen((p) => ({ ...p, [k]: !p[k] }));
 
   return (
     <section className="rounded-md border border-border bg-card">
@@ -99,47 +101,75 @@ const UnplottedList: React.FC<{
                 <span className="font-mono tabular-nums">{g.materials.length}</span> {g.cause}
               </p>
               <ul className="mt-1.5 divide-y divide-border/60">
-                {g.materials.map((m) => (
-                  <li
-                    key={m.material_id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-1.5 py-1.5"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => openBrief(m.material_id)}
-                      className="w-56 shrink-0 text-left text-[11px] font-medium text-foreground hover:text-primary"
-                    >
-                      {m.name}
-                    </button>
-                    <span className="w-40 shrink-0 text-[10px] text-muted-foreground">
-                      {m.material_class ?? "Unclassified"}
-                    </span>
-                    {g.axis.questionId ? (
-                      <ScoreScale
-                        size="sm"
-                        value={null}
-                        ariaLabel={`${g.axis.label} for ${m.name}`}
-                        onChange={(v) => {
-                          setScore(m.material_id, g.axis.questionId as string, v, null);
-                          onSaved(m.material_id);
-                        }}
-                      />
-                    ) : g.axis.field ? (
-                      <FigureInput m={m} axis={g.axis} onSaved={onSaved} />
-                    ) : (
+                {g.materials.map((m) => {
+                  const key = `${g.axis.id}:${m.material_id}`;
+                  const isOpen = !!open[key];
+                  return (
+                    <li key={m.material_id} className="py-0.5">
                       <button
                         type="button"
-                        onClick={() => openBrief(m.material_id)}
-                        className={cn(
-                          "text-[11px] text-muted-foreground underline decoration-dotted",
-                          "underline-offset-2 hover:text-foreground",
-                        )}
+                        onClick={() => toggle(key)}
+                        aria-expanded={isOpen}
+                        className="flex w-full items-center gap-x-2 py-1.5 text-left hover:bg-muted/40"
                       >
-                        Add {g.axis.noun} on the brief
+                        <span
+                          aria-hidden
+                          className={cn(
+                            "w-3 shrink-0 text-[9px] text-muted-foreground transition-transform",
+                            isOpen && "rotate-90",
+                          )}
+                        >
+                          ▶
+                        </span>
+                        <span className="w-56 shrink-0 text-[11px] font-medium text-foreground">
+                          {m.name}
+                        </span>
+                        <span className="w-40 shrink-0 text-[10px] text-muted-foreground">
+                          {m.material_class ?? "Unclassified"}
+                        </span>
+                        <span className="ml-auto pr-1 text-[10px] text-muted-foreground">
+                          {isOpen ? "" : `add ${g.axis.noun}`}
+                        </span>
                       </button>
-                    )}
-                  </li>
-                ))}
+
+                      {isOpen && (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-2 pl-5">
+                          {g.axis.questionId ? (
+                            <ScoreScale
+                              size="sm"
+                              value={null}
+                              ariaLabel={`${g.axis.label} for ${m.name}`}
+                              onChange={(v) => {
+                                setScore(m.material_id, g.axis.questionId as string, v, null);
+                                onSaved(m.material_id);
+                              }}
+                            />
+                          ) : g.axis.field ? (
+                            <FigureInput m={m} axis={g.axis} onSaved={onSaved} />
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => openBrief(m.material_id)}
+                              className={cn(
+                                "text-[11px] text-muted-foreground underline decoration-dotted",
+                                "underline-offset-2 hover:text-foreground",
+                              )}
+                            >
+                              Add {g.axis.noun} on the brief
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => openBrief(m.material_id)}
+                            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                          >
+                            Open brief
+                          </button>
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -148,5 +178,6 @@ const UnplottedList: React.FC<{
     </section>
   );
 };
+
 
 export default UnplottedList;
