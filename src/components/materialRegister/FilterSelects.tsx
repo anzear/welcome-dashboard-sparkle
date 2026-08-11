@@ -17,8 +17,22 @@ import {
   useRegister,
 } from "@/components/materialRegister/registerStore";
 
-/** The register's filter controls. Shared scope: any view mounting this filters the same set. */
-const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
+export type FilterKey =
+  | "statuses"
+  | "owners"
+  | "entryTypes"
+  | "classes"
+  | "products"
+  | "applications"
+  | "tags"
+  | "priorityPeriods";
+
+/**
+ * The register's filter controls. Shared scope: any view mounting this filters the
+ * same set. `include` narrows which controls a screen offers without changing the
+ * shared filter state.
+ */
+const FilterSelects: React.FC<{ className?: string; include?: FilterKey[] }> = ({ className, include }) => {
   const { data, filters, setFilters } = useRegister();
 
   const options = useMemo(() => {
@@ -71,56 +85,74 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
     };
   }, [data]);
 
+  const shown = (key: FilterKey) => !include || include.includes(key);
+
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <MultiSelectFilter
-        label="Status"
-        options={options.statuses}
-        selected={filters.statuses}
-        onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
-      />
-      <MultiSelectFilter
-        label="Owner"
-        options={options.owners}
-        selected={filters.owners}
-        onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
-      />
-      <MultiSelectFilter
-        label="Material type"
-        options={options.entryTypes}
-        selected={filters.entryTypes}
-        onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
-      />
-      <MultiSelectFilter
-        label="Material category"
-        options={options.classes}
-        selected={filters.classes}
-        onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-      />
-      <MultiSelectFilter
-        label="Product"
-        options={options.products}
-        selected={filters.products}
-        onChange={(v) => setFilters((f) => ({ ...f, products: v }))}
-      />
-      <MultiSelectFilter
-        label="Application"
-        options={options.applications}
-        selected={filters.applications}
-        onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
-      />
-      <MultiSelectFilter
-        label="Tags"
-        options={options.tags}
-        selected={filters.tags}
-        onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
-      />
-      <MultiSelectFilter
-        label="Priority period"
-        options={options.priorityPeriods}
-        selected={filters.priorityPeriods}
-        onChange={(v) => setFilters((f) => ({ ...f, priorityPeriods: v }))}
-      />
+      {shown("statuses") && (
+        <MultiSelectFilter
+          label="Status"
+          options={options.statuses}
+          selected={filters.statuses}
+          onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
+        />
+      )}
+      {shown("owners") && (
+        <MultiSelectFilter
+          label="Owner"
+          options={options.owners}
+          selected={filters.owners}
+          onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
+        />
+      )}
+      {shown("entryTypes") && (
+        <MultiSelectFilter
+          label="Material type"
+          options={options.entryTypes}
+          selected={filters.entryTypes}
+          onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+        />
+      )}
+      {shown("classes") && (
+        <MultiSelectFilter
+          label="Material category"
+          options={options.classes}
+          selected={filters.classes}
+          onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
+        />
+      )}
+      {shown("products") && (
+        <MultiSelectFilter
+          label="Product"
+          options={options.products}
+          selected={filters.products}
+          onChange={(v) => setFilters((f) => ({ ...f, products: v }))}
+        />
+      )}
+      {shown("applications") && (
+        <MultiSelectFilter
+          label="Application"
+          options={options.applications}
+          selected={filters.applications}
+          onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
+        />
+      )}
+      {shown("tags") && (
+        <MultiSelectFilter
+          label="Tags"
+          options={options.tags}
+          selected={filters.tags}
+          onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
+        />
+      )}
+      {shown("priorityPeriods") && (
+        <MultiSelectFilter
+          label="Priority period"
+          options={options.priorityPeriods}
+          selected={filters.priorityPeriods}
+          onChange={(v) => setFilters((f) => ({ ...f, priorityPeriods: v }))}
+        />
+      )}
 
     </div>
   );
