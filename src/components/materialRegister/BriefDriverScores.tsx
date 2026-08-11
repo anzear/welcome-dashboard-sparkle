@@ -51,7 +51,7 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
  * one compact row per question at rest, expanding to the 11-point control on click.
  */
 const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => {
-  const { scoreFor, setScore, countsFor, questions, canEditQuestionSet } = useRegister();
+  const { scoreFor, setScore, clearScore, countsFor, questions, canEditQuestionSet } = useRegister();
   const [editorOpen, setEditorOpen] = useState(false);
   const counts = countsFor(materialId);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -102,7 +102,13 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
                 <span
                   className={cn(
                     "text-right font-mono text-[15px] font-medium tabular-nums",
-                    v === null ? "text-muted-foreground/50" : "text-foreground",
+                    v === null
+                      ? "text-muted-foreground/50"
+                      : v === 0
+                        ? "text-muted-foreground"
+                        : v < 0
+                          ? "text-sky-900"
+                          : "text-teal-800",
                   )}
                 >
                   {v === null ? "—" : signed(v)}
@@ -115,15 +121,29 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
 
               {expanded && (
                 <div className="px-1 pt-1.5">
-                  <ScoreScale
-                    value={v}
-                    size="sm"
-                    ariaLabel={`${q.label} score`}
-                    onChange={(next) => {
-                      setScore(materialId, q.question_id, next, rec?.note ?? null);
-                      setOpenId(null);
-                    }}
-                  />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <ScoreScale
+                      value={v}
+                      size="sm"
+                      ariaLabel={`${q.label} score`}
+                      onChange={(next) => {
+                        setScore(materialId, q.question_id, next, rec?.note ?? null);
+                        setOpenId(null);
+                      }}
+                    />
+                    {v !== null && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          clearScore(materialId, q.question_id);
+                          setOpenId(null);
+                        }}
+                        className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
