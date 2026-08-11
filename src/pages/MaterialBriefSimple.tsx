@@ -704,7 +704,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
               </Select>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Shared multiplier for Spend and GHG.</p>
-            <SourceField value={scoring.volumeSource} onChange={(v) => setScoring({ ...scoring, volumeSource: v })} />
+            <SourceNote field="volume" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between">
@@ -717,7 +717,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
             </div>
             <Input type="number" className="mt-2" value={scoring.ghg} onChange={(e) => setScoring({ ...scoring, ghg: e.target.value === '' ? '' : Number(e.target.value) })} />
             <p className="text-xs text-muted-foreground mt-2">Total: <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> tCO₂e/yr</p>
-            <SourceField value={scoring.ghgSource} onChange={(v) => setScoring({ ...scoring, ghgSource: v })} />
+            <SourceNote field="ghg" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between">
@@ -736,7 +736,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
               </Select>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Total: <span className="font-semibold text-foreground tabular-nums">{spendTotal.toLocaleString()}</span> {scoring.spendCurrency}/yr</p>
-            <SourceField value={scoring.spendSource} onChange={(v) => setScoring({ ...scoring, spendSource: v })} />
+            <SourceNote field="spend" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between gap-2">
@@ -812,7 +812,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
                 </span></>
               )}
             </p>
-            <SourceField value={scoring.suppliersSource} onChange={(v) => setScoring({ ...scoring, suppliersSource: v })} />
+            <SourceNote field="suppliers" />
           </div>
         </div>
       </section>
