@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import DriverScoring from "@/components/materialRegister/DriverScoring";
-import PrioritisationGrid from "@/components/materialRegister/PrioritisationGrid";
+import Prioritisation from "@/components/materialRegister/Prioritisation";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus } from "lucide-react";
 
 const TABS = [
   { id: "register", label: "Register" },
-  { id: "grid", label: "Prioritisation Grid" },
+  { id: "grid", label: "Prioritisation" },
   { id: "scoring", label: "Driver Scoring" },
 ] as const;
 
@@ -66,7 +66,7 @@ const Inner: React.FC = () => {
 
 
       {tab === "register" && <MaterialRegisterTable />}
-      {tab === "grid" && <PrioritisationGrid />}
+      {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
       {tab === "scoring" && <DriverScoring />}
     </div>
   );
