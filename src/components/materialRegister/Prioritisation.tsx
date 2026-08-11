@@ -6,7 +6,7 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import { STATUS_DOT, StatusLegend, median, ordinal } from "@/components/materialRegister/gridPrimitives";
-import UnplottedList, { type UnplottedGroup } from "@/components/materialRegister/UnplottedList";
+import UnplottedList, { type UnplottedEntry } from "@/components/materialRegister/UnplottedList";
 import DriverListView from "@/components/materialRegister/DriverListView";
 import {
   AXIS_PRESETS,
@@ -157,24 +157,19 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
   const classified = useMemo(() => {
     const plotted: { m: Material; x: number; y: number; sizeCount: number | null; scored: boolean }[] = [];
-    /** Grouped by the axis whose value is missing. A material can appear twice. */
-    const missing = new Map<string, { axis: AxisVar; materials: Material[] }>();
-    const noteMissing = (axis: AxisVar, m: Material) => {
-      const entry = missing.get(axis.id) ?? { axis, materials: [] };
-      entry.materials.push(m);
-      missing.set(axis.id, entry);
-    };
+    /** One entry per material, listing every axis it lacks a value for. */
+    const entries: UnplottedEntry[] = [];
 
-    const unplottedIds = new Set<string>();
     rows.forEach(({ m }) => {
       const counts = countsFor(m.material_id);
       const ctx = { score: (qid: string) => scoreFor(m.material_id, qid)?.score ?? null };
       const x = xv.value(m, counts, ctx);
       const y = yv.value(m, counts, ctx);
-      if (x === null) noteMissing(xv, m);
-      if (y === null) noteMissing(yv, m);
       if (x === null || y === null) {
-        unplottedIds.add(m.material_id);
+        const gaps: AxisVar[] = [];
+        if (x === null) gaps.push(xv);
+        if (y === null) gaps.push(yv);
+        entries.push({ m, gaps, sortValue: x === null ? y : x });
         return;
       }
       plotted.push({
@@ -186,16 +181,19 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
       });
     });
 
-    const groups: UnplottedGroup[] = [...missing.values()].map(({ axis, materials }) => ({
-      axis,
-      cause: axis.questionId ? `not scored on ${axis.label}` : `no ${axis.noun} figure`,
-      materials: [...materials].sort((a, b) => a.name.localeCompare(b.name)),
-    }));
+    /** Highest exposure on the axis it does have comes first; no value sinks. */
+    entries.sort((a, b) => {
+      if (a.sortValue === null && b.sortValue === null) return a.m.name.localeCompare(b.m.name);
+      if (a.sortValue === null) return 1;
+      if (b.sortValue === null) return -1;
+      return b.sortValue - a.sortValue;
+    });
 
-    return { plotted, groups, unplottedTotal: unplottedIds.size };
+    return { plotted, entries, unplottedTotal: entries.length };
   }, [rows, xv, yv, sizeVar, countsFor, scoreFor]);
 
-  const { plotted, groups, unplottedTotal } = classified;
+  const { plotted, entries, unplottedTotal } = classified;
+
 
   /** Fixed domains for judgement axes; round derived scales for measured ones. */
   const xScale = scaleFor(xv, plotted.map((p) => p.x));
@@ -716,7 +714,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             </div>
           </div>
 
-          <UnplottedList groups={groups} total={unplottedTotal} onSaved={markPlotted} />
+          <UnplottedList entries={entries} totalMaterials={rows.length} onSaved={markPlotted} />
         </>
       )}
 
