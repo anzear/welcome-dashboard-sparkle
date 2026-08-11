@@ -171,9 +171,15 @@ export const AXIS_PRESETS: AxisPreset[] = [
     y: "constraints",
     size: "drivers",
   },
+  {
+    id: "emissions-supply-risk",
+    label: "Emissions × Supply risk",
+    reading: "high impact, fragile supply",
+    x: "emissions",
+    y: "supply_risk",
+    size: "drivers",
+  },
 ];
-
-export const GHG_SUPPLY_PRESET_ID = "emissions-supply-risk";
 
 export const DEFAULT_PRESET = AXIS_PRESETS[0];
 

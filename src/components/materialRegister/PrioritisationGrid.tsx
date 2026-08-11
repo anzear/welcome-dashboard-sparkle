@@ -84,6 +84,7 @@ const PrioritisationGrid: React.FC = () => {
     data,
     rankTables,
     countsFor,
+    scoreFor,
     openBrief,
     priorityPeriod,
     setPriorityPeriod,
@@ -138,8 +139,9 @@ const PrioritisationGrid: React.FC = () => {
     const notScored: Material[] = [];
     rows.forEach(({ m }) => {
       const counts = countsFor(m.material_id);
-      const x = xv.value(m, counts);
-      const y = yv.value(m, counts);
+      const ctx = { score: (qid: string) => scoreFor(m.material_id, qid)?.score ?? null };
+      const x = xv.value(m, counts, ctx);
+      const y = yv.value(m, counts, ctx);
       if (x === null || y === null) {
         const missingJudgement =
           (xv.kind === "judgement" && x === null) || (yv.kind === "judgement" && y === null);
@@ -150,13 +152,13 @@ const PrioritisationGrid: React.FC = () => {
         m,
         x,
         y,
-        sizeCount: counts.scored_count === null ? null : (sizeVar.value(m, counts) as number),
+        sizeCount: counts.scored_count === null ? null : (sizeVar.value(m, counts, ctx) as number),
         scored: counts.scored_count !== null,
       });
     });
     const byName = (a: Material, b: Material) => a.name.localeCompare(b.name);
     return { plotted, noFigure: noFigure.sort(byName), notScored: notScored.sort(byName) };
-  }, [rows, xv, yv, sizeVar, countsFor]);
+  }, [rows, xv, yv, sizeVar, countsFor, scoreFor]);
 
   const { plotted, noFigure, notScored } = classified;
 
