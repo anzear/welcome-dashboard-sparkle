@@ -263,6 +263,14 @@ interface Store {
   scores: Record<string, DriverScore>;
   scoreFor: (materialId: string, questionId: string) => DriverScore | null;
   setScore: (materialId: string, questionId: string, score: number, note: string | null) => void;
+  /** Clears a judgement back to null. Null is absence, never a zero. */
+  clearScore: (materialId: string, questionId: string) => void;
+  /**
+   * One driver, one value (or null to clear), applied to every selected material.
+   * Writes one event per changed material under a shared batch_id so Undo can
+   * revert the whole judgement in a single action.
+   */
+  applyScoreBulk: (questionId: string, value: number | null, ids: Set<string>) => void;
   countsFor: (materialId: string) => DriverCounts;
   questionCoverage: (questionId: string, rows: Material[]) => number;
   /**
@@ -288,9 +296,19 @@ interface Store {
   inPrioritySet: (m: Material) => boolean;
   /** Sets or clears priority_selected for a set of materials in one batch. */
   applyPriority: (ids: Set<string>, add: boolean) => void;
-  toast: { message: string; snapshot: Material[]; batchId?: string } | null;
+  toast: {
+    message: string;
+    snapshot: Material[];
+    batchId?: string;
+    scoreSnapshot?: Record<string, DriverScore>;
+  } | null;
   setToast: React.Dispatch<
-    React.SetStateAction<{ message: string; snapshot: Material[]; batchId?: string } | null>
+    React.SetStateAction<{
+      message: string;
+      snapshot: Material[];
+      batchId?: string;
+      scoreSnapshot?: Record<string, DriverScore>;
+    } | null>
   >;
   undo: () => void;
 
@@ -767,6 +785,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     if (!toast) return;
     const byId = new Map(toast.snapshot.map((m) => [m.material_id, m]));
     setData((prev) => prev.map((m) => byId.get(m.material_id) ?? m));
+    if (toast.scoreSnapshot) setScores(toast.scoreSnapshot);
     if (toast.batchId) setEvents((prev) => prev.filter((e) => e.batch_id !== toast.batchId));
     setToast(null);
   };
@@ -923,6 +942,81 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     ]);
   };
 
+  const clearScore = (materialId: string, questionId: string) => {
+    const key = scoreKey(materialId, questionId);
+    const previous = scores[key]?.score ?? null;
+    if (previous === null) return;
+    setScores((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "score_change",
+        field: questionId,
+        from_value: String(previous),
+        to_value: null,
+      },
+    ]);
+  };
+
+  const applyScoreBulk = (questionId: string, value: number | null, ids: Set<string>) => {
+    if (ids.size === 0) return;
+    const batchId = `BATCH-${Date.now()}`;
+    const scoreSnapshot = { ...scores };
+    const stamp = new Date().toISOString();
+    const changed: string[] = [];
+
+    setScores((prev) => {
+      const next = { ...prev };
+      ids.forEach((id) => {
+        const key = scoreKey(id, questionId);
+        const previous = prev[key]?.score ?? null;
+        if (previous === value) return;
+        changed.push(id);
+        if (value === null) delete next[key];
+        else
+          next[key] = {
+            material_id: id,
+            question_id: questionId,
+            score: value,
+            note: prev[key]?.note ?? null,
+            scored_by: CURRENT_USER,
+            scored_at: stamp,
+          };
+      });
+      return next;
+    });
+
+    // One event per material that actually moved, all under the same batch.
+    recordEvents(
+      changed.map((id) => ({
+        material_id: id,
+        event_type: "score_change" as const,
+        field: questionId,
+        from_value: (() => {
+          const p = scoreSnapshot[scoreKey(id, questionId)]?.score ?? null;
+          return p === null ? null : String(p);
+        })(),
+        to_value: value === null ? null : String(value),
+        batch_id: batchId,
+      })),
+    );
+
+    const label = questionSet.find((q) => q.question_id === questionId)?.label ?? questionId;
+    setToast({
+      message:
+        value === null
+          ? `${label} cleared for ${changed.length} of ${ids.size} materials.`
+          : `${label} set to ${value > 0 ? `+${value}` : value} for ${changed.length} of ${ids.size} materials.`,
+      snapshot: data,
+      batchId,
+      scoreSnapshot,
+    });
+  };
+
   const value: Store = {
     data,
     measureId,
@@ -962,6 +1056,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     scores,
     scoreFor,
     setScore,
+    clearScore,
+    applyScoreBulk,
     countsFor,
     questionCoverage,
     questions: activeQuestions,
