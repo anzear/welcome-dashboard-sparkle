@@ -75,8 +75,6 @@ export interface Material {
   owner: string | null;
   /** Non-null means the material is in that period's priority set. Null = not prioritised. */
   priority_period: string | null;
-  /** The date the change is planned for. null = undated, never "today". */
-  target_date: string | null;
   intelligence_status: IntelligenceStatus;
   intelligence_ordered_date: string | null;
   intelligence_delivered_date: string | null;
@@ -87,12 +85,7 @@ export interface Material {
   provenance: Record<string, FieldProvenance>;
 }
 
-/**
- * One target date per material, read the same way everywhere: the planned date
- * if one is set, otherwise the earliest need date stated in the requirements.
- */
-export const targetDateOf = (m: Pick<Material, "target_date" | "requirements">): string | null =>
-  m.target_date ?? m.requirements?.earliest_need_date ?? null;
+
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
   not_started: "Not started",

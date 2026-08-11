@@ -154,7 +154,6 @@ export function blankMaterial(entry_type: EntryType = "drop_in_substitute"): Omi
     blocker_condition: null,
     owner: null,
     priority_period: null,
-    target_date: null,
     intelligence_status: "not_ordered",
     intelligence_ordered_date: null,
     intelligence_delivered_date: null,

@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -607,9 +606,6 @@ export const MaterialBrief: React.FC = () => {
     return `Ranks ${first.r} on ${first.m.noun} but ${second.r} on ${second.m.noun}. ${row.gapSize} positions apart.`;
   };
 
-  // One reading of the target date everywhere: planned date, else earliest need date.
-  const targetDate = targetDateOf(m);
-
   return (
     <div className="pb-24">
       <div ref={sentinel} className="h-px" />
@@ -800,12 +796,6 @@ export const MaterialBrief: React.FC = () => {
             </div>
           </BarField>
 
-
-          <BarField label="Target date" className="w-[140px]">
-            <div className="flex h-8 items-center font-mono text-[13px] tabular-nums text-foreground">
-              {targetDate ?? <span className="font-sans text-[12px] text-muted-foreground/60">Set date</span>}
-            </div>
-          </BarField>
 
           {draftStatus !== null && (
             <div className="ml-auto flex items-center gap-2">

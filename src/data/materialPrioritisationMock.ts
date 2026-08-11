@@ -437,7 +437,6 @@ export const materials: Material[] = rows.map((row, i) => {
   put("journey_status", row.status, row.status === "not_started" ? loaded : decided);
   put("owner", row.owner, decided);
   put("priority_period", row.priority ?? null, decided);
-  put("target_date", row.target ?? null, decided);
   put("intelligence_status", row.intel && row.intel !== "not_ordered" ? row.intel : null, decided);
 
   const intel: IntelligenceStatus = row.intel ?? "not_ordered";
@@ -458,7 +457,15 @@ export const materials: Material[] = rows.map((row, i) => {
     application_categories: row.apps,
     product_categories: row.prods,
     entry_type: i % 9 === 4 ? "new_substitute" : "drop_in_substitute",
-    requirements: row.req ? { ...emptyRequirements(), ...row.req } : null,
+    requirements: (() => {
+      const base = row.req ? { ...emptyRequirements(), ...row.req } : null;
+      // Migrate the old `target` field into earliest_need_date when the
+      // requirements don't already state one.
+      if (row.target && (!base || base.earliest_need_date === null)) {
+        return { ...(base ?? emptyRequirements()), earliest_need_date: row.target };
+      }
+      return base;
+    })(),
     annual_volume: row.vol,
     unit_price: row.price,
     annual_spend,
@@ -483,7 +490,6 @@ export const materials: Material[] = rows.map((row, i) => {
       : null,
     owner: row.owner,
     priority_period: row.priority ?? null,
-    target_date: row.target ?? null,
     intelligence_status: intel,
     intelligence_ordered_date: orderedDate,
     intelligence_delivered_date: intel === "delivered" ? `2026-0${(i % 4) + 4}-${String((i % 24) + 4).padStart(2, "0")}` : null,
@@ -517,7 +523,6 @@ const PROVENANCE_TRACKED: (keyof Material)[] = [
   "supplier_count",
   "supplier_countries",
   "owner",
-  "target_date",
 ];
 
 export function findMissingProvenance(list: Material[] = materials): string[] {

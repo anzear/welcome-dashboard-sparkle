@@ -11,7 +11,6 @@ import {
 } from "@/config/driverQuestions";
 import {
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -120,26 +119,6 @@ export interface RankedRow {
   gapSize: number;
 }
 
-export type TargetDateBand = "overdue" | "next_30" | "next_90" | "undated";
-
-export const TARGET_DATE_BANDS: { value: TargetDateBand; label: string }[] = [
-  { value: "overdue", label: "Overdue" },
-  { value: "next_30", label: "Next 30 days" },
-  { value: "next_90", label: "Next 90 days" },
-  { value: "undated", label: "Undated" },
-];
-
-/** Which band a material's single target date falls in. Undated is a state. */
-export const targetDateBand = (iso: string | null): TargetDateBand | "later" => {
-  if (!iso) return "undated";
-  const t = Date.parse(iso);
-  if (Number.isNaN(t)) return "undated";
-  const days = Math.round((t - Date.now()) / 86400000);
-  if (days < 0) return "overdue";
-  if (days <= 30) return "next_30";
-  if (days <= 90) return "next_90";
-  return "later";
-};
 
 export interface Filters {
   search: string;
@@ -155,8 +134,6 @@ export interface Filters {
   applications: string[];
   /** Priority periods, matched with ANY. May include NO_PRIORITY. */
   priorityPeriods: string[];
-  /** Target date bands, matched with ANY. */
-  targetDates: string[];
   /** Blocker categories, matched with ANY. May include NO_BLOCKER. */
   blockers: string[];
   /** Supplier countries, matched with ANY. */
@@ -176,7 +153,6 @@ export const EMPTY_FILTERS: Filters = {
   products: [],
   applications: [],
   priorityPeriods: [],
-  targetDates: [],
   blockers: [],
   countries: [],
 };
@@ -363,7 +339,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.applications.length > 0 ||
     filters.tags.length > 0 ||
     filters.priorityPeriods.length > 0 ||
-    filters.targetDates.length > 0 ||
     filters.blockers.length > 0 ||
     filters.countries.length > 0;
 
@@ -398,14 +373,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.priorityPeriods.length) {
         const key = m.priority_period ?? NO_PRIORITY;
         if (!filters.priorityPeriods.includes(key)) return false;
-      }
-      if (filters.targetDates.length) {
-        const band = targetDateBand(targetDateOf(m));
-        const hit = filters.targetDates.some((b) => {
-          if (b === "next_90") return band === "next_30" || band === "next_90";
-          return b === band;
-        });
-        if (!hit) return false;
       }
       if (filters.blockers.length && !filters.blockers.includes(m.blocker_category ?? NO_BLOCKER)) return false;
       if (filters.countries.length && !(m.supplier_countries ?? []).some((c) => filters.countries.includes(c)))

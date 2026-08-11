@@ -6,7 +6,6 @@ import {
   ENTRY_TYPE_LABEL,
   NO_BLOCKER,
   NO_PRIORITY,
-  TARGET_DATE_BANDS,
   UNASSIGNED_OWNER,
   useRegister,
   type Filters,
@@ -20,7 +19,6 @@ const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "tags" && value === UNTAGGED) return "Untagged";
   if (kind === "priorityPeriods" && value === NO_PRIORITY) return "Not prioritised";
   if (kind === "blockers" && value === NO_BLOCKER) return "No blocker";
-  if (kind === "targetDates") return TARGET_DATE_BANDS.find((b) => b.value === value)?.label ?? value;
   return value;
 };
 
