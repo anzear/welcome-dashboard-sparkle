@@ -496,8 +496,9 @@ const StepModal: React.FC<{
   icon: React.ReactNode;
   headerAccent: string; // top bar color
   progressPercent: number;
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ open, onClose, onSave, stepNumber, title, subtitle, icon, headerAccent, progressPercent, children }) => (
+}> = ({ open, onClose, onSave, stepNumber, title, subtitle, icon, headerAccent, progressPercent, headerActions, children }) => (
   <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
     <StepDialogContent className="max-w-5xl p-0 overflow-hidden max-h-[90vh] flex flex-col gap-0">
       <div className={`h-1 ${headerAccent}`} />
@@ -510,10 +511,12 @@ const StepModal: React.FC<{
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {headerActions}
           <div className="text-sm text-muted-foreground tabular-nums">{progressPercent}%</div>
           <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
         </div>
       </div>
+
       <div className="flex-1 overflow-y-auto p-6">{children}</div>
       <div className="p-4 border-t border-border/60 flex justify-end gap-2 bg-muted/20">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
