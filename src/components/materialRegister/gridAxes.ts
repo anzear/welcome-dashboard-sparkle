@@ -10,9 +10,15 @@ export type AxisVarId =
   | "price"
   | "applications"
   | "drivers"
-  | "constraints";
+  | "constraints"
+  | "supply_risk";
 
 export type SizeVarId = "drivers" | "constraints";
+
+/** Read access to the team's judgements, for axes that read a single question. */
+export interface AxisCtx {
+  score: (questionId: string) => number | null;
+}
 
 export interface AxisVar {
   id: AxisVarId;
@@ -27,7 +33,7 @@ export interface AxisVar {
   measureId?: MeasureId;
   /** Fixed upper bound for count axes. */
   fixedMax?: number;
-  value: (m: Material, counts: DriverCounts) => number | null;
+  value: (m: Material, counts: DriverCounts, ctx: AxisCtx) => number | null;
   fmt: (v: number) => string;
 }
 
@@ -94,6 +100,21 @@ export const AXIS_VARS: AxisVar[] = [
     fmt: (v) => `${v} strong drivers`,
   },
   {
+    id: "supply_risk",
+    label: "Supply risk",
+    noun: "supply risk",
+    unit: "0-10",
+    kind: "judgement",
+    fixedMax: 10,
+    // The supply security judgement read as risk: +5 (change reduces exposure) = 0 risk,
+    // -5 (change adds fragility) = 10. One judgement, never blended with anything else.
+    value: (_m, _c, ctx) => {
+      const s = ctx.score("supply_security");
+      return s === null ? null : 5 - s;
+    },
+    fmt: (v) => `supply risk ${nf(0).format(v)} of 10`,
+  },
+  {
     id: "constraints",
     label: "Strong constraints",
     noun: "strong constraints",
@@ -151,6 +172,8 @@ export const AXIS_PRESETS: AxisPreset[] = [
     size: "drivers",
   },
 ];
+
+export const GHG_SUPPLY_PRESET_ID = "emissions-supply-risk";
 
 export const DEFAULT_PRESET = AXIS_PRESETS[0];
 
