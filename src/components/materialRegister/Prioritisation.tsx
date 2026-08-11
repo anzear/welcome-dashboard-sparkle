@@ -714,7 +714,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             </div>
           </div>
 
-          <UnplottedList groups={groups} total={unplottedTotal} onSaved={markPlotted} />
+          <UnplottedList entries={entries} totalMaterials={rows.length} onSaved={markPlotted} />
         </>
       )}
 
