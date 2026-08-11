@@ -659,17 +659,22 @@ const STAR_LABELS: Record<StarKey, string[]> = {
   costOpportunity: ['None', 'Low', 'Moderate', 'High', 'Breakthrough'],
 };
 
-const SourceField: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
-  <div className="mt-3 pt-3 border-t border-border/50">
-    <label className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Source data</label>
-    <Input
-      className="mt-1.5 h-8 text-xs"
-      placeholder="e.g. 2025 spend cube export.xlsx"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  </div>
-);
+/** Dataset each figure was populated from — read-only provenance footnote. */
+const SOURCE_DATASETS: Record<'volume' | 'ghg' | 'spend' | 'suppliers', { file: string; date: string }> = {
+  volume: { file: 'Group volume plan 2026.xlsx', date: '12 Mar 2026' },
+  ghg: { file: 'Scope 3 factor library v4.csv', date: '04 Feb 2026' },
+  spend: { file: '2025 spend cube export.xlsx', date: '28 Jan 2026' },
+  suppliers: { file: 'Supplier master extract.csv', date: '19 Feb 2026' },
+};
+
+const SourceNote: React.FC<{ field: keyof typeof SOURCE_DATASETS }> = ({ field }) => {
+  const src = SOURCE_DATASETS[field];
+  return (
+    <p className="mt-3 pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
+      Source: <span className="font-medium text-foreground/80">{src.file}</span> · added {src.date}
+    </p>
+  );
+};
 
 const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: StrategicScoring) => void; missing: string[]; materialName: string }> = ({ scoring, setScoring, missing, materialName }) => {
   const total = typeof scoring.volume === 'number' && typeof scoring.ghg === 'number'
@@ -678,22 +683,10 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
   const spendTotal = typeof scoring.spend === 'number'
     ? (scoring.spendMode === 'fxv' ? (typeof scoring.volume === 'number' ? scoring.volume * scoring.spend : 0) : scoring.spend)
     : 0;
-  const exportMeta = {
-    material: materialName,
-    score: priorityScore(scoring),
-    tier: priorityTier(priorityScore(scoring)),
-  };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringPdf(scoring, exportMeta)}>
-          <Download className="w-3.5 h-3.5" /> Export PDF
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringCsv(scoring, exportMeta)}>
-          <Download className="w-3.5 h-3.5" /> Export CSV
-        </Button>
-      </div>
       {/* A · Impact */}
+
       <section>
         <div className="flex items-center gap-2 mb-1">
           <Target className="w-4 h-4 text-foreground" />
