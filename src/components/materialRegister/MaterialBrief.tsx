@@ -797,12 +797,6 @@ export const MaterialBrief: React.FC = () => {
           </BarField>
 
 
-          <BarField label="Target date" className="w-[140px]">
-            <div className="flex h-8 items-center font-mono text-[13px] tabular-nums text-foreground">
-              {targetDate ?? <span className="font-sans text-[12px] text-muted-foreground/60">Set date</span>}
-            </div>
-          </BarField>
-
           {draftStatus !== null && (
             <div className="ml-auto flex items-center gap-2">
               <span className="text-[10px] text-muted-foreground">
