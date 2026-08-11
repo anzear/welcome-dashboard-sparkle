@@ -356,7 +356,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                   <Input
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    placeholder="e.g. H2 2026"
+                    placeholder="e.g. H2 2026 — empty clears it"
                     className="h-8 text-xs"
                   />
                   {periodSuggestions.length > 0 && (
