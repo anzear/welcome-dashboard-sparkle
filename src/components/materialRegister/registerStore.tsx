@@ -294,7 +294,7 @@ interface Store {
   setPriorityPeriod: (v: string) => void;
   prioritySetCount: number;
   inPrioritySet: (m: Material) => boolean;
-  /** Sets or clears priority_selected for a set of materials in one batch. */
+  /** Sets or clears priority_period for a set of materials in one batch. */
   applyPriority: (ids: Set<string>, add: boolean) => void;
   toast: {
     message: string;
