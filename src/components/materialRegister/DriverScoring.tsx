@@ -29,6 +29,7 @@ interface Cursor {
 const DriverScoring: React.FC = () => {
   const {
     ordered,
+    scores,
     scoreFor,
     setScore,
     clearScore,
@@ -68,14 +69,14 @@ const DriverScoring: React.FC = () => {
       return sort.dir === "desc" ? d : -d;
     });
     return { scoredRows: sorted, unscoredRows: absent };
-  }, [rows, sort, scores_dep(scoreFor), countsFor]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, sort, scores, countsFor]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const displayRows = useMemo(() => [...scoredRows, ...unscoredRows], [scoredRows, unscoredRows]);
 
   const totalCells = rows.length * questions.length;
   const scoredCells = useMemo(
     () => rows.reduce((acc, m) => acc + questions.filter((q) => scoreOf(m, q.question_id) !== null).length, 0),
-    [rows, questions, scoreFor], // eslint-disable-line react-hooks/exhaustive-deps
+    [rows, questions, scores], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const pct = totalCells === 0 ? 0 : Math.round((scoredCells / totalCells) * 100);
 
@@ -526,10 +527,5 @@ const DriverScoring: React.FC = () => {
     </div>
   );
 };
-
-/** Sorting must recompute when any judgement changes; the map identity is the signal. */
-function scores_dep(scoreFor: unknown) {
-  return scoreFor;
-}
 
 export default DriverScoring;
