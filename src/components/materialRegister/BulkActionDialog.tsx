@@ -167,11 +167,11 @@ export const BulkActionDialog: React.FC<Props> = ({
   const periodEffect = useMemo(() => {
     if (kind !== "priority_period" || !value.trim()) return null;
     const target = value.trim();
-    const none = materials.filter((m) => !m.priority_selected).length;
-    const same = materials.filter((m) => m.priority_selected && m.priority_period === target).length;
+    const none = materials.filter((m) => m.priority_period === null).length;
+    const same = materials.filter((m) => m.priority_period === target).length;
     const other = new Map<string, number>();
     materials.forEach((m) => {
-      if (m.priority_selected && m.priority_period !== target) {
+      if (m.priority_period !== null && m.priority_period !== target) {
         const k = m.priority_period ?? "an unnamed period";
         other.set(k, (other.get(k) ?? 0) + 1);
       }

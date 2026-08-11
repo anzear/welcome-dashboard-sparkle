@@ -66,13 +66,13 @@ const FilterSelects: React.FC<{ className?: string; include?: FilterKey[] }> = (
         { value: UNTAGGED, label: `Untagged (${data.filter((m) => m.tags.length === 0).length})` },
       ],
       priorityPeriods: [
-        ...uniq(data.map((m) => (m.priority_selected ? m.priority_period : null))).map((v) => ({
+        ...uniq(data.map((m) => m.priority_period)).map((v) => ({
           value: v,
-          label: `${v} (${data.filter((m) => m.priority_selected && m.priority_period === v).length})`,
+          label: `${v} (${data.filter((m) => m.priority_period === v).length})`,
         })),
         {
           value: NO_PRIORITY,
-          label: `Not prioritised (${data.filter((m) => !m.priority_selected).length})`,
+          label: `Not prioritised (${data.filter((m) => m.priority_period === null).length})`,
         },
       ],
       targetDates: TARGET_DATE_BANDS.map((b) => {

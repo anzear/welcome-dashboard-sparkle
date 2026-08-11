@@ -197,12 +197,12 @@ function buildEvents(materials: Material[]): MaterialEvent[] {
           });
           currentOwner = m.owner;
         }
-        if (m.priority_selected && !priority) {
+        if (m.priority_period !== null && !priority) {
           events.push({
             event_id: id(),
             material_id: m.material_id,
             event_type: "priority_change",
-            field: "priority_selected",
+            field: "priority_period",
             from_value: null,
             to_value: m.priority_period ?? "current period",
             reason: null,
@@ -266,7 +266,7 @@ function buildEvents(materials: Material[]): MaterialEvent[] {
           event_id: id(),
           material_id: m.material_id,
           event_type: "priority_change",
-          field: "priority_selected",
+          field: "priority_period",
           from_value: priority ? null : (m.priority_period ?? "current period"),
           to_value: priority ? (m.priority_period ?? "H2 2026") : null,
           reason,

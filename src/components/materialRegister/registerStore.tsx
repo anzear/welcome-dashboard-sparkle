@@ -396,7 +396,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         if (!anyMatch) return false;
       }
       if (filters.priorityPeriods.length) {
-        const key = m.priority_selected ? (m.priority_period ?? NO_PRIORITY) : NO_PRIORITY;
+        const key = m.priority_period ?? NO_PRIORITY;
         if (!filters.priorityPeriods.includes(key)) return false;
       }
       if (filters.targetDates.length) {
@@ -577,9 +577,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           next.application_categories = nextList(m.application_categories ?? []);
           next.provenance.application_categories = enteredProvenance();
         } else if (payload.kind === "priority_period") {
-          next.priority_selected = true;
-          next.priority_period = payload.value;
-          next.provenance.priority_selected = enteredProvenance();
+          next.priority_period = payload.value && payload.value.trim() ? payload.value.trim() : null;
           next.provenance.priority_period = enteredProvenance();
         } else if (payload.kind === "intelligence") {
           if (m.intelligence_status === "not_ordered") {
@@ -623,8 +621,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             material_id: m.material_id,
             event_type: "priority_change",
             field: "priority_period",
-            from_value: m.priority_selected ? (m.priority_period ?? "unnamed period") : null,
-            to_value: payload.value,
+            from_value: m.priority_period,
+            to_value: payload.value && payload.value.trim() ? payload.value.trim() : null,
             batch_id: batchId,
           } as EventInput;
         }
@@ -738,7 +736,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     ]);
   };
 
-  const inPrioritySet = (m: Material) => m.priority_selected && m.priority_period === priorityPeriod;
+  const inPrioritySet = (m: Material) => m.priority_period === priorityPeriod;
   const prioritySetCount = data.filter(inPrioritySet).length;
 
   /** Priority set changes: one event per material, all sharing one batch_id. */
@@ -751,11 +749,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         if (!ids.has(m.material_id)) return m;
         return {
           ...m,
-          priority_selected: add,
           priority_period: add ? priorityPeriod : null,
           provenance: {
             ...m.provenance,
-            priority_selected: enteredProvenance(),
             priority_period: enteredProvenance(),
           },
         };
@@ -766,8 +762,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       snapshot.map((m) => ({
         material_id: m.material_id,
         event_type: "priority_change",
-        field: "priority_selected",
-        from_value: m.priority_selected ? (m.priority_period ?? "current period") : null,
+        field: "priority_period",
+        from_value: m.priority_period,
         to_value: add ? priorityPeriod : null,
         batch_id: batchId,
       })),
