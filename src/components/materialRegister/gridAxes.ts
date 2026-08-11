@@ -1,17 +1,12 @@
-import type { Material } from "@/types/materialPrioritisation";
-import type { DriverCounts } from "@/types/materialPrioritisation";
+import type { DriverCounts, Material } from "@/types/materialPrioritisation";
 import { nf } from "@/components/materialRegister/primitives";
 import type { MeasureId } from "@/components/materialRegister/registerStore";
+import type { DriverQuestion } from "@/config/driverQuestions";
 
-export type AxisVarId =
-  | "spend"
-  | "emissions"
-  | "volume"
-  | "price"
-  | "applications"
-  | "drivers"
-  | "constraints"
-  | "supply_risk";
+/** Lens ids are fixed; a driver axis is "q:<question_id>". */
+export type AxisVarId = string;
+export const DRIVER_AXIS_PREFIX = "q:";
+export const driverAxisId = (questionId: string) => `${DRIVER_AXIS_PREFIX}${questionId}`;
 
 export type SizeVarId = "drivers" | "constraints";
 
@@ -24,29 +19,39 @@ export interface AxisVar {
   id: AxisVarId;
   /** Control label. */
   label: string;
-  /** Lower-case noun used in quadrant readings and sentences. */
+  /** Lower-case noun used in corner readings and sentences. */
   noun: string;
   unit: string;
-  /** Measured figure or a count of judgements. Never mixed into one number. */
+  /** Measured figure or a judgement. Never mixed into one number. */
   kind: "measured" | "judgement";
+  /** Which selector section the variable belongs to. */
+  group: "lens" | "driver";
   /** Present only for variables the register already ranks. */
   measureId?: MeasureId;
-  /** Fixed upper bound for count axes. */
-  fixedMax?: number;
+  /** Fixed axis domain. Absent for open-ended measured figures. */
+  domain?: { min: number; max: number };
+  /** Set when the axis reads one driver question. */
+  questionId?: string;
+  /** Numeric field behind a measured lens, so a gap can be filled inline. */
+  field?: keyof Material;
   value: (m: Material, counts: DriverCounts, ctx: AxisCtx) => number | null;
   fmt: (v: number) => string;
 }
 
 const eur = (v: number) => `EUR ${nf(0).format(v)}`;
+const listLen = (v: string[] | null | undefined) => (v && v.length > 0 ? v.length : null);
 
-export const AXIS_VARS: AxisVar[] = [
+/** Measured lenses. Each one is a figure the register already holds. */
+export const LENS_VARS: AxisVar[] = [
   {
     id: "spend",
     label: "Annual spend",
     noun: "spend",
     unit: "EUR/yr",
     kind: "measured",
+    group: "lens",
     measureId: "spend",
+    field: "annual_spend",
     value: (m) => m.annual_spend,
     fmt: (v) => `${eur(v)}/yr`,
   },
@@ -56,7 +61,9 @@ export const AXIS_VARS: AxisVar[] = [
     noun: "emissions",
     unit: "tCO2e/yr",
     kind: "measured",
+    group: "lens",
     measureId: "emissions",
+    field: "ghg_contribution",
     value: (m) => m.ghg_contribution,
     fmt: (v) => `${nf(0).format(v)} tCO2e/yr`,
   },
@@ -66,7 +73,9 @@ export const AXIS_VARS: AxisVar[] = [
     noun: "volume",
     unit: "t/yr",
     kind: "measured",
+    group: "lens",
     measureId: "volume",
+    field: "annual_volume",
     value: (m) => m.annual_volume,
     fmt: (v) => `${nf(0).format(v)} t/yr`,
   },
@@ -76,8 +85,32 @@ export const AXIS_VARS: AxisVar[] = [
     noun: "unit price",
     unit: "EUR/kg",
     kind: "measured",
+    group: "lens",
+    field: "unit_price",
     value: (m) => m.unit_price,
     fmt: (v) => `EUR ${nf(2).format(v)}/kg`,
+  },
+  {
+    id: "ghg_factor",
+    label: "GHG factor",
+    noun: "GHG factor",
+    unit: "kgCO2e/kg",
+    kind: "measured",
+    group: "lens",
+    field: "ghg_emission_factor",
+    value: (m) => m.ghg_emission_factor,
+    fmt: (v) => `${nf(2).format(v)} kgCO2e/kg`,
+  },
+  {
+    id: "suppliers",
+    label: "Suppliers",
+    noun: "supplier count",
+    unit: "count",
+    kind: "measured",
+    group: "lens",
+    field: "supplier_count",
+    value: (m) => m.supplier_count,
+    fmt: (v) => `${nf(0).format(v)} suppliers`,
   },
   {
     id: "applications",
@@ -85,34 +118,35 @@ export const AXIS_VARS: AxisVar[] = [
     noun: "applications",
     unit: "count",
     kind: "measured",
+    group: "lens",
     measureId: "applications",
-    value: (m) => (m.application_categories && m.application_categories.length > 0 ? m.application_categories.length : null),
+    value: (m) => listLen(m.application_categories),
     fmt: (v) => `${nf(0).format(v)} applications`,
   },
+  {
+    id: "products",
+    label: "Products",
+    noun: "products",
+    unit: "count",
+    kind: "measured",
+    group: "lens",
+    value: (m) => listLen(m.product_categories),
+    fmt: (v) => `${nf(0).format(v)} products`,
+  },
+];
+
+/** Counts of judgements. Counts only — never a blended index. */
+export const COUNT_VARS: AxisVar[] = [
   {
     id: "drivers",
     label: "Strong drivers",
     noun: "strong drivers",
     unit: "count",
     kind: "judgement",
-    fixedMax: 12,
+    group: "driver",
+    domain: { min: 0, max: 12 },
     value: (_m, c) => (c.scored_count === null ? null : (c.strong_drivers as number)),
     fmt: (v) => `${v} strong drivers`,
-  },
-  {
-    id: "supply_risk",
-    label: "Supply risk",
-    noun: "supply risk",
-    unit: "0-10",
-    kind: "judgement",
-    fixedMax: 10,
-    // The supply security judgement read as risk: +5 (change reduces exposure) = 0 risk,
-    // -5 (change adds fragility) = 10. One judgement, never blended with anything else.
-    value: (_m, _c, ctx) => {
-      const s = ctx.score("supply_security");
-      return s === null ? null : 5 - s;
-    },
-    fmt: (v) => `supply risk ${nf(0).format(v)} of 10`,
   },
   {
     id: "constraints",
@@ -120,13 +154,38 @@ export const AXIS_VARS: AxisVar[] = [
     noun: "strong constraints",
     unit: "count",
     kind: "judgement",
-    fixedMax: 12,
+    group: "driver",
+    domain: { min: 0, max: 12 },
     value: (_m, c) => (c.scored_count === null ? null : (c.strong_constraints as number)),
     fmt: (v) => `${v} strong constraints`,
   },
 ];
 
-export const axisVar = (id: AxisVarId) => AXIS_VARS.find((v) => v.id === id)!;
+const signedScore = (v: number) => (v > 0 ? `+${v}` : String(v));
+
+/** One driver question as an axis: its recorded score, -5 to +5. Unscored is no position. */
+export const driverAxis = (q: DriverQuestion): AxisVar => ({
+  id: driverAxisId(q.question_id),
+  label: q.label,
+  noun: q.label.toLowerCase(),
+  unit: "-5..+5",
+  kind: "judgement",
+  group: "driver",
+  domain: { min: -5, max: 5 },
+  questionId: q.question_id,
+  value: (_m, _c, ctx) => ctx.score(q.question_id),
+  fmt: (v) => `${q.label} ${signedScore(v)}`,
+});
+
+/** Full selector list: lenses first, then every driver question, then the counts. */
+export const buildAxisVars = (questions: DriverQuestion[]): AxisVar[] => [
+  ...LENS_VARS,
+  ...questions.map(driverAxis),
+  ...COUNT_VARS,
+];
+
+export const findAxisVar = (vars: AxisVar[], id: AxisVarId): AxisVar =>
+  vars.find((v) => v.id === id) ?? vars[0];
 
 export interface AxisPreset {
   id: string;
@@ -148,36 +207,28 @@ export const AXIS_PRESETS: AxisPreset[] = [
     size: "drivers",
   },
   {
-    id: "spend-drivers",
-    label: "Spend × Strong drivers",
-    reading: "exposure against the case for acting",
+    id: "spend-cost",
+    label: "Spend × Cost",
+    reading: "exposure against the cost barrier",
     x: "spend",
-    y: "drivers",
+    y: driverAxisId("cost"),
     size: "constraints",
   },
   {
-    id: "volume-price",
-    label: "Volume × Unit price",
-    reading: "where the money actually comes from",
-    x: "volume",
-    y: "price",
+    id: "emissions-regulatory",
+    label: "Emissions × Regulatory",
+    reading: "impact against regulatory push",
+    x: "emissions",
+    y: driverAxisId("regulatory_position"),
     size: "drivers",
   },
   {
-    id: "emissions-constraints",
-    label: "Emissions × Strong constraints",
-    reading: "high impact, hard to move",
-    x: "emissions",
-    y: "constraints",
-    size: "drivers",
-  },
-  {
-    id: "emissions-supply-risk",
-    label: "Emissions × Supply risk",
-    reading: "high impact, fragile supply",
-    x: "emissions",
-    y: "supply_risk",
-    size: "drivers",
+    id: "spend-readiness",
+    label: "Spend × Internal readiness",
+    reading: "exposure against capacity to act",
+    x: "spend",
+    y: driverAxisId("internal_readiness"),
+    size: "constraints",
   },
 ];
 
@@ -217,3 +268,21 @@ export const niceScale = (dataMax: number, count = 4) => {
   return { max, step, ticks };
 };
 
+export interface AxisScale {
+  min: number;
+  max: number;
+  step: number;
+  ticks: number[];
+}
+
+/** Fixed domain when the variable has one, otherwise a round scale over the data. */
+export const scaleFor = (v: AxisVar, values: number[]): AxisScale => {
+  if (v.domain) {
+    const { min, max } = v.domain;
+    const ticks: number[] = [];
+    for (let t = min; t <= max; t += 1) ticks.push(t);
+    return { min, max, step: 1, ticks };
+  }
+  const s = niceScale(Math.max(1, ...values));
+  return { min: 0, max: s.max, step: s.step, ticks: s.ticks };
+};
