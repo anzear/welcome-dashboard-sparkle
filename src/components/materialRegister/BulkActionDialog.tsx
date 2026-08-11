@@ -18,9 +18,12 @@ import {
 } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
-import { cleanTags, hasTag, normalizeTag, tagVocabulary } from "@/components/materialRegister/tags";
+import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
 
-export type BulkKind = "status" | "owner" | "add_tags" | "remove_tags";
+export type BulkKind = "status" | "owner" | "products" | "applications" | "priority_period" | "intelligence";
+
+/** Multi-value actions add by default; remove is an explicit mode. */
+export type BulkMode = "add" | "remove";
 
 export const BLOCKER_CATEGORIES = [
   "Technical performance",
@@ -45,8 +48,9 @@ const STATUS_ORDER: JourneyStatus[] = [
 export interface BulkPayload {
   kind: BulkKind;
   value: string | null;
-  /** Tags to add or remove. Empty for status / owner actions. */
-  tags?: string[];
+  /** Values to add or remove for the multi-value actions. */
+  values?: string[];
+  mode?: BulkMode;
   blocker_category?: string | null;
   blocker_detail?: string | null;
 }
@@ -56,30 +60,56 @@ interface Props {
   materials: Material[];
   hiddenCount: number;
   ownerOptions: string[];
-  /** Every tag in use across the register, for autocomplete. */
-  tagSuggestions: string[];
+  /** Vocabulary in use across the register, for autocomplete. */
+  productSuggestions: string[];
+  applicationSuggestions: string[];
+  /** Priority periods already in use. */
+  periodSuggestions: string[];
   onCancel: () => void;
   onApply: (payload: BulkPayload) => void;
 }
 
 const UNASSIGNED = "__unassigned__";
 
-const currentLabel = (kind: BulkKind, m: Material) => {
-  if (kind === "status") return JOURNEY_STATUS_LABEL[m.journey_status];
-  return m.owner ?? "Unassigned";
+const MULTI: Record<string, { field: keyof Material; noun: string }> = {
+  products: { field: "product_categories", noun: "product category" },
+  applications: { field: "application_categories", noun: "application category" },
 };
+
+const valuesOf = (m: Material, kind: BulkKind): string[] => {
+  const cfg = MULTI[kind];
+  if (!cfg) return [];
+  return ((m[cfg.field] as string[] | null) ?? []) as string[];
+};
+
+/** Vocabulary present on the selection, with counts — the only removable set. */
+function vocabulary(materials: Material[], kind: BulkKind) {
+  const seen = new Map<string, { value: string; count: number }>();
+  materials.forEach((m) =>
+    cleanTags(valuesOf(m, kind)).forEach((v) => {
+      const k = v.toLowerCase();
+      const hit = seen.get(k);
+      if (hit) hit.count += 1;
+      else seen.set(k, { value: v, count: 1 });
+    }),
+  );
+  return [...seen.values()].sort((a, b) => a.value.localeCompare(b.value));
+}
 
 export const BulkActionDialog: React.FC<Props> = ({
   kind,
   materials,
   hiddenCount,
   ownerOptions,
-  tagSuggestions,
+  productSuggestions,
+  applicationSuggestions,
+  periodSuggestions,
   onCancel,
   onApply,
 }) => {
   const [value, setValue] = useState<string>("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [values, setValues] = useState<string[]>([]);
+  const [mode, setMode] = useState<BulkMode>("add");
   const [draft, setDraft] = useState("");
   const [blockerCategory, setBlockerCategory] = useState<string>("");
   const [blockerDetail, setBlockerDetail] = useState<string>("");
@@ -88,71 +118,112 @@ export const BulkActionDialog: React.FC<Props> = ({
   // reset when the action changes
   React.useEffect(() => {
     setValue("");
-    setTags([]);
+    setValues([]);
+    setMode("add");
     setDraft("");
     setBlockerCategory("");
     setBlockerDetail("");
     setShowList(false);
   }, [kind]);
 
-  const isTagAction = kind === "add_tags" || kind === "remove_tags";
+  const isMulti = kind === "products" || kind === "applications";
+  const cfgNoun = kind && MULTI[kind] ? MULTI[kind].noun : "";
+  const suggestions = kind === "products" ? productSuggestions : applicationSuggestions;
 
-  /** Tags present on the selection, with counts — the only removable set. */
-  const selectionTags = useMemo(() => tagVocabulary(materials), [materials]);
+  const selectionVocab = useMemo(
+    () => (isMulti && kind ? vocabulary(materials, kind) : []),
+    [isMulti, kind, materials],
+  );
 
   const addMatches = useMemo(() => {
     const q = draft.trim().toLowerCase();
-    if (!q) return [];
-    return tagSuggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(tags, t)).slice(0, 6);
-  }, [draft, tagSuggestions, tags]);
+    if (!q || !isMulti) return [];
+    return suggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(values, t)).slice(0, 6);
+  }, [draft, suggestions, values, isMulti]);
 
-  const addTag = (raw: string) => {
+  const addValue = (raw: string) => {
     const t = normalizeTag(raw);
     setDraft("");
-    if (!t || hasTag(tags, t)) return;
-    setTags((prev) => [...prev, t]);
+    if (!t || hasTag(values, t)) return;
+    setValues((prev) => [...prev, t]);
   };
 
-  const targetLabel = useMemo(() => {
-    if (!kind || isTagAction || !value) return null;
-    if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
-    return value === UNASSIGNED ? "Unassigned" : value;
-  }, [kind, isTagAction, value]);
+  /** Per-value consequence sentence: who gains it, who already has it. */
+  const multiEffects = useMemo(() => {
+    if (!isMulti || !kind) return [];
+    return cleanTags(values).map((v) => {
+      const have = materials.filter((m) => hasTag(valuesOf(m, kind), v)).length;
+      return {
+        value: v,
+        sentence:
+          mode === "add"
+            ? `${materials.length - have} will gain it. ${have} already have it.`
+            : `${have} will lose it. ${materials.length - have} do not have it.`,
+      };
+    });
+  }, [isMulti, kind, values, materials, mode]);
 
-  const breakdown = useMemo(() => {
-    if (!kind || isTagAction) return [];
-    const counts = new Map<string, number>();
+  /** Priority period: state exactly what is replaced and what does not change. */
+  const periodEffect = useMemo(() => {
+    if (kind !== "priority_period" || !value.trim()) return null;
+    const target = value.trim();
+    const none = materials.filter((m) => !m.priority_selected).length;
+    const same = materials.filter((m) => m.priority_selected && m.priority_period === target).length;
+    const other = new Map<string, number>();
     materials.forEach((m) => {
-      const l = currentLabel(kind, m);
-      counts.set(l, (counts.get(l) ?? 0) + 1);
+      if (m.priority_selected && m.priority_period !== target) {
+        const k = m.priority_period ?? "an unnamed period";
+        other.set(k, (other.get(k) ?? 0) + 1);
+      }
     });
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [kind, isTagAction, materials]);
+    return { target, none, same, other: [...other.entries()].sort((a, b) => b[1] - a[1]) };
+  }, [kind, value, materials]);
 
-  /** Per-tag consequence sentence: who gains it, who already has it. */
-  const tagEffects = useMemo(() => {
-    if (!isTagAction) return [];
-    return cleanTags(tags).map((t) => {
-      const have = materials.filter((m) => hasTag(m.tags, t)).length;
-      return kind === "add_tags"
-        ? { tag: t, sentence: `${materials.length - have} will gain the tag. ${have} already have it.` }
-        : { tag: t, sentence: `${have} will lose the tag. ${materials.length - have} do not have it.` };
-    });
-  }, [isTagAction, kind, tags, materials]);
+  const intelligenceEffect = useMemo(() => {
+    if (kind !== "intelligence") return null;
+    const none = materials.filter((m) => m.intelligence_status === "not_ordered").length;
+    return { none, already: materials.length - none };
+  }, [kind, materials]);
 
   const requiresBlocker = kind === "status" && (value === "parked" || value === "rejected");
-  const canApply = isTagAction
-    ? cleanTags(tags).length > 0
-    : Boolean(value) && (!requiresBlocker || Boolean(blockerCategory));
+  const canApply =
+    kind === "intelligence"
+      ? materials.length > 0
+      : isMulti
+        ? cleanTags(values).length > 0
+        : kind === "priority_period"
+          ? value.trim() !== ""
+          : Boolean(value) && (!requiresBlocker || Boolean(blockerCategory));
 
   const title =
     kind === "status"
       ? `Set status for ${materials.length} materials`
       : kind === "owner"
         ? `Set owner for ${materials.length} materials`
-        : kind === "add_tags"
-          ? `Add tags to ${materials.length} materials`
-          : `Remove tags from ${materials.length} materials`;
+        : kind === "products"
+          ? `${mode === "add" ? "Add" : "Remove"} product categories — ${materials.length} materials`
+          : kind === "applications"
+            ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
+            : kind === "priority_period"
+              ? `Set priority period for ${materials.length} materials`
+              : `Order intelligence for ${materials.length} materials`;
+
+  const targetLabel = useMemo(() => {
+    if (!kind || isMulti || !value) return null;
+    if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
+    if (kind === "owner") return value === UNASSIGNED ? "Unassigned" : value;
+    return null;
+  }, [kind, isMulti, value]);
+
+  const breakdown = useMemo(() => {
+    if (kind !== "status" && kind !== "owner") return [];
+    const counts = new Map<string, number>();
+    materials.forEach((m) => {
+      const l = kind === "status" ? JOURNEY_STATUS_LABEL[m.journey_status] : (m.owner ?? "Unassigned");
+      counts.set(l, (counts.get(l) ?? 0) + 1);
+    });
+    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
+  }, [kind, materials]);
 
   return (
     <Dialog open={kind !== null} onOpenChange={(o) => !o && onCancel()}>
@@ -160,121 +231,176 @@ export const BulkActionDialog: React.FC<Props> = ({
         <DialogHeader>
           <DialogTitle className="text-sm">{title}</DialogTitle>
           <DialogDescription className="text-xs">
-            {kind === "add_tags"
-              ? "Tags are added, never overwritten. Nothing is written until you press Apply."
-              : kind === "remove_tags"
-                ? "Only tags present on the selection can be removed. Nothing is written until you press Apply."
-                : "Nothing is written until you press Apply. Bulk-set values are recorded as entered data."}
+            {isMulti
+              ? mode === "add"
+                ? "Values are added, never overwritten. Nothing is written until you press Apply."
+                : "Only values present on the selection can be removed. Nothing is written until you press Apply."
+              : "Nothing is written until you press Apply. Bulk-set values are recorded as entered data."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 text-xs">
-          <div className="space-y-1">
-            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {kind === "status"
-                ? "New status"
-                : kind === "owner"
-                  ? "New owner"
-                  : kind === "add_tags"
-                    ? "Tags to add"
-                    : "Tags to remove"}
+          {isMulti && (
+            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+              {(["add", "remove"] as BulkMode[]).map((mm) => (
+                <button
+                  key={mm}
+                  type="button"
+                  onClick={() => {
+                    setMode(mm);
+                    setValues([]);
+                    setDraft("");
+                  }}
+                  className={
+                    mode === mm
+                      ? "rounded-[4px] bg-foreground px-2.5 py-1 text-[11px] font-medium text-background shadow-sm"
+                      : "rounded-[4px] px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                  }
+                >
+                  {mm === "add" ? "Add" : "Remove"}
+                </button>
+              ))}
             </div>
+          )}
 
-            {kind === "add_tags" ? (
-              <div className="space-y-1">
-                <div className="flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-1.5 py-1">
-                  {tags.map((t) => (
-                    <span
-                      key={t}
-                      className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
-                    >
-                      {t}
-                      <button type="button" aria-label={`Remove ${t}`} onClick={() => setTags(tags.filter((x) => x !== t))}>
-                        <X className="h-3 w-3 opacity-60 hover:opacity-100" />
-                      </button>
-                    </span>
-                  ))}
-                  <input
-                    value={draft}
-                    maxLength={40}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addTag(draft);
-                      }
-                      if (e.key === "Backspace" && draft === "" && tags.length) setTags(tags.slice(0, -1));
-                    }}
-                    onBlur={() => addTag(draft)}
-                    placeholder={tags.length === 0 ? "Type a tag and press Enter" : ""}
-                    className="min-w-[8rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
-                  />
-                </div>
-                {addMatches.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {addMatches.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => addTag(t)}
-                        className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
+          {kind !== "intelligence" && (
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {kind === "status"
+                  ? "New status"
+                  : kind === "owner"
+                    ? "New owner"
+                    : kind === "priority_period"
+                      ? "Priority period"
+                      : `${mode === "add" ? "Values to add" : "Values to remove"}`}
               </div>
-            ) : kind === "remove_tags" ? (
-              selectionTags.length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">No tags on the selected materials.</p>
-              ) : (
-                <div className="flex flex-wrap gap-1">
-                  {selectionTags.map(({ tag, count }) => {
-                    const on = hasTag(tags, tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => setTags(on ? tags.filter((x) => x !== tag) : [...tags, tag])}
-                        className={
-                          on
-                            ? "rounded-sm bg-foreground px-1.5 py-0.5 text-[10px] text-background"
-                            : "rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                        }
-                      >
-                        {tag} <span className="tabular-nums opacity-70">({count})</span>
-                      </button>
-                    );
-                  })}
+
+              {isMulti ? (
+                mode === "add" ? (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-1.5 py-1">
+                      {values.map((t) => (
+                        <span
+                          key={t}
+                          className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
+                        >
+                          {t}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${t}`}
+                            onClick={() => setValues(values.filter((x) => x !== t))}
+                          >
+                            <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+                          </button>
+                        </span>
+                      ))}
+                      <input
+                        value={draft}
+                        maxLength={60}
+                        onChange={(e) => setDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addValue(draft);
+                          }
+                          if (e.key === "Backspace" && draft === "" && values.length)
+                            setValues(values.slice(0, -1));
+                        }}
+                        onBlur={() => addValue(draft)}
+                        placeholder={values.length === 0 ? `Type a ${cfgNoun} and press Enter` : ""}
+                        className="min-w-[10rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
+                      />
+                    </div>
+                    {addMatches.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {addMatches.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => addValue(t)}
+                            className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : selectionVocab.length === 0 ? (
+                  <p className="text-[11px] text-muted-foreground">
+                    No {cfgNoun} recorded on the selected materials.
+                  </p>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {selectionVocab.map(({ value: v, count }) => {
+                      const on = hasTag(values, v);
+                      return (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setValues(on ? values.filter((x) => x !== v) : [...values, v])}
+                          className={
+                            on
+                              ? "rounded-sm bg-foreground px-1.5 py-0.5 text-[10px] text-background"
+                              : "rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                          }
+                        >
+                          {v} <span className="tabular-nums opacity-70">({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )
+              ) : kind === "priority_period" ? (
+                <div className="space-y-1">
+                  <Input
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="e.g. H2 2026"
+                    className="h-8 text-xs"
+                  />
+                  {periodSuggestions.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {periodSuggestions.map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => setValue(p)}
+                          className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+                        >
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )
-            ) : (
-              <Select value={value} onValueChange={setValue}>
-                <SelectTrigger className="h-8 text-xs">
-                  <SelectValue placeholder="Select a value" />
-                </SelectTrigger>
-                <SelectContent>
-                  {kind === "status"
-                    ? STATUS_ORDER.map((s) => (
-                        <SelectItem key={s} value={s} className="text-xs">
-                          {JOURNEY_STATUS_LABEL[s]}
-                        </SelectItem>
-                      ))
-                    : [
-                        ...ownerOptions.map((o) => (
-                          <SelectItem key={o} value={o} className="text-xs">
-                            {o}
+              ) : (
+                <Select value={value} onValueChange={setValue}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Select a value" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {kind === "status"
+                      ? STATUS_ORDER.map((s) => (
+                          <SelectItem key={s} value={s} className="text-xs">
+                            {JOURNEY_STATUS_LABEL[s]}
                           </SelectItem>
-                        )),
-                        <SelectItem key={UNASSIGNED} value={UNASSIGNED} className="text-xs">
-                          Unassigned
-                        </SelectItem>,
-                      ]}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+                        ))
+                      : [
+                          ...ownerOptions.map((o) => (
+                            <SelectItem key={o} value={o} className="text-xs">
+                              {o}
+                            </SelectItem>
+                          )),
+                          <SelectItem key={UNASSIGNED} value={UNASSIGNED} className="text-xs">
+                            Unassigned
+                          </SelectItem>,
+                        ]}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
           {requiresBlocker && (
             <div className="space-y-2 rounded-md border border-amber-500/30 bg-amber-500/5 p-2">
@@ -302,41 +428,89 @@ export const BulkActionDialog: React.FC<Props> = ({
             </div>
           )}
 
-          {isTagAction ? (
-            tagEffects.length > 0 && (
-              <div className="space-y-1">
-                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  What will happen
+          {isMulti
+            ? multiEffects.length > 0 && (
+                <div className="space-y-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    What will happen
+                  </div>
+                  <ul className="space-y-0.5 text-[11px]">
+                    {multiEffects.map((e) => (
+                      <li key={e.value}>
+                        {mode === "add" ? "Add" : "Remove"} '{e.value}'{" "}
+                        {mode === "add" ? "to" : "from"} {materials.length} materials?{" "}
+                        <span className="text-muted-foreground">{e.sentence}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-0.5 text-[11px]">
-                  {tagEffects.map((e) => (
-                    <li key={e.tag}>
-                      {kind === "add_tags" ? "Add" : "Remove"} '{e.tag}'{" "}
-                      {kind === "add_tags" ? "to" : "from"} {materials.length} materials?{" "}
-                      <span className="text-muted-foreground">{e.sentence}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )
-          ) : (
-            <div className="space-y-1">
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                What will be overwritten
-              </div>
-              <ul className="space-y-0.5 font-mono text-[11px]">
-                {breakdown.map(([label, count]) => {
-                  const noChange = targetLabel !== null && label === targetLabel;
-                  return (
-                    <li key={label} className={noChange ? "text-muted-foreground" : "text-foreground"}>
-                      <span className="tabular-nums">{count}</span> x {label}
-                      {targetLabel ? (noChange ? " (no change)" : ` -> ${targetLabel}`) : ""}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          )}
+              )
+            : kind === "priority_period"
+              ? periodEffect && (
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                      What will happen
+                    </div>
+                    <ul className="space-y-0.5 text-[11px]">
+                      <li>
+                        Set priority period to {periodEffect.target} for {materials.length} materials?
+                      </li>
+                      {periodEffect.none > 0 && (
+                        <li className="text-muted-foreground">
+                          <span className="font-mono tabular-nums">{periodEffect.none}</span> not currently in a
+                          priority set.
+                        </li>
+                      )}
+                      {periodEffect.other.map(([p, n]) => (
+                        <li key={p} className="text-muted-foreground">
+                          <span className="font-mono tabular-nums">{n}</span> currently in {p} — this replaces it.
+                        </li>
+                      ))}
+                      {periodEffect.same > 0 && (
+                        <li className="text-muted-foreground">
+                          <span className="font-mono tabular-nums">{periodEffect.same}</span> already in{" "}
+                          {periodEffect.target} — no change.
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )
+              : kind === "intelligence"
+                ? intelligenceEffect && (
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        What will happen
+                      </div>
+                      <ul className="space-y-0.5 text-[11px] text-muted-foreground">
+                        <li>
+                          <span className="font-mono tabular-nums">{intelligenceEffect.none}</span> will be marked
+                          requested.
+                        </li>
+                        <li>
+                          <span className="font-mono tabular-nums">{intelligenceEffect.already}</span> already have
+                          an order — no change.
+                        </li>
+                      </ul>
+                    </div>
+                  )
+                : (
+                    <div className="space-y-1">
+                      <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        What will be overwritten
+                      </div>
+                      <ul className="space-y-0.5 font-mono text-[11px]">
+                        {breakdown.map(([label, count]) => {
+                          const noChange = targetLabel !== null && label === targetLabel;
+                          return (
+                            <li key={label} className={noChange ? "text-muted-foreground" : "text-foreground"}>
+                              <span className="tabular-nums">{count}</span> x {label}
+                              {targetLabel ? (noChange ? " (no change)" : ` -> ${targetLabel}`) : ""}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
 
           {hiddenCount > 0 && (
             <p className="text-[11px] text-amber-700">
@@ -373,8 +547,17 @@ export const BulkActionDialog: React.FC<Props> = ({
             onClick={() =>
               onApply({
                 kind: kind!,
-                value: isTagAction ? null : kind === "owner" && value === UNASSIGNED ? null : value,
-                tags: isTagAction ? cleanTags(tags) : undefined,
+                value: isMulti
+                  ? null
+                  : kind === "owner" && value === UNASSIGNED
+                    ? null
+                    : kind === "priority_period"
+                      ? value.trim()
+                      : kind === "intelligence"
+                        ? null
+                        : value,
+                values: isMulti ? cleanTags(values) : undefined,
+                mode: isMulti ? mode : undefined,
                 blocker_category: requiresBlocker ? blockerCategory : undefined,
                 blocker_detail: requiresBlocker ? blockerDetail || null : undefined,
               })
