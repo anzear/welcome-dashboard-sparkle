@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type EntryType,
   type JourneyStatus,
 } from "@/types/materialPrioritisation";
@@ -11,9 +10,7 @@ import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   ENTRY_TYPE_LABEL,
   NO_PRIORITY,
-  TARGET_DATE_BANDS,
   UNASSIGNED_OWNER,
-  targetDateBand,
   useRegister,
 } from "@/components/materialRegister/registerStore";
 
@@ -75,13 +72,6 @@ const FilterSelects: React.FC<{ className?: string; include?: FilterKey[] }> = (
           label: `Not prioritised (${data.filter((m) => m.priority_period === null).length})`,
         },
       ],
-      targetDates: TARGET_DATE_BANDS.map((b) => {
-        const count = data.filter((m) => {
-          const band = targetDateBand(targetDateOf(m));
-          return b.value === "next_90" ? band === "next_30" || band === "next_90" : band === b.value;
-        }).length;
-        return { value: b.value, label: `${b.label} (${count})` };
-      }),
     };
   }, [data]);
 
