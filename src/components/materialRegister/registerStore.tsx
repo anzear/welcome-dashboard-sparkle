@@ -346,6 +346,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     message: string;
     snapshot: Material[];
     batchId?: string;
+    /** Judgement map before a bulk score, so Undo can restore it wholesale. */
+    scoreSnapshot?: Record<string, DriverScore>;
   } | null>(null);
 
 
