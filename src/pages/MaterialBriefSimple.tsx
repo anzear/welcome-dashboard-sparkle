@@ -1417,6 +1417,19 @@ const MaterialBriefSimple: React.FC = () => {
         icon={<Star className="w-5 h-5 text-foreground" />}
         headerAccent="bg-foreground"
         progressPercent={scoringPercent(draftScoring)}
+        headerActions={(() => {
+          const meta = { material: decodedTopic, score: priorityScore(draftScoring), tier: priorityTier(priorityScore(draftScoring)) };
+          return (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringPdf(draftScoring, meta)}>
+                <Download className="w-3.5 h-3.5" /> PDF
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringCsv(draftScoring, meta)}>
+                <Download className="w-3.5 h-3.5" /> CSV
+              </Button>
+            </div>
+          );
+        })()}
       >
         <Step2Body scoring={draftScoring} setScoring={setDraftScoring} missing={missingScoring} materialName={decodedTopic} />
       </StepModal>
