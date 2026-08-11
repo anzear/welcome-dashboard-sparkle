@@ -466,6 +466,26 @@ export const MaterialBrief: React.FC = () => {
 
   const m: Material = material;
 
+  /** Periods already in use, offered as autocomplete. Null is not prioritised. */
+  const periodSuggestions = [
+    ...new Set(data.map((x) => x.priority_period).filter((v): v is string => Boolean(v))),
+  ].sort();
+
+  /** A period is the whole of priority: setting it joins the set, clearing it leaves. */
+  const commitPeriod = (next: string | null) => {
+    updateMaterial(m.material_id, { priority_period: next }, ["priority_period"], [
+      {
+        material_id: m.material_id,
+        event_type: "priority_change",
+        field: "priority_period",
+        from_value: m.priority_period,
+        to_value: next,
+      },
+    ]);
+  };
+
+
+
   /** Records a numeric figure as entered, recomputing anything derived from it. */
   const saveFigure = (
     field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
