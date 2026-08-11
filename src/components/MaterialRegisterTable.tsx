@@ -22,7 +22,6 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
