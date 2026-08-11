@@ -704,7 +704,12 @@ export const MaterialRegisterTable: React.FC = () => {
         materials={selectedMaterials}
         hiddenCount={hiddenSelectedCount}
         ownerOptions={ownerNames}
-        tagSuggestions={tagVocabulary(data).map((t) => t.tag)}
+        productSuggestions={[...new Set(data.flatMap((m) => m.product_categories ?? []))].sort()}
+        applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
+        periodSuggestions={[
+          ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),
+        ].sort()}
+
         onCancel={() => setBulkKind(null)}
         onApply={(payload) => {
           applyBulk(payload, new Set(selected));
