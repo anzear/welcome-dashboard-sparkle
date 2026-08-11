@@ -22,7 +22,6 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
@@ -35,7 +34,7 @@ const STICK = "sticky bg-muted/60";
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
 type OptionalColumn =
-  | "position"
+  | "rank"
   | "materialType"
   | "materialCategory"
   | "volume"
@@ -51,7 +50,7 @@ type OptionalColumn =
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
-  ["position", "Position", "Rank under all four measures"],
+  ["rank", "Rank", "Position under the active measure"],
   ["materialType", "Material type", "How the material enters the portfolio"],
   ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
@@ -65,6 +64,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
+
 
 /** Application categories as chips, overflow folded into a count. */
 const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
@@ -178,8 +178,9 @@ export const MaterialRegisterTable: React.FC = () => {
   const colCount = 2;
   const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
-  const materialLeft = "left-8";
-  const positionLeft = "left-[16rem]";
+  /** Pinned offset shifts when the rank column is switched off. */
+  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+
 
 
   const visibleIds = visible.map((r) => r.m.material_id);
@@ -397,6 +398,9 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
+              {cols.rank && (
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+              )}
               <th
                 className={cn(
                   HEAD,
@@ -407,18 +411,7 @@ export const MaterialRegisterTable: React.FC = () => {
               >
                 Material
               </th>
-              {cols.position && (
-                <th className={cn(HEAD, STICK, positionLeft, "z-30 w-[100px] border-r border-border px-3 pb-2 pt-3 text-left")}>
-                  <div className="leading-none">Position</div>
-                  {/* Key letters only — one per bar slot, aligned to their positions */}
-                  <div className={cn(UNIT, "mt-3 flex w-[60px] justify-between font-mono")}>
-                    <span title="Spend">S</span>
-                    <span title="Emissions">E</span>
-                    <span title="Volume">V</span>
-                    <span title="Applications">A</span>
-                  </div>
-                </th>
-              )}
+
               {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
               {cols.materialCategory && (
                 <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
@@ -518,6 +511,16 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
+                    {cols.rank && (
+                      <td
+                        className={cn(
+                          STICK,
+                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                        )}
+                      >
+                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
+                      </td>
+                    )}
                     <td
                       className={cn(
                         STICK,
@@ -537,21 +540,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         {m.material_class ?? "Unclassified"}
                       </div>
                     </td>
-                    {cols.position && (
-                      <td
-                        className={cn(
-                          STICK,
-                          positionLeft,
-                          "z-10 w-[100px] border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
-                        )}
-                      >
-                        <PositionBlock
-                          materialId={m.material_id}
-                          gapMeasure={row.gapMeasure}
-                          gapSize={row.gapSize}
-                        />
-                      </td>
-                    )}
+
                     {cols.materialType && (
                       <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
                         {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
