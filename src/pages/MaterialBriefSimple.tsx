@@ -496,8 +496,9 @@ const StepModal: React.FC<{
   icon: React.ReactNode;
   headerAccent: string; // top bar color
   progressPercent: number;
+  headerActions?: React.ReactNode;
   children: React.ReactNode;
-}> = ({ open, onClose, onSave, stepNumber, title, subtitle, icon, headerAccent, progressPercent, children }) => (
+}> = ({ open, onClose, onSave, stepNumber, title, subtitle, icon, headerAccent, progressPercent, headerActions, children }) => (
   <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
     <StepDialogContent className="max-w-5xl p-0 overflow-hidden max-h-[90vh] flex flex-col gap-0">
       <div className={`h-1 ${headerAccent}`} />
@@ -510,10 +511,12 @@ const StepModal: React.FC<{
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {headerActions}
           <div className="text-sm text-muted-foreground tabular-nums">{progressPercent}%</div>
           <button onClick={onClose} className="p-1 text-muted-foreground hover:text-foreground"><X className="w-4 h-4" /></button>
         </div>
       </div>
+
       <div className="flex-1 overflow-y-auto p-6">{children}</div>
       <div className="p-4 border-t border-border/60 flex justify-end gap-2 bg-muted/20">
         <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -656,17 +659,22 @@ const STAR_LABELS: Record<StarKey, string[]> = {
   costOpportunity: ['None', 'Low', 'Moderate', 'High', 'Breakthrough'],
 };
 
-const SourceField: React.FC<{ value: string; onChange: (v: string) => void }> = ({ value, onChange }) => (
-  <div className="mt-3 pt-3 border-t border-border/50">
-    <label className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">Source data</label>
-    <Input
-      className="mt-1.5 h-8 text-xs"
-      placeholder="e.g. 2025 spend cube export.xlsx"
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  </div>
-);
+/** Dataset each figure was populated from — read-only provenance footnote. */
+const SOURCE_DATASETS: Record<'volume' | 'ghg' | 'spend' | 'suppliers', { file: string; date: string }> = {
+  volume: { file: 'Group volume plan 2026.xlsx', date: '12 Mar 2026' },
+  ghg: { file: 'Scope 3 factor library v4.csv', date: '04 Feb 2026' },
+  spend: { file: '2025 spend cube export.xlsx', date: '28 Jan 2026' },
+  suppliers: { file: 'Supplier master extract.csv', date: '19 Feb 2026' },
+};
+
+const SourceNote: React.FC<{ field: keyof typeof SOURCE_DATASETS }> = ({ field }) => {
+  const src = SOURCE_DATASETS[field];
+  return (
+    <p className="mt-3 pt-2 border-t border-border/50 text-[11px] text-muted-foreground">
+      Source: <span className="font-medium text-foreground/80">{src.file}</span> · added {src.date}
+    </p>
+  );
+};
 
 const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: StrategicScoring) => void; missing: string[]; materialName: string }> = ({ scoring, setScoring, missing, materialName }) => {
   const total = typeof scoring.volume === 'number' && typeof scoring.ghg === 'number'
@@ -675,22 +683,10 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
   const spendTotal = typeof scoring.spend === 'number'
     ? (scoring.spendMode === 'fxv' ? (typeof scoring.volume === 'number' ? scoring.volume * scoring.spend : 0) : scoring.spend)
     : 0;
-  const exportMeta = {
-    material: materialName,
-    score: priorityScore(scoring),
-    tier: priorityTier(priorityScore(scoring)),
-  };
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-end gap-2">
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringPdf(scoring, exportMeta)}>
-          <Download className="w-3.5 h-3.5" /> Export PDF
-        </Button>
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringCsv(scoring, exportMeta)}>
-          <Download className="w-3.5 h-3.5" /> Export CSV
-        </Button>
-      </div>
       {/* A · Impact */}
+
       <section>
         <div className="flex items-center gap-2 mb-1">
           <Target className="w-4 h-4 text-foreground" />
@@ -708,7 +704,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
               </Select>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Shared multiplier for Spend and GHG.</p>
-            <SourceField value={scoring.volumeSource} onChange={(v) => setScoring({ ...scoring, volumeSource: v })} />
+            <SourceNote field="volume" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between">
@@ -721,7 +717,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
             </div>
             <Input type="number" className="mt-2" value={scoring.ghg} onChange={(e) => setScoring({ ...scoring, ghg: e.target.value === '' ? '' : Number(e.target.value) })} />
             <p className="text-xs text-muted-foreground mt-2">Total: <span className="font-semibold text-foreground tabular-nums">{total.toLocaleString()}</span> tCO₂e/yr</p>
-            <SourceField value={scoring.ghgSource} onChange={(v) => setScoring({ ...scoring, ghgSource: v })} />
+            <SourceNote field="ghg" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between">
@@ -740,7 +736,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
               </Select>
             </div>
             <p className="text-xs text-muted-foreground mt-2">Total: <span className="font-semibold text-foreground tabular-nums">{spendTotal.toLocaleString()}</span> {scoring.spendCurrency}/yr</p>
-            <SourceField value={scoring.spendSource} onChange={(v) => setScoring({ ...scoring, spendSource: v })} />
+            <SourceNote field="spend" />
           </div>
           <div className="border border-border/60 rounded-lg p-4">
             <div className="flex items-start justify-between gap-2">
@@ -816,7 +812,7 @@ const Step2Body: React.FC<{ scoring: StrategicScoring; setScoring: (s: Strategic
                 </span></>
               )}
             </p>
-            <SourceField value={scoring.suppliersSource} onChange={(v) => setScoring({ ...scoring, suppliersSource: v })} />
+            <SourceNote field="suppliers" />
           </div>
         </div>
       </section>
@@ -1421,6 +1417,19 @@ const MaterialBriefSimple: React.FC = () => {
         icon={<Star className="w-5 h-5 text-foreground" />}
         headerAccent="bg-foreground"
         progressPercent={scoringPercent(draftScoring)}
+        headerActions={(() => {
+          const meta = { material: decodedTopic, score: priorityScore(draftScoring), tier: priorityTier(priorityScore(draftScoring)) };
+          return (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringPdf(draftScoring, meta)}>
+                <Download className="w-3.5 h-3.5" /> PDF
+              </Button>
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => exportScoringCsv(draftScoring, meta)}>
+                <Download className="w-3.5 h-3.5" /> CSV
+              </Button>
+            </div>
+          );
+        })()}
       >
         <Step2Body scoring={draftScoring} setScoring={setDraftScoring} missing={missingScoring} materialName={decodedTopic} />
       </StepModal>
