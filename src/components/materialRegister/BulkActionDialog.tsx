@@ -165,13 +165,13 @@ export const BulkActionDialog: React.FC<Props> = ({
 
   /** Priority period: state exactly what is replaced and what does not change. */
   const periodEffect = useMemo(() => {
-    if (kind !== "priority_period" || !value.trim()) return null;
-    const target = value.trim();
-    const none = materials.filter((m) => !m.priority_selected).length;
-    const same = materials.filter((m) => m.priority_selected && m.priority_period === target).length;
+    if (kind !== "priority_period") return null;
+    const target = value.trim() || null;
+    const none = materials.filter((m) => m.priority_period === null).length;
+    const same = materials.filter((m) => m.priority_period === target).length;
     const other = new Map<string, number>();
     materials.forEach((m) => {
-      if (m.priority_selected && m.priority_period !== target) {
+      if (m.priority_period !== null && m.priority_period !== target) {
         const k = m.priority_period ?? "an unnamed period";
         other.set(k, (other.get(k) ?? 0) + 1);
       }
@@ -192,7 +192,7 @@ export const BulkActionDialog: React.FC<Props> = ({
       : isMulti
         ? cleanTags(values).length > 0
         : kind === "priority_period"
-          ? value.trim() !== ""
+          ? materials.length > 0
           : Boolean(value) && (!requiresBlocker || Boolean(blockerCategory));
 
   const title =
@@ -205,7 +205,7 @@ export const BulkActionDialog: React.FC<Props> = ({
           : kind === "applications"
             ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
             : kind === "priority_period"
-              ? `Set priority period for ${materials.length} materials`
+              ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
               : `Order intelligence for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
@@ -356,7 +356,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                   <Input
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
-                    placeholder="e.g. H2 2026"
+                    placeholder="e.g. H2 2026 — empty clears it"
                     className="h-8 text-xs"
                   />
                   {periodSuggestions.length > 0 && (
@@ -453,20 +453,23 @@ export const BulkActionDialog: React.FC<Props> = ({
                     </div>
                     <ul className="space-y-0.5 text-[11px]">
                       <li>
-                        Set priority period to {periodEffect.target} for {materials.length} materials?
+                        {periodEffect.target === null
+                          ? `Clear priority period for ${materials.length} materials?`
+                          : `Set priority period to ${periodEffect.target} for ${materials.length} materials?`}
                       </li>
                       {periodEffect.none > 0 && (
                         <li className="text-muted-foreground">
-                          <span className="font-mono tabular-nums">{periodEffect.none}</span> not currently in a
-                          priority set.
+                          <span className="font-mono tabular-nums">{periodEffect.none}</span> already not
+                          prioritised.
                         </li>
                       )}
                       {periodEffect.other.map(([p, n]) => (
                         <li key={p} className="text-muted-foreground">
-                          <span className="font-mono tabular-nums">{n}</span> currently in {p} — this replaces it.
+                          <span className="font-mono tabular-nums">{n}</span> currently in {p} —{" "}
+                          {periodEffect.target === null ? "this removes it" : "this replaces it"}.
                         </li>
                       ))}
-                      {periodEffect.same > 0 && (
+                      {periodEffect.same > 0 && periodEffect.target !== null && (
                         <li className="text-muted-foreground">
                           <span className="font-mono tabular-nums">{periodEffect.same}</span> already in{" "}
                           {periodEffect.target} — no change.
@@ -552,7 +555,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                   : kind === "owner" && value === UNASSIGNED
                     ? null
                     : kind === "priority_period"
-                      ? value.trim()
+                      ? value.trim() || null
                       : kind === "intelligence"
                         ? null
                         : value,

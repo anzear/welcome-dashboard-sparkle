@@ -436,7 +436,6 @@ export const materials: Material[] = rows.map((row, i) => {
   const decided = prov("entered", row.owner ?? "System import", statusDate);
   put("journey_status", row.status, row.status === "not_started" ? loaded : decided);
   put("owner", row.owner, decided);
-  put("priority_selected", row.priority ?? null, decided);
   put("priority_period", row.priority ?? null, decided);
   put("target_date", row.target ?? null, decided);
   put("intelligence_status", row.intel && row.intel !== "not_ordered" ? row.intel : null, decided);
@@ -483,7 +482,6 @@ export const materials: Material[] = rows.map((row, i) => {
         : "Reopen if a supplier qualifies a bio-based grade within spec."
       : null,
     owner: row.owner,
-    priority_selected: Boolean(row.priority),
     priority_period: row.priority ?? null,
     target_date: row.target ?? null,
     intelligence_status: intel,

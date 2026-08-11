@@ -466,6 +466,26 @@ export const MaterialBrief: React.FC = () => {
 
   const m: Material = material;
 
+  /** Periods already in use, offered as autocomplete. Null is not prioritised. */
+  const periodSuggestions = [
+    ...new Set(data.map((x) => x.priority_period).filter((v): v is string => Boolean(v))),
+  ].sort();
+
+  /** A period is the whole of priority: setting it joins the set, clearing it leaves. */
+  const commitPeriod = (next: string | null) => {
+    updateMaterial(m.material_id, { priority_period: next }, ["priority_period"], [
+      {
+        material_id: m.material_id,
+        event_type: "priority_change",
+        field: "priority_period",
+        from_value: m.priority_period,
+        to_value: next,
+      },
+    ]);
+  };
+
+
+
   /** Records a numeric figure as entered, recomputing anything derived from it. */
   const saveFigure = (
     field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
@@ -746,42 +766,40 @@ export const MaterialBrief: React.FC = () => {
             </Select>
           </BarField>
 
-          <BarField label="Priority" className="w-[220px]">
+          <BarField label="Priority period" className="w-[220px]">
             <div className="flex items-center gap-2">
-              <label className="flex shrink-0 items-center gap-1.5 text-[11px] text-foreground">
-                <Checkbox
-                  checked={m.priority_selected}
-                  onCheckedChange={(c) => {
-                    const on = Boolean(c);
-                    updateMaterial(
-                      m.material_id,
-                      { priority_selected: on },
-                      ["priority_selected"],
-                      [
-                        {
-                          material_id: m.material_id,
-                          event_type: "priority_change",
-                          field: "priority_selected",
-                          from_value: on ? null : (m.priority_period ?? "current period"),
-                          to_value: on ? (m.priority_period ?? "current period") : null,
-                        },
-                      ],
-                    );
-                  }}
-                  className="h-3.5 w-3.5"
-                />
-                Selected
-              </label>
               <Input
-                value={m.priority_period ?? ""}
-                onChange={(e) =>
-                  updateMaterial(m.material_id, { priority_period: e.target.value || null }, ["priority_period"])
-                }
-                placeholder="Period"
+                list="priority-periods-in-use"
+                defaultValue={m.priority_period ?? ""}
+                key={m.material_id + (m.priority_period ?? "")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
+                onBlur={(e) => {
+                  const next = e.target.value.trim() || null;
+                  if (next === (m.priority_period ?? null)) return;
+                  commitPeriod(next);
+                }}
+                placeholder="Not prioritised"
                 className="h-8 bg-background font-mono text-[11px]"
               />
+              <datalist id="priority-periods-in-use">
+                {periodSuggestions.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+              {m.priority_period !== null && (
+                <button
+                  type="button"
+                  onClick={() => commitPeriod(null)}
+                  className="shrink-0 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                >
+                  Clear
+                </button>
+              )}
             </div>
           </BarField>
+
 
           <BarField label="Target date" className="w-[140px]">
             <div className="flex h-8 items-center font-mono text-[13px] tabular-nums text-foreground">

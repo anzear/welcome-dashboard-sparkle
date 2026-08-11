@@ -73,7 +73,7 @@ export interface Material {
   blocker_date: string | null;
   blocker_condition: string | null;
   owner: string | null;
-  priority_selected: boolean;
+  /** Non-null means the material is in that period's priority set. Null = not prioritised. */
   priority_period: string | null;
   /** The date the change is planned for. null = undated, never "today". */
   target_date: string | null;
@@ -140,7 +140,7 @@ export interface MaterialEvent {
 export const EVENT_FIELD_LABEL: Record<string, string> = {
   journey_status: "Status",
   owner: "Owner",
-  priority_selected: "Priority",
+  priority_period: "Priority period",
   blocker_category: "Blocker",
   cas_number: "CAS number",
   material_class: "Material class",

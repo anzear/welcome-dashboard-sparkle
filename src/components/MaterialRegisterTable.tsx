@@ -602,15 +602,13 @@ export const MaterialRegisterTable: React.FC = () => {
                     )}
                     {cols.priority && (
                       <td className="px-3 py-2 align-middle">
-                        {m.priority_selected ? (
-                          <span className="inline-flex items-center gap-1.5 text-[11px] text-foreground">
-                            <span className="h-1.5 w-1.5 rounded-full bg-foreground/70" />
-                            {m.priority_period ?? "Selected"}
-                          </span>
+                        {m.priority_period ? (
+                          <span className="text-[11px] text-foreground">{m.priority_period}</span>
                         ) : (
                           <Missing />
                         )}
                       </td>
+
                     )}
 
                     {cols.intelligence && (

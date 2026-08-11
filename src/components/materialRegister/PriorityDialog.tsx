@@ -21,7 +21,7 @@ interface Props {
 
 /** States what changes before anything is written — same pattern as bulk edit. */
 const PriorityDialog: React.FC<Props> = ({ open, add, period, materials, onCancel, onApply }) => {
-  const already = materials.filter((m) => m.priority_selected && m.priority_period === period);
+  const already = materials.filter((m) => m.priority_period === period);
   const changing = add ? materials.filter((m) => !already.includes(m)) : already;
   const untouched = materials.length - changing.length;
 
