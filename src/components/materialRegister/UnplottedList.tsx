@@ -1,28 +1,32 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale } from "@/components/materialRegister/scorePrimitives";
 import type { AxisVar } from "@/components/materialRegister/gridAxes";
 
-export interface UnplottedGroup {
-  /** The axis whose value is missing. */
-  axis: AxisVar;
-  cause: string;
-  materials: Material[];
+/** One material, one entry. The entry states every gap the material has. */
+export interface UnplottedEntry {
+  m: Material;
+  /** Axes with no value for this material. One or two. */
+  gaps: AxisVar[];
+  /** Value on the axis it does have, used to put highest exposure first. */
+  sortValue: number | null;
 }
 
-/** Number entry for one missing figure. Saving writes the field and its event. */
-const FigureInput: React.FC<{ m: Material; axis: AxisVar; onSaved: (id: string) => void }> = ({
-  m,
-  axis,
-  onSaved,
-}) => {
+const FIRST_PAGE = 12;
+
+/** Number entry for one missing figure. Enter or blur commits; blank commits nothing. */
+const FigureInput: React.FC<{
+  m: Material;
+  axis: AxisVar;
+  onCommitted: () => void;
+}> = ({ m, axis, onCommitted }) => {
   const { updateMaterial } = useRegister();
   const [value, setValue] = useState("");
   const field = axis.field as keyof Material;
 
-  const save = () => {
+  const commit = () => {
     const n = Number(value);
     if (value.trim() === "" || !Number.isFinite(n)) return;
     updateMaterial(
@@ -39,145 +43,149 @@ const FigureInput: React.FC<{ m: Material; axis: AxisVar; onSaved: (id: string) 
         },
       ],
     );
+    onCommitted();
+  };
+
+  return (
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit();
+      }}
+      onBlur={commit}
+      inputMode="decimal"
+      placeholder="—"
+      aria-label={`${axis.label} (${axis.unit}) for ${m.name}`}
+      className="h-7 w-[90px] shrink-0 rounded-sm border border-border bg-background px-1.5 text-right font-mono text-[11px] tabular-nums"
+    />
+  );
+};
+
+/** One card: the material and every value it is missing, editable in place. */
+const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }> = ({
+  entry,
+  onSaved,
+}) => {
+  const { setScore } = useRegister();
+  const [saved, setSaved] = useState(false);
+  const { m, gaps } = entry;
+
+  const confirm = () => {
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1400);
     onSaved(m.material_id);
   };
 
   return (
-    <span className="inline-flex items-center gap-1.5">
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") save();
-        }}
-        inputMode="decimal"
-        placeholder="—"
-        aria-label={`${axis.label} for ${m.name}`}
-        className="h-7 w-28 rounded-sm border border-border bg-background px-1.5 text-right font-mono text-[11px] tabular-nums"
-      />
-      <span className="text-[10px] text-muted-foreground">{axis.unit}</span>
-      <button
-        type="button"
-        onClick={save}
-        className="rounded-sm border border-border bg-background px-2 py-0.5 text-[10px] font-medium hover:bg-muted"
-      >
-        Save
-      </button>
-    </span>
+    <li className="w-[260px] rounded-md border border-border p-3">
+      <p className="truncate text-[12px] font-medium text-foreground" title={m.name}>
+        {m.name}
+      </p>
+      <p className="truncate text-[10px] text-muted-foreground">
+        {m.material_class ?? "Unclassified"}
+      </p>
+
+      <div className="mt-2.5 space-y-2">
+        {gaps.map((axis) => (
+          <div key={axis.id} className="flex items-center justify-between gap-2">
+            <label className="min-w-0 flex-1 text-[10px] leading-tight text-muted-foreground">
+              {axis.label}
+              {axis.kind === "measured" ? ` (${axis.unit})` : ""}
+            </label>
+            {axis.questionId ? (
+              <ScoreScale
+                size="sm"
+                value={null}
+                ariaLabel={`${axis.label} for ${m.name}`}
+                onChange={(v) => {
+                  setScore(m.material_id, axis.questionId as string, v, null);
+                  confirm();
+                }}
+              />
+            ) : axis.field ? (
+              <FigureInput m={m} axis={axis} onCommitted={confirm} />
+            ) : (
+              <span className="font-mono text-[11px] text-muted-foreground">—</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {saved && <p className="mt-2 text-[10px] text-muted-foreground">Saved.</p>}
+    </li>
   );
 };
 
 /**
- * Every material the current axes cannot place, grouped by what is missing, with
- * the missing item editable in place. A gap is a task, never an error.
+ * Every material the current axes cannot place. One card per material, with each
+ * missing value editable where it stands. A gap is a task, never an error.
  */
 const UnplottedList: React.FC<{
-  groups: UnplottedGroup[];
-  total: number;
+  entries: UnplottedEntry[];
+  /** Materials in scope, for the "all plotted" line. */
+  totalMaterials: number;
   onSaved: (id: string) => void;
-}> = ({ groups, total, onSaved }) => {
-  const { setScore, openBrief } = useRegister();
-  const [open, setOpen] = useState<Record<string, boolean>>({});
-  const toggle = (k: string) => setOpen((p) => ({ ...p, [k]: !p[k] }));
+}> = ({ entries, totalMaterials, onSaved }) => {
+  const [showAll, setShowAll] = useState(false);
+
+  const summary = useMemo(() => {
+    const perAxis = new Map<string, number>();
+    let both = 0;
+    entries.forEach((e) => {
+      e.gaps.forEach((a) => perAxis.set(a.noun, (perAxis.get(a.noun) ?? 0) + 1));
+      if (e.gaps.length > 1) both += 1;
+    });
+    const parts = [...perAxis.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([noun, n]) => `${n} missing ${noun}`);
+    if (both > 0) parts.push(`${both} missing both`);
+    return parts.join(", ");
+  }, [entries]);
+
+  if (entries.length === 0) {
+    return (
+      <p className="text-[11px] text-muted-foreground">
+        All <span className="font-mono tabular-nums">{totalMaterials}</span> materials are plotted.
+      </p>
+    );
+  }
+
+  const visible = showAll ? entries : entries.slice(0, FIRST_PAGE);
+  const rest = entries.length - visible.length;
 
   return (
-    <section className="rounded-md border border-border bg-card">
-      <header className="flex flex-wrap items-baseline gap-x-3 border-b border-border px-3 py-2">
+    <section>
+      <header className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="text-[13px] font-semibold text-foreground">
-          <span className="font-mono tabular-nums">{total}</span> not plotted
+          <span className="font-mono tabular-nums">{entries.length}</span> materials not plotted
         </h2>
-        <p className="text-[11px] text-muted-foreground">Add what you have. Nothing here is an error.</p>
-      </header>
-
-      {total === 0 ? (
-        <p className="px-3 py-3 text-[11px] text-muted-foreground">
-          Everything in scope has a value on both axes.
+        <p className="text-[10px] text-muted-foreground/70">
+          Add what you have. Nothing here is an error.
         </p>
-      ) : (
-        <div className="divide-y divide-border">
-          {groups.map((g) => (
-            <div key={g.axis.id} className="px-3 py-2">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                <span className="font-mono tabular-nums">{g.materials.length}</span> {g.cause}
-              </p>
-              <ul className="mt-1.5 divide-y divide-border/60">
-                {g.materials.map((m) => {
-                  const key = `${g.axis.id}:${m.material_id}`;
-                  const isOpen = !!open[key];
-                  return (
-                    <li key={m.material_id} className="py-0.5">
-                      <button
-                        type="button"
-                        onClick={() => toggle(key)}
-                        aria-expanded={isOpen}
-                        className="flex w-full items-center gap-x-2 py-1.5 text-left hover:bg-muted/40"
-                      >
-                        <span
-                          aria-hidden
-                          className={cn(
-                            "w-3 shrink-0 text-[9px] text-muted-foreground transition-transform",
-                            isOpen && "rotate-90",
-                          )}
-                        >
-                          ▶
-                        </span>
-                        <span className="w-56 shrink-0 text-[11px] font-medium text-foreground">
-                          {m.name}
-                        </span>
-                        <span className="w-40 shrink-0 text-[10px] text-muted-foreground">
-                          {m.material_class ?? "Unclassified"}
-                        </span>
-                        <span className="ml-auto pr-1 text-[10px] text-muted-foreground">
-                          {isOpen ? "" : `add ${g.axis.noun}`}
-                        </span>
-                      </button>
+      </header>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {summary}
+        <span className="text-muted-foreground/70"> · Highest exposure first.</span>
+      </p>
 
-                      {isOpen && (
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-2 pl-5">
-                          {g.axis.questionId ? (
-                            <ScoreScale
-                              size="sm"
-                              value={null}
-                              ariaLabel={`${g.axis.label} for ${m.name}`}
-                              onChange={(v) => {
-                                setScore(m.material_id, g.axis.questionId as string, v, null);
-                                onSaved(m.material_id);
-                              }}
-                            />
-                          ) : g.axis.field ? (
-                            <FigureInput m={m} axis={g.axis} onSaved={onSaved} />
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => openBrief(m.material_id)}
-                              className={cn(
-                                "text-[11px] text-muted-foreground underline decoration-dotted",
-                                "underline-offset-2 hover:text-foreground",
-                              )}
-                            >
-                              Add {g.axis.noun} on the brief
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => openBrief(m.material_id)}
-                            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-                          >
-                            Open brief
-                          </button>
-                        </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-        </div>
+      <ul className={cn("mt-3 flex flex-wrap gap-4")}>
+        {visible.map((e) => (
+          <GapCard key={e.m.material_id} entry={e} onSaved={onSaved} />
+        ))}
+      </ul>
+
+      {rest > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowAll(true)}
+          className="mt-3 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+        >
+          Show <span className="font-mono tabular-nums">{rest}</span> more
+        </button>
       )}
     </section>
   );
 };
-
 
 export default UnplottedList;
