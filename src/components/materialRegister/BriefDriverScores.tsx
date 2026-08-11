@@ -47,6 +47,64 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
 
 
 /**
+ * Editable -5..+5 cell. Type a number (optionally with a leading minus) to record
+ * a judgement; clear the box to remove it. Enter or blur commits.
+ */
+const ScoreCell: React.FC<{
+  value: number | null;
+  ariaLabel: string;
+  onCommit: (next: number | null) => void;
+}> = ({ value, ariaLabel, onCommit }) => {
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft !== null ? draft : value === null ? "" : signed(value);
+
+  const commit = () => {
+    if (draft === null) return;
+    const t = draft.trim();
+    setDraft(null);
+    if (t === "" || t === "-" || t === "+") {
+      onCommit(null);
+      return;
+    }
+    const n = Number(t);
+    if (Number.isNaN(n)) return;
+    onCommit(Math.max(-5, Math.min(5, Math.round(n))));
+  };
+
+  return (
+    <input
+      aria-label={ariaLabel}
+      inputMode="numeric"
+      value={shown}
+      placeholder="—"
+      onChange={(e) => {
+        const raw = e.target.value;
+        if (/^[+-]?\d?$/.test(raw)) setDraft(raw);
+      }}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          commit();
+          (e.target as HTMLInputElement).blur();
+        }
+        if (e.key === "Escape") setDraft(null);
+      }}
+      className={cn(
+        "w-full rounded-sm border border-transparent bg-transparent px-0.5 py-0 text-right font-mono text-[15px] font-medium tabular-nums outline-none hover:border-border focus:border-primary/40 focus:bg-background",
+        value === null
+          ? "text-muted-foreground/50 placeholder:text-muted-foreground/50"
+          : value === 0
+            ? "text-muted-foreground"
+            : value < 0
+              ? "text-sky-900"
+              : "text-teal-800",
+      )}
+    />
+  );
+};
+
+
+/**
  * Section 3 of the brief. Judgement, kept in its own tint and its own type —
  * one compact row per question at rest, expanding to the 11-point control on click.
  */
@@ -91,29 +149,38 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
           const expanded = openId === q.question_id;
           return (
             <div key={q.question_id} className="py-1.5">
-              <button
-                type="button"
-                onClick={() => setOpenId(expanded ? null : q.question_id)}
+              <div
                 className="grid w-full grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 rounded-sm px-1 py-0.5 text-left hover:bg-primary/10"
                 title={q.helper ?? undefined}
               >
-                <span className="text-[13px] leading-snug text-muted-foreground">{q.label}</span>
-                <ScoreTrack value={v} />
-                <span
-                  className={cn(
-                    "text-right font-mono text-[15px] font-medium tabular-nums",
-                    v === null
-                      ? "text-muted-foreground/50"
-                      : v === 0
-                        ? "text-muted-foreground"
-                        : v < 0
-                          ? "text-sky-900"
-                          : "text-teal-800",
-                  )}
+                <button
+                  type="button"
+                  onClick={() => setOpenId(expanded ? null : q.question_id)}
+                  className="text-left text-[13px] leading-snug text-muted-foreground"
                 >
-                  {v === null ? "—" : signed(v)}
-                </span>
-              </button>
+                  {q.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpenId(expanded ? null : q.question_id)}
+                  className="block"
+                  aria-label={`${q.label} track`}
+                >
+                  <ScoreTrack value={v} />
+                </button>
+                <ScoreCell
+                  value={v}
+                  ariaLabel={`${q.label} score`}
+                  onCommit={(next) => {
+                    if (next === null) {
+                      if (v !== null) clearScore(materialId, q.question_id);
+                    } else if (next !== v) {
+                      setScore(materialId, q.question_id, next, rec?.note ?? null);
+                    }
+                  }}
+                />
+              </div>
+
 
               {v === null && !expanded && (
                 <p className="px-1 pt-0.5 text-[10px] text-muted-foreground/70">Not scored</p>
