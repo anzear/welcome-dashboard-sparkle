@@ -1,181 +1,192 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
-import { ScoreScale, scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
+import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
+import ScoreBulkDialog, { type ScoreBulkKind } from "@/components/materialRegister/ScoreBulkDialog";
+import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
-type Mode = "by_question" | "by_material";
-
 const HEAD = "text-[9px] font-semibold uppercase tracking-widest text-muted-foreground";
+const CELL_W = "w-[38px] min-w-[38px]";
 
-/** One focused item in the entry panel: a material/question pair. */
-interface EntryTarget {
-  material: Material;
-  questionId: string;
+/** null sorts to its own block at the bottom, never as a zero. */
+type SortDir = "desc" | "asc";
+interface Sort {
+  /** A question id, or "scored" for the coverage column. */
+  key: string;
+  dir: SortDir;
+}
+
+interface Cursor {
+  row: number;
+  col: number;
 }
 
 const DriverScoring: React.FC = () => {
-  const { ordered, scoreFor, setScore, countsFor, questionCoverage, filtersActive, questions, filters, setFilters } =
-    useRegister();
+  const {
+    ordered,
+    scoreFor,
+    setScore,
+    clearScore,
+    countsFor,
+    questionCoverage,
+    questions,
+    filters,
+    setFilters,
+    filtersActive,
+    canEditQuestionSet,
+    toast,
+    setToast,
+    undo,
+  } = useRegister();
+
   const rows = useMemo(() => ordered.map((r) => r.m), [ordered]);
 
-  const [mode, setMode] = useState<Mode>("by_question");
-  const [runKind, setRunKind] = useState<"question" | "material" | null>(null);
-  const [focusQuestion, setFocusQuestion] = useState<string | null>(null);
-  const [focusMaterial, setFocusMaterial] = useState<string | null>(null);
-  const [index, setIndex] = useState(0);
-  const [note, setNote] = useState("");
-  const panelRef = useRef<HTMLDivElement>(null);
+  const [sort, setSort] = useState<Sort | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [cursor, setCursor] = useState<Cursor | null>(null);
+  const [bulk, setBulk] = useState<ScoreBulkKind | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const negativeNext = useRef(false);
+  const gridRef = useRef<HTMLTableSectionElement>(null);
+
+  const scoreOf = (m: Material, questionId: string) => scoreFor(m.material_id, questionId)?.score ?? null;
+
+  /** Sorted material list. Unscored rows split off into a trailing block. */
+  const { scoredRows, unscoredRows } = useMemo(() => {
+    if (!sort) return { scoredRows: rows, unscoredRows: [] as Material[] };
+    const valueOf = (m: Material) =>
+      sort.key === "scored" ? countsFor(m.material_id).scored_count : scoreOf(m, sort.key);
+    const present = rows.filter((m) => valueOf(m) !== null);
+    const absent = rows.filter((m) => valueOf(m) === null);
+    const sorted = [...present].sort((a, b) => {
+      const d = (valueOf(b) as number) - (valueOf(a) as number);
+      return sort.dir === "desc" ? d : -d;
+    });
+    return { scoredRows: sorted, unscoredRows: absent };
+  }, [rows, sort, scores_dep(scoreFor), countsFor]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const displayRows = useMemo(() => [...scoredRows, ...unscoredRows], [scoredRows, unscoredRows]);
 
   const totalCells = rows.length * questions.length;
   const scoredCells = useMemo(
-    () =>
-      rows.reduce(
-        (acc, m) =>
-          acc + questions.filter((q) => (scoreFor(m.material_id, q.question_id)?.score ?? null) !== null).length,
-        0,
-      ),
-    [rows, scoreFor],
+    () => rows.reduce((acc, m) => acc + questions.filter((q) => scoreOf(m, q.question_id) !== null).length, 0),
+    [rows, questions, scoreFor], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const pct = totalCells === 0 ? 0 : Math.round((scoredCells / totalCells) * 100);
 
-  /** The isolated run of items being scored, in order. */
-  const run: EntryTarget[] = useMemo(() => {
-    if (runKind === "question" && focusQuestion) {
-      return rows.map((m) => ({ material: m, questionId: focusQuestion }));
-    }
-    if (runKind === "material" && focusMaterial) {
-      const m = rows.find((x) => x.material_id === focusMaterial);
-      if (!m) return [];
-      return questions.map((q) => ({ material: m, questionId: q.question_id }));
-    }
-    return [];
-  }, [runKind, focusQuestion, focusMaterial, rows, questions]);
+  /** Selection accumulates: rows filtered out stay selected but are counted apart. */
+  const visibleIds = useMemo(() => new Set(rows.map((m) => m.material_id)), [rows]);
+  const hiddenSelected = [...selected].filter((id) => !visibleIds.has(id)).length;
+  const allVisibleSelected = rows.length > 0 && rows.every((m) => selected.has(m.material_id));
 
-  const current = run[index] ?? null;
-  const currentScore = current ? (scoreFor(current.material.material_id, current.questionId)?.score ?? null) : null;
+  const toggleRow = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
-  useEffect(() => {
-    if (current) setNote(scoreFor(current.material.material_id, current.questionId)?.note ?? "");
-  }, [current?.material.material_id, current?.questionId]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleAllVisible = () =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allVisibleSelected) rows.forEach((m) => next.delete(m.material_id));
+      else rows.forEach((m) => next.add(m.material_id));
+      return next;
+    });
 
-  useEffect(() => {
-    if (run.length > 0) panelRef.current?.focus();
-  }, [run.length]);
+  /** Third click on the same column clears back to the register's order. */
+  const cycleSort = (key: string) =>
+    setSort((prev) => {
+      if (!prev || prev.key !== key) return { key, dir: "desc" };
+      if (prev.dir === "desc") return { key, dir: "asc" };
+      return null;
+    });
 
-  const runScored = run.filter(
-    (t) => (scoreFor(t.material.material_id, t.questionId)?.score ?? null) !== null,
-  ).length;
-
-  /** Open a run down one question column (every material, one question). */
-  const openQuestionRun = (questionId: string, startIndex = 0) => {
-    setRunKind("question");
-    setFocusQuestion(questionId);
-    setFocusMaterial(null);
-    setIndex(startIndex);
+  const sortLabel = () => {
+    if (!sort) return null;
+    const name = sort.key === "scored" ? "coverage" : questions.find((q) => q.question_id === sort.key)?.label;
+    return `Sorted by ${name}, ${sort.dir === "desc" ? "highest" : "lowest"} first`;
   };
 
-  /** Open a run across one material (every question, one material). */
-  const openMaterialRun = (materialId: string, startIndex = 0) => {
-    setRunKind("material");
-    setFocusMaterial(materialId);
-    setFocusQuestion(null);
-    setIndex(startIndex);
+  const sortedQuestionLabel = sort && sort.key !== "scored"
+    ? (questions.find((q) => q.question_id === sort.key)?.label ?? null)
+    : null;
+
+  /* ------------------------------- cell entry ------------------------------ */
+
+  const focusCell = (row: number, col: number) => {
+    const el = gridRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`);
+    el?.focus();
   };
 
-
-  const exitRun = () => {
-    setRunKind(null);
-    setFocusQuestion(null);
-    setFocusMaterial(null);
-    setIndex(0);
+  const move = (dr: number, dc: number) => {
+    if (!cursor) return;
+    const row = Math.max(0, Math.min(displayRows.length - 1, cursor.row + dr));
+    const col = Math.max(0, Math.min(questions.length - 1, cursor.col + dc));
+    setCursor({ row, col });
+    focusCell(row, col);
   };
 
-  const step = (delta: number) => {
-    setIndex((i) => Math.max(0, Math.min(run.length - 1, i + delta)));
-  };
-
-  const commit = (value: number) => {
-    if (!current) return;
-    setScore(current.material.material_id, current.questionId, value, note || null);
-  };
-
-  const onPanelKeyDown = (e: React.KeyboardEvent) => {
-    if (!current) return;
-    if (e.key === "Enter") {
+  const onCellKeyDown = (e: React.KeyboardEvent, m: Material, questionId: string) => {
+    const key = e.key;
+    if (/^[0-5]$/.test(key)) {
       e.preventDefault();
-      step(1);
-      return;
-    }
-    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
-      e.preventDefault();
-      step(1);
-      return;
-    }
-    if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
-      e.preventDefault();
-      step(-1);
-      return;
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      exitRun();
-      return;
-    }
-    // Digits 0-5 set magnitude; a leading minus makes it a constraint.
-    if (/^[0-5]$/.test(e.key)) {
-      e.preventDefault();
-      const mag = Number(e.key);
-      commit(negativeNext.current ? -mag : mag);
+      const mag = Number(key);
+      setScore(m.material_id, questionId, negativeNext.current ? -mag : mag, scoreFor(m.material_id, questionId)?.note ?? null);
       negativeNext.current = false;
       return;
     }
-    if (e.key === "-") {
+    if (key === "-") {
       negativeNext.current = true;
+      return;
+    }
+    if (key === "Backspace" || key === "Delete") {
+      e.preventDefault();
+      clearScore(m.material_id, questionId);
+      return;
+    }
+    if (key === "ArrowDown" || key === "Enter") {
+      e.preventDefault();
+      move(1, 0);
+      return;
+    }
+    if (key === "ArrowUp") {
+      e.preventDefault();
+      move(-1, 0);
+      return;
+    }
+    if (key === "ArrowRight" || (key === "Tab" && !e.shiftKey)) {
+      e.preventDefault();
+      move(0, 1);
+      return;
+    }
+    if (key === "ArrowLeft" || (key === "Tab" && e.shiftKey)) {
+      e.preventDefault();
+      move(0, -1);
     }
   };
 
-  const negativeNext = useRef(false);
-  const questionLabel = (id: string) => questions.find((q) => q.question_id === id)?.label ?? id;
-  const questionHelper = (id: string) => questions.find((q) => q.question_id === id)?.helper ?? "";
+  useEffect(() => {
+    // A shrinking list must not leave the cursor pointing past the end.
+    if (cursor && cursor.row > displayRows.length - 1) setCursor(null);
+  }, [displayRows.length, cursor]);
+
+  const arrow = (key: string) =>
+    sort?.key !== key ? null : sort.dir === "desc" ? (
+      <ArrowDown className="ml-0.5 inline h-2.5 w-2.5" />
+    ) : (
+      <ArrowUp className="ml-0.5 inline h-2.5 w-2.5" />
+    );
 
   return (
     <div className="space-y-3">
-      {/* Mode switch and coverage */}
+      {/* Coverage and the shared question set */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="flex items-center gap-2">
-          <span className={HEAD}>Entry mode</span>
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-            {(
-              [
-                { id: "by_question", label: "Score by question" },
-                { id: "by_material", label: "Score by material" },
-              ] as const
-            ).map((o) => (
-              <button
-                key={o.id}
-                type="button"
-                onClick={() => {
-                  setMode(o.id);
-                  exitRun();
-                }}
-                className={cn(
-                  "rounded-[4px] px-2 py-0.5 text-[11px] font-medium transition-colors",
-                  mode === o.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
         <div className="text-[11px] text-muted-foreground">
           <span className="font-mono tabular-nums text-foreground">{scoredCells.toLocaleString("en-GB")}</span> of{" "}
           <span className="font-mono tabular-nums">{totalCells.toLocaleString("en-GB")}</span> cells scored (
@@ -184,9 +195,25 @@ const DriverScoring: React.FC = () => {
         <span className="text-[10px] text-muted-foreground">
           Partial scoring is normal. Nothing depends on filling this in.
         </span>
+        {canEditQuestionSet ? (
+          <button
+            type="button"
+            onClick={() => setEditorOpen(true)}
+            className="ml-auto text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Edit question set
+          </button>
+        ) : (
+          <span
+            className="ml-auto cursor-default text-[10px] text-muted-foreground/60"
+            title="Managed by your workspace administrator"
+          >
+            Edit question set
+          </span>
+        )}
       </div>
 
-      {/* Same filter scope as the register */}
+      {/* Same filter scope as the register, narrowed to what this screen needs */}
       <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
         <div className="flex flex-wrap items-center gap-2">
           <Input
@@ -195,257 +222,275 @@ const DriverScoring: React.FC = () => {
             placeholder="Search name, CAS, customer ID"
             className="h-7 w-56 bg-background text-[11px]"
           />
-          <FilterSelects className="ml-auto" />
+          <FilterSelects
+            className="ml-auto"
+            include={["statuses", "owners", "applications", "products", "priorityPeriods"]}
+          />
         </div>
         <FilterChips />
       </div>
 
-
-      {/* Focused entry panel */}
-      {current ? (
-        <div
-          ref={panelRef}
-          tabIndex={0}
-          onKeyDown={onPanelKeyDown}
-          className="rounded-md border border-dashed border-primary/40 bg-primary/5 p-3 outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-primary/40"
-        >
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div>
-              <div className={HEAD}>{current.material.name}</div>
-              <div className="text-sm font-semibold tracking-tight text-foreground">
-                {questionLabel(current.questionId)}
-              </div>
-              <div className="text-[10px] text-muted-foreground">{questionHelper(current.questionId)}</div>
-            </div>
-            <div className="text-[11px] text-muted-foreground">
-              <span className="font-mono tabular-nums text-foreground">{runScored}</span> of{" "}
-              <span className="font-mono tabular-nums">{run.length}</span> scored
-            </div>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <ScoreScale value={currentScore} onChange={commit} ariaLabel="Driver score" />
-            <span className="text-[10px] text-muted-foreground">
-              -5 strong constraint · 0 neutral · +5 strong driver
-            </span>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              onBlur={() => {
-                if (currentScore !== null) commit(currentScore);
-              }}
-              placeholder="Note (optional)"
-              className="h-7 max-w-md text-[11px]"
-            />
-            <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => step(1)}>
-              Skip
-            </Button>
-            <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => step(-1)} disabled={index === 0}>
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-[11px]"
-              onClick={() => step(1)}
-              disabled={index >= run.length - 1}
+      {/* Active sort */}
+      <div className="flex flex-wrap items-center gap-3 text-[11px]">
+        {sort ? (
+          <>
+            <span className="text-foreground">{sortLabel()}</span>
+            <button
+              type="button"
+              onClick={() => setSort(null)}
+              className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
             >
-              Next
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={exitRun}>
-              Back to matrix
-            </Button>
-            <span className="text-[10px] text-muted-foreground">
-              Keyboard: 0-5 scores, minus first for a constraint, Enter or arrows move on, Esc exits.
-            </span>
-          </div>
+              Clear sort
+            </button>
+          </>
+        ) : (
+          <span className="text-muted-foreground">
+            Ordered as in the register. Click a driver heading to rank by that judgement.
+          </span>
+        )}
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          Click a cell, then 0–5 to score, minus first for a constraint, Backspace clears, arrows move.
+        </span>
+      </div>
+
+      {/* Selection bar */}
+      {selected.size > 0 && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
+          <span className="font-medium text-foreground">
+            <span className="font-mono tabular-nums">{selected.size}</span> selected
+            {(hiddenSelected > 0 || filtersActive) && (
+              <>
+                {" "}
+                — <span className="font-mono tabular-nums">{hiddenSelected}</span> hidden by current filters
+              </>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => setBulk("set")}
+            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
+          >
+            Set score
+          </button>
+          <button
+            type="button"
+            onClick={() => setBulk("clear")}
+            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
+          >
+            Clear score
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelected(new Set())}
+            className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Clear selection
+          </button>
         </div>
-      ) : (
-        <p className="text-[11px] text-muted-foreground">
-          {mode === "by_question"
-            ? "Pick a question header to work down the column of materials — like compared with like."
-            : "Pick a material name to work across all twelve questions."}
-        </p>
       )}
 
-      {/* Matrix — axes follow the entry mode */}
-      {(() => {
-        const transposed = mode === "by_material";
-        // Rows carry the entity being worked through; columns carry the other axis.
-        const rowItems = transposed
-          ? questions.map((q) => ({ id: q.question_id, label: q.label, short: q.short, helper: q.helper }))
-          : rows.map((m) => ({ id: m.material_id, label: m.name, short: m.name, helper: "" }));
-        const colItems = transposed
-          ? rows.map((m) => ({ id: m.material_id, label: m.name, short: m.name, helper: "" }))
-          : questions.map((q) => ({ id: q.question_id, label: q.label, short: q.short, helper: q.helper }));
+      {toast && (
+        <div className="flex items-center gap-3 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
+          <span className="text-foreground">{toast.message}</span>
+          <button
+            type="button"
+            onClick={undo}
+            className="underline decoration-dotted underline-offset-2 hover:text-primary"
+          >
+            Undo
+          </button>
+          <button type="button" onClick={() => setToast(null)} className="text-muted-foreground hover:text-foreground">
+            Dismiss
+          </button>
+        </div>
+      )}
 
-        const focusId = transposed ? focusQuestion : focusMaterial;
-        const scoreAt = (rowId: string, colId: string) =>
-          transposed ? scoreFor(colId, rowId) : scoreFor(rowId, colId);
-        const cellTitleParts = (rowId: string, colId: string) => {
-          const materialId = transposed ? colId : rowId;
-          const questionId = transposed ? rowId : colId;
-          const m = rows.find((x) => x.material_id === materialId);
-          return { name: m?.name ?? materialId, qLabel: questionLabel(questionId), materialId, questionId };
-        };
+      {/* The matrix is the only entry surface */}
+      <div className="relative overflow-x-auto rounded-md border border-border">
+        <table className="w-full border-separate border-spacing-0 text-[11px]">
+          <thead className="sticky top-0 z-20">
+            <tr>
+              <th className="sticky left-0 z-30 w-8 min-w-8 border-b border-border bg-background px-2 py-2">
+                <input
+                  type="checkbox"
+                  aria-label="Select all shown"
+                  checked={allVisibleSelected}
+                  onChange={toggleAllVisible}
+                  className="h-3 w-3 cursor-pointer accent-primary"
+                />
+              </th>
+              <th
+                className={cn(
+                  HEAD,
+                  "sticky left-8 z-30 min-w-[280px] border-b border-r border-border bg-background px-3 py-2 text-left",
+                )}
+              >
+                Material
+              </th>
 
-        return (
-          <div className="relative overflow-x-auto rounded-md border border-border">
-            <table className="w-full border-separate border-spacing-0 text-[11px]">
-              <thead className="sticky top-0 z-20">
-                <tr>
+              {questions.map((q) => {
+                const active = sort?.key === q.question_id;
+                return (
                   <th
+                    key={q.question_id}
+                    title={q.helper ? `${q.label} — ${q.helper}` : q.label}
                     className={cn(
-                      HEAD,
-                      "sticky left-0 z-30 min-w-[300px] border-b border-r border-border bg-background px-3 py-2 text-left",
+                      CELL_W,
+                      "border-b border-border bg-background px-0.5 py-1.5 align-bottom",
+                      active && "bg-primary/10",
                     )}
                   >
-                    {transposed ? "Question" : "Material"}
+                    <button
+                      type="button"
+                      onClick={() => cycleSort(q.question_id)}
+                      className="flex w-full flex-col items-center gap-0.5"
+                    >
+                      <span className={cn(HEAD, "hover:text-foreground", active && "text-primary")}>
+                        {q.short}
+                        {arrow(q.question_id)}
+                      </span>
+                      <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
+                        {questionCoverage(q.question_id, rows)}/{rows.length}
+                      </span>
+                    </button>
                   </th>
+                );
+              })}
 
-                  {colItems.map((c) => {
-                    const active = transposed ? focusMaterial === c.id : focusQuestion === c.id;
-                    const cov = transposed
-                      ? questions.filter(
-                          (q) => (scoreFor(c.id, q.question_id)?.score ?? null) !== null,
-                        ).length
-                      : questionCoverage(c.id, rows);
-                    const denom = transposed ? questions.length : rows.length;
-                    return (
-                      <th
-                        key={c.id}
-                        title={c.helper ? `${c.label} — ${c.helper}` : c.label}
-                        className={cn(
-                          "w-[38px] border-b border-border bg-background px-0.5 py-1.5 align-bottom",
-                          active && "bg-primary/5",
-                        )}
+              <th
+                className={cn(
+                  HEAD,
+                  "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-background px-2 py-2 text-right",
+                  sort?.key === "scored" && "bg-primary/10",
+                )}
+              >
+                <button
+                  type="button"
+                  onClick={() => cycleSort("scored")}
+                  className={cn("hover:text-foreground", sort?.key === "scored" && "text-primary")}
+                >
+                  Scored{arrow("scored")}
+                </button>
+              </th>
+            </tr>
+          </thead>
 
-                      >
-                        <button
-                          type="button"
-                          onClick={() => (transposed ? openMaterialRun(c.id) : openQuestionRun(c.id))}
-                          className="flex w-full flex-col items-center gap-0.5"
-                        >
-                          <span
-                            className={cn(
-                              HEAD,
-                              "hover:text-foreground",
-                              transposed && "max-w-[80px] truncate",
-                              active && "text-primary",
-                            )}
-                          >
-                            {c.short}
-                          </span>
-                          <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
-                            {cov}/{denom}
-                          </span>
-                        </button>
-                      </th>
-                    );
-                  })}
-                  <th
-                    className={cn(
-                      HEAD,
-                      "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-background px-2 py-2 text-right",
-                    )}
-                  >
-                    Scored
-                  </th>
+          <tbody ref={gridRef}>
+            {displayRows.map((m, rowIndex) => {
+              const counts = countsFor(m.material_id);
+              const isSelected = selected.has(m.material_id);
+              const startsUnscoredBlock =
+                sort !== null && unscoredRows.length > 0 && rowIndex === scoredRows.length;
 
-                </tr>
-              </thead>
-              <tbody>
-                {rowItems.map((r) => {
-                  const activeRow = focusId === r.id;
-                  const counts = transposed ? null : countsFor(r.id);
-                  const rowScored = transposed
-                    ? rows.filter((m) => (scoreFor(m.material_id, r.id)?.score ?? null) !== null).length
-                    : (counts?.scored_count ?? null);
-                  const rowDenom = transposed ? rows.length : questions.length;
-                  return (
-                    <tr key={r.id} className={cn("hover:bg-muted/40", activeRow && "bg-primary/5")}>
+              return (
+                <React.Fragment key={m.material_id}>
+                  {startsUnscoredBlock && (
+                    <tr>
                       <td
-                        className={cn(
-                          "sticky left-0 z-10 border-b border-r border-border bg-background px-3 py-1 align-middle",
-                          activeRow && "bg-primary/5",
-                        )}
+                        colSpan={questions.length + 3}
+                        className="border-y border-dashed border-border bg-muted/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground"
                       >
-                        <button
-                          type="button"
-                          onClick={() => (transposed ? openQuestionRun(r.id) : openMaterialRun(r.id))}
-                          className="block max-w-[280px] truncate text-left hover:text-primary"
-                          title={r.helper ? `${r.label} — ${r.helper}` : r.label}
-                        >
-                          <span className={cn("leading-tight", activeRow && "text-primary")}>{r.label}</span>
-                        </button>
-                      </td>
-                      {colItems.map((c) => {
-                        const rec = scoreAt(r.id, c.id);
-                        const v = rec?.score ?? null;
-                        const activeCol = transposed ? focusMaterial === c.id : focusQuestion === c.id;
-                        const t = cellTitleParts(r.id, c.id);
-                        return (
-                          <td
-                            key={c.id}
-                            className={cn("border-b border-border px-0.5 py-1 text-center", activeCol && "bg-primary/5")}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const start = colItems.findIndex((x) => x.id === c.id);
-                                if (transposed) openQuestionRun(r.id, start);
-                                else openMaterialRun(r.id, start);
-                              }}
-                              title={
-                                v === null
-                                  ? `${t.name} · ${t.qLabel} — not scored`
-                                  : `${t.name} · ${t.qLabel} — ${signed(v)}${rec?.note ? ` · ${rec.note}` : ""}${
-                                      rec ? ` · ${rec.scored_by} on ${rec.scored_at.slice(0, 10)}` : ""
-                                    }`
-                              }
-                              className={cn(
-                                "mx-auto flex h-5 w-[30px] items-center justify-center rounded-[3px] font-mono text-[11px] tabular-nums",
-                                scoreTone(v),
-                              )}
-                            >
-                              {v === null ? "·" : signed(v)}
-                            </button>
-                          </td>
-                        );
-                      })}
-                      {/* Coverage and the two strong counts, one compact readout */}
-                      <td className="sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground">
-                        {rowScored === null ? (
-                          <span className="text-muted-foreground/60" title="No judgements recorded">
-                            —
-                          </span>
-                        ) : (
-                          <>
-                            {rowScored}/{rowDenom}
-                            {!transposed && counts && counts.scored_count !== null && (
-                              <span
-                                className="pl-1 text-muted-foreground/70"
-                                title={`${counts.strong_drivers} strong drivers, ${counts.strong_constraints} strong constraints`}
-                              >
-                                · {counts.strong_drivers}↑ {counts.strong_constraints}↓
-                              </span>
-                            )}
-                          </>
-                        )}
-
+                        Not scored on {sortedQuestionLabel ?? "any driver"} ·{" "}
+                        <span className="font-mono tabular-nums">{unscoredRows.length}</span>
                       </td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        );
-      })()}
+                  )}
+                  <tr className={cn("hover:bg-muted/40", isSelected && "bg-primary/5")}>
+                    <td
+                      className={cn(
+                        "sticky left-0 z-10 border-b border-border bg-background px-2 py-1 align-middle",
+                        isSelected && "bg-primary/5",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${m.name}`}
+                        checked={isSelected}
+                        onChange={() => toggleRow(m.material_id)}
+                        className="h-3 w-3 cursor-pointer accent-primary"
+                      />
+                    </td>
+                    <td
+                      className={cn(
+                        "sticky left-8 z-10 border-b border-r border-border bg-background px-3 py-1 align-middle",
+                        isSelected && "bg-primary/5",
+                      )}
+                    >
+                      <span className="block max-w-[260px] truncate leading-tight" title={m.name}>
+                        {m.name}
+                      </span>
+                    </td>
 
+                    {questions.map((q, colIndex) => {
+                      const rec = scoreFor(m.material_id, q.question_id);
+                      const v = rec?.score ?? null;
+                      const activeCol = sort?.key === q.question_id;
+                      const focused = cursor?.row === rowIndex && cursor?.col === colIndex;
+                      return (
+                        <td
+                          key={q.question_id}
+                          className={cn(
+                            "border-b border-border px-0.5 py-1 text-center",
+                            activeCol && "bg-primary/10",
+                          )}
+                        >
+                          <button
+                            type="button"
+                            data-cell={`${rowIndex}-${colIndex}`}
+                            onFocus={() => setCursor({ row: rowIndex, col: colIndex })}
+                            onClick={() => {
+                              setCursor({ row: rowIndex, col: colIndex });
+                              negativeNext.current = false;
+                            }}
+                            onKeyDown={(e) => onCellKeyDown(e, m, q.question_id)}
+                            title={
+                              v === null
+                                ? `${m.name} · ${q.label} — not scored`
+                                : `${m.name} · ${q.label} — ${signed(v)}${rec?.note ? ` · ${rec.note}` : ""}${
+                                    rec ? ` · ${rec.scored_by} on ${rec.scored_at.slice(0, 10)}` : ""
+                                  }`
+                            }
+                            className={cn(
+                              "mx-auto flex h-5 w-[30px] items-center justify-center rounded-[3px] font-mono text-[11px] tabular-nums outline-none",
+                              scoreTone(v),
+                              focused && "ring-2 ring-primary/60 ring-offset-1",
+                            )}
+                          >
+                            {v === null ? (focused ? "" : "·") : signed(v)}
+                          </button>
+                        </td>
+                      );
+                    })}
+
+                    <td
+                      className={cn(
+                        "sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground",
+                        sort?.key === "scored" && "bg-primary/10",
+                      )}
+                    >
+                      {counts.scored_count === null ? (
+                        <span className="text-muted-foreground/60" title="No judgements recorded">
+                          —
+                        </span>
+                      ) : (
+                        <>
+                          {counts.scored_count}/{questions.length}
+                          <span
+                            className="pl-1 text-muted-foreground/70"
+                            title={`${counts.strong_drivers} strong drivers, ${counts.strong_constraints} strong constraints`}
+                          >
+                            · {counts.strong_drivers}↑ {counts.strong_constraints}↓
+                          </span>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
@@ -471,8 +516,20 @@ const DriverScoring: React.FC = () => {
         </span>
       </div>
 
+      <ScoreBulkDialog
+        open={bulk !== null}
+        kind={bulk ?? "set"}
+        ids={[...selected]}
+        onOpenChange={(v) => setBulk(v ? bulk : null)}
+      />
+      <QuestionSetDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </div>
   );
 };
+
+/** Sorting must recompute when any judgement changes; the map identity is the signal. */
+function scores_dep(scoreFor: unknown) {
+  return scoreFor;
+}
 
 export default DriverScoring;
