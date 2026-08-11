@@ -31,9 +31,11 @@ export function eventSentence(e: MaterialEvent): string {
     case "owner_change":
       return `Owner changed from ${e.from_value ?? "Unassigned"} to ${e.to_value ?? "Unassigned"}`;
     case "priority_change":
-      return e.to_value
-        ? `Selected as priority for ${e.to_value}`
-        : "Removed from priority";
+      return e.to_value === null
+        ? "Priority period cleared"
+        : e.from_value === null
+          ? `Priority period set to ${e.to_value}`
+          : `Priority period changed from ${e.from_value} to ${e.to_value}`;
     case "blocker_set":
       return `Blocker recorded on ${statusLabel(e.from_value) !== "—" ? "status change" : "this material"}`;
     case "score_change":
