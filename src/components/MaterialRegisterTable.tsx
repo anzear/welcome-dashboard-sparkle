@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type JourneyStatus,
 } from "@/types/materialPrioritisation";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
-import { Missing, NumCell, relativeDate, StatusPill } from "@/components/materialRegister/primitives";
+import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
@@ -36,58 +35,55 @@ const STICK = "sticky bg-muted/60";
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
 type OptionalColumn =
-  | "rank"
   | "position"
+  | "materialType"
+  | "materialCategory"
   | "volume"
-  | "price"
   | "spend"
   | "emissions"
   | "suppliers"
+  | "applications"
   | "status"
-  | "owner"
-  | "tags"
   | "priority"
-  | "target"
+  | "owner"
   | "intelligence"
   | "lastChange";
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
-  ["rank", "Rank", "Position under the active ranking measure"],
   ["position", "Position", "Rank under all four measures"],
-  ["volume", "Annual volume", "Tonnes per year"],
-  ["price", "Unit price", "EUR per kg"],
-  ["spend", "Annual spend", "EUR per year"],
+  ["materialType", "Material type", "How the material enters the portfolio"],
+  ["materialCategory", "Material category", "Class the material belongs to"],
+  ["volume", "Volume", "Tonnes per year"],
+  ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["suppliers", "Suppliers", "Count of qualified suppliers"],
+  ["applications", "Applications", "Application categories the material serves"],
   ["status", "Status", "Where the material sits in the journey"],
-  ["owner", "Owner", "Person accountable"],
-  ["tags", "Tags", "Customer tags on the material"],
   ["priority", "Priority", "Selected for a period"],
-  ["target", "Target date", "Date the replacement is needed by"],
+  ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
 
-
-
-
-/**
- * Tags are a filter signal, not content: plain muted text so the column recedes
- * and never reads as a second copy of the material class. Empty reads as an
- * em-dash. Up to two tags, remainder folded into a count.
- */
-const TagsCell: React.FC<{ tags: string[] }> = ({ tags }) => {
-  if (tags.length === 0) return <span className="text-muted-foreground/50">—</span>;
-  const shown = tags.slice(0, 2);
-  const rest = tags.length - shown.length;
+/** Application categories as chips, overflow folded into a count. */
+const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
+  const list = values ?? [];
+  if (list.length === 0) return <Missing />;
+  const shown = list.slice(0, 2);
+  const rest = list.length - shown.length;
   return (
-    <span className="text-[11px] text-muted-foreground/80" title={tags.join(", ")}>
-      {shown.join(", ")}
-      {rest > 0 && <span className="ml-1 font-mono tabular-nums text-muted-foreground/60">+{rest}</span>}
+    <span className="inline-flex flex-wrap items-center gap-1" title={list.join(", ")}>
+      {shown.map((v) => (
+        <span key={v} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {v}
+        </span>
+      ))}
+      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
     </span>
   );
 };
+
 
 
 export const MaterialRegisterTable: React.FC = () => {
