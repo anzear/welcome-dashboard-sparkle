@@ -518,16 +518,6 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
-                    {cols.rank && (
-                      <td
-                        className={cn(
-                          STICK,
-                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
-                        )}
-                      >
-                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
-                      </td>
-                    )}
                     <td
                       className={cn(
                         STICK,
@@ -562,7 +552,20 @@ export const MaterialRegisterTable: React.FC = () => {
                         />
                       </td>
                     )}
-
+                    {cols.materialType && (
+                      <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
+                        {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+                      </td>
+                    )}
+                    {cols.materialCategory && (
+                      <td className="px-3 py-2 align-middle text-[11px]">
+                        {m.material_class ? (
+                          <span className="text-muted-foreground">{m.material_class}</span>
+                        ) : (
+                          <Missing />
+                        )}
+                      </td>
+                    )}
                     {cols.volume && (
                       <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
                         <NumCell
@@ -570,11 +573,6 @@ export const MaterialRegisterTable: React.FC = () => {
                           provenance={m.provenance.annual_volume}
                           emphasis={activeCol("volume")}
                         />
-                      </td>
-                    )}
-                    {cols.price && (
-                      <td className="px-3 py-2 text-right align-middle">
-                        <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
                       </td>
                     )}
                     {cols.spend && (
@@ -595,24 +593,14 @@ export const MaterialRegisterTable: React.FC = () => {
                         />
                       </td>
                     )}
-                    {activeCol("applications") && (
-                      <td className={cn("px-3 py-2 text-right align-middle", colTint("applications"))}>
-                        {m.application_categories && m.application_categories.length > 0 ? (
-                          <span
-                            className="font-mono font-medium tabular-nums text-foreground"
-                            title={m.application_categories.join(", ")}
-                          >
-                            {m.application_categories.length}
-                          </span>
-                        ) : (
-                          <Missing />
-                        )}
-                      </td>
-                    )}
-
                     {cols.suppliers && (
                       <td className="px-3 py-2 text-right align-middle">
                         <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
+                      </td>
+                    )}
+                    {cols.applications && (
+                      <td className={cn("px-3 py-2 align-middle", colTint("applications"))}>
+                        <ApplicationsCell values={m.application_categories} />
                       </td>
                     )}
                     {cols.status && (
@@ -621,12 +609,6 @@ export const MaterialRegisterTable: React.FC = () => {
                           status={m.journey_status}
                           entered={m.provenance.journey_status?.origin === "entered"}
                         />
-                      </td>
-                    )}
-
-                    {cols.tags && (
-                      <td className="px-3 py-2 align-middle">
-                        <TagsCell tags={m.tags} />
                       </td>
                     )}
                     {cols.priority && (
@@ -641,30 +623,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         )}
                       </td>
                     )}
-                    {cols.target && (
-                      <td className="whitespace-nowrap px-3 py-2 align-middle">
-                        {(() => {
-                          const iso = targetDateOf(m);
-                          const rel = relativeDate(iso);
-                          if (!iso || !rel) return <Missing />;
-                          return (
-                            <>
-                              <div className="font-mono text-[11px] tabular-nums leading-[1.15] text-foreground/85">
-                                {iso}
-                              </div>
-                              <div
-                                className={cn(
-                                  "text-[10px] leading-[1.15]",
-                                  rel.overdue ? "text-amber-700" : "text-muted-foreground",
-                                )}
-                              >
-                                {rel.label}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </td>
-                    )}
+
                     {cols.intelligence && (
                       <td className="px-3 py-2 align-middle">
                         <span className="text-[11px] text-muted-foreground">
