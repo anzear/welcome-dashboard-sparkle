@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -606,9 +605,6 @@ export const MaterialBrief: React.FC = () => {
     const second = divergentRank < row.rank ? { m: active, r: row.rank } : { m: divergent, r: divergentRank };
     return `Ranks ${first.r} on ${first.m.noun} but ${second.r} on ${second.m.noun}. ${row.gapSize} positions apart.`;
   };
-
-  // One reading of the target date everywhere: planned date, else earliest need date.
-  const targetDate = targetDateOf(m);
 
   return (
     <div className="pb-24">
