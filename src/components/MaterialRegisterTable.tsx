@@ -176,12 +176,11 @@ export const MaterialRegisterTable: React.FC = () => {
 
   // Always present: checkbox and Material. Everything else is switchable.
   const colCount = 2;
-  const extraCols =
-    (activeCol("applications") ? 1 : 0) + OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
+  const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
-  /** Pinned offsets shift when the rank column is switched off. */
-  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
-  const positionLeft = cols.rank ? "left-[19rem]" : "left-[16rem]";
+  const materialLeft = "left-8";
+  const positionLeft = "left-[16rem]";
+
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -255,19 +254,8 @@ export const MaterialRegisterTable: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            aria-pressed={onlyDivergent}
-            onClick={() => setOnlyDivergent((v) => !v)}
-            className={cn(
-              "rounded-sm border bg-background px-2 py-1 text-[11px] font-medium transition-colors",
-              onlyDivergent
-                ? "border-amber-400/60 text-amber-700"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
-          </button>
+
+
 
           <Popover>
             <PopoverTrigger asChild>
@@ -343,9 +331,12 @@ export const MaterialRegisterTable: React.FC = () => {
               [
                 ["status", "Set status"],
                 ["owner", "Set owner"],
-                ["add_tags", "Add tags"],
-                ["remove_tags", "Remove tags"],
+                ["products", "Set product"],
+                ["applications", "Set application"],
+                ["priority_period", "Set priority period"],
+                ["intelligence", "Order intelligence"],
               ] as [BulkKind, string][]
+
             ).map(([k, label]) => (
               <button
                 key={k}
@@ -406,9 +397,6 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              {cols.rank && (
-                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
-              )}
               <th
                 className={cn(
                   HEAD,
@@ -431,23 +419,19 @@ export const MaterialRegisterTable: React.FC = () => {
                   </div>
                 </th>
               )}
-
-
+              {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
+              {cols.materialCategory && (
+                <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
+              )}
               {cols.volume && (
                 <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
-                  Annual volume
+                  Volume
                   <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-                </th>
-              )}
-              {cols.price && (
-                <th className={cn(HEAD, "px-3 py-2 text-right")}>
-                  Unit price
-                  <div className={UNIT}>(EUR/kg)</div>
                 </th>
               )}
               {cols.spend && (
                 <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
-                  Annual spend
+                  Spend
                   <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
                 </th>
               )}
@@ -457,23 +441,16 @@ export const MaterialRegisterTable: React.FC = () => {
                   <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
                 </th>
               )}
-              {activeCol("applications") && (
-                <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
-              )}
               {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
-
-              {cols.tags && <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
-              {cols.target && (
-                <th className={cn(HEAD, "px-3 py-2 text-left")}>
-                  Target date
-                  <div className={UNIT}>(need by)</div>
-                </th>
+              {cols.applications && (
+                <th className={cn(HEAD, "px-3 py-2 text-left", emphHead("applications"))}>Applications</th>
               )}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
+              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
               {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
+              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
+
             </tr>
           </thead>
           <tbody>
