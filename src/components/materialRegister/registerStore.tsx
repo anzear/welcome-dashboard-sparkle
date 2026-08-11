@@ -521,6 +521,12 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const stamp = today();
     const batchId = `BATCH-${Date.now()}`;
 
+    /** Multi-value actions add rather than overwrite. */
+    const nextList = (existing: string[]) =>
+      payload.mode === "remove"
+        ? removeTags(existing, payload.values ?? [])
+        : addTags(existing, payload.values ?? []);
+
     setData((prev) =>
       prev.map((m) => {
         if (!ids.has(m.material_id)) return m;
@@ -544,12 +550,23 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         } else if (payload.kind === "owner") {
           next.owner = payload.value;
           next.provenance.owner = enteredProvenance();
-        } else if (payload.kind === "add_tags") {
-          next.tags = addTags(m.tags, payload.tags ?? []);
-          next.provenance.tags = enteredProvenance();
-        } else {
-          next.tags = removeTags(m.tags, payload.tags ?? []);
-          next.provenance.tags = enteredProvenance();
+        } else if (payload.kind === "products") {
+          next.product_categories = nextList(m.product_categories ?? []);
+          next.provenance.product_categories = enteredProvenance();
+        } else if (payload.kind === "applications") {
+          next.application_categories = nextList(m.application_categories ?? []);
+          next.provenance.application_categories = enteredProvenance();
+        } else if (payload.kind === "priority_period") {
+          next.priority_selected = true;
+          next.priority_period = payload.value;
+          next.provenance.priority_selected = enteredProvenance();
+          next.provenance.priority_period = enteredProvenance();
+        } else if (payload.kind === "intelligence") {
+          if (m.intelligence_status === "not_ordered") {
+            next.intelligence_status = "requested";
+            next.intelligence_ordered_date = stamp;
+            next.provenance.intelligence_status = enteredProvenance();
+          }
         }
         return next;
       }),
@@ -581,16 +598,34 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
-        const nextTags =
-          payload.kind === "add_tags"
-            ? addTags(m.tags, payload.tags ?? [])
-            : removeTags(m.tags, payload.tags ?? []);
+        if (payload.kind === "priority_period") {
+          return {
+            material_id: m.material_id,
+            event_type: "priority_change",
+            field: "priority_period",
+            from_value: m.priority_selected ? (m.priority_period ?? "unnamed period") : null,
+            to_value: payload.value,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        if (payload.kind === "intelligence") {
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "intelligence_status",
+            from_value: m.intelligence_status,
+            to_value: m.intelligence_status === "not_ordered" ? "requested" : m.intelligence_status,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        const field = payload.kind === "products" ? "product_categories" : "application_categories";
+        const existing = (payload.kind === "products" ? m.product_categories : m.application_categories) ?? [];
         return {
           material_id: m.material_id,
-          event_type: "tags_change",
-          field: "tags",
-          from_value: formatTags(m.tags) || null,
-          to_value: formatTags(nextTags) || null,
+          event_type: "field_correction",
+          field,
+          from_value: formatTags(existing) || null,
+          to_value: formatTags(nextList(existing)) || null,
           batch_id: batchId,
         } as EventInput;
       }),
@@ -601,9 +636,16 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         ? "Status"
         : payload.kind === "owner"
           ? "Owner"
-          : "Tags";
+          : payload.kind === "products"
+            ? "Product categories"
+            : payload.kind === "applications"
+              ? "Application categories"
+              : payload.kind === "priority_period"
+                ? "Priority period"
+                : "Intelligence";
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
+
 
   const nextIds = (count: number, taken: Material[]) => {
     let max = 0;
