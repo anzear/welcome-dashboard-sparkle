@@ -6,7 +6,7 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import { STATUS_DOT, StatusLegend, median, ordinal } from "@/components/materialRegister/gridPrimitives";
-import UnplottedList, { type UnplottedGroup } from "@/components/materialRegister/UnplottedList";
+import UnplottedList, { type UnplottedEntry } from "@/components/materialRegister/UnplottedList";
 import DriverListView from "@/components/materialRegister/DriverListView";
 import {
   AXIS_PRESETS,
