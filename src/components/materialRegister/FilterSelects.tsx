@@ -37,6 +37,8 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         value: v,
         label: ENTRY_TYPE_LABEL[v as EntryType] ?? v,
       })),
+      classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
+
       products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
         value: v,
         label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
@@ -84,10 +86,16 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
       />
       <MultiSelectFilter
-        label="Entry type"
+        label="Material type"
         options={options.entryTypes}
         selected={filters.entryTypes}
         onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
+      />
+      <MultiSelectFilter
+        label="Material category"
+        options={options.classes}
+        selected={filters.classes}
+        onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
       />
       <MultiSelectFilter
         label="Product"
@@ -113,12 +121,7 @@ const FilterSelects: React.FC<{ className?: string }> = ({ className }) => {
         selected={filters.priorityPeriods}
         onChange={(v) => setFilters((f) => ({ ...f, priorityPeriods: v }))}
       />
-      <MultiSelectFilter
-        label="Target date"
-        options={options.targetDates}
-        selected={filters.targetDates}
-        onChange={(v) => setFilters((f) => ({ ...f, targetDates: v }))}
-      />
+
     </div>
   );
 };
