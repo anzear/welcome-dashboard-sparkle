@@ -39,7 +39,7 @@ const FilterChips: React.FC = () => {
       "applications",
       "tags",
       "priorityPeriods",
-      "targetDates",
+      
       "blockers",
       "countries",
     ] as const

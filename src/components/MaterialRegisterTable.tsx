@@ -3,7 +3,6 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  targetDateOf,
   type JourneyStatus,
 } from "@/types/materialPrioritisation";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
-import { Missing, NumCell, relativeDate, StatusPill } from "@/components/materialRegister/primitives";
+import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
@@ -36,58 +35,55 @@ const STICK = "sticky bg-muted/60";
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
 type OptionalColumn =
-  | "rank"
   | "position"
+  | "materialType"
+  | "materialCategory"
   | "volume"
-  | "price"
   | "spend"
   | "emissions"
   | "suppliers"
+  | "applications"
   | "status"
-  | "owner"
-  | "tags"
   | "priority"
-  | "target"
+  | "owner"
   | "intelligence"
   | "lastChange";
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
-  ["rank", "Rank", "Position under the active ranking measure"],
   ["position", "Position", "Rank under all four measures"],
-  ["volume", "Annual volume", "Tonnes per year"],
-  ["price", "Unit price", "EUR per kg"],
-  ["spend", "Annual spend", "EUR per year"],
+  ["materialType", "Material type", "How the material enters the portfolio"],
+  ["materialCategory", "Material category", "Class the material belongs to"],
+  ["volume", "Volume", "Tonnes per year"],
+  ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["suppliers", "Suppliers", "Count of qualified suppliers"],
+  ["applications", "Applications", "Application categories the material serves"],
   ["status", "Status", "Where the material sits in the journey"],
-  ["owner", "Owner", "Person accountable"],
-  ["tags", "Tags", "Customer tags on the material"],
   ["priority", "Priority", "Selected for a period"],
-  ["target", "Target date", "Date the replacement is needed by"],
+  ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
 
-
-
-
-/**
- * Tags are a filter signal, not content: plain muted text so the column recedes
- * and never reads as a second copy of the material class. Empty reads as an
- * em-dash. Up to two tags, remainder folded into a count.
- */
-const TagsCell: React.FC<{ tags: string[] }> = ({ tags }) => {
-  if (tags.length === 0) return <span className="text-muted-foreground/50">—</span>;
-  const shown = tags.slice(0, 2);
-  const rest = tags.length - shown.length;
+/** Application categories as chips, overflow folded into a count. */
+const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
+  const list = values ?? [];
+  if (list.length === 0) return <Missing />;
+  const shown = list.slice(0, 2);
+  const rest = list.length - shown.length;
   return (
-    <span className="text-[11px] text-muted-foreground/80" title={tags.join(", ")}>
-      {shown.join(", ")}
-      {rest > 0 && <span className="ml-1 font-mono tabular-nums text-muted-foreground/60">+{rest}</span>}
+    <span className="inline-flex flex-wrap items-center gap-1" title={list.join(", ")}>
+      {shown.map((v) => (
+        <span key={v} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {v}
+        </span>
+      ))}
+      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
     </span>
   );
 };
+
 
 
 export const MaterialRegisterTable: React.FC = () => {
@@ -180,12 +176,11 @@ export const MaterialRegisterTable: React.FC = () => {
 
   // Always present: checkbox and Material. Everything else is switchable.
   const colCount = 2;
-  const extraCols =
-    (activeCol("applications") ? 1 : 0) + OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
+  const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
-  /** Pinned offsets shift when the rank column is switched off. */
-  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
-  const positionLeft = cols.rank ? "left-[19rem]" : "left-[16rem]";
+  const materialLeft = "left-8";
+  const positionLeft = "left-[16rem]";
+
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -259,19 +254,8 @@ export const MaterialRegisterTable: React.FC = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            aria-pressed={onlyDivergent}
-            onClick={() => setOnlyDivergent((v) => !v)}
-            className={cn(
-              "rounded-sm border bg-background px-2 py-1 text-[11px] font-medium transition-colors",
-              onlyDivergent
-                ? "border-amber-400/60 text-amber-700"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            Divergent only (<span className="font-mono tabular-nums">{divergentCount}</span>)
-          </button>
+
+
 
           <Popover>
             <PopoverTrigger asChild>
@@ -347,9 +331,12 @@ export const MaterialRegisterTable: React.FC = () => {
               [
                 ["status", "Set status"],
                 ["owner", "Set owner"],
-                ["add_tags", "Add tags"],
-                ["remove_tags", "Remove tags"],
+                ["products", "Set product"],
+                ["applications", "Set application"],
+                ["priority_period", "Set priority period"],
+                ["intelligence", "Order intelligence"],
               ] as [BulkKind, string][]
+
             ).map(([k, label]) => (
               <button
                 key={k}
@@ -410,9 +397,6 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="h-3.5 w-3.5"
                 />
               </th>
-              {cols.rank && (
-                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
-              )}
               <th
                 className={cn(
                   HEAD,
@@ -435,23 +419,19 @@ export const MaterialRegisterTable: React.FC = () => {
                   </div>
                 </th>
               )}
-
-
+              {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
+              {cols.materialCategory && (
+                <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
+              )}
               {cols.volume && (
                 <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
-                  Annual volume
+                  Volume
                   <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-                </th>
-              )}
-              {cols.price && (
-                <th className={cn(HEAD, "px-3 py-2 text-right")}>
-                  Unit price
-                  <div className={UNIT}>(EUR/kg)</div>
                 </th>
               )}
               {cols.spend && (
                 <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
-                  Annual spend
+                  Spend
                   <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
                 </th>
               )}
@@ -461,23 +441,16 @@ export const MaterialRegisterTable: React.FC = () => {
                   <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
                 </th>
               )}
-              {activeCol("applications") && (
-                <th className={cn(HEAD, "px-3 py-2 text-right text-primary")}>Applications</th>
-              )}
               {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
-
-              {cols.tags && <th className={cn(HEAD, "px-3 py-2 text-left")}>Tags</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
-              {cols.target && (
-                <th className={cn(HEAD, "px-3 py-2 text-left")}>
-                  Target date
-                  <div className={UNIT}>(need by)</div>
-                </th>
+              {cols.applications && (
+                <th className={cn(HEAD, "px-3 py-2 text-left", emphHead("applications"))}>Applications</th>
               )}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
+              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
               {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
+              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
+
             </tr>
           </thead>
           <tbody>
@@ -545,16 +518,6 @@ export const MaterialRegisterTable: React.FC = () => {
                         className="h-3.5 w-3.5"
                       />
                     </td>
-                    {cols.rank && (
-                      <td
-                        className={cn(
-                          STICK,
-                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
-                        )}
-                      >
-                        {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
-                      </td>
-                    )}
                     <td
                       className={cn(
                         STICK,
@@ -589,7 +552,20 @@ export const MaterialRegisterTable: React.FC = () => {
                         />
                       </td>
                     )}
-
+                    {cols.materialType && (
+                      <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
+                        {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+                      </td>
+                    )}
+                    {cols.materialCategory && (
+                      <td className="px-3 py-2 align-middle text-[11px]">
+                        {m.material_class ? (
+                          <span className="text-muted-foreground">{m.material_class}</span>
+                        ) : (
+                          <Missing />
+                        )}
+                      </td>
+                    )}
                     {cols.volume && (
                       <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
                         <NumCell
@@ -597,11 +573,6 @@ export const MaterialRegisterTable: React.FC = () => {
                           provenance={m.provenance.annual_volume}
                           emphasis={activeCol("volume")}
                         />
-                      </td>
-                    )}
-                    {cols.price && (
-                      <td className="px-3 py-2 text-right align-middle">
-                        <NumCell value={m.unit_price} decimals={2} provenance={m.provenance.unit_price} />
                       </td>
                     )}
                     {cols.spend && (
@@ -622,24 +593,14 @@ export const MaterialRegisterTable: React.FC = () => {
                         />
                       </td>
                     )}
-                    {activeCol("applications") && (
-                      <td className={cn("px-3 py-2 text-right align-middle", colTint("applications"))}>
-                        {m.application_categories && m.application_categories.length > 0 ? (
-                          <span
-                            className="font-mono font-medium tabular-nums text-foreground"
-                            title={m.application_categories.join(", ")}
-                          >
-                            {m.application_categories.length}
-                          </span>
-                        ) : (
-                          <Missing />
-                        )}
-                      </td>
-                    )}
-
                     {cols.suppliers && (
                       <td className="px-3 py-2 text-right align-middle">
                         <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
+                      </td>
+                    )}
+                    {cols.applications && (
+                      <td className={cn("px-3 py-2 align-middle", colTint("applications"))}>
+                        <ApplicationsCell values={m.application_categories} />
                       </td>
                     )}
                     {cols.status && (
@@ -648,12 +609,6 @@ export const MaterialRegisterTable: React.FC = () => {
                           status={m.journey_status}
                           entered={m.provenance.journey_status?.origin === "entered"}
                         />
-                      </td>
-                    )}
-
-                    {cols.tags && (
-                      <td className="px-3 py-2 align-middle">
-                        <TagsCell tags={m.tags} />
                       </td>
                     )}
                     {cols.priority && (
@@ -668,30 +623,7 @@ export const MaterialRegisterTable: React.FC = () => {
                         )}
                       </td>
                     )}
-                    {cols.target && (
-                      <td className="whitespace-nowrap px-3 py-2 align-middle">
-                        {(() => {
-                          const iso = targetDateOf(m);
-                          const rel = relativeDate(iso);
-                          if (!iso || !rel) return <Missing />;
-                          return (
-                            <>
-                              <div className="font-mono text-[11px] tabular-nums leading-[1.15] text-foreground/85">
-                                {iso}
-                              </div>
-                              <div
-                                className={cn(
-                                  "text-[10px] leading-[1.15]",
-                                  rel.overdue ? "text-amber-700" : "text-muted-foreground",
-                                )}
-                              >
-                                {rel.label}
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </td>
-                    )}
+
                     {cols.intelligence && (
                       <td className="px-3 py-2 align-middle">
                         <span className="text-[11px] text-muted-foreground">
@@ -772,7 +704,12 @@ export const MaterialRegisterTable: React.FC = () => {
         materials={selectedMaterials}
         hiddenCount={hiddenSelectedCount}
         ownerOptions={ownerNames}
-        tagSuggestions={tagVocabulary(data).map((t) => t.tag)}
+        productSuggestions={[...new Set(data.flatMap((m) => m.product_categories ?? []))].sort()}
+        applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
+        periodSuggestions={[
+          ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),
+        ].sort()}
+
         onCancel={() => setBulkKind(null)}
         onApply={(payload) => {
           applyBulk(payload, new Set(selected));
