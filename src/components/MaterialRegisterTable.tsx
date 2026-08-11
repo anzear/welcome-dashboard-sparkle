@@ -35,7 +35,7 @@ const STICK = "sticky bg-muted/60";
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
 
 type OptionalColumn =
-  | "position"
+  | "rank"
   | "materialType"
   | "materialCategory"
   | "volume"
@@ -51,7 +51,7 @@ type OptionalColumn =
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
-  ["position", "Position", "Rank under all four measures"],
+  ["rank", "Rank", "Position under the active measure"],
   ["materialType", "Material type", "How the material enters the portfolio"],
   ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
@@ -65,6 +65,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
+
 
 /** Application categories as chips, overflow folded into a count. */
 const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
@@ -178,8 +179,9 @@ export const MaterialRegisterTable: React.FC = () => {
   const colCount = 2;
   const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
-  const materialLeft = "left-8";
-  const positionLeft = "left-[16rem]";
+  /** Pinned offset shifts when the rank column is switched off. */
+  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+
 
 
   const visibleIds = visible.map((r) => r.m.material_id);
