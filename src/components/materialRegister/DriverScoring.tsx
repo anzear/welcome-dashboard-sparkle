@@ -185,28 +185,31 @@ const DriverScoring: React.FC = () => {
     );
 
   return (
-    <div className="space-y-3">
-      {/* Coverage and the shared question set */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="text-[11px] text-muted-foreground">
-          <span className="font-mono tabular-nums text-foreground">{scoredCells.toLocaleString("en-GB")}</span> of{" "}
-          <span className="font-mono tabular-nums">{totalCells.toLocaleString("en-GB")}</span> cells scored (
-          <span className="font-mono tabular-nums">{pct}%</span>)
-        </div>
-        <span className="text-[10px] text-muted-foreground">
-          Partial scoring is normal. Nothing depends on filling this in.
-        </span>
+    <div className="space-y-2">
+      {/* Toolbar — same shape as the register: search, folded filters, right-aligned action */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+        <Input
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          placeholder="Search name, CAS, customer ID"
+          className="h-7 w-60 bg-card text-[11px]"
+        />
+        <FilterSelects
+          variant="popover"
+          include={["statuses", "owners", "applications", "products", "priorityPeriods"]}
+        />
+
         {canEditQuestionSet ? (
           <button
             type="button"
             onClick={() => setEditorOpen(true)}
-            className="ml-auto text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            className="ml-auto inline-flex h-7 items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Edit question set
           </button>
         ) : (
           <span
-            className="ml-auto cursor-default text-[10px] text-muted-foreground/60"
+            className="ml-auto inline-flex h-7 cursor-default items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground/60"
             title="Managed by your workspace administrator"
           >
             Edit question set
@@ -214,25 +217,14 @@ const DriverScoring: React.FC = () => {
         )}
       </div>
 
-      {/* Same filter scope as the register, narrowed to what this screen needs */}
-      <div className="space-y-1.5 pb-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={filters.search}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-            placeholder="Search name, CAS, customer ID"
-            className="h-7 w-56 bg-card text-[11px]"
-          />
-          <FilterSelects
-            variant="popover"
-            include={["statuses", "owners", "applications", "products", "priorityPeriods"]}
-          />
-        </div>
-        <FilterChips />
-      </div>
-
-      {/* Active sort */}
-      <div className="flex flex-wrap items-center gap-3 text-[11px]">
+      {/* Coverage readout on its own row below the toolbar */}
+      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <span>
+          <span className="font-mono tabular-nums text-foreground">{scoredCells.toLocaleString("en-GB")}</span> of{" "}
+          <span className="font-mono tabular-nums">{totalCells.toLocaleString("en-GB")}</span> cells scored (
+          <span className="font-mono tabular-nums">{pct}%</span>)
+        </span>
+        <span className="text-border">·</span>
         {sort ? (
           <>
             <span className="text-foreground">{sortLabel()}</span>
@@ -245,14 +237,15 @@ const DriverScoring: React.FC = () => {
             </button>
           </>
         ) : (
-          <span className="text-muted-foreground">
-            Ordered as in the register. Click a driver heading to rank by that judgement.
-          </span>
+          <span>Ordered as in the register. Click a driver heading to rank by that judgement.</span>
         )}
-        <span className="ml-auto text-[10px] text-muted-foreground">
+        <span className="ml-auto text-[10px]">
           Click a cell, then 0–5 to score, minus first for a constraint, Backspace clears, arrows move.
         </span>
       </div>
+
+      <FilterChips />
+
 
       {/* Selection bar */}
       {selected.size > 0 && (
