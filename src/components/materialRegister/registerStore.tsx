@@ -27,10 +27,11 @@ import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/
 
 export const CURRENT_USER = "You";
 
-export type MeasureId = "spend" | "emissions" | "volume" | "applications";
+export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
+export type MeasureId = RankMeasureId | "all";
 
 export interface Measure {
-  id: MeasureId;
+  id: RankMeasureId;
   label: string;
   /** compact chip label */
   short: string;
