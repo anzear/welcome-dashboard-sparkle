@@ -78,7 +78,7 @@ const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }
   };
 
   return (
-    <li className="w-[260px] rounded-md border border-border p-3">
+    <li className="w-[260px] rounded-lg border border-border/70 bg-muted/40 p-3 shadow-sm transition-colors hover:bg-muted/60">
       <p className="truncate text-[12px] font-medium text-foreground" title={m.name}>
         {m.name}
       </p>
