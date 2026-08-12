@@ -328,7 +328,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   } | null>(null);
 
 
-  const measure = MEASURES.find((x) => x.id === measureId)!;
+  const measure = measureId === "all" ? null : MEASURES.find((x) => x.id === measureId)!;
 
   const filtersActive =
     filters.search.trim() !== "" ||
