@@ -20,6 +20,8 @@ type TabId = (typeof TABS)[number]["id"];
 
 const Inner: React.FC = () => {
   const [tab, setTab] = useState<TabId>("register");
+  const navigate = useNavigate();
+
   const [addOpen, setAddOpen] = useState(false);
   const { openId } = useRegister();
 
