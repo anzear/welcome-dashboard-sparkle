@@ -262,17 +262,10 @@ const DriverScoring: React.FC = () => {
           </span>
           <button
             type="button"
-            onClick={() => setBulk("set")}
+            onClick={() => setBulkOpen(true)}
             className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
           >
             Set score
-          </button>
-          <button
-            type="button"
-            onClick={() => setBulk("clear")}
-            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
-          >
-            Clear score
           </button>
           <button
             type="button"
