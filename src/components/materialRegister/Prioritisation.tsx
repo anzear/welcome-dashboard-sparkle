@@ -398,24 +398,25 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
 
       {/* Readout on its own row */}
-      <div className="flex flex-wrap items-center justify-end gap-2 text-[11px] text-muted-foreground">
+      <div className="w-full text-right text-[11px] text-muted-foreground">
         {activePreset && (
           <span className="hidden sm:inline">{activePreset.reading}</span>
         )}
-        {mode === "chart" && (
-          <>
-            <span className="hidden sm:inline">
-              <span className="text-foreground">{xv.label}</span> against{" "}
-              <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
-            </span>
-            <span className="hidden sm:inline text-border">·</span>
-          </>
+        {mode === "chart" && activePreset && (
+          <span className="hidden sm:inline text-border"> · </span>
         )}
+        {mode === "chart" && (
+          <span className="hidden sm:inline">
+            <span className="text-foreground">{xv.label}</span> against{" "}
+            <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
+          </span>
+        )}
+        <span className="text-border"> · </span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in {priorityPeriod} priority
           set
         </span>
-        <span className="text-border">·</span>
+        <span className="text-border"> · </span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{rows.length}</span>
           {rows.length !== data.length && (
