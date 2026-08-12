@@ -409,6 +409,15 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
           )}{" "}
           materials
         </span>
+        {mode === "chart" && (
+          <>
+            <span className="text-border">·</span>
+            <span>
+              <span className="text-foreground">{xv.label}</span> against{" "}
+              <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
+            </span>
+          </>
+        )}
         <span className="text-border">·</span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in {priorityPeriod} priority
