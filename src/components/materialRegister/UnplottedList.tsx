@@ -78,7 +78,7 @@ const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }
   };
 
   return (
-    <li className="w-[260px] rounded-md border border-border p-3">
+    <li className="w-[260px] rounded-lg border border-border/70 bg-muted/40 p-3 shadow-sm transition-colors hover:bg-muted/60">
       <p className="truncate text-[12px] font-medium text-foreground" title={m.name}>
         {m.name}
       </p>
@@ -157,7 +157,7 @@ const UnplottedList: React.FC<{
   return (
     <section>
       <header className="flex flex-wrap items-baseline gap-x-3">
-        <h2 className="text-[13px] font-semibold text-foreground">
+        <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
           <span className="font-mono tabular-nums">{entries.length}</span> materials not plotted
         </h2>
         <p className="text-[10px] text-muted-foreground/70">
