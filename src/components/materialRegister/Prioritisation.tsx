@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterChips from "@/components/materialRegister/FilterChips";
