@@ -50,7 +50,7 @@ const DriverScoring: React.FC = () => {
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [bulk, setBulk] = useState<ScoreBulkKind | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const negativeNext = useRef(false);
   const gridRef = useRef<HTMLTableSectionElement>(null);
