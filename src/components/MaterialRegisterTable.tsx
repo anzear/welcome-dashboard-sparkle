@@ -304,7 +304,19 @@ export const MaterialRegisterTable: React.FC = () => {
       </div>
 
       {/* Coverage readout on its own row below the toolbar */}
-      <div className="flex items-center gap-2 pb-2 text-[11px] text-muted-foreground">
+      <div className="flex items-center justify-end gap-2 pb-2 text-[11px] text-muted-foreground">
+        {measureId !== "all" && missingCount > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setOnlyUnranked((v) => !v)}
+              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              {onlyUnranked ? "Show all" : `${missingCount} unranked`}
+            </button>
+            <span className="text-border">·</span>
+          </>
+        )}
         <span>
           <span className="font-mono tabular-nums text-foreground">{visible.length}</span>
           {visible.length !== data.length && (
@@ -315,18 +327,6 @@ export const MaterialRegisterTable: React.FC = () => {
           )}{" "}
           materials
         </span>
-        {measureId !== "all" && missingCount > 0 && (
-          <>
-            <span className="text-border">·</span>
-            <button
-              type="button"
-              onClick={() => setOnlyUnranked((v) => !v)}
-              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              {onlyUnranked ? "Show all" : `${missingCount} unranked`}
-            </button>
-          </>
-        )}
       </div>
 
       {/* Active filter chips only when something is on */}
