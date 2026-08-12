@@ -256,6 +256,25 @@ export const MaterialRegisterTable: React.FC = () => {
           </PopoverContent>
         </Popover>
 
+        {/* Rank tabs — dark pill toggle, right-aligned */}
+        <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+          {MEASURES.map((mm) => (
+            <button
+              key={mm.id}
+              type="button"
+              onClick={() => setMeasureId(mm.id)}
+              className={cn(
+                "px-2.5 py-1 text-[11px] font-medium rounded-sm transition-colors",
+                measureId === mm.id
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {mm.label}
+            </button>
+          ))}
+        </div>
+
         {/* Coverage readout, right-aligned on the same row */}
         <div className="ml-auto flex items-center gap-2 text-[11px] text-muted-foreground">
           <span>
