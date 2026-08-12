@@ -704,7 +704,7 @@ export const MaterialBrief: React.FC = () => {
       </header>
 
       {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 shadow-sm">
+      <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
 
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <BarField label="Status" className="w-[180px]">
@@ -866,10 +866,10 @@ export const MaterialBrief: React.FC = () => {
       </div>
 
       {/* Body — 55 / 45. Neither column scrolls. */}
-      <div className="mt-8 grid items-start gap-x-10 gap-y-8 lg:grid-cols-[55fr_45fr]">
+      <div className="mt-4 grid items-start gap-x-4 gap-y-4 lg:grid-cols-[55fr_45fr]">
 
         {/* Left column */}
-        <div className="space-y-10 self-start">
+        <div className="space-y-4 self-start">
           <Section
             title="Figures"
             note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
@@ -1108,7 +1108,7 @@ export const MaterialBrief: React.FC = () => {
         </div>
 
         {/* Right column */}
-        <div className="space-y-10 self-start">
+        <div className="space-y-4 self-start">
           <Section title="Position" note="Four separate positions. Never combined into one score.">
             <PositionBlock
               materialId={m.material_id}
