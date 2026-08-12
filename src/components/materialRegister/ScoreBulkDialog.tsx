@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -9,26 +9,18 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 /**
  * Bulk judgement across the selection, shown inline above the matrix so the
  * selection stays visible and editable while scoring. The first driver is
- * selected on open; the user steps through drivers with the arrows or the
+ * selected by default; the user steps through drivers with the arrows or the
  * dropdown and can stage several before saving. Nothing is written until Save.
  */
 const ScoreBulkPanel: React.FC<{
-  open: boolean;
   ids: string[];
   onRemoveMaterial?: (id: string) => void;
-  onOpenChange: (v: boolean) => void;
-}> = ({ open, ids, onRemoveMaterial, onOpenChange }) => {
+  onClearSelection?: () => void;
+}> = ({ ids, onRemoveMaterial, onClearSelection }) => {
   const { questions, scoreFor, applyScoreBulk, data } = useRegister();
   const [index, setIndex] = useState(0);
   /** Staged changes for this session. Key present = will be written. */
   const [staged, setStaged] = useState<Record<string, number | null>>({});
-
-  useEffect(() => {
-    if (open) {
-      setIndex(0);
-      setStaged({});
-    }
-  }, [open]);
 
   const nameFor = useMemo(() => {
     const map = new Map(data.map((m) => [m.material_id, m.name]));
@@ -38,7 +30,26 @@ const ScoreBulkPanel: React.FC<{
   const q = questions[index] ?? null;
   const stagedKeys = Object.keys(staged);
   const hasStagedHere = Boolean(q && q.question_id in staged);
-  const value = q && q.question_id in staged ? staged[q.question_id] : null;
+
+  /** If every selected material has the same existing score for this driver, return it. */
+  const commonScore = useMemo(() => {
+    if (!q || ids.length === 0) return null;
+    let first: number | null = null;
+    let set = false;
+    for (const id of ids) {
+      const score = scoreFor(id, q.question_id)?.score ?? null;
+      if (!set) {
+        first = score;
+        set = true;
+      } else if (score !== first) {
+        return null;
+      }
+    }
+    return first;
+  }, [ids, q, scoreFor]);
+
+  /** Highlight the staged value first; fall back to the common existing score. */
+  const effectiveValue = q && q.question_id in staged ? staged[q.question_id] : commonScore;
 
   const breakdown = useMemo(() => {
     if (!q || !hasStagedHere) return { unscored: 0, changing: 0, already: 0 };
@@ -56,7 +67,7 @@ const ScoreBulkPanel: React.FC<{
   }, [ids, q, staged, hasStagedHere, scoreFor]);
 
   const close = () => {
-    onOpenChange(false);
+    onClearSelection?.();
     setIndex(0);
     setStaged({});
   };
