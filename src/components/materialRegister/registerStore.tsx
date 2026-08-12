@@ -27,10 +27,11 @@ import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/
 
 export const CURRENT_USER = "You";
 
-export type MeasureId = "spend" | "emissions" | "volume" | "applications";
+export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
+export type MeasureId = RankMeasureId | "all";
 
 export interface Measure {
-  id: MeasureId;
+  id: RankMeasureId;
   label: string;
   /** compact chip label */
   short: string;
@@ -114,8 +115,8 @@ export function computeRanks(rows: Material[], measure: Measure): RankTable {
 export interface RankedRow {
   m: Material;
   rank: number | null;
-  ranks: Record<MeasureId, number | null>;
-  gapMeasure: MeasureId | null;
+  ranks: Record<RankMeasureId, number | null>;
+  gapMeasure: RankMeasureId | null;
   gapSize: number;
 }
 
@@ -187,7 +188,7 @@ interface Store {
   data: Material[];
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
-  measure: Measure;
+  measure: Measure | null;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   filtersActive: boolean;
@@ -201,7 +202,7 @@ interface Store {
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>;
   ordered: RankedRow[];
   visible: RankedRow[];
-  rankTables: Record<MeasureId, RankTable>;
+  rankTables: Record<RankMeasureId, RankTable>;
   rankedCount: number;
   filteredTotal: number;
   missingCount: number;
@@ -327,7 +328,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   } | null>(null);
 
 
-  const measure = MEASURES.find((x) => x.id === measureId)!;
+  const measure = measureId === "all" ? null : MEASURES.find((x) => x.id === measureId)!;
 
   const filtersActive =
     filters.search.trim() !== "" ||
@@ -382,21 +383,36 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   }, [data, filters]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
-    const tables = {} as Record<MeasureId, RankTable>;
+    const tables = {} as Record<RankMeasureId, RankTable>;
     MEASURES.forEach((mm) => {
       tables[mm.id] = computeRanks(filtered, mm);
     });
+
+    if (measureId === "all") {
+      const buildAll = (m: Material): RankedRow => {
+        const ranks = {} as Record<RankMeasureId, number | null>;
+        MEASURES.forEach((mm) => {
+          ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
+        });
+        return { m, rank: null, ranks, gapMeasure: null, gapSize: 0 };
+      };
+      return {
+        ordered: filtered.map((m) => buildAll(m)),
+        rankTables: tables,
+        rankedCount: 0,
+      };
+    }
 
     const active = tables[measureId];
     const threshold = active.rankedCount * DIVERGENCE_THRESHOLD_RATIO;
 
     const build = (m: Material, rank: number | null): RankedRow => {
-      const ranks = {} as Record<MeasureId, number | null>;
+      const ranks = {} as Record<RankMeasureId, number | null>;
       MEASURES.forEach((mm) => {
         ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
       });
 
-      let gapMeasure: MeasureId | null = null;
+      let gapMeasure: RankMeasureId | null = null;
       let gapSize = 0;
       if (rank !== null) {
         MEASURES.forEach((mm) => {
