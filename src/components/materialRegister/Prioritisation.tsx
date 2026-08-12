@@ -405,8 +405,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         )}
         <span className="text-border"> · </span>
         <span>
-          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in {priorityPeriod} priority
-          set
+          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in priority set
         </span>
         <span className="text-border"> · </span>
         <span>
