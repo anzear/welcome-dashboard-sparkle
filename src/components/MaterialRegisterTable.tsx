@@ -286,32 +286,32 @@ export const MaterialRegisterTable: React.FC = () => {
             </button>
           ))}
         </div>
+      </div>
 
-        {/* Coverage readout, right-aligned on the same row */}
-        <div className="ml-auto flex items-center gap-2 text-[11px] text-muted-foreground">
-          <span>
-            <span className="font-mono tabular-nums text-foreground">{visible.length}</span>
-            {visible.length !== data.length && (
-              <>
-                {" of "}
-                <span className="font-mono tabular-nums">{data.length}</span>
-              </>
-            )}{" "}
-            materials
-          </span>
-          {missingCount > 0 && (
+      {/* Coverage readout on its own row below the toolbar */}
+      <div className="flex items-center gap-2 pb-2 text-[11px] text-muted-foreground">
+        <span>
+          <span className="font-mono tabular-nums text-foreground">{visible.length}</span>
+          {visible.length !== data.length && (
             <>
-              <span className="text-border">·</span>
-              <button
-                type="button"
-                onClick={() => setOnlyUnranked((v) => !v)}
-                className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-              >
-                {onlyUnranked ? "Show all" : `${missingCount} unranked`}
-              </button>
+              {" of "}
+              <span className="font-mono tabular-nums">{data.length}</span>
             </>
-          )}
-        </div>
+          )}{" "}
+          materials
+        </span>
+        {missingCount > 0 && (
+          <>
+            <span className="text-border">·</span>
+            <button
+              type="button"
+              onClick={() => setOnlyUnranked((v) => !v)}
+              className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              {onlyUnranked ? "Show all" : `${missingCount} unranked`}
+            </button>
+          </>
+        )}
       </div>
 
       {/* Active filter chips only when something is on */}
