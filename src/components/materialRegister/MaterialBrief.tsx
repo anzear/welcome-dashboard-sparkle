@@ -1109,7 +1109,16 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Right column */}
         <div className="space-y-4 self-start">
-          <Section title="Position" note="Four separate positions. Never combined into one score.">
+          <div className="-mx-3 rounded-md bg-primary/5 px-3 py-3">
+            <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
+              <BriefDriverScores materialId={m.material_id} />
+            </Section>
+          </div>
+
+          <Section
+            title="Position"
+            note="Calculated by the platform from the figures above. Four separate positions, never combined into one score."
+          >
             <PositionBlock
               materialId={m.material_id}
               gapMeasure={row?.gapMeasure ?? null}
@@ -1119,11 +1128,6 @@ export const MaterialBrief: React.FC = () => {
             {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
           </Section>
 
-          <div className="-mx-3 rounded-md bg-primary/5 px-3 py-3">
-            <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
-              <BriefDriverScores materialId={m.material_id} />
-            </Section>
-          </div>
 
           <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
             <div className="space-y-3">
