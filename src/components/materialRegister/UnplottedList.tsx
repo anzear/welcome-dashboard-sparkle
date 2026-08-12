@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
+
 import type { Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale } from "@/components/materialRegister/scorePrimitives";
@@ -62,8 +62,8 @@ const FigureInput: React.FC<{
   );
 };
 
-/** One card: the material and every value it is missing, editable in place. */
-const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }> = ({
+/** One row: the material and every value it is missing, editable in place. */
+const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }> = ({
   entry,
   onSaved,
 }) => {
@@ -78,18 +78,21 @@ const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }
   };
 
   return (
-    <li className="w-[260px] rounded-lg border border-border/70 bg-muted/40 p-3 shadow-sm transition-colors hover:bg-muted/60">
-      <p className="truncate text-[12px] font-medium text-foreground" title={m.name}>
-        {m.name}
-      </p>
-      <p className="truncate text-[10px] text-muted-foreground">
-        {m.material_class ?? "Unclassified"}
-      </p>
+    <li className="grid grid-cols-1 gap-x-6 gap-y-2 px-4 py-3 transition-colors hover:bg-muted/40 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+      <div className="min-w-0">
+        <p className="truncate text-[12px] font-medium text-foreground" title={m.name}>
+          {m.name}
+        </p>
+        <p className="truncate text-[10px] text-muted-foreground">
+          {m.material_class ?? "Unclassified"}
+          {saved && <span className="ml-2 text-teal-700">Saved</span>}
+        </p>
+      </div>
 
-      <div className="mt-2.5 space-y-2">
+      <div className="flex flex-col gap-1.5">
         {gaps.map((axis) => (
-          <div key={axis.id} className="flex items-center justify-between gap-2">
-            <label className="min-w-0 flex-1 text-[10px] leading-tight text-muted-foreground">
+          <div key={axis.id} className="flex items-center justify-end gap-3">
+            <label className="text-[10px] uppercase tracking-wide text-muted-foreground">
               {axis.label}
               {axis.kind === "measured" ? ` (${axis.unit})` : ""}
             </label>
@@ -111,11 +114,10 @@ const GapCard: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }
           </div>
         ))}
       </div>
-
-      {saved && <p className="mt-2 text-[10px] text-muted-foreground">Saved.</p>}
     </li>
   );
 };
+
 
 /**
  * Every material the current axes cannot place. One card per material, with each
@@ -169,11 +171,12 @@ const UnplottedList: React.FC<{
         <span className="text-muted-foreground/70"> · Highest exposure first.</span>
       </p>
 
-      <ul className={cn("mt-3 flex flex-wrap gap-4")}>
+      <ul className="mt-3 divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
         {visible.map((e) => (
-          <GapCard key={e.m.material_id} entry={e} onSaved={onSaved} />
+          <GapRow key={e.m.material_id} entry={e} onSaved={onSaved} />
         ))}
       </ul>
+
 
       {rest > 0 && (
         <button
