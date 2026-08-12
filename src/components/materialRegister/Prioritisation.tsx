@@ -281,32 +281,73 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
   return (
     <div className="w-full space-y-2">
-      {/* Axis presets */}
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Presets</span>
-        {AXIS_PRESETS.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            aria-pressed={activePreset?.id === p.id}
-            onClick={() => applyPreset(p.id)}
-            title={p.reading}
-            className={cn(
-              "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
-              activePreset?.id === p.id
-                ? "border-primary/40 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {p.label}
-          </button>
-        ))}
-        {activePreset && <span className="text-[10px] text-muted-foreground">— {activePreset.reading}</span>}
-      </div>
+      {/* Toolbar — one quiet row: search, filters, preset picker; view switch right-aligned */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+        <Input
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          placeholder="Search name, CAS, customer ID"
+          className="h-7 w-60 bg-card text-[11px]"
+        />
+        <FilterSelects variant="popover" />
 
-      {/* View switch and axis controls */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                activePreset
+                  ? "border-primary/40 bg-primary/5 text-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <SlidersHorizontal className="h-3 w-3 opacity-70" />
+              {activePreset ? activePreset.label : "Custom pairing"}
+              <ChevronDown className="h-3 w-3 opacity-60" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-72 p-2">
+            <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Presets</div>
+            {AXIS_PRESETS.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => applyPreset(p.id)}
+                className={cn(
+                  "block w-full rounded-sm px-1.5 py-1 text-left hover:bg-muted/60",
+                  activePreset?.id === p.id && "bg-primary/5",
+                )}
+              >
+                <span
+                  className={cn(
+                    "block text-[11px]",
+                    activePreset?.id === p.id ? "font-medium text-primary" : "text-foreground",
+                  )}
+                >
+                  {p.label}
+                </span>
+                <span className="block text-[10px] leading-tight text-muted-foreground">{p.reading}</span>
+              </button>
+            ))}
+          </PopoverContent>
+        </Popover>
+
+        <button
+          type="button"
+          aria-pressed={prioritySetOnly}
+          onClick={() => setPrioritySetOnly((v) => !v)}
+          className={cn(
+            "inline-flex h-7 items-center rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+            prioritySetOnly
+              ? "border-primary/40 bg-primary/5 text-primary"
+              : "border-border bg-card text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Priority set only
+        </button>
+
+        <div className="ml-auto flex items-center gap-1 rounded-md bg-muted p-0.5">
           {(["chart", "list"] as const).map((v) => (
             <button
               key={v}
@@ -314,7 +355,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
               aria-pressed={mode === v}
               onClick={() => setMode(v)}
               className={cn(
-                "rounded-[4px] px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
+                "rounded-sm px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
                 mode === v ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -322,65 +363,66 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             </button>
           ))}
         </div>
+      </div>
 
-        {mode === "chart" && (
+      {/* Axis controls */}
+      {mode === "chart" && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
+          <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
+          <label className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Size</span>
+            <select
+              value={sizeId}
+              onChange={(e) => setSizeId(e.target.value as SizeVarId)}
+              className="h-7 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
+              aria-label="Size"
+            >
+              <option value="drivers">Strong drivers (count)</option>
+              <option value="constraints">Strong constraints (count)</option>
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Priority set for
+            </span>
+            <Input
+              value={priorityPeriod}
+              onChange={(e) => setPriorityPeriod(e.target.value)}
+              className="h-7 w-24 bg-card text-[11px]"
+              aria-label="Priority period"
+            />
+          </label>
+        </div>
+      )}
+
+      {/* Readout on its own row */}
+      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+        <span>
+          <span className="font-mono tabular-nums text-foreground">{rows.length}</span>
+          {rows.length !== data.length && (
+            <>
+              {" of "}
+              <span className="font-mono tabular-nums">{data.length}</span>
+            </>
+          )}{" "}
+          materials
+        </span>
+        <span className="text-border">·</span>
+        <span>
+          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in {priorityPeriod} priority
+          set
+        </span>
+        {activePreset && (
           <>
-            <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
-            <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
-            <label className="flex items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Size
-              </span>
-              <select
-                value={sizeId}
-                onChange={(e) => setSizeId(e.target.value as SizeVarId)}
-                className="h-7 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-                aria-label="Size"
-              >
-                <option value="drivers">Strong drivers (count)</option>
-                <option value="constraints">Strong constraints (count)</option>
-              </select>
-            </label>
+            <span className="text-border">·</span>
+            <span>{activePreset.reading}</span>
           </>
         )}
-
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Priority set for
-          </span>
-          <Input
-            value={priorityPeriod}
-            onChange={(e) => setPriorityPeriod(e.target.value)}
-            className="h-7 w-28 text-[11px]"
-            aria-label="Priority period"
-          />
-          <span className="text-[11px] text-muted-foreground">
-            <span className="font-mono tabular-nums">{prioritySetCount}</span> materials in {priorityPeriod} priority
-            set
-          </span>
-        </div>
-
-        <button
-          type="button"
-          aria-pressed={prioritySetOnly}
-          onClick={() => setPrioritySetOnly((v) => !v)}
-          className={cn(
-            "rounded-sm border px-2 py-0.5 text-[11px] font-medium transition-colors",
-            prioritySetOnly
-              ? "border-primary/40 bg-primary/10 text-primary"
-              : "border-border text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Priority set only
-        </button>
-
-        <span className="text-[11px] text-muted-foreground">
-          Showing <span className="font-mono tabular-nums">{rows.length}</span> of{" "}
-          <span className="font-mono tabular-nums">{data.length}</span> materials
-        </span>
       </div>
 
       <FilterChips />
+
 
       {/* Selection bar */}
       {picked.size > 0 && (
