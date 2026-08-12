@@ -27,10 +27,15 @@ export type FilterKey =
 /**
  * The register's filter controls. Shared scope: any view mounting this filters the
  * same set. `include` narrows which controls a screen offers without changing the
- * shared filter state.
+ * shared filter state. `variant="popover"` folds them all behind one button.
  */
-const FilterSelects: React.FC<{ className?: string; include?: FilterKey[] }> = ({ className, include }) => {
+const FilterSelects: React.FC<{
+  className?: string;
+  include?: FilterKey[];
+  variant?: "inline" | "popover";
+}> = ({ className, include, variant = "inline" }) => {
   const { data, filters, setFilters } = useRegister();
+
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
