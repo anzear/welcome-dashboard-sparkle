@@ -526,12 +526,6 @@ const DriverScoring: React.FC = () => {
         </span>
       </div>
 
-      <ScoreBulkDialog
-        open={bulk !== null}
-        kind={bulk ?? "set"}
-        ids={[...selected]}
-        onOpenChange={(v) => setBulk(v ? bulk : null)}
-      />
       <QuestionSetDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </div>
   );
