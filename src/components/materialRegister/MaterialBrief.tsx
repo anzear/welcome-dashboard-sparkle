@@ -1109,11 +1109,9 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Right column */}
         <div className="space-y-4 self-start">
-          <div className="-mx-3 rounded-md bg-primary/5 px-3 py-3">
-            <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
-              <BriefDriverScores materialId={m.material_id} />
-            </Section>
-          </div>
+          <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
+            <BriefDriverScores materialId={m.material_id} />
+          </Section>
 
           <Section
             title="Position"
