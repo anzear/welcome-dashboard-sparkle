@@ -630,31 +630,6 @@ export const MaterialBrief: React.FC = () => {
                 >
                   <ArrowLeft className="h-3.5 w-3.5" /> Back
                 </Button>
-                {index >= 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <button
-                      type="button"
-                      disabled={index <= 0}
-                      onClick={() => openBrief(visible[index - 1].m.material_id)}
-                      className="rounded-sm border border-border p-0.5 disabled:opacity-40"
-                      aria-label="Previous material"
-                    >
-                      <ChevronLeft className="h-3 w-3" />
-                    </button>
-                    <button
-                      type="button"
-                      disabled={index >= visible.length - 1}
-                      onClick={() => openBrief(visible[index + 1].m.material_id)}
-                      className="rounded-sm border border-border p-0.5 disabled:opacity-40"
-                      aria-label="Next material"
-                    >
-                      <ChevronRight className="h-3 w-3" />
-                    </button>
-                    <span className="font-mono tabular-nums">
-                      {index + 1} of {visible.length}
-                    </span>
-                  </span>
-                )}
               </div>
             )}
 
