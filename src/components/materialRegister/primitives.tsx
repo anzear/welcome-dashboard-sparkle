@@ -90,11 +90,11 @@ export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> 
     )}
     title={entered ? "entered judgement" : undefined}
   >
-    <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT_STYLES[status])} />
     {entered && <span className="text-muted-foreground/70">^</span>}
     {JOURNEY_STATUS_LABEL[status]}
   </span>
 );
+
 
 
 const fmtDate = (d: string | null) => {
