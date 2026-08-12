@@ -213,61 +213,47 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Control band — one tint, one hairline beneath */}
-      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">Ranked by</span>
-            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-              {MEASURES.map((mm) => (
-                <button
-                  key={mm.id}
-                  type="button"
-                  aria-pressed={measureId === mm.id}
-                  onClick={() => setMeasureId(mm.id)}
-                  className={cn(
-                    "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-                    measureId === mm.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {mm.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Toolbar — one quiet row, no tint */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
+        <Input
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          placeholder="Search name, CAS, customer ID"
+          className="h-7 w-56 bg-card text-[11px]"
+        />
+        <FilterSelects variant="popover" />
 
-          <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
-            <span>
-              Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
-              <span className="font-mono tabular-nums">{filteredTotal}</span>
-              {filtersActive ? " filtered" : ""}
-            </span>
-            {missingCount > 0 && (
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">Ranked by</span>
+          <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
+            {MEASURES.map((mm) => (
               <button
+                key={mm.id}
                 type="button"
-                onClick={() => setOnlyUnranked((v) => !v)}
-                className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                aria-pressed={measureId === mm.id}
+                onClick={() => setMeasureId(mm.id)}
+                className={cn(
+                  "rounded-[4px] px-2 py-1 text-[11px] font-medium transition-colors",
+                  measureId === mm.id
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
-                {onlyUnranked ? "Show all" : `${missingCount} missing`}
+                {mm.label}
               </button>
-            )}
+            ))}
           </div>
-
-
-
 
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 <SlidersHorizontal className="h-3 w-3" /> Columns
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
+            <PopoverContent align="end" className="max-h-[70vh] w-60 overflow-y-auto p-2">
               <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
                 Optional columns
               </div>
@@ -289,23 +275,28 @@ export const MaterialRegisterTable: React.FC = () => {
               ))}
             </PopoverContent>
           </Popover>
-
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={filters.search}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-            placeholder="Search name, CAS, customer ID"
-            className="h-7 w-56 bg-background text-[11px]"
-          />
-          <FilterSelects className="ml-auto" />
-        </div>
-
-        <FilterChips />
-
-
       </div>
+
+      {/* Caption — coverage readout and any active filters */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-1.5 text-[11px] text-muted-foreground">
+        <span>
+          Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
+          <span className="font-mono tabular-nums">{filteredTotal}</span>
+          {filtersActive ? " filtered" : ""}
+        </span>
+        {missingCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setOnlyUnranked((v) => !v)}
+            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {onlyUnranked ? "Show all" : `${missingCount} missing`}
+          </button>
+        )}
+        <FilterChips />
+      </div>
+
 
 
       {/* Selection bar */}
