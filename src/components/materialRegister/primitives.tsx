@@ -71,7 +71,9 @@ export const STATUS_STYLES: Record<JourneyStatus, string> = {
   rejected: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
 };
 
+export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (
   <span
+
     className={cn(
       "inline-flex items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-medium",
       STATUS_STYLES[status],
