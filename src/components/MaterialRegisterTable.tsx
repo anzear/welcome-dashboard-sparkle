@@ -230,34 +230,6 @@ export const MaterialRegisterTable: React.FC = () => {
               type="button"
               className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              Rank: <span className="text-foreground">{MEASURES.find((m) => m.id === measureId)?.label}</span>
-              <ChevronDown className="h-3 w-3" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-44 p-1">
-            {MEASURES.map((mm) => (
-              <button
-                key={mm.id}
-                type="button"
-                onClick={() => setMeasureId(mm.id)}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[11px] hover:bg-muted",
-                  measureId === mm.id ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {mm.label}
-                {measureId === mm.id && <Check className="h-3 w-3" />}
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
               <SlidersHorizontal className="h-3 w-3" /> Columns
             </button>
           </PopoverTrigger>
