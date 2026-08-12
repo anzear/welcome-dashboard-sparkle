@@ -172,7 +172,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
   /** The active measure is marked once per column: header accent plus a faint tint. */
-  const colTint = (id: MeasureId) => (activeCol(id) ? "bg-primary/[0.05]" : undefined);
+  const colTint = (_id: MeasureId) => undefined as string | undefined;
 
   // Always present: checkbox and Material. Everything else is switchable.
   const colCount = 2;
@@ -376,7 +376,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div className="overflow-x-auto rounded-md border border-border bg-card">
         <table className="w-full min-w-[1500px] border-collapse text-xs">
 
           <thead>
@@ -492,7 +492,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   >
 
                     <td
-                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-middle group-hover:bg-muted/30")}
+                      className={cn(STICK, "left-0 z-10 bg-card px-2 py-2 align-middle group-hover:bg-muted/30")}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
@@ -516,7 +516,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       className={cn(
                         STICK,
                         materialLeft,
-                        "z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        "z-10 border-r border-border bg-card px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <div
