@@ -284,6 +284,21 @@ const DriverScoring: React.FC = () => {
         </div>
       )}
 
+      <ScoreBulkPanel
+        open={bulk !== null && selected.size > 0}
+        kind={bulk ?? "set"}
+        ids={[...selected]}
+        onRemoveMaterial={(id) =>
+          setSelected((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          })
+        }
+        onOpenChange={(v) => setBulk(v ? bulk : null)}
+      />
+
+
       {toast && (
         <div className="flex items-center gap-3 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
           <span className="text-foreground">{toast.message}</span>
