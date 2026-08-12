@@ -25,7 +25,7 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, SlidersHorizontal, X, ChevronDown } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-b border-border/60 align-bottom";
+  "sticky top-0 z-10 bg-muted/30 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-b border-border/60 align-bottom";
 
 /** Pinned identity columns: they hold while the measures scroll. */
 const STICK = "sticky";
@@ -276,7 +276,7 @@ export const MaterialRegisterTable: React.FC = () => {
               type="button"
               onClick={() => setMeasureId("all")}
               className={cn(
-                "px-2.5 py-1 text-[11px] font-medium rounded-sm transition-colors",
+                "px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
                 measureId === "all"
                   ? "bg-foreground text-background shadow-sm"
                   : "text-muted-foreground hover:text-foreground",
@@ -290,7 +290,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 type="button"
                 onClick={() => setMeasureId(mm.id)}
                 className={cn(
-                  "px-2.5 py-1 text-[11px] font-medium rounded-sm transition-colors",
+                  "px-2.5 py-1 text-[11px] font-medium rounded-md transition-colors",
                   measureId === mm.id
                     ? "bg-foreground text-background shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -513,7 +513,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   <tr
                     onClick={() => openBrief(m.material_id)}
                     className={cn(
-                      "group h-[46px] cursor-pointer border-b border-border/40 last:border-0",
+                      "group h-[46px] cursor-pointer border-b border-border/40 transition-colors duration-150 last:border-0",
                       rank === null && "text-muted-foreground",
                       isSelected && "bg-muted/50",
                       highlightIds.has(m.material_id) && "bg-muted/70 ring-1 ring-inset ring-border",

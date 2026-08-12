@@ -386,7 +386,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
               aria-pressed={mode === v}
               onClick={() => setMode(v)}
               className={cn(
-                "rounded-sm px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
+                "rounded-md px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
                 mode === v ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
               )}
             >
@@ -488,7 +488,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
       ) : (
         <>
           {/* Plot */}
-          <div className="relative w-full rounded-md border border-border bg-card p-1">
+          <div className="relative w-full rounded-xl border border-border/70 bg-card p-1 shadow-sm">
             <svg
               ref={svgRef}
               viewBox={`0 0 ${W} ${H}`}
