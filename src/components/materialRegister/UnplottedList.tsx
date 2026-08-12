@@ -157,7 +157,7 @@ const UnplottedList: React.FC<{
   return (
     <section>
       <header className="flex flex-wrap items-baseline gap-x-3">
-        <h2 className="text-[13px] font-semibold text-foreground">
+        <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
           <span className="font-mono tabular-nums">{entries.length}</span> materials not plotted
         </h2>
         <p className="text-[10px] text-muted-foreground/70">
