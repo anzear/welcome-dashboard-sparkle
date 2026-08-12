@@ -205,10 +205,10 @@ const ScoreBulkPanel: React.FC<{
                 key={p}
                 type="button"
                 onClick={() => stage(p)}
-                aria-pressed={hasStagedHere && value === p}
+                aria-pressed={effectiveValue === p}
                 className={cn(
                   "h-7 w-8 rounded-[3px] border font-mono text-[11px] tabular-nums transition-colors",
-                  hasStagedHere && value === p
+                  effectiveValue === p
                     ? cn(scoreTone(p), "border-foreground/40 bg-muted font-semibold")
                     : "border-border bg-background text-muted-foreground/70 hover:bg-muted",
                 )}
@@ -219,10 +219,10 @@ const ScoreBulkPanel: React.FC<{
             <button
               type="button"
               onClick={() => stage(null)}
-              aria-pressed={hasStagedHere && value === null}
+              aria-pressed={hasStagedHere && staged[q?.question_id ?? ""] === null}
               className={cn(
                 "h-7 rounded-[3px] border px-2 text-[11px] font-medium transition-colors",
-                hasStagedHere && value === null
+                hasStagedHere && staged[q?.question_id ?? ""] === null
                   ? "border-destructive/50 bg-destructive/10 text-destructive"
                   : "border-border bg-background text-muted-foreground/70 hover:bg-muted hover:text-destructive",
               )}
