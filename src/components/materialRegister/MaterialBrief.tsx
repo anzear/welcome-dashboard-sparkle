@@ -870,97 +870,6 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Left column */}
         <div className="space-y-4 self-start">
-          <Section
-            title="Figures"
-            note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
-          >
-            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-              <GroupLabel first>Volume and cost</GroupLabel>
-              <EditableFigure
-                label="Annual volume (t/yr)"
-                value={m.annual_volume}
-                provenance={m.provenance.annual_volume}
-                placeholder="t/yr"
-                onSave={(raw) => saveFigure("annual_volume", raw)}
-              />
-              <EditableFigure
-                label="Unit price (EUR/kg)"
-                value={m.unit_price}
-                decimals={2}
-                provenance={m.provenance.unit_price}
-                placeholder="EUR/kg"
-                onSave={(raw) => saveFigure("unit_price", raw)}
-              />
-              <Figure
-                label="Annual spend (EUR)"
-                value={m.annual_spend}
-                provenance={m.provenance.annual_spend}
-                computedInputs="volume x price"
-              />
-
-              <GroupLabel>Emissions</GroupLabel>
-              <EditableFigure
-                label="GHG emission factor (kgCO2e/kg)"
-                value={m.ghg_emission_factor}
-                decimals={2}
-                provenance={m.provenance.ghg_emission_factor}
-                placeholder="kgCO2e/kg"
-                onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
-              />
-              <Figure
-                label="GHG contribution (tCO2e/yr)"
-                value={m.ghg_contribution}
-                provenance={m.provenance.ghg_contribution}
-                computedInputs="volume x emission factor"
-              />
-              <EditableFigure
-                label="GHG boundary"
-                value={m.ghg_boundary}
-                provenance={m.provenance.ghg_boundary}
-                placeholder="e.g. Cradle-to-gate (A1-A3)"
-                onSave={(raw) => saveText("ghg_boundary", raw)}
-              />
-              <EditableFigure
-                label="GHG data basis"
-                value={m.ghg_data_basis}
-                provenance={m.provenance.ghg_data_basis}
-                placeholder="e.g. Supplier-specific"
-                onSave={(raw) => saveText("ghg_data_basis", raw)}
-              />
-
-              <GroupLabel>Supply</GroupLabel>
-              <EditableFigure
-                label="Suppliers"
-                value={m.supplier_count}
-                provenance={m.provenance.supplier_count}
-                placeholder="count"
-                onSave={(raw) => saveFigure("supplier_count", raw)}
-              />
-              <EditableFigure
-                wide
-                label="Supplier countries"
-                value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
-                provenance={m.provenance.supplier_countries}
-                placeholder="DE, FI, CN"
-                onSave={(raw) => {
-                  const next = raw
-                    .split(",")
-                    .map((x) => x.trim().toUpperCase())
-                    .filter(Boolean);
-                  updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
-                    {
-                      material_id: m.material_id,
-                      event_type: "field_correction",
-                      field: "supplier_countries",
-                      from_value: m.supplier_countries.join(", ") || null,
-                      to_value: next.join(", ") || null,
-                    },
-                  ]);
-                }}
-              />
-            </div>
-          </Section>
-
           <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
             <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <DerivedField
@@ -1095,6 +1004,97 @@ export const MaterialBrief: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          </Section>
+
+          <Section
+            title="Figures"
+            note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
+          >
+            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+              <GroupLabel first>Volume and cost</GroupLabel>
+              <EditableFigure
+                label="Annual volume (t/yr)"
+                value={m.annual_volume}
+                provenance={m.provenance.annual_volume}
+                placeholder="t/yr"
+                onSave={(raw) => saveFigure("annual_volume", raw)}
+              />
+              <EditableFigure
+                label="Unit price (EUR/kg)"
+                value={m.unit_price}
+                decimals={2}
+                provenance={m.provenance.unit_price}
+                placeholder="EUR/kg"
+                onSave={(raw) => saveFigure("unit_price", raw)}
+              />
+              <Figure
+                label="Annual spend (EUR)"
+                value={m.annual_spend}
+                provenance={m.provenance.annual_spend}
+                computedInputs="volume x price"
+              />
+
+              <GroupLabel>Emissions</GroupLabel>
+              <EditableFigure
+                label="GHG emission factor (kgCO2e/kg)"
+                value={m.ghg_emission_factor}
+                decimals={2}
+                provenance={m.provenance.ghg_emission_factor}
+                placeholder="kgCO2e/kg"
+                onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
+              />
+              <Figure
+                label="GHG contribution (tCO2e/yr)"
+                value={m.ghg_contribution}
+                provenance={m.provenance.ghg_contribution}
+                computedInputs="volume x emission factor"
+              />
+              <EditableFigure
+                label="GHG boundary"
+                value={m.ghg_boundary}
+                provenance={m.provenance.ghg_boundary}
+                placeholder="e.g. Cradle-to-gate (A1-A3)"
+                onSave={(raw) => saveText("ghg_boundary", raw)}
+              />
+              <EditableFigure
+                label="GHG data basis"
+                value={m.ghg_data_basis}
+                provenance={m.provenance.ghg_data_basis}
+                placeholder="e.g. Supplier-specific"
+                onSave={(raw) => saveText("ghg_data_basis", raw)}
+              />
+
+              <GroupLabel>Supply</GroupLabel>
+              <EditableFigure
+                label="Suppliers"
+                value={m.supplier_count}
+                provenance={m.provenance.supplier_count}
+                placeholder="count"
+                onSave={(raw) => saveFigure("supplier_count", raw)}
+              />
+              <EditableFigure
+                wide
+                label="Supplier countries"
+                value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
+                provenance={m.provenance.supplier_countries}
+                placeholder="DE, FI, CN"
+                onSave={(raw) => {
+                  const next = raw
+                    .split(",")
+                    .map((x) => x.trim().toUpperCase())
+                    .filter(Boolean);
+                  updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
+                    {
+                      material_id: m.material_id,
+                      event_type: "field_correction",
+                      field: "supplier_countries",
+                      from_value: m.supplier_countries.join(", ") || null,
+                      to_value: next.join(", ") || null,
+                    },
+                  ]);
+                }}
+              />
             </div>
           </Section>
 
