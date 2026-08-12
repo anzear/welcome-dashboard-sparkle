@@ -387,8 +387,9 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-md border border-border bg-card">
-        <table className="w-full min-w-[1500px] border-collapse text-xs">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+        <table className="w-full min-w-[1500px] border-collapse text-[12px]">
+
 
           <thead>
             <tr>
