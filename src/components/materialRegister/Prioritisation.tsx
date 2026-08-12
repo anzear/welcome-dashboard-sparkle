@@ -88,6 +88,8 @@ const AxisSelect: React.FC<{
 const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScoring }) => {
   const {
     setMeasureId,
+    filters,
+    setFilters,
     ordered,
     data,
     rankTables,
