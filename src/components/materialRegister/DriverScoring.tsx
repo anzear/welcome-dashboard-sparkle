@@ -6,7 +6,7 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
-import ScoreBulkPanel, { type ScoreBulkKind } from "@/components/materialRegister/ScoreBulkDialog";
+import ScoreBulkPanel from "@/components/materialRegister/ScoreBulkDialog";
 import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
@@ -50,7 +50,7 @@ const DriverScoring: React.FC = () => {
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [bulk, setBulk] = useState<ScoreBulkKind | null>(null);
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const negativeNext = useRef(false);
   const gridRef = useRef<HTMLTableSectionElement>(null);
@@ -262,17 +262,10 @@ const DriverScoring: React.FC = () => {
           </span>
           <button
             type="button"
-            onClick={() => setBulk("set")}
+            onClick={() => setBulkOpen(true)}
             className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
           >
             Set score
-          </button>
-          <button
-            type="button"
-            onClick={() => setBulk("clear")}
-            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
-          >
-            Clear score
           </button>
           <button
             type="button"
@@ -285,8 +278,7 @@ const DriverScoring: React.FC = () => {
       )}
 
       <ScoreBulkPanel
-        open={bulk !== null && selected.size > 0}
-        kind={bulk ?? "set"}
+        open={bulkOpen && selected.size > 0}
         ids={[...selected]}
         onRemoveMaterial={(id) =>
           setSelected((prev) => {
@@ -295,7 +287,7 @@ const DriverScoring: React.FC = () => {
             return next;
           })
         }
-        onOpenChange={(v) => setBulk(v ? bulk : null)}
+        onOpenChange={setBulkOpen}
       />
 
 
