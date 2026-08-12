@@ -357,14 +357,6 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
               </div>
 
               <div className="mt-2 space-y-1.5 border-t border-border pt-2">
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Priority set</div>
-                <Input
-                  value={priorityPeriod}
-                  onChange={(e) => setPriorityPeriod(e.target.value)}
-                  className="h-7 text-[11px]"
-                  aria-label="Priority period"
-                  placeholder="H2 2026"
-                />
                 <label className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 hover:bg-muted/60">
                   <Checkbox
                     checked={prioritySetOnly}
@@ -413,8 +405,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         )}
         <span className="text-border"> · </span>
         <span>
-          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in {priorityPeriod} priority
-          set
+          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in priority set
         </span>
         <span className="text-border"> · </span>
         <span>
