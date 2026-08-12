@@ -1,5 +1,8 @@
 import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
+import { ChevronDown, Filter } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
 import {
   JOURNEY_STATUS_LABEL,
   type EntryType,
