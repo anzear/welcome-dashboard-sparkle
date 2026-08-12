@@ -201,7 +201,7 @@ export const AXIS_PRESETS: AxisPreset[] = [
   {
     id: "spend-emissions",
     label: "Spend × Emissions",
-    reading: "where the two cases disagree",
+    reading: "spend against emissions impact",
     x: "spend",
     y: "emissions",
     size: "drivers",
