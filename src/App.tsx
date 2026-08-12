@@ -58,8 +58,20 @@ const HeaderBreadcrumb = () => {
   const location = useLocation();
   const navigate = useNavigate();
   
+  const materialPaths = ['/material-pipeline', '/material-inventory', '/material-prioritisation'];
+  if (materialPaths.includes(location.pathname)) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground ml-3">
+        <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Dashboard</button>
+        <ChevronRight className="w-3 h-3" />
+        <span className="text-foreground font-medium">Material Prioritisation</span>
+      </div>
+    );
+  }
+
   const match = location.pathname.match(/\/landscape\/([^/]+)\/([^/]+)/);
   if (!match) {
+
     // Show "Dashboard" on the home page
     if (location.pathname === '/') {
       return (
