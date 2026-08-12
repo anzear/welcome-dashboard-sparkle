@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { cn } from "@/lib/utils";
+
 import type { Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale } from "@/components/materialRegister/scorePrimitives";
