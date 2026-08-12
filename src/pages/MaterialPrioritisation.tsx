@@ -6,7 +6,9 @@ import DriverScoring from "@/components/materialRegister/DriverScoring";
 import Prioritisation from "@/components/materialRegister/Prioritisation";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 const TABS = [
   { id: "register", label: "Register" },
