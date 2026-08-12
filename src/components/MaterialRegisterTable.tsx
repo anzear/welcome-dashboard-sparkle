@@ -25,13 +25,14 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, SlidersHorizontal, X, ChevronDown, Check } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-card text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
+  "sticky top-0 z-10 bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-b border-border/60 align-bottom";
 
 /** Pinned identity columns: they hold while the measures scroll. */
-const STICK = "sticky bg-card";
+const STICK = "sticky";
 
 /** Units live in the header, second line, faintest tier. */
-const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-foreground/50";
+
 
 
 type OptionalColumn =
@@ -386,12 +387,13 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-md border border-border bg-card">
-        <table className="w-full min-w-[1500px] border-collapse text-xs">
+      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+        <table className="w-full min-w-[1500px] border-collapse text-[12px]">
+
 
           <thead>
             <tr>
-              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2")}>
+              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2.5")}>
                 <Checkbox
                   checked={headerChecked}
                   onCheckedChange={toggleAllVisible}
@@ -400,50 +402,50 @@ export const MaterialRegisterTable: React.FC = () => {
                 />
               </th>
               {cols.rank && (
-                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2.5 text-right text-foreground/80")}>#</th>
               )}
               <th
                 className={cn(
                   HEAD,
                   STICK,
                   materialLeft,
-                  "z-30 w-56 border-r border-border px-3 py-2 text-left",
+                  "z-30 w-56 border-r border-border px-3 py-2.5 text-left",
                 )}
               >
                 Material
               </th>
 
-              {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
+              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material type</th>}
               {cols.materialCategory && (
-                <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
+                <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
               )}
               {cols.volume && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
                   Volume
                   <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
                 </th>
               )}
               {cols.spend && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
                   Spend
                   <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
                 </th>
               )}
               {cols.emissions && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
                   GHG contribution
                   <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
                 </th>
               )}
-              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
+              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2.5 text-right")}>Suppliers</th>}
               {cols.applications && (
-                <th className={cn(HEAD, "px-3 py-2 text-left", emphHead("applications"))}>Applications</th>
+                <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
               )}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
-              {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
-              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>}
+              {cols.priority && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>}
+              {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
+              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
+              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
             </tr>
           </thead>
@@ -543,12 +545,12 @@ export const MaterialRegisterTable: React.FC = () => {
                     </td>
 
                     {cols.materialType && (
-                      <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
+                      <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
                         {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
                       </td>
                     )}
                     {cols.materialCategory && (
-                      <td className="px-3 py-2 align-middle text-[11px]">
+                      <td className="px-3 py-2 align-middle text-[12px]">
                         {m.material_class ? (
                           <span className="text-muted-foreground">{m.material_class}</span>
                         ) : (
@@ -604,7 +606,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     {cols.priority && (
                       <td className="px-3 py-2 align-middle">
                         {m.priority_period ? (
-                          <span className="text-[11px] text-foreground">{m.priority_period}</span>
+                          <span className="text-[12px] text-foreground">{m.priority_period}</span>
                         ) : (
                           <Missing />
                         )}
@@ -614,7 +616,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
                     {cols.intelligence && (
                       <td className="px-3 py-2 align-middle">
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[12px] text-muted-foreground">
                           {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
                         </span>
                       </td>
