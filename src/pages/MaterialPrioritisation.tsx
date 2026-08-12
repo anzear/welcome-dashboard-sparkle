@@ -60,14 +60,14 @@ const Inner: React.FC = () => {
         </header>
 
         <div className="flex items-center gap-3">
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+          <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1">
             {TABS.map((t) => (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  "rounded-md px-3 py-1 text-[11px] font-medium transition-colors",
                   tab === t.id ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
                 )}
               >
