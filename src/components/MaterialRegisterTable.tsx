@@ -25,13 +25,14 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
+  "sticky top-0 z-10 bg-card text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
 
 /** Pinned identity columns: they hold while the measures scroll. */
-const STICK = "sticky bg-muted/60";
+const STICK = "sticky bg-card";
 
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+
 
 type OptionalColumn =
   | "rank"
