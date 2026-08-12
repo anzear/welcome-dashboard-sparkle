@@ -106,7 +106,7 @@ const FilterSelects: React.FC<{
           <button
             type="button"
             className={cn(
-              "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+              "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-medium transition-colors",
               activeCount > 0
                 ? "border-primary/40 bg-primary/5 text-foreground"
                 : "border-border bg-card text-muted-foreground hover:text-foreground",

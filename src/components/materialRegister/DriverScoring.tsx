@@ -192,7 +192,7 @@ const DriverScoring: React.FC = () => {
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
           placeholder="Search name, CAS, customer ID"
-          className="h-7 w-60 bg-card text-[11px]"
+          className="h-7 w-60 rounded-lg bg-card text-[11px]"
         />
         <FilterSelects
           variant="popover"
@@ -203,13 +203,13 @@ const DriverScoring: React.FC = () => {
           <button
             type="button"
             onClick={() => setEditorOpen(true)}
-            className="ml-auto inline-flex h-7 items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="ml-auto inline-flex h-7 items-center rounded-lg border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Edit question set
           </button>
         ) : (
           <span
-            className="ml-auto inline-flex h-7 cursor-default items-center rounded-md border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground/60"
+            className="ml-auto inline-flex h-7 cursor-default items-center rounded-lg border border-border bg-card px-2.5 text-[11px] font-medium text-muted-foreground/60"
             title="Managed by your workspace administrator"
           >
             Edit question set
@@ -301,7 +301,7 @@ const DriverScoring: React.FC = () => {
       )}
 
       {/* The matrix is the only entry surface */}
-      <div className="relative overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+      <div className="relative overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
         <table className="w-full border-separate border-spacing-0 text-[11px]">
           <thead className="sticky top-0 z-20">
             <tr>

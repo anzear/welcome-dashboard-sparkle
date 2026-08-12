@@ -220,7 +220,7 @@ export const MaterialRegisterTable: React.FC = () => {
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
           placeholder="Search name, CAS, customer ID"
-          className="h-7 w-60 bg-card text-[11px]"
+          className="h-7 w-60 rounded-lg bg-card text-[11px]"
         />
         <FilterSelects variant="popover" />
 
@@ -229,7 +229,7 @@ export const MaterialRegisterTable: React.FC = () => {
             <button
               type="button"
               className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-medium transition-colors",
                 extraCols < OPTIONAL_COLUMNS.length
                   ? "border-primary/40 bg-primary/5 text-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -271,7 +271,7 @@ export const MaterialRegisterTable: React.FC = () => {
         {/* Rank by — dark pill toggle, right-aligned */}
         <div className="ml-auto flex items-center gap-2">
           <span className="text-[11px] font-medium text-muted-foreground">Rank by</span>
-          <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+          <div className="flex items-center gap-1 rounded-lg bg-muted p-1">
             <button
               type="button"
               onClick={() => setMeasureId("all")}
@@ -405,7 +405,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
         <table className="w-full min-w-[1500px] border-collapse text-[12px]">
 
 

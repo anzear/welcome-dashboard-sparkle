@@ -291,7 +291,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
           placeholder="Search name, CAS, customer ID"
-          className="h-7 w-60 bg-card text-[11px]"
+          className="h-7 w-60 rounded-lg bg-card text-[11px]"
         />
         <FilterSelects variant="popover" />
 
@@ -301,7 +301,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
               <button
                 type="button"
                 className={cn(
-                  "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                  "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-medium transition-colors",
                   activePreset
                     ? "border-border bg-card text-muted-foreground hover:text-foreground"
                     : "border-primary/40 bg-primary/5 text-foreground",
@@ -378,7 +378,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
           </Popover>
         )}
 
-        <div className="ml-auto flex items-center gap-1 rounded-md bg-muted p-0.5">
+        <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-1">
           {(["chart", "list"] as const).map((v) => (
             <button
               key={v}
