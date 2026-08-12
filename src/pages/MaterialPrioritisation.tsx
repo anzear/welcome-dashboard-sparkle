@@ -67,16 +67,17 @@ const Inner: React.FC = () => {
             <Plus className="h-3 w-3" /> Add material
           </button>
         )}
+        </div>
+        <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
+        {tab === "register" && <MaterialRegisterTable />}
+        {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
+        {tab === "scoring" && <DriverScoring />}
       </div>
-      <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
-
-
-      {tab === "register" && <MaterialRegisterTable />}
-      {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
-      {tab === "scoring" && <DriverScoring />}
     </div>
   );
 };
+
 
 const MaterialPrioritisation: React.FC = () => (
   <RegisterProvider>
