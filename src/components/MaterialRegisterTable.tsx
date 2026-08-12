@@ -506,7 +506,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       <td
                         className={cn(
                           STICK,
-                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                          "left-8 z-10 bg-card px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
                         )}
                       >
                         {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
