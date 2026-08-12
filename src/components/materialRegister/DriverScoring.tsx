@@ -6,7 +6,7 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
-import ScoreBulkDialog, { type ScoreBulkKind } from "@/components/materialRegister/ScoreBulkDialog";
+import ScoreBulkPanel, { type ScoreBulkKind } from "@/components/materialRegister/ScoreBulkDialog";
 import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
@@ -284,6 +284,21 @@ const DriverScoring: React.FC = () => {
         </div>
       )}
 
+      <ScoreBulkPanel
+        open={bulk !== null && selected.size > 0}
+        kind={bulk ?? "set"}
+        ids={[...selected]}
+        onRemoveMaterial={(id) =>
+          setSelected((prev) => {
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+          })
+        }
+        onOpenChange={(v) => setBulk(v ? bulk : null)}
+      />
+
+
       {toast && (
         <div className="flex items-center gap-3 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
           <span className="text-foreground">{toast.message}</span>
@@ -511,12 +526,6 @@ const DriverScoring: React.FC = () => {
         </span>
       </div>
 
-      <ScoreBulkDialog
-        open={bulk !== null}
-        kind={bulk ?? "set"}
-        ids={[...selected]}
-        onOpenChange={(v) => setBulk(v ? bulk : null)}
-      />
       <QuestionSetDialog open={editorOpen} onOpenChange={setEditorOpen} />
     </div>
   );
