@@ -171,11 +171,12 @@ const UnplottedList: React.FC<{
         <span className="text-muted-foreground/70"> · Highest exposure first.</span>
       </p>
 
-      <ul className={cn("mt-3 flex flex-wrap gap-4")}>
+      <ul className="mt-3 divide-y divide-border/60 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
         {visible.map((e) => (
-          <GapCard key={e.m.material_id} entry={e} onSaved={onSaved} />
+          <GapRow key={e.m.material_id} entry={e} onSaved={onSaved} />
         ))}
       </ul>
+
 
       {rest > 0 && (
         <button
