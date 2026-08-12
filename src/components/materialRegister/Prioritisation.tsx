@@ -487,284 +487,302 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         />
       ) : (
         <>
-          {/* Plot */}
-          <div className="relative w-full rounded-xl border border-border/70 bg-card p-1 shadow-sm">
-            <svg
-              ref={svgRef}
-              viewBox={`0 0 ${W} ${H}`}
-              className="w-full select-none"
-              onMouseMove={moveLasso}
-              onMouseUp={endLasso}
-              onMouseLeave={() => {
-                setLasso(null);
-                setHover(null);
-              }}
-            >
-              <rect
-                x={PAD.l}
-                y={PAD.t}
-                width={PW}
-                height={PH}
-                fill="transparent"
-                onMouseDown={startLasso}
-                className="cursor-crosshair"
-              />
+          {/* Plot + legend side by side */}
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px]">
+            <div className="relative rounded-xl border border-border/70 bg-card p-1 shadow-sm">
+              <svg
+                ref={svgRef}
+                viewBox={`0 0 ${W} ${H}`}
+                className="w-full select-none"
+                onMouseMove={moveLasso}
+                onMouseUp={endLasso}
+                onMouseLeave={() => {
+                  setLasso(null);
+                  setHover(null);
+                }}
+              >
+                <rect
+                  x={PAD.l}
+                  y={PAD.t}
+                  width={PW}
+                  height={PH}
+                  fill="transparent"
+                  onMouseDown={startLasso}
+                  className="cursor-crosshair"
+                />
 
-              {/* frame */}
-              <line x1={PAD.l} y1={PAD.t + PH} x2={PAD.l + PW} y2={PAD.t + PH} stroke="hsl(var(--border))" />
-              <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + PH} stroke="hsl(var(--border))" />
+                {/* frame */}
+                <line x1={PAD.l} y1={PAD.t + PH} x2={PAD.l + PW} y2={PAD.t + PH} stroke="hsl(var(--border))" />
+                <line x1={PAD.l} y1={PAD.t} x2={PAD.l} y2={PAD.t + PH} stroke="hsl(var(--border))" />
 
-              {/* y ticks */}
-              {yScale.ticks.map((t, i) => {
-                const labelled = labelTick(t, yScale, yv.kind === "judgement");
-                return (
-                  <g key={i}>
-                    <line
-                      x1={PAD.l - 4}
-                      y1={sy(t)}
-                      x2={PAD.l + PW}
-                      y2={sy(t)}
-                      stroke="hsl(var(--border))"
-                      strokeOpacity={labelled ? 0.5 : 0.2}
-                    />
-                    {labelled && (
+                {/* y ticks */}
+                {yScale.ticks.map((t, i) => {
+                  const labelled = labelTick(t, yScale, yv.kind === "judgement");
+                  return (
+                    <g key={i}>
+                      <line
+                        x1={PAD.l - 4}
+                        y1={sy(t)}
+                        x2={PAD.l + PW}
+                        y2={sy(t)}
+                        stroke="hsl(var(--border))"
+                        strokeOpacity={labelled ? 0.5 : 0.2}
+                      />
+                      {labelled && (
+                        <text
+                          x={PAD.l - 8}
+                          y={sy(t) + 3}
+                          textAnchor="end"
+                          className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                        >
+                          {yv.domain && yv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, yScale.step)}
+                        </text>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* x ticks */}
+                {xScale.ticks.map((t, i) => {
+                  const labelled = labelTick(t, xScale, xv.kind === "judgement");
+                  if (!labelled) return null;
+                  return (
+                    <g key={i}>
+                      <line x1={sx(t)} y1={PAD.t + PH} x2={sx(t)} y2={PAD.t + PH + 4} stroke="hsl(var(--border))" />
                       <text
-                        x={PAD.l - 8}
-                        y={sy(t) + 3}
-                        textAnchor="end"
+                        x={sx(t)}
+                        y={PAD.t + PH + 15}
+                        textAnchor="middle"
                         className="fill-muted-foreground font-mono text-[9px] tabular-nums"
                       >
-                        {yv.domain && yv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, yScale.step)}
+                        {xv.domain && xv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, xScale.step)}
                       </text>
-                    )}
-                  </g>
-                );
-              })}
+                    </g>
+                  );
+                })}
 
-              {/* x ticks */}
-              {xScale.ticks.map((t, i) => {
-                const labelled = labelTick(t, xScale, xv.kind === "judgement");
-                if (!labelled) return null;
-                return (
-                  <g key={i}>
-                    <line x1={sx(t)} y1={PAD.t + PH} x2={sx(t)} y2={PAD.t + PH + 4} stroke="hsl(var(--border))" />
-                    <text
-                      x={sx(t)}
-                      y={PAD.t + PH + 15}
-                      textAnchor="middle"
-                      className="fill-muted-foreground font-mono text-[9px] tabular-nums"
-                    >
-                      {xv.domain && xv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, xScale.step)}
+                {/* zero line on a driver axis — a recorded neutral judgement is a position */}
+                {yv.domain && yv.domain.min < 0 && (
+                  <g>
+                    <line
+                      x1={PAD.l}
+                      y1={sy(0)}
+                      x2={PAD.l + PW}
+                      y2={sy(0)}
+                      stroke="hsl(var(--foreground))"
+                      strokeOpacity={0.35}
+                    />
+                    <text x={PAD.l + PW - 2} y={sy(0) - 4} textAnchor="end" className="fill-muted-foreground text-[9px]">
+                      0 — neutral judgement
                     </text>
                   </g>
-                );
-              })}
+                )}
+                {xv.domain && xv.domain.min < 0 && (
+                  <g>
+                    <line
+                      x1={sx(0)}
+                      y1={PAD.t}
+                      x2={sx(0)}
+                      y2={PAD.t + PH}
+                      stroke="hsl(var(--foreground))"
+                      strokeOpacity={0.35}
+                    />
+                    <text
+                      x={sx(0) + 3}
+                      y={PAD.t + 9}
+                      className="fill-muted-foreground text-[9px]"
+                    >
+                      0 — neutral judgement
+                    </text>
+                  </g>
+                )}
 
-              {/* zero line on a driver axis — a recorded neutral judgement is a position */}
-              {yv.domain && yv.domain.min < 0 && (
-                <g>
+                {/* median splits on measured axes only */}
+                {xMedian !== null && (
+                  <line
+                    x1={sx(xMedian)}
+                    y1={PAD.t}
+                    x2={sx(xMedian)}
+                    y2={PAD.t + PH}
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeOpacity={0.35}
+                    strokeDasharray="3 3"
+                  />
+                )}
+                {yMedian !== null && (
                   <line
                     x1={PAD.l}
-                    y1={sy(0)}
+                    y1={sy(yMedian)}
                     x2={PAD.l + PW}
-                    y2={sy(0)}
-                    stroke="hsl(var(--foreground))"
+                    y2={sy(yMedian)}
+                    stroke="hsl(var(--muted-foreground))"
                     strokeOpacity={0.35}
+                    strokeDasharray="3 3"
                   />
-                  <text x={PAD.l + PW - 2} y={sy(0) - 4} textAnchor="end" className="fill-muted-foreground text-[9px]">
-                    0 — neutral judgement
-                  </text>
-                </g>
-              )}
-              {xv.domain && xv.domain.min < 0 && (
-                <g>
-                  <line
-                    x1={sx(0)}
-                    y1={PAD.t}
-                    x2={sx(0)}
-                    y2={PAD.t + PH}
-                    stroke="hsl(var(--foreground))"
-                    strokeOpacity={0.35}
-                  />
-                  <text
-                    x={sx(0) + 3}
-                    y={PAD.t + 9}
-                    className="fill-muted-foreground text-[9px]"
-                  >
-                    0 — neutral judgement
-                  </text>
-                </g>
-              )}
+                )}
 
-              {/* median splits on measured axes only */}
-              {xMedian !== null && (
-                <line
-                  x1={sx(xMedian)}
-                  y1={PAD.t}
-                  x2={sx(xMedian)}
-                  y2={PAD.t + PH}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.35}
-                  strokeDasharray="3 3"
-                />
-              )}
-              {yMedian !== null && (
-                <line
-                  x1={PAD.l}
-                  y1={sy(yMedian)}
-                  x2={PAD.l + PW}
-                  y2={sy(yMedian)}
-                  stroke="hsl(var(--muted-foreground))"
-                  strokeOpacity={0.35}
-                  strokeDasharray="3 3"
-                />
-              )}
+                {/* corner readings — orientation only, kept out of the way of the dots */}
+                <text x={PAD.l + PW - 4} y={PAD.t + 10} textAnchor="end" className="fill-muted-foreground/45 text-[9px]">
+                  {readings.topRight}
+                </text>
+                <text x={PAD.l + 4} y={PAD.t + 10} className="fill-muted-foreground/45 text-[9px]">
+                  {readings.topLeft}
+                </text>
+                <text
+                  x={PAD.l + PW - 4}
+                  y={PAD.t + PH - 4}
+                  textAnchor="end"
+                  className="fill-muted-foreground/45 text-[9px]"
+                >
+                  {readings.bottomRight}
+                </text>
+                <text x={PAD.l + 4} y={PAD.t + PH - 4} className="fill-muted-foreground/45 text-[9px]">
+                  {readings.bottomLeft}
+                </text>
 
-              {/* corner readings — orientation only, kept out of the way of the dots */}
-              <text x={PAD.l + PW - 4} y={PAD.t + 10} textAnchor="end" className="fill-muted-foreground/45 text-[9px]">
-                {readings.topRight}
-              </text>
-              <text x={PAD.l + 4} y={PAD.t + 10} className="fill-muted-foreground/45 text-[9px]">
-                {readings.topLeft}
-              </text>
-              <text
-                x={PAD.l + PW - 4}
-                y={PAD.t + PH - 4}
-                textAnchor="end"
-                className="fill-muted-foreground/45 text-[9px]"
-              >
-                {readings.bottomRight}
-              </text>
-              <text x={PAD.l + 4} y={PAD.t + PH - 4} className="fill-muted-foreground/45 text-[9px]">
-                {readings.bottomLeft}
-              </text>
+                {/* axis titles */}
+                <text
+                  x={PAD.l + PW / 2}
+                  y={H - 12}
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+                >
+                  {axisTitle(xv)}
+                </text>
+                <text
+                  transform={`translate(14 ${PAD.t + PH / 2}) rotate(-90)`}
+                  textAnchor="middle"
+                  className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+                >
+                  {axisTitle(yv)}
+                </text>
 
-              {/* axis titles */}
-              <text
-                x={PAD.l + PW / 2}
-                y={H - 12}
-                textAnchor="middle"
-                className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
-              >
-                {axisTitle(xv)}
-              </text>
-              <text
-                transform={`translate(14 ${PAD.t + PH / 2}) rotate(-90)`}
-                textAnchor="middle"
-                className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
-              >
-                {axisTitle(yv)}
-              </text>
-
-              {/* dots */}
-              {dots.map((d) => {
-                const isPicked = picked.has(d.m.material_id);
-                const enter = () => {
-                  const rect = svgRef.current!.getBoundingClientRect();
-                  setHover({ dot: d, left: (d.cx / W) * rect.width, top: (d.cy / H) * rect.height });
-                };
-                const click = (e: React.MouseEvent) => {
-                  if (e.shiftKey) {
-                    setPicked((prev) => {
-                      const next = new Set(prev);
-                      next.has(d.m.material_id) ? next.delete(d.m.material_id) : next.add(d.m.material_id);
-                      return next;
-                    });
-                    return;
-                  }
-                  openBrief(d.m.material_id);
-                };
-                return (
-                  <g
-                    key={d.m.material_id}
-                    className={cn(justPlotted.has(d.m.material_id) && "animate-value-pop")}
-                    style={{ transformOrigin: `${d.cx}px ${d.cy}px` }}
-                  >
-                    {inPrioritySet(d.m) && (
+                {/* dots */}
+                {dots.map((d) => {
+                  const isPicked = picked.has(d.m.material_id);
+                  const enter = () => {
+                    const rect = svgRef.current!.getBoundingClientRect();
+                    setHover({ dot: d, left: (d.cx / W) * rect.width, top: (d.cy / H) * rect.height });
+                  };
+                  const click = (e: React.MouseEvent) => {
+                    if (e.shiftKey) {
+                      setPicked((prev) => {
+                        const next = new Set(prev);
+                        next.has(d.m.material_id) ? next.delete(d.m.material_id) : next.add(d.m.material_id);
+                        return next;
+                      });
+                      return;
+                    }
+                    openBrief(d.m.material_id);
+                  };
+                  return (
+                    <g
+                      key={d.m.material_id}
+                      className={cn(justPlotted.has(d.m.material_id) && "animate-value-pop")}
+                      style={{ transformOrigin: `${d.cx}px ${d.cy}px` }}
+                    >
+                      {inPrioritySet(d.m) && (
+                        <circle
+                          cx={d.cx}
+                          cy={d.cy}
+                          r={d.r + 2.6}
+                          fill="none"
+                          stroke="hsl(var(--foreground))"
+                          strokeOpacity={0.55}
+                          strokeWidth={1.2}
+                        />
+                      )}
                       <circle
                         cx={d.cx}
                         cy={d.cy}
-                        r={d.r + 2.6}
-                        fill="none"
-                        stroke="hsl(var(--foreground))"
-                        strokeOpacity={0.55}
-                        strokeWidth={1.2}
+                        r={d.r}
+                        className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                        fill={d.scored ? "currentColor" : "none"}
+                        fillOpacity={d.scored ? 0.75 : 0}
+                        stroke={isPicked ? "hsl(var(--primary))" : d.scored ? "hsl(var(--background))" : "currentColor"}
+                        strokeWidth={isPicked ? 2 : d.scored ? 0.8 : 1.3}
+                        strokeDasharray={d.scored ? undefined : "2 1.6"}
+                        onMouseEnter={enter}
+                        onMouseLeave={() => setHover(null)}
+                        onClick={click}
                       />
-                    )}
-                    <circle
-                      cx={d.cx}
-                      cy={d.cy}
-                      r={d.r}
-                      className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
-                      fill={d.scored ? "currentColor" : "none"}
-                      fillOpacity={d.scored ? 0.75 : 0}
-                      stroke={isPicked ? "hsl(var(--primary))" : d.scored ? "hsl(var(--background))" : "currentColor"}
-                      strokeWidth={isPicked ? 2 : d.scored ? 0.8 : 1.3}
-                      strokeDasharray={d.scored ? undefined : "2 1.6"}
-                      onMouseEnter={enter}
-                      onMouseLeave={() => setHover(null)}
-                      onClick={click}
-                    />
-                  </g>
-                );
-              })}
+                    </g>
+                  );
+                })}
 
-              {lasso && (
-                <rect
-                  x={Math.min(lasso.x0, lasso.x1)}
-                  y={Math.min(lasso.y0, lasso.y1)}
-                  width={Math.abs(lasso.x1 - lasso.x0)}
-                  height={Math.abs(lasso.y1 - lasso.y0)}
-                  fill="hsl(var(--primary))"
-                  fillOpacity={0.08}
-                  stroke="hsl(var(--primary))"
-                  strokeOpacity={0.5}
-                  strokeDasharray="3 3"
-                />
+                {lasso && (
+                  <rect
+                    x={Math.min(lasso.x0, lasso.x1)}
+                    y={Math.min(lasso.y0, lasso.y1)}
+                    width={Math.abs(lasso.x1 - lasso.x0)}
+                    height={Math.abs(lasso.y1 - lasso.y0)}
+                    fill="hsl(var(--primary))"
+                    fillOpacity={0.08}
+                    stroke="hsl(var(--primary))"
+                    strokeOpacity={0.5}
+                    strokeDasharray="3 3"
+                  />
+                )}
+              </svg>
+
+              {hover && (
+                <div
+                  className="pointer-events-none absolute z-20 w-60 rounded-md border border-border bg-popover p-2 text-[10px] shadow-md"
+                  style={{
+                    left: Math.min(hover.left + 12, 9999),
+                    top: Math.max(hover.top - 10, 0),
+                    transform: hover.left > 420 ? "translateX(-110%)" : undefined,
+                  }}
+                >
+                  <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
+                  <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
+                  <p className="mt-1 font-mono tabular-nums text-foreground">{xv.fmt(hover.dot.x)}</p>
+                  <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
+                  {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
+                  <p className="mt-1 text-muted-foreground">
+                    {hover.dot.scored
+                      ? `${hover.dot.sizeCount} ${sizeVar.noun}`
+                      : "Not yet scored — no judgement to size by"}
+                  </p>
+                  <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
+                </div>
               )}
-            </svg>
+            </div>
 
-            {hover && (
-              <div
-                className="pointer-events-none absolute z-20 w-60 rounded-md border border-border bg-popover p-2 text-[10px] shadow-md"
-                style={{
-                  left: Math.min(hover.left + 12, 9999),
-                  top: Math.max(hover.top - 10, 0),
-                  transform: hover.left > 420 ? "translateX(-110%)" : undefined,
-                }}
-              >
-                <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
-                <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
-                <p className="mt-1 font-mono tabular-nums text-foreground">{xv.fmt(hover.dot.x)}</p>
-                <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
-                {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
-                <p className="mt-1 text-muted-foreground">
-                  {hover.dot.scored
-                    ? `${hover.dot.sizeCount} ${sizeVar.noun}`
-                    : "Not yet scored — no judgement to size by"}
-                </p>
-                <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
+            {/* Legend panel */}
+            <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Legend</div>
+              <div className="space-y-2.5">
+                <div className="text-[10px] font-medium text-foreground">Status colour</div>
+                <StatusLegend statuses={statusesPresent} />
               </div>
-            )}
-
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border px-2 py-1.5">
-              <StatusLegend statuses={statusesPresent} />
-              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
-                  <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
-                  <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
-                </svg>
-                Bubble size = {sizeVar.noun} (count, 0 to 12)
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                <svg width="14" height="14" viewBox="0 0 14 14" className="text-muted-foreground/70">
-                  <circle cx="7" cy="7" r="3.4" fill="none" stroke="currentColor" strokeDasharray="2 1.6" />
-                </svg>
-                Hollow ring: nothing scored, so no size
-              </span>
-              <span className="text-[10px] text-muted-foreground">
-                Shift-click or drag a box to select. Click a dot to open its brief.
-              </span>
+              <div className="space-y-2">
+                <div className="text-[10px] font-medium text-foreground">Bubble size</div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
+                    <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
+                    <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
+                  </svg>
+                  {sizeVar.noun} (0 to 12)
+                </span>
+              </div>
+              <div className="space-y-2">
+                <div className="text-[10px] font-medium text-foreground">Unscored</div>
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <svg width="14" height="14" viewBox="0 0 14 14" className="text-muted-foreground/70">
+                    <circle cx="7" cy="7" r="3.4" fill="none" stroke="currentColor" strokeDasharray="2 1.6" />
+                  </svg>
+                  Hollow ring — no judgement yet
+                </span>
+              </div>
+              <div className="mt-auto space-y-2">
+                <div className="text-[10px] font-medium text-foreground">Interactions</div>
+                <ul className="space-y-1 text-[10px] text-muted-foreground">
+                  <li>• Click a dot to open its brief</li>
+                  <li>• Shift-click to select</li>
+                  <li>• Drag a box to select multiple</li>
+                </ul>
+              </div>
             </div>
           </div>
 
