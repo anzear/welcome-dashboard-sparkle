@@ -621,14 +621,15 @@ export const MaterialBrief: React.FC = () => {
 
           <div className="min-w-0 leading-tight">
             {!stuck && (
-              <div className="flex items-center gap-3 pb-0.5">
-                <button
-                  type="button"
+              <div className="flex items-center gap-3 pb-1.5">
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={closeBrief}
-                  className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                  className="h-7 gap-1.5 text-xs"
                 >
-                  <ArrowLeft className="h-3 w-3" /> Back to register
-                </button>
+                  <ArrowLeft className="h-3.5 w-3.5" /> Back
+                </Button>
                 {index >= 0 && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                     <button
@@ -657,10 +658,16 @@ export const MaterialBrief: React.FC = () => {
               </div>
             )}
 
+            {!stuck && (
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Material profile
+              </div>
+            )}
+
             <h1
               className={cn(
                 "truncate font-semibold tracking-tight text-foreground transition-all",
-                stuck ? "text-base" : "text-2xl",
+                stuck ? "text-sm" : "text-lg",
               )}
             >
               {m.name}
@@ -675,7 +682,7 @@ export const MaterialBrief: React.FC = () => {
 
             {!stuck && (
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">IDs</span>
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">IDs</span>
                 {m.customer_material_ids.length > 0 ? (
                   m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
                 ) : (
@@ -686,10 +693,10 @@ export const MaterialBrief: React.FC = () => {
           </div>
 
           <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
-            <Button variant="outline" size="sm" className="h-8 text-[11px]">
+            <Button variant="outline" size="sm" className="h-7 text-xs">
               Export brief
             </Button>
-            <Button size="sm" className="h-8 text-[11px]">
+            <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
               Order intelligence
             </Button>
           </div>
@@ -697,7 +704,8 @@ export const MaterialBrief: React.FC = () => {
       </header>
 
       {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 border-b border-border bg-muted/30 px-3 py-3">
+      <div className="mt-4 rounded-xl border border-border/70 bg-muted/30 px-4 py-3 shadow-sm">
+
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
           <BarField label="Status" className="w-[180px]">
             <Select
