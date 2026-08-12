@@ -67,23 +67,22 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
 ];
 
 
-/** Application categories as chips, overflow folded into a count. */
+/** Application categories as plain text, overflow folded into a count. */
 const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
   const list = values ?? [];
   if (list.length === 0) return <Missing />;
   const shown = list.slice(0, 2);
   const rest = list.length - shown.length;
   return (
-    <span className="inline-flex flex-wrap items-center gap-1" title={list.join(", ")}>
-      {shown.map((v) => (
-        <span key={v} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-          {v}
-        </span>
-      ))}
-      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
+    <span className="text-[11px] text-muted-foreground" title={list.join(", ")}>
+      {shown.join(", ")}
+      {rest > 0 && (
+        <span className="ml-1 font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>
+      )}
     </span>
   );
 };
+
 
 
 
