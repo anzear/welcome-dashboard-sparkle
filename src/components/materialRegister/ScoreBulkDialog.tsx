@@ -6,8 +6,6 @@ import { SCORE_POINTS } from "@/config/driverQuestions";
 import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import { useRegister } from "@/components/materialRegister/registerStore";
 
-export type ScoreBulkKind = "set" | "clear";
-
 /**
  * Bulk judgement across the selection, shown inline above the matrix so the
  * selection stays visible and editable while scoring. The first driver is
@@ -16,11 +14,10 @@ export type ScoreBulkKind = "set" | "clear";
  */
 const ScoreBulkPanel: React.FC<{
   open: boolean;
-  kind: ScoreBulkKind;
   ids: string[];
   onRemoveMaterial?: (id: string) => void;
   onOpenChange: (v: boolean) => void;
-}> = ({ open, kind, ids, onRemoveMaterial, onOpenChange }) => {
+}> = ({ open, ids, onRemoveMaterial, onOpenChange }) => {
   const { questions, scoreFor, applyScoreBulk, data } = useRegister();
   const [index, setIndex] = useState(0);
   /** Staged changes for this session. Key present = will be written. */
@@ -31,7 +28,7 @@ const ScoreBulkPanel: React.FC<{
       setIndex(0);
       setStaged({});
     }
-  }, [open, kind]);
+  }, [open]);
 
   const nameFor = useMemo(() => {
     const map = new Map(data.map((m) => [m.material_id, m.name]));
@@ -93,9 +90,7 @@ const ScoreBulkPanel: React.FC<{
     <div className="space-y-3 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">
-            {kind === "clear" ? "Clear scores" : "Set scores"}
-          </h3>
+          <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Set scores</h3>
           <p className="text-[11px] text-muted-foreground">
             <span className="font-mono tabular-nums text-foreground">{ids.length}</span>{" "}
             {plural(ids.length, "material", "materials")} selected · tick more rows below to add, or remove them here.
@@ -182,50 +177,48 @@ const ScoreBulkPanel: React.FC<{
           </p>
         </div>
 
-        {kind === "set" ? (
-          <div className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Value</span>
-            <div className="flex flex-wrap items-center gap-[3px]">
-              {SCORE_POINTS.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => stage(p)}
-                  aria-pressed={hasStagedHere && value === p}
-                  className={cn(
-                    "h-7 w-8 rounded-[3px] border font-mono text-[11px] tabular-nums transition-colors",
-                    hasStagedHere && value === p
-                      ? cn(scoreTone(p), "border-foreground/40 bg-muted font-semibold")
-                      : "border-border bg-background text-muted-foreground/70 hover:bg-muted",
-                  )}
-                >
-                  {signed(p)}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center justify-between">
-              <p className="text-[10px] text-muted-foreground">-5 strong constraint · 0 neutral · +5 strong driver</p>
-              {hasStagedHere && (
-                <button type="button" onClick={unstage} className="text-[10px] text-muted-foreground underline">
-                  Remove
-                </button>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Action</span>
-            <Button
+        <div className="space-y-1">
+          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Value</span>
+          <div className="flex flex-wrap items-center gap-[3px]">
+            {SCORE_POINTS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => stage(p)}
+                aria-pressed={hasStagedHere && value === p}
+                className={cn(
+                  "h-7 w-8 rounded-[3px] border font-mono text-[11px] tabular-nums transition-colors",
+                  hasStagedHere && value === p
+                    ? cn(scoreTone(p), "border-foreground/40 bg-muted font-semibold")
+                    : "border-border bg-background text-muted-foreground/70 hover:bg-muted",
+                )}
+              >
+                {signed(p)}
+              </button>
+            ))}
+            <button
               type="button"
-              variant={hasStagedHere ? "default" : "outline"}
-              size="sm"
-              className="h-7 text-[11px]"
-              onClick={() => (hasStagedHere ? unstage() : stage(null))}
+              onClick={() => stage(null)}
+              aria-pressed={hasStagedHere && value === null}
+              className={cn(
+                "h-7 rounded-[3px] border px-2 text-[11px] font-medium transition-colors",
+                hasStagedHere && value === null
+                  ? "border-destructive/50 bg-destructive/10 text-destructive"
+                  : "border-border bg-background text-muted-foreground/70 hover:bg-muted hover:text-destructive",
+              )}
             >
-              {hasStagedHere ? "Staged for clearing" : "Clear this driver"}
-            </Button>
+              Clear
+            </button>
           </div>
-        )}
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] text-muted-foreground">-5 strong constraint · 0 neutral · +5 strong driver</p>
+            {hasStagedHere && (
+              <button type="button" onClick={unstage} className="text-[10px] text-muted-foreground underline">
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {hasStagedHere && q && (
