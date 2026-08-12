@@ -22,7 +22,7 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import { Plus, SlidersHorizontal, X } from "lucide-react";
+import { Plus, SlidersHorizontal, X, ChevronDown, Check } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-card text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
