@@ -228,9 +228,21 @@ export const MaterialRegisterTable: React.FC = () => {
           <PopoverTrigger asChild>
             <button
               type="button"
-              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className={cn(
+                "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                extraCols < OPTIONAL_COLUMNS.length
+                  ? "border-primary/40 bg-primary/5 text-foreground"
+                  : "border-border bg-card text-muted-foreground hover:text-foreground",
+              )}
             >
-              <SlidersHorizontal className="h-3 w-3" /> Columns
+              <SlidersHorizontal className="h-3 w-3 opacity-70" />
+              Columns
+              {extraCols < OPTIONAL_COLUMNS.length && (
+                <span className="font-mono tabular-nums text-primary">
+                  {OPTIONAL_COLUMNS.length - extraCols}
+                </span>
+              )}
+              <ChevronDown className="h-3 w-3 opacity-60" />
             </button>
           </PopoverTrigger>
           <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
