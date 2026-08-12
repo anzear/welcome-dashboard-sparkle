@@ -278,8 +278,7 @@ const DriverScoring: React.FC = () => {
       )}
 
       <ScoreBulkPanel
-        open={bulk !== null && selected.size > 0}
-        kind={bulk ?? "set"}
+        open={bulkOpen && selected.size > 0}
         ids={[...selected]}
         onRemoveMaterial={(id) =>
           setSelected((prev) => {
@@ -288,7 +287,7 @@ const DriverScoring: React.FC = () => {
             return next;
           })
         }
-        onOpenChange={(v) => setBulk(v ? bulk : null)}
+        onOpenChange={setBulkOpen}
       />
 
 
