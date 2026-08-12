@@ -269,7 +269,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </Popover>
 
         {/* Rank tabs — dark pill toggle, right-aligned */}
-        <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+        <div className="ml-auto flex items-center gap-1 rounded-md bg-muted p-0.5">
           {MEASURES.map((mm) => (
             <button
               key={mm.id}
