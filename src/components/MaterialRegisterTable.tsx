@@ -213,93 +213,106 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Toolbar — one quiet row, no tint */}
-      <div className="flex flex-wrap items-center gap-2 pb-2">
+      {/* Toolbar — one quiet row: search is the only bordered element */}
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-2 pb-2">
         <Input
           value={filters.search}
           onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
           placeholder="Search name, CAS, customer ID"
-          className="h-7 w-56 bg-card text-[11px]"
+          className="h-7 w-60 bg-card text-[11px]"
         />
         <FilterSelects variant="popover" />
 
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">Ranked by</span>
-          <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              Rank: <span className="text-foreground">{MEASURES.find((m) => m.id === measureId)?.label}</span>
+              <ChevronDown className="h-3 w-3" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-44 p-1">
             {MEASURES.map((mm) => (
               <button
                 key={mm.id}
                 type="button"
-                aria-pressed={measureId === mm.id}
                 onClick={() => setMeasureId(mm.id)}
                 className={cn(
-                  "rounded-[4px] px-2 py-1 text-[11px] font-medium transition-colors",
-                  measureId === mm.id
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground",
+                  "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[11px] hover:bg-muted",
+                  measureId === mm.id ? "text-foreground" : "text-muted-foreground",
                 )}
               >
                 {mm.label}
+                {measureId === mm.id && <Check className="h-3 w-3" />}
               </button>
             ))}
-          </div>
+          </PopoverContent>
+        </Popover>
 
-          <Popover>
-            <PopoverTrigger asChild>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <SlidersHorizontal className="h-3 w-3" /> Columns
+            </button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
+            <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+              Optional columns
+            </div>
+            {OPTIONAL_COLUMNS.map(([key, label, hint]) => (
+              <label
+                key={key}
+                className="flex cursor-pointer items-start gap-2 rounded-sm px-1 py-1 hover:bg-muted/60"
+              >
+                <Checkbox
+                  checked={cols[key]}
+                  onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
+                  className="mt-0.5 h-3.5 w-3.5"
+                />
+                <span className="min-w-0">
+                  <span className="block text-[11px] text-foreground">{label}</span>
+                  <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
+                </span>
+              </label>
+            ))}
+          </PopoverContent>
+        </Popover>
+
+        {/* Coverage readout, right-aligned on the same row */}
+        <div className="ml-auto flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span>
+            <span className="font-mono tabular-nums text-foreground">{visible.length}</span>
+            {visible.length !== data.length && (
+              <>
+                {" of "}
+                <span className="font-mono tabular-nums">{data.length}</span>
+              </>
+            )}{" "}
+            materials
+          </span>
+          {missingCount > 0 && (
+            <>
+              <span className="text-border">·</span>
               <button
                 type="button"
-                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={() => setOnlyUnranked((v) => !v)}
+                className="underline decoration-dotted underline-offset-2 hover:text-foreground"
               >
-                <SlidersHorizontal className="h-3 w-3" /> Columns
+                {onlyUnranked ? "Show all" : `${missingCount} unranked`}
               </button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="max-h-[70vh] w-60 overflow-y-auto p-2">
-              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                Optional columns
-              </div>
-              {OPTIONAL_COLUMNS.map(([key, label, hint]) => (
-                <label
-                  key={key}
-                  className="flex cursor-pointer items-start gap-2 rounded-sm px-1 py-1 hover:bg-muted/60"
-                >
-                  <Checkbox
-                    checked={cols[key]}
-                    onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
-                    className="mt-0.5 h-3.5 w-3.5"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-[11px] text-foreground">{label}</span>
-                    <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
-                  </span>
-                </label>
-              ))}
-            </PopoverContent>
-          </Popover>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Caption — coverage readout and any active filters */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-1.5 text-[11px] text-muted-foreground">
-        <span className="text-foreground">
-          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
-          <span className="font-mono tabular-nums">{data.length}</span> materials
-        </span>
-        <span>
-          Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
-          <span className="font-mono tabular-nums">{filteredTotal}</span>
-          {filtersActive ? " filtered" : ""}
-        </span>
-        {missingCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setOnlyUnranked((v) => !v)}
-            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            {onlyUnranked ? "Show all" : `${missingCount} missing`}
-          </button>
-        )}
-        <FilterChips />
-      </div>
+      {/* Active filter chips only when something is on */}
+      <FilterChips />
+
 
 
 
