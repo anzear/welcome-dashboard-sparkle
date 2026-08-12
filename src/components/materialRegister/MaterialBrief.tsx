@@ -617,57 +617,23 @@ export const MaterialBrief: React.FC = () => {
           stuck ? "py-2" : "pb-4 pt-2",
         )}
       >
-        <div className="flex flex-nowrap items-center justify-between gap-4">
+        <div className="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-2">
+          {/* Top-left: back button aligned with pagination */}
+          {!stuck && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={closeBrief}
+                className="h-7 gap-1.5 text-xs"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" /> Back
+              </Button>
+            </div>
+          )}
 
-          <div className="min-w-0 leading-tight">
-            {!stuck && (
-              <div className="flex items-center gap-3 pb-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={closeBrief}
-                  className="h-7 gap-1.5 text-xs"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" /> Back
-                </Button>
-              </div>
-            )}
-
-            {!stuck && (
-              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Material profile
-              </div>
-            )}
-
-            <h1
-              className={cn(
-                "truncate font-semibold tracking-tight text-foreground transition-all",
-                stuck ? "text-sm" : "text-lg",
-              )}
-            >
-              {m.name}
-            </h1>
-
-            {!stuck && (
-              <div className="font-mono text-[11px] leading-tight text-muted-foreground">
-                {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
-              </div>
-            )}
-
-
-            {!stuck && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">IDs</span>
-                {m.customer_material_ids.length > 0 ? (
-                  m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
-                ) : (
-                  <span className="font-mono text-[10px] text-muted-foreground/50">No customer IDs</span>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
+          {/* Top-right: pagination sits above the action buttons */}
+          <div className="flex shrink-0 items-center justify-end gap-3 whitespace-nowrap">
             {index >= 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                 <button
@@ -693,6 +659,45 @@ export const MaterialBrief: React.FC = () => {
                 </span>
               </span>
             )}
+          </div>
+
+          {/* Bottom-left: title metadata */}
+          <div className="min-w-0 leading-tight">
+            {!stuck && (
+              <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Material profile
+              </div>
+            )}
+
+            <h1
+              className={cn(
+                "truncate font-semibold tracking-tight text-foreground transition-all",
+                stuck ? "text-sm" : "text-lg",
+              )}
+            >
+              {m.name}
+            </h1>
+
+            {!stuck && (
+              <div className="font-mono text-[11px] leading-tight text-muted-foreground">
+                {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
+              </div>
+            )}
+
+            {!stuck && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">IDs</span>
+                {m.customer_material_ids.length > 0 ? (
+                  m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
+                ) : (
+                  <span className="font-mono text-[10px] text-muted-foreground/50">No customer IDs</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom-right: action buttons under pagination */}
+          <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
             <Button variant="outline" size="sm" className="h-7 text-xs">
               Export brief
             </Button>
