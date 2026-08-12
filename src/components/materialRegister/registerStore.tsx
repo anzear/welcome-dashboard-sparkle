@@ -719,7 +719,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     ]);
   };
 
-  const inPrioritySet = (m: Material) => m.priority_period === priorityPeriod;
+  const inPrioritySet = (m: Material) => m.priority_period !== null;
   const prioritySetCount = data.filter(inPrioritySet).length;
 
   /** Priority set changes: one event per material, all sharing one batch_id. */
