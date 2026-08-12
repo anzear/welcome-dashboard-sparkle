@@ -8,6 +8,7 @@ import { RegisterProvider, useRegister } from "@/components/materialRegister/reg
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 
 const TABS = [
@@ -39,21 +40,15 @@ const Inner: React.FC = () => {
     <div className="h-full w-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-6 pb-16 pt-4">
         <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground shadow-sm transition-colors hover:bg-muted"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/")} className="gap-1.5 h-7 text-xs">
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back
+          </Button>
           {tab === "register" && (
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="inline-flex items-center gap-2 rounded-md bg-foreground px-3 py-2 text-sm font-semibold text-background shadow-sm transition-colors hover:bg-foreground/90"
-            >
-              <Plus className="h-4 w-4" /> Add material
-            </button>
+            <Button size="sm" className="gap-1.5 h-7 text-xs bg-foreground text-background hover:bg-foreground/90" onClick={() => setAddOpen(true)}>
+              <Plus className="w-3.5 h-3.5" />
+              Add material
+            </Button>
           )}
         </div>
 
