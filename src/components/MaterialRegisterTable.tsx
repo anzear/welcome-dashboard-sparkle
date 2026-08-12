@@ -393,7 +393,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
           <thead>
             <tr>
-              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2")}>
+              <th className={cn(HEAD, STICK, "left-0 z-30 w-8 px-2 py-2.5")}>
                 <Checkbox
                   checked={headerChecked}
                   onCheckedChange={toggleAllVisible}
@@ -402,50 +402,50 @@ export const MaterialRegisterTable: React.FC = () => {
                 />
               </th>
               {cols.rank && (
-                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2 text-right text-foreground/80")}>#</th>
+                <th className={cn(HEAD, STICK, "left-8 z-30 w-12 px-2 pr-4 py-2.5 text-right text-foreground/80")}>#</th>
               )}
               <th
                 className={cn(
                   HEAD,
                   STICK,
                   materialLeft,
-                  "z-30 w-56 border-r border-border px-3 py-2 text-left",
+                  "z-30 w-56 border-r border-border px-3 py-2.5 text-left",
                 )}
               >
                 Material
               </th>
 
-              {cols.materialType && <th className={cn(HEAD, "px-3 py-2 text-left")}>Material type</th>}
+              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material type</th>}
               {cols.materialCategory && (
-                <th className={cn(HEAD, "px-3 py-2 text-left")}>Material category</th>
+                <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
               )}
               {cols.volume && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("volume"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
                   Volume
                   <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
                 </th>
               )}
               {cols.spend && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("spend"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
                   Spend
                   <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
                 </th>
               )}
               {cols.emissions && (
-                <th className={cn(HEAD, "px-3 py-2 text-right", emphHead("emissions"))}>
+                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
                   GHG contribution
                   <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
                 </th>
               )}
-              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2 text-right")}>Suppliers</th>}
+              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2.5 text-right")}>Suppliers</th>}
               {cols.applications && (
-                <th className={cn(HEAD, "px-3 py-2 text-left", emphHead("applications"))}>Applications</th>
+                <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
               )}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2 text-left")}>Status</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2 text-left")}>Priority</th>}
-              {cols.owner && <th className={cn(HEAD, "px-3 py-2 text-left")}>Owner</th>}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2 text-left")}>Intelligence</th>}
-              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2 text-left")}>Last change</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>}
+              {cols.priority && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>}
+              {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
+              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
+              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
             </tr>
           </thead>
