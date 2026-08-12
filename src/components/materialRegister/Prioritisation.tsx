@@ -485,7 +485,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
       ) : (
         <>
           {/* Plot + legend side by side */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px]">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px]">
             <div className="relative rounded-xl border border-border/70 bg-card p-1 shadow-sm">
               <svg
                 ref={svgRef}
