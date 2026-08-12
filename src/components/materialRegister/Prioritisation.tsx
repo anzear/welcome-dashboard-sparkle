@@ -643,14 +643,14 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                   x={PAD.l + PW / 2}
                   y={H - 12}
                   textAnchor="middle"
-                  className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+                  className="fill-muted-foreground text-[8px] font-semibold uppercase tracking-wider"
                 >
                   {axisTitle(xv)}
                 </text>
                 <text
                   transform={`translate(14 ${PAD.t + PH / 2}) rotate(-90)`}
                   textAnchor="middle"
-                  className="fill-muted-foreground text-[10px] font-semibold uppercase tracking-widest"
+                  className="fill-muted-foreground text-[8px] font-semibold uppercase tracking-wider"
                 >
                   {axisTitle(yv)}
                 </text>
