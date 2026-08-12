@@ -42,7 +42,7 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ title, note, children, className }) => (
-  <section className={cn("space-y-3", className)}>
+  <section className={cn("space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm", className)}>
     <div className="border-b border-border/70 pb-1.5">
       <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">{title}</h2>
       {note && <p className="pt-1 text-xs leading-snug text-muted-foreground">{note}</p>}
