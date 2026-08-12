@@ -6,7 +6,7 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
-import ScoreBulkPanel, { type ScoreBulkKind } from "@/components/materialRegister/ScoreBulkDialog";
+import ScoreBulkPanel from "@/components/materialRegister/ScoreBulkDialog";
 import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
