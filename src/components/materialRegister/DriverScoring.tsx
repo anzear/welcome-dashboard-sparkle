@@ -215,16 +215,16 @@ const DriverScoring: React.FC = () => {
       </div>
 
       {/* Same filter scope as the register, narrowed to what this screen needs */}
-      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
+      <div className="space-y-1.5 pb-2">
         <div className="flex flex-wrap items-center gap-2">
           <Input
             value={filters.search}
             onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
             placeholder="Search name, CAS, customer ID"
-            className="h-7 w-56 bg-background text-[11px]"
+            className="h-7 w-56 bg-card text-[11px]"
           />
           <FilterSelects
-            className="ml-auto"
+            variant="popover"
             include={["statuses", "owners", "applications", "products", "priorityPeriods"]}
           />
         </div>

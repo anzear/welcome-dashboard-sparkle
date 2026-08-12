@@ -71,30 +71,20 @@ export const STATUS_STYLES: Record<JourneyStatus, string> = {
   rejected: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
 };
 
-const STATUS_DOT_STYLES: Record<JourneyStatus, string> = {
-  not_started: "bg-muted-foreground/30",
-  under_evaluation: "bg-slate-300",
-  in_testing: "bg-slate-400",
-  qualified: "bg-slate-500",
-  sourcing: "bg-slate-700",
-  in_use: "bg-slate-100",
-  parked: "bg-amber-500/70",
-  rejected: "bg-muted-foreground/25",
-};
-
 export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (
   <span
+
     className={cn(
       "inline-flex items-center gap-1 whitespace-nowrap rounded-sm border px-1.5 py-0.5 text-[10px] font-medium",
       STATUS_STYLES[status],
     )}
     title={entered ? "entered judgement" : undefined}
   >
-    <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", STATUS_DOT_STYLES[status])} />
     {entered && <span className="text-muted-foreground/70">^</span>}
     {JOURNEY_STATUS_LABEL[status]}
   </span>
 );
+
 
 
 const fmtDate = (d: string | null) => {

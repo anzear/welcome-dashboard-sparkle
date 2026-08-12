@@ -25,13 +25,14 @@ import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
-  "sticky top-0 z-10 bg-muted/60 backdrop-blur-sm text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
+  "sticky top-0 z-10 bg-card text-[11px] font-medium text-muted-foreground border-b border-border align-bottom";
 
 /** Pinned identity columns: they hold while the measures scroll. */
-const STICK = "sticky bg-muted/60";
+const STICK = "sticky bg-card";
 
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal text-muted-foreground/50";
+
 
 type OptionalColumn =
   | "rank"
@@ -66,23 +67,22 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
 ];
 
 
-/** Application categories as chips, overflow folded into a count. */
+/** Application categories as plain text, overflow folded into a count. */
 const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
   const list = values ?? [];
   if (list.length === 0) return <Missing />;
   const shown = list.slice(0, 2);
   const rest = list.length - shown.length;
   return (
-    <span className="inline-flex flex-wrap items-center gap-1" title={list.join(", ")}>
-      {shown.map((v) => (
-        <span key={v} className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-          {v}
-        </span>
-      ))}
-      {rest > 0 && <span className="font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>}
+    <span className="text-[11px] text-muted-foreground" title={list.join(", ")}>
+      {shown.join(", ")}
+      {rest > 0 && (
+        <span className="ml-1 font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>
+      )}
     </span>
   );
 };
+
 
 
 
@@ -172,7 +172,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
   /** The active measure is marked once per column: header accent plus a faint tint. */
-  const colTint = (id: MeasureId) => (activeCol(id) ? "bg-primary/[0.05]" : undefined);
+  const colTint = (_id: MeasureId) => undefined as string | undefined;
 
   // Always present: checkbox and Material. Everything else is switchable.
   const colCount = 2;
@@ -213,61 +213,47 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
-      {/* Control band — one tint, one hairline beneath */}
-      <div className="space-y-1.5 border-b border-border bg-muted/30 px-2 py-2">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">Ranked by</span>
-            <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
-              {MEASURES.map((mm) => (
-                <button
-                  key={mm.id}
-                  type="button"
-                  aria-pressed={measureId === mm.id}
-                  onClick={() => setMeasureId(mm.id)}
-                  className={cn(
-                    "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
-                    measureId === mm.id
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {mm.label}
-                </button>
-              ))}
-            </div>
-          </div>
+      {/* Toolbar — one quiet row, no tint */}
+      <div className="flex flex-wrap items-center gap-2 pb-2">
+        <Input
+          value={filters.search}
+          onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
+          placeholder="Search name, CAS, customer ID"
+          className="h-7 w-56 bg-card text-[11px]"
+        />
+        <FilterSelects variant="popover" />
 
-          <div className="flex items-baseline gap-2 text-[11px] text-muted-foreground">
-            <span>
-              Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
-              <span className="font-mono tabular-nums">{filteredTotal}</span>
-              {filtersActive ? " filtered" : ""}
-            </span>
-            {missingCount > 0 && (
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">Ranked by</span>
+          <div className="inline-flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
+            {MEASURES.map((mm) => (
               <button
+                key={mm.id}
                 type="button"
-                onClick={() => setOnlyUnranked((v) => !v)}
-                className="text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                aria-pressed={measureId === mm.id}
+                onClick={() => setMeasureId(mm.id)}
+                className={cn(
+                  "rounded-[4px] px-2 py-1 text-[11px] font-medium transition-colors",
+                  measureId === mm.id
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
               >
-                {onlyUnranked ? "Show all" : `${missingCount} missing`}
+                {mm.label}
               </button>
-            )}
+            ))}
           </div>
-
-
-
 
           <Popover>
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-sm border border-border bg-background px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground"
+                className="inline-flex h-7 items-center gap-1 rounded-md border border-border bg-card px-2 text-[11px] text-muted-foreground hover:text-foreground"
               >
                 <SlidersHorizontal className="h-3 w-3" /> Columns
               </button>
             </PopoverTrigger>
-            <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
+            <PopoverContent align="end" className="max-h-[70vh] w-60 overflow-y-auto p-2">
               <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
                 Optional columns
               </div>
@@ -289,23 +275,32 @@ export const MaterialRegisterTable: React.FC = () => {
               ))}
             </PopoverContent>
           </Popover>
-
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Input
-            value={filters.search}
-            onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-            placeholder="Search name, CAS, customer ID"
-            className="h-7 w-56 bg-background text-[11px]"
-          />
-          <FilterSelects className="ml-auto" />
-        </div>
-
-        <FilterChips />
-
-
       </div>
+
+      {/* Caption — coverage readout and any active filters */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-1.5 text-[11px] text-muted-foreground">
+        <span className="text-foreground">
+          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
+          <span className="font-mono tabular-nums">{data.length}</span> materials
+        </span>
+        <span>
+          Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
+          <span className="font-mono tabular-nums">{filteredTotal}</span>
+          {filtersActive ? " filtered" : ""}
+        </span>
+        {missingCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setOnlyUnranked((v) => !v)}
+            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            {onlyUnranked ? "Show all" : `${missingCount} missing`}
+          </button>
+        )}
+        <FilterChips />
+      </div>
+
 
 
       {/* Selection bar */}
@@ -378,14 +373,7 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2 py-2">
-        <div className="text-xs font-medium text-foreground">
-          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
-          <span className="font-mono tabular-nums">{data.length}</span> materials
-        </div>
-      </div>
-
-      <div className="overflow-x-auto rounded-md border border-border">
+      <div className="overflow-x-auto rounded-md border border-border bg-card">
         <table className="w-full min-w-[1500px] border-collapse text-xs">
 
           <thead>
@@ -501,7 +489,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   >
 
                     <td
-                      className={cn(STICK, "left-0 z-10 bg-background px-2 py-2 align-middle group-hover:bg-muted/30")}
+                      className={cn(STICK, "left-0 z-10 bg-card px-2 py-2 align-middle group-hover:bg-muted/30")}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
@@ -515,7 +503,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       <td
                         className={cn(
                           STICK,
-                          "left-8 z-10 bg-background px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                          "left-8 z-10 bg-card px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
                         )}
                       >
                         {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
@@ -525,7 +513,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       className={cn(
                         STICK,
                         materialLeft,
-                        "z-10 border-r border-border/60 bg-background px-3 py-2 align-middle group-hover:bg-muted/30",
+                        "z-10 border-r border-border bg-card px-3 py-2 align-middle group-hover:bg-muted/30",
                       )}
                     >
                       <div
