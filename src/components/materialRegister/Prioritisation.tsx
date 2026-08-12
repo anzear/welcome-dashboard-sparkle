@@ -284,7 +284,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
   return (
     <div className="w-full space-y-2">
-      {/* Toolbar — one quiet row: search, filters, preset picker; view switch right-aligned */}
+      {/* Toolbar — one quiet row: search, filters, chart setup; view switch right-aligned */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
         <Input
           value={filters.search}
@@ -294,61 +294,88 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         />
         <FilterSelects variant="popover" />
 
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className={cn(
-                "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
-                activePreset
-                  ? "border-primary/40 bg-primary/5 text-foreground"
-                  : "border-border bg-card text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <SlidersHorizontal className="h-3 w-3 opacity-70" />
-              {activePreset ? activePreset.label : "Custom pairing"}
-              <ChevronDown className="h-3 w-3 opacity-60" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-72 p-2">
-            <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Presets</div>
-            {AXIS_PRESETS.map((p) => (
+        {mode === "chart" && (
+          <Popover>
+            <PopoverTrigger asChild>
               <button
-                key={p.id}
                 type="button"
-                onClick={() => applyPreset(p.id)}
                 className={cn(
-                  "block w-full rounded-sm px-1.5 py-1 text-left hover:bg-muted/60",
-                  activePreset?.id === p.id && "bg-primary/5",
+                  "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+                  activePreset
+                    ? "border-border bg-card text-muted-foreground hover:text-foreground"
+                    : "border-primary/40 bg-primary/5 text-foreground",
                 )}
               >
-                <span
+                <SlidersHorizontal className="h-3 w-3 opacity-70" />
+                {activePreset ? activePreset.label : "Custom pairing"}
+                <ChevronDown className="h-3 w-3 opacity-60" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="max-h-[70vh] w-72 overflow-y-auto p-2">
+              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Presets</div>
+              {AXIS_PRESETS.map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => applyPreset(p.id)}
                   className={cn(
-                    "block text-[11px]",
-                    activePreset?.id === p.id ? "font-medium text-primary" : "text-foreground",
+                    "block w-full rounded-sm px-1.5 py-1 text-left hover:bg-muted/60",
+                    activePreset?.id === p.id && "bg-primary/5",
                   )}
                 >
-                  {p.label}
-                </span>
-                <span className="block text-[10px] leading-tight text-muted-foreground">{p.reading}</span>
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
+                  <span
+                    className={cn(
+                      "block text-[11px]",
+                      activePreset?.id === p.id ? "font-medium text-primary" : "text-foreground",
+                    )}
+                  >
+                    {p.label}
+                  </span>
+                  <span className="block text-[10px] leading-tight text-muted-foreground">{p.reading}</span>
+                </button>
+              ))}
 
-        <button
-          type="button"
-          aria-pressed={prioritySetOnly}
-          onClick={() => setPrioritySetOnly((v) => !v)}
-          className={cn(
-            "inline-flex h-7 items-center rounded-md border px-2.5 text-[11px] font-medium transition-colors",
-            prioritySetOnly
-              ? "border-primary/40 bg-primary/5 text-primary"
-              : "border-border bg-card text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Priority set only
-        </button>
+              <div className="mt-2 space-y-1.5 border-t border-border pt-2">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Axes</div>
+                <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
+                <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
+                <label className="flex items-center gap-1.5">
+                  <span className="w-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    ●
+                  </span>
+                  <select
+                    value={sizeId}
+                    onChange={(e) => setSizeId(e.target.value as SizeVarId)}
+                    className="h-7 w-full rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
+                    aria-label="Size"
+                  >
+                    <option value="drivers">Strong drivers (count)</option>
+                    <option value="constraints">Strong constraints (count)</option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="mt-2 space-y-1.5 border-t border-border pt-2">
+                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Priority set</div>
+                <Input
+                  value={priorityPeriod}
+                  onChange={(e) => setPriorityPeriod(e.target.value)}
+                  className="h-7 text-[11px]"
+                  aria-label="Priority period"
+                  placeholder="H2 2026"
+                />
+                <label className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 hover:bg-muted/60">
+                  <Checkbox
+                    checked={prioritySetOnly}
+                    onCheckedChange={(v) => setPrioritySetOnly(v === true)}
+                    className="h-3.5 w-3.5"
+                  />
+                  <span className="text-[11px] text-foreground">Priority set only</span>
+                </label>
+              </div>
+            </PopoverContent>
+          </Popover>
+        )}
 
         <div className="ml-auto flex items-center gap-1 rounded-md bg-muted p-0.5">
           {(["chart", "list"] as const).map((v) => (
@@ -368,36 +395,6 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         </div>
       </div>
 
-      {/* Axis controls */}
-      {mode === "chart" && (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-          <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
-          <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
-          <label className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Size</span>
-            <select
-              value={sizeId}
-              onChange={(e) => setSizeId(e.target.value as SizeVarId)}
-              className="h-7 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-              aria-label="Size"
-            >
-              <option value="drivers">Strong drivers (count)</option>
-              <option value="constraints">Strong constraints (count)</option>
-            </select>
-          </label>
-          <label className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Priority set for
-            </span>
-            <Input
-              value={priorityPeriod}
-              onChange={(e) => setPriorityPeriod(e.target.value)}
-              className="h-7 w-24 bg-card text-[11px]"
-              aria-label="Priority period"
-            />
-          </label>
-        </div>
-      )}
 
       {/* Readout on its own row */}
       <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
