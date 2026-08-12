@@ -597,7 +597,7 @@ export const MaterialBrief: React.FC = () => {
   };
 
   const gapSentence = () => {
-    if (!row || row.gapMeasure === null || row.rank === null) return null;
+    if (!row || row.gapMeasure === null || row.rank === null || measureId === "all") return null;
     const active = MEASURES.find((x) => x.id === measureId)!;
     const divergent = MEASURES.find((x) => x.id === row.gapMeasure)!;
     const divergentRank = row.ranks[divergent.id]!;
