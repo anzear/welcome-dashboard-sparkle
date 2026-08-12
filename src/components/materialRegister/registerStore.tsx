@@ -188,7 +188,7 @@ interface Store {
   data: Material[];
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
-  measure: Measure;
+  measure: Measure | null;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   filtersActive: boolean;
@@ -202,7 +202,7 @@ interface Store {
   setSelected: React.Dispatch<React.SetStateAction<Set<string>>>;
   ordered: RankedRow[];
   visible: RankedRow[];
-  rankTables: Record<MeasureId, RankTable>;
+  rankTables: Record<RankMeasureId, RankTable>;
   rankedCount: number;
   filteredTotal: number;
   missingCount: number;
