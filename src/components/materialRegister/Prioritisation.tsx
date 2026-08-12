@@ -27,8 +27,8 @@ import {
 } from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
 
-const W = 680;
-const H = 380;
+const W = 600;
+const H = 300;
 const PAD = { l: 72, r: 40, t: 20, b: 46 };
 const PW = W - PAD.l - PAD.r;
 const PH = H - PAD.t - PAD.b;
