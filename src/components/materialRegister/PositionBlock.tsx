@@ -44,7 +44,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
         `${mm.label}: rank ${rank} of ${rankedCount} ranked.` +
         (missing > 0 ? ` ${missing} material${missing === 1 ? "" : "s"} have no figure.` : "");
 
-    const activeRank = rankTables[measureId].ranks[materialId] ?? null;
+    const activeRank = measureId === "all" ? null : rankTables[measureId].ranks[materialId] ?? null;
     let gapSentence = "";
     if (isAmber && rank !== null && activeRank !== null) {
       const a = MEASURES.find((x) => x.id === measureId)!;
