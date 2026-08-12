@@ -731,7 +731,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                   style={{
                     left: Math.min(hover.left + 12, 9999),
                     top: Math.max(hover.top - 10, 0),
-                    transform: hover.left > 420 ? "translateX(-110%)" : undefined,
+                    transform: hover.left > 340 ? "translateX(-110%)" : undefined,
                   }}
                 >
                   <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
