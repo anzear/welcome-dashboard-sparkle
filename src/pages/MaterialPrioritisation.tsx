@@ -35,11 +35,19 @@ const Inner: React.FC = () => {
     <div className="h-full w-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-6 pb-16 pt-4">
         <header className="space-y-1">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="mb-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" /> Back to Dashboard
+          </button>
           <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Material Prioritisation
           </h1>
           <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
         </header>
+
 
         <div className="flex items-center gap-3">
 
