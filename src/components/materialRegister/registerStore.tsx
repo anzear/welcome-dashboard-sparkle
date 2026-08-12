@@ -383,21 +383,36 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   }, [data, filters]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
-    const tables = {} as Record<MeasureId, RankTable>;
+    const tables = {} as Record<RankMeasureId, RankTable>;
     MEASURES.forEach((mm) => {
       tables[mm.id] = computeRanks(filtered, mm);
     });
+
+    if (measureId === "all") {
+      const buildAll = (m: Material): RankedRow => {
+        const ranks = {} as Record<RankMeasureId, number | null>;
+        MEASURES.forEach((mm) => {
+          ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
+        });
+        return { m, rank: null, ranks, gapMeasure: null, gapSize: 0 };
+      };
+      return {
+        ordered: filtered.map((m) => buildAll(m)),
+        rankTables: tables,
+        rankedCount: 0,
+      };
+    }
 
     const active = tables[measureId];
     const threshold = active.rankedCount * DIVERGENCE_THRESHOLD_RATIO;
 
     const build = (m: Material, rank: number | null): RankedRow => {
-      const ranks = {} as Record<MeasureId, number | null>;
+      const ranks = {} as Record<RankMeasureId, number | null>;
       MEASURES.forEach((mm) => {
         ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
       });
 
-      let gapMeasure: MeasureId | null = null;
+      let gapMeasure: RankMeasureId | null = null;
       let gapSize = 0;
       if (rank !== null) {
         MEASURES.forEach((mm) => {
