@@ -115,8 +115,8 @@ export function computeRanks(rows: Material[], measure: Measure): RankTable {
 export interface RankedRow {
   m: Material;
   rank: number | null;
-  ranks: Record<MeasureId, number | null>;
-  gapMeasure: MeasureId | null;
+  ranks: Record<RankMeasureId, number | null>;
+  gapMeasure: RankMeasureId | null;
   gapSize: number;
 }
 
