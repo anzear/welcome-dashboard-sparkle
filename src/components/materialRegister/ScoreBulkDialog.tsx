@@ -107,14 +107,23 @@ const ScoreBulkPanel: React.FC<{
             {plural(ids.length, "material", "materials")} selected · tick more rows below to add, or remove them here.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={close}
-          className="rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Close"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={close}
+            className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+          >
+            Clear selection
+          </button>
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-sm p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+            aria-label="Close"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Selection, visible and editable */}
