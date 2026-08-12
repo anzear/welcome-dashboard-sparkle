@@ -23,20 +23,26 @@ const Inner: React.FC = () => {
 
   if (openId) {
     return (
-      <div className="h-full w-full overflow-y-auto p-4">
-        <MaterialBrief />
+      <div className="h-full w-full overflow-y-auto">
+        <div className="mx-auto w-full max-w-[1400px] px-6 py-4">
+          <MaterialBrief />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-full w-full space-y-4 overflow-y-auto p-4 pb-16">
-      <header className="space-y-0.5">
-        <h1 className="text-base font-semibold tracking-tight text-foreground">Material Prioritisation</h1>
-        <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
-      </header>
+    <div className="h-full w-full overflow-y-auto">
+      <div className="mx-auto w-full max-w-[1400px] space-y-4 px-6 pb-16 pt-4">
+        <header className="space-y-1">
+          <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Material Prioritisation
+          </h1>
+          <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
+        </header>
 
-      <div className="flex items-center gap-3 rounded-t-md bg-muted/30 px-2 py-1.5">
+        <div className="flex items-center gap-3">
+
         <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
           {TABS.map((t) => (
             <button
@@ -61,16 +67,17 @@ const Inner: React.FC = () => {
             <Plus className="h-3 w-3" /> Add material
           </button>
         )}
+        </div>
+        <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
+        {tab === "register" && <MaterialRegisterTable />}
+        {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
+        {tab === "scoring" && <DriverScoring />}
       </div>
-      <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
-
-
-      {tab === "register" && <MaterialRegisterTable />}
-      {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
-      {tab === "scoring" && <DriverScoring />}
     </div>
   );
 };
+
 
 const MaterialPrioritisation: React.FC = () => (
   <RegisterProvider>
