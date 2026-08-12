@@ -22,7 +22,7 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import { Plus, SlidersHorizontal, X, ChevronDown, Check } from "lucide-react";
+import { Plus, SlidersHorizontal, X } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-b border-border/60 align-bottom";
@@ -230,34 +230,6 @@ export const MaterialRegisterTable: React.FC = () => {
               type="button"
               className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
-              Rank: <span className="text-foreground">{MEASURES.find((m) => m.id === measureId)?.label}</span>
-              <ChevronDown className="h-3 w-3" />
-            </button>
-          </PopoverTrigger>
-          <PopoverContent align="start" className="w-44 p-1">
-            {MEASURES.map((mm) => (
-              <button
-                key={mm.id}
-                type="button"
-                onClick={() => setMeasureId(mm.id)}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[11px] hover:bg-muted",
-                  measureId === mm.id ? "text-foreground" : "text-muted-foreground",
-                )}
-              >
-                {mm.label}
-                {measureId === mm.id && <Check className="h-3 w-3" />}
-              </button>
-            ))}
-          </PopoverContent>
-        </Popover>
-
-        <Popover>
-          <PopoverTrigger asChild>
-            <button
-              type="button"
-              className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
               <SlidersHorizontal className="h-3 w-3" /> Columns
             </button>
           </PopoverTrigger>
@@ -283,6 +255,25 @@ export const MaterialRegisterTable: React.FC = () => {
             ))}
           </PopoverContent>
         </Popover>
+
+        {/* Rank tabs — dark pill toggle, right-aligned */}
+        <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+          {MEASURES.map((mm) => (
+            <button
+              key={mm.id}
+              type="button"
+              onClick={() => setMeasureId(mm.id)}
+              className={cn(
+                "px-2.5 py-1 text-[11px] font-medium rounded-sm transition-colors",
+                measureId === mm.id
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {mm.label}
+            </button>
+          ))}
+        </div>
 
         {/* Coverage readout, right-aligned on the same row */}
         <div className="ml-auto flex items-center gap-2 text-[11px] text-muted-foreground">
