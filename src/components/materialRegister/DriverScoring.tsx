@@ -237,11 +237,12 @@ const DriverScoring: React.FC = () => {
             </button>
           </>
         ) : (
-          <span>Ordered as in the register. Click a driver heading to rank by that judgement.</span>
+          <span>
+            Click a driver heading to rank by that judgement; click a cell, then 0–5 to score, minus first for a
+            constraint, Backspace clears, arrows move.
+          </span>
         )}
-        <span className="ml-auto text-[10px]">
-          Click a cell, then 0–5 to score, minus first for a constraint, Backspace clears, arrows move.
-        </span>
+
       </div>
 
       <FilterChips />
