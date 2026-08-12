@@ -43,9 +43,9 @@ const Section: React.FC<{
   className?: string;
 }> = ({ title, note, children, className }) => (
   <section className={cn("space-y-3", className)}>
-    <div className="border-b border-border/60 pb-1.5">
-      <h2 className="text-[14px] font-semibold tracking-tight text-foreground">{title}</h2>
-      {note && <p className="pt-0.5 text-[11px] leading-snug text-muted-foreground/60">{note}</p>}
+    <div className="border-b border-border/70 pb-1.5">
+      <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">{title}</h2>
+      {note && <p className="pt-1 text-xs leading-snug text-muted-foreground">{note}</p>}
     </div>
     {children}
   </section>
@@ -58,7 +58,7 @@ const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ 
       first ? "" : "mt-2 border-t border-border/50 pt-4",
     )}
   >
-    <span className="text-[12px] font-medium text-muted-foreground">{children}</span>
+    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</span>
   </div>
 );
 
