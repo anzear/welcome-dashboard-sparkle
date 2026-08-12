@@ -50,7 +50,6 @@ const DriverScoring: React.FC = () => {
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<Cursor | null>(null);
-  const [bulkOpen, setBulkOpen] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const negativeNext = useRef(false);
   const gridRef = useRef<HTMLTableSectionElement>(null);
@@ -248,7 +247,7 @@ const DriverScoring: React.FC = () => {
       <FilterChips />
 
 
-      {/* Selection bar */}
+      {/* Compact selection summary */}
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
           <span className="font-medium text-foreground">
@@ -260,35 +259,22 @@ const DriverScoring: React.FC = () => {
               </>
             )}
           </span>
-          <button
-            type="button"
-            onClick={() => setBulkOpen(true)}
-            className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium hover:bg-muted"
-          >
-            Set score
-          </button>
-          <button
-            type="button"
-            onClick={() => setSelected(new Set())}
-            className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            Clear selection
-          </button>
         </div>
       )}
 
-      <ScoreBulkPanel
-        open={bulkOpen && selected.size > 0}
-        ids={[...selected]}
-        onRemoveMaterial={(id) =>
-          setSelected((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          })
-        }
-        onOpenChange={setBulkOpen}
-      />
+      {selected.size > 0 && (
+        <ScoreBulkPanel
+          ids={[...selected]}
+          onRemoveMaterial={(id) =>
+            setSelected((prev) => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            })
+          }
+          onClearSelection={() => setSelected(new Set())}
+        />
+      )}
 
 
       {toast && (
