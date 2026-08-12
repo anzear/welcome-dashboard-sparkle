@@ -6,7 +6,9 @@ import DriverScoring from "@/components/materialRegister/DriverScoring";
 import Prioritisation from "@/components/materialRegister/Prioritisation";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 
 const TABS = [
   { id: "register", label: "Register" },
@@ -18,6 +20,8 @@ type TabId = (typeof TABS)[number]["id"];
 
 const Inner: React.FC = () => {
   const [tab, setTab] = useState<TabId>("register");
+  const navigate = useNavigate();
+
   const [addOpen, setAddOpen] = useState(false);
   const { openId } = useRegister();
 
@@ -35,11 +39,19 @@ const Inner: React.FC = () => {
     <div className="h-full w-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-6 pb-16 pt-4">
         <header className="space-y-1">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            className="mb-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-3 w-3" /> Back to Dashboard
+          </button>
           <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             Material Prioritisation
           </h1>
           <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
         </header>
+
 
         <div className="flex items-center gap-3">
 
