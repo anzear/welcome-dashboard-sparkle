@@ -27,8 +27,8 @@ import {
 } from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
 
-const W = 680;
-const H = 380;
+const W = 600;
+const H = 300;
 const PAD = { l: 72, r: 40, t: 20, b: 46 };
 const PW = W - PAD.l - PAD.r;
 const PH = H - PAD.t - PAD.b;
@@ -485,7 +485,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
       ) : (
         <>
           {/* Plot + legend side by side */}
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px]">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px]">
             <div className="relative rounded-xl border border-border/70 bg-card p-1 shadow-sm">
               <svg
                 ref={svgRef}
@@ -728,7 +728,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                   style={{
                     left: Math.min(hover.left + 12, 9999),
                     top: Math.max(hover.top - 10, 0),
-                    transform: hover.left > 340 ? "translateX(-110%)" : undefined,
+                    transform: hover.left > W / 2 ? "translateX(-110%)" : undefined,
                   }}
                 >
                   <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
