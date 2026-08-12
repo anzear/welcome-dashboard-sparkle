@@ -28,7 +28,7 @@ const HEAD =
   "sticky top-0 z-10 bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-slate-500 border-b border-border/60 align-bottom";
 
 /** Pinned identity columns: they hold while the measures scroll. */
-const STICK = "sticky bg-card";
+const STICK = "sticky";
 
 /** Units live in the header, second line, faintest tier. */
 const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-foreground/50";
