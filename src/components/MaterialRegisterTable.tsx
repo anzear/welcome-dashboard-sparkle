@@ -545,12 +545,12 @@ export const MaterialRegisterTable: React.FC = () => {
                     </td>
 
                     {cols.materialType && (
-                      <td className="px-3 py-2 align-middle text-[11px] text-muted-foreground">
+                      <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
                         {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
                       </td>
                     )}
                     {cols.materialCategory && (
-                      <td className="px-3 py-2 align-middle text-[11px]">
+                      <td className="px-3 py-2 align-middle text-[12px]">
                         {m.material_class ? (
                           <span className="text-muted-foreground">{m.material_class}</span>
                         ) : (
@@ -606,7 +606,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     {cols.priority && (
                       <td className="px-3 py-2 align-middle">
                         {m.priority_period ? (
-                          <span className="text-[11px] text-foreground">{m.priority_period}</span>
+                          <span className="text-[12px] text-foreground">{m.priority_period}</span>
                         ) : (
                           <Missing />
                         )}
@@ -616,7 +616,7 @@ export const MaterialRegisterTable: React.FC = () => {
 
                     {cols.intelligence && (
                       <td className="px-3 py-2 align-middle">
-                        <span className="text-[11px] text-muted-foreground">
+                        <span className="text-[12px] text-muted-foreground">
                           {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
                         </span>
                       </td>
