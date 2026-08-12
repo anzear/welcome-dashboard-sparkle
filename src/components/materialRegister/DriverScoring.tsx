@@ -301,11 +301,11 @@ const DriverScoring: React.FC = () => {
       )}
 
       {/* The matrix is the only entry surface */}
-      <div className="relative overflow-x-auto rounded-md border border-border">
+      <div className="relative overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
         <table className="w-full border-separate border-spacing-0 text-[11px]">
           <thead className="sticky top-0 z-20">
             <tr>
-              <th className="sticky left-0 z-30 w-8 min-w-8 border-b border-border bg-background px-2 py-2">
+              <th className="sticky left-0 z-30 w-8 min-w-8 border-b border-border bg-card px-2 py-2">
                 <input
                   type="checkbox"
                   aria-label="Select all shown"
@@ -317,7 +317,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky left-8 z-30 min-w-[280px] border-b border-r border-border bg-background px-3 py-2 text-left",
+                  "sticky left-8 z-30 min-w-[280px] border-b border-r border-border bg-card px-3 py-2 text-left",
                 )}
               >
                 Material
@@ -331,7 +331,7 @@ const DriverScoring: React.FC = () => {
                     title={q.helper ? `${q.label} — ${q.helper}` : q.label}
                     className={cn(
                       CELL_W,
-                      "border-b border-border bg-background px-0.5 py-1.5 align-bottom",
+                      "border-b border-border bg-card px-0.5 py-1.5 align-bottom",
                       active && "bg-primary/10",
                     )}
                   >
@@ -355,7 +355,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-background px-2 py-2 text-right",
+                  "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
                   sort?.key === "scored" && "bg-primary/10",
                 )}
               >
@@ -393,7 +393,7 @@ const DriverScoring: React.FC = () => {
                   <tr className={cn("hover:bg-muted/40", isSelected && "bg-primary/5")}>
                     <td
                       className={cn(
-                        "sticky left-0 z-10 border-b border-border bg-background px-2 py-1 align-middle",
+                        "sticky left-0 z-10 border-b border-border bg-card px-2 py-1 align-middle group-hover:bg-muted/30",
                         isSelected && "bg-primary/5",
                       )}
                     >
@@ -407,7 +407,7 @@ const DriverScoring: React.FC = () => {
                     </td>
                     <td
                       className={cn(
-                        "sticky left-8 z-10 border-b border-r border-border bg-background px-3 py-1 align-middle",
+                        "sticky left-8 z-10 border-b border-r border-border bg-card px-3 py-1 align-middle group-hover:bg-muted/30",
                         isSelected && "bg-primary/5",
                       )}
                     >
@@ -459,7 +459,7 @@ const DriverScoring: React.FC = () => {
 
                     <td
                       className={cn(
-                        "sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-background px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground",
+                        "sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-card px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground group-hover:bg-muted/30",
                         sort?.key === "scored" && "bg-primary/10",
                       )}
                     >
