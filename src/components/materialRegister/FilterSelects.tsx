@@ -77,75 +77,90 @@ const FilterSelects: React.FC<{ className?: string; include?: FilterKey[] }> = (
 
   const shown = (key: FilterKey) => !include || include.includes(key);
 
+  const controls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
+    ["statuses", "Status", options.statuses, filters.statuses],
+    ["owners", "Owner", options.owners, filters.owners],
+    ["entryTypes", "Material type", options.entryTypes, filters.entryTypes],
+    ["classes", "Material category", options.classes, filters.classes],
+    ["products", "Product", options.products, filters.products],
+    ["applications", "Application", options.applications, filters.applications],
+    ["tags", "Tags", options.tags, filters.tags],
+    ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
+  ];
+
+  const active = controls.filter(([k]) => shown(k));
+  const activeCount = active.reduce((n, [, , , sel]) => n + sel.length, 0);
+
+  if (variant === "popover") {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button
+            type="button"
+            className={cn(
+              "inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-medium transition-colors",
+              activeCount > 0
+                ? "border-primary/40 bg-primary/5 text-foreground"
+                : "border-border bg-card text-muted-foreground hover:text-foreground",
+              className,
+            )}
+          >
+            <Filter className="h-3 w-3 opacity-70" />
+            Filters
+            {activeCount > 0 && (
+              <span className="font-mono tabular-nums text-primary">{activeCount}</span>
+            )}
+            <ChevronDown className="h-3 w-3 opacity-60" />
+          </button>
+        </PopoverTrigger>
+        <PopoverContent align="end" className="w-64 p-2">
+          <div className="space-y-1.5">
+            {active.map(([key, label, opts, sel]) => (
+              <div key={key} className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-muted-foreground">{label}</span>
+                <MultiSelectFilter
+                  label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
+                  options={opts}
+                  selected={sel}
+                  onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
+                />
+              </div>
+            ))}
+          </div>
+          {activeCount > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                setFilters((f) => {
+                  const next = { ...f };
+                  active.forEach(([k]) => ((next as any)[k] = []));
+                  return next;
+                })
+              }
+              className="mt-2 w-full rounded-sm border border-border px-2 py-1 text-[10px] uppercase tracking-widest text-muted-foreground hover:bg-muted"
+            >
+              Clear all
+            </button>
+          )}
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {shown("statuses") && (
+      {active.map(([key, label, opts, sel]) => (
         <MultiSelectFilter
-          label="Status"
-          options={options.statuses}
-          selected={filters.statuses}
-          onChange={(v) => setFilters((f) => ({ ...f, statuses: v }))}
+          key={key}
+          label={label}
+          options={opts}
+          selected={sel}
+          onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
         />
-      )}
-      {shown("owners") && (
-        <MultiSelectFilter
-          label="Owner"
-          options={options.owners}
-          selected={filters.owners}
-          onChange={(v) => setFilters((f) => ({ ...f, owners: v }))}
-        />
-      )}
-      {shown("entryTypes") && (
-        <MultiSelectFilter
-          label="Material type"
-          options={options.entryTypes}
-          selected={filters.entryTypes}
-          onChange={(v) => setFilters((f) => ({ ...f, entryTypes: v }))}
-        />
-      )}
-      {shown("classes") && (
-        <MultiSelectFilter
-          label="Material category"
-          options={options.classes}
-          selected={filters.classes}
-          onChange={(v) => setFilters((f) => ({ ...f, classes: v }))}
-        />
-      )}
-      {shown("products") && (
-        <MultiSelectFilter
-          label="Product"
-          options={options.products}
-          selected={filters.products}
-          onChange={(v) => setFilters((f) => ({ ...f, products: v }))}
-        />
-      )}
-      {shown("applications") && (
-        <MultiSelectFilter
-          label="Application"
-          options={options.applications}
-          selected={filters.applications}
-          onChange={(v) => setFilters((f) => ({ ...f, applications: v }))}
-        />
-      )}
-      {shown("tags") && (
-        <MultiSelectFilter
-          label="Tags"
-          options={options.tags}
-          selected={filters.tags}
-          onChange={(v) => setFilters((f) => ({ ...f, tags: v }))}
-        />
-      )}
-      {shown("priorityPeriods") && (
-        <MultiSelectFilter
-          label="Priority period"
-          options={options.priorityPeriods}
-          selected={filters.priorityPeriods}
-          onChange={(v) => setFilters((f) => ({ ...f, priorityPeriods: v }))}
-        />
-      )}
-
+      ))}
     </div>
   );
 };
 
 export default FilterSelects;
+
