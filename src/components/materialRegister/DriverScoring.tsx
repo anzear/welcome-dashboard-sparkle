@@ -217,32 +217,32 @@ const DriverScoring: React.FC = () => {
         )}
       </div>
 
-      {/* Coverage readout on its own row below the toolbar */}
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+      {/* Caption row: instruction on the left, coverage readout on the right */}
+      <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2">
+          {sort ? (
+            <>
+              <span className="text-foreground">{sortLabel()}</span>
+              <button
+                type="button"
+                onClick={() => setSort(null)}
+                className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              >
+                Clear sort
+              </button>
+            </>
+          ) : (
+            <span>
+              Click a driver heading to rank by that judgement; click a cell, then 0–5 to score, minus first for a
+              constraint, Backspace clears, arrows move.
+            </span>
+          )}
+        </div>
         <span>
           <span className="font-mono tabular-nums text-foreground">{scoredCells.toLocaleString("en-GB")}</span> of{" "}
           <span className="font-mono tabular-nums">{totalCells.toLocaleString("en-GB")}</span> cells scored (
           <span className="font-mono tabular-nums">{pct}%</span>)
         </span>
-        <span className="text-border">·</span>
-        {sort ? (
-          <>
-            <span className="text-foreground">{sortLabel()}</span>
-            <button
-              type="button"
-              onClick={() => setSort(null)}
-              className="text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-            >
-              Clear sort
-            </button>
-          </>
-        ) : (
-          <span>
-            Click a driver heading to rank by that judgement; click a cell, then 0–5 to score, minus first for a
-            constraint, Backspace clears, arrows move.
-          </span>
-        )}
-
       </div>
 
       <FilterChips />
