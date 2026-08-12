@@ -280,6 +280,10 @@ export const MaterialRegisterTable: React.FC = () => {
 
       {/* Caption — coverage readout and any active filters */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pb-1.5 text-[11px] text-muted-foreground">
+        <span className="text-foreground">
+          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
+          <span className="font-mono tabular-nums">{data.length}</span> materials
+        </span>
         <span>
           Ranking <span className="font-mono tabular-nums">{rankedCount}</span> of{" "}
           <span className="font-mono tabular-nums">{filteredTotal}</span>
@@ -368,13 +372,6 @@ export const MaterialRegisterTable: React.FC = () => {
           </button>
         </div>
       )}
-
-      <div className="flex flex-wrap items-baseline justify-between gap-2 py-2">
-        <div className="text-xs font-medium text-foreground">
-          <span className="font-mono tabular-nums">{visible.length}</span> of{" "}
-          <span className="font-mono tabular-nums">{data.length}</span> materials
-        </div>
-      </div>
 
       <div className="overflow-x-auto rounded-md border border-border bg-card">
         <table className="w-full min-w-[1500px] border-collapse text-xs">
