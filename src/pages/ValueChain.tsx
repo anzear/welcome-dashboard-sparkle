@@ -619,7 +619,7 @@ const generateValueChainOverview = (
 
   const bullets = [
     `The top feedstock is ${topFeedstock.name} (${topFeedstock.volume.toFixed(1)} M t/yr), with a total of ~${totalVolume.toFixed(0)} M t/yr available across all feedstocks at prices ranging €${minPrice}–${maxPrice}/t. ${commercialShare}% of feedstocks are already at commercial maturity.`,
-    `${techCount} technologies transform these feedstocks into ${topic}. The best-matched route is ${bestTech.name} — compatible with ${bestTech.feedstocks.length} feedstocks and processing ~${bestTech.feedstockVolume.toFixed(1)} M t/yr, with low IP density (score ${bestTech.ipScore}) and high research activity (${bestTech.patents} patents). Status: ${bestTech.status} (TRL ${bestTech.trl}).`,
+    `${techCount} technologies transform these feedstocks into ${topic}. The best-matched route is ${bestTech.name} — compatible with ${bestTech.feedstocks.length} feedstocks and processing ~${bestTech.feedstockVolume.toFixed(1)} M t/yr, with a low IP / Patent count (${bestTech.ipScore}) and high research activity (${bestTech.patents} patents). Status: ${bestTech.status} (TRL ${bestTech.trl}).`,
     `${totalProducers} producers of ${topic} identified. ${topRegion} leads, with the main players in ${topCountries.join(' and ')}, primarily at ${topScales.join(' and ')} scale.`,
     `${topic} is sold across ${appCount} market applications. Top market is ${topApp.name} (${topApp.topMarket}), with a ${topic} price of ~€${topApp.materialPrice.toLocaleString()}/t.`,
   ];
@@ -1067,7 +1067,7 @@ const TechBubbleChart: React.FC<{ data: TechDatum[]; height?: number }> = ({ dat
   const iw = Math.max(50, W - M.left - M.right);
   const ih = Math.max(50, H - M.top - M.bottom);
 
-  // Domains: X = IP density (0-100), Y = feedstock available (M t/yr)
+  // Domains: X = IP / Patent count (0-100), Y = feedstock available (M t/yr)
   const xMin = 0, xMax = 100;
   const yRawMax = Math.max(...data.map((d) => d.feedstockVolume), 1);
   const yMax = Math.ceil(yRawMax / 5) * 5;
@@ -1194,7 +1194,7 @@ const TechBubbleChart: React.FC<{ data: TechDatum[]; height?: number }> = ({ dat
         ))}
 
         {/* Axis titles */}
-        <text x={M.left + iw / 2} y={H - 10} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP DENSITY</text>
+        <text x={M.left + iw / 2} y={H - 10} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP / PATENT COUNT</text>
         <text transform={`rotate(-90 ${18} ${M.top + ih / 2})`} x={18} y={M.top + ih / 2} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>FEEDSTOCK AVAILABLE EU  (M t/yr)</text>
 
 
@@ -1240,7 +1240,7 @@ const TechBubbleChart: React.FC<{ data: TechDatum[]; height?: number }> = ({ dat
               </span>
             </div>
             <div className="space-y-1.5 tabular-nums">
-              <div className="flex items-center justify-between gap-3"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP density</span><span className="font-semibold text-slate-900 text-right whitespace-nowrap">{hover.ipScore}</span></div>
+              <div className="flex items-center justify-between gap-3"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP / Patent count</span><span className="font-semibold text-slate-900 text-right whitespace-nowrap">{hover.ipScore}</span></div>
               <div className="flex items-center justify-between gap-3"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Research volume</span><span className="font-semibold text-slate-900 text-right whitespace-nowrap">{Math.round(hover.patents * 2.4).toLocaleString()} pubs</span></div>
               <div className="flex items-center justify-between gap-3"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Est. feedstock vol. (M t/yr)</span><span className="font-semibold text-slate-900 text-right whitespace-nowrap">{volumeRangeStr(hover.feedstockVolume)}</span></div>
               <div className="flex items-center justify-between gap-3"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Pathways</span><span className="font-semibold text-slate-900 text-right whitespace-nowrap">{hover.feedstocks.length} feedstocks</span></div>
@@ -1529,8 +1529,8 @@ const TechnologySnapshotSection: React.FC<{
         const leastIp = [...cats].sort((a, b) => a.avgIp - b.avgIp)[0];
         const cards: { label: string; cat: typeof cats[number]; metric: string; unit: string }[] = [
           { label: 'Most Scalable',      cat: mostScalable, metric: mostScalable.avgTrl.toFixed(1),      unit: 'avg TRL' },
-          { label: 'Most IP Dense',      cat: mostIp,       metric: Math.round(mostIp.avgIp).toString(), unit: 'avg IP score' },
-          { label: 'Least IP Dense',     cat: leastIp,      metric: Math.round(leastIp.avgIp).toString(),unit: 'avg IP score' },
+          { label: 'Highest IP / Patent Count', cat: mostIp,  metric: Math.round(mostIp.avgIp).toString(), unit: 'avg IP / Patent count' },
+          { label: 'Lowest IP / Patent Count',  cat: leastIp, metric: Math.round(leastIp.avgIp).toString(), unit: 'avg IP / Patent count' },
         ];
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 rounded-lg border border-border/60 bg-muted/40 overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border/60">
@@ -2342,7 +2342,7 @@ const MarketSnapshotSection: React.FC<{
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 8;
 
-  // Composite ranking: maturity 40% · inverse IP density 30% · signals 30%
+  // Composite ranking: maturity 40% · inverse IP / Patent count 30% · signals 30%
   const rankedApps = useMemo(() => {
     const maxSig = Math.max(...APPLICATIONS_DATA.map((a) => a.signals));
     return [...APPLICATIONS_DATA]
@@ -2406,7 +2406,7 @@ const MarketSnapshotSection: React.FC<{
   const M = { top: 22, right: 22, bottom: 42, left: 52 };
   const iw = CHART_W - M.left - M.right;
   const ih = CHART_H - M.top - M.bottom;
-  const xMin = 0, xMax = 100;             // Application IP density (0-100)
+  const xMin = 0, xMax = 100;             // Application IP / Patent count (0-100)
   const yMin = 0, yMax = Math.ceil(Math.max(...APPLICATIONS_DATA.map((a) => a.marketPlayers)) / 20) * 20;
   const xScale = (v: number) => M.left + ((v - xMin) / (xMax - xMin)) * iw;
   const yScale = (v: number) => M.top + ih - ((v - yMin) / (yMax - yMin)) * ih;
@@ -2454,7 +2454,7 @@ const MarketSnapshotSection: React.FC<{
               </g>
             ))}
             {/* Axis labels */}
-            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP / PATENT COUNTY</text>
+            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP / PATENT COUNT</text>
             <text transform={`rotate(-90 ${16} ${M.top + ih / 2})`} x={16} y={M.top + ih / 2} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>MARKET PLAYERS</text>
 
             {/* Bubbles */}
@@ -2542,7 +2542,7 @@ const MarketSnapshotSection: React.FC<{
       const tiles: Array<{ label: string; value: string | number; unit: string; tooltip?: string; footer?: React.ReactNode }> = [
         { label: 'Applications', value: APPLICATIONS_DATA.length, unit: 'identified', tooltip: 'Total applications tracked', footer: `Top: ${topApp.name} · ${topApp.signals.toLocaleString()} players` },
         { label: 'Top Market', value: topMarket.name, unit: `${topMarket.count} app${topMarket.count === 1 ? '' : 's'}`, tooltip: 'Top market by application coverage' },
-        { label: 'IP Density Range', value: `${minIp}–${maxIp}`, unit: 'IP density', footer: 'Across all applications' },
+        { label: 'IP / Patent Count Range', value: `${minIp}–${maxIp}`, unit: 'IP / Patent count', footer: 'Across all applications' },
       ];
       return (
         <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-0 rounded-lg border border-border/60 bg-muted/40 overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border/60">
@@ -2617,7 +2617,7 @@ const MarketSnapshotSection: React.FC<{
                   ['name', 'Category', 'left', null],
                   ['signals', 'Market Players', 'center', null],
                   ['topMarket', 'Top Market', 'left', null],
-                  ['ipScore', 'IP Density', 'center', 'Patent intensity score for this application'],
+                  ['ipScore', 'IP / Patent count', 'center', 'IP / Patent count for this application'],
                   ['maturity', 'Maturity', 'left', null],
                 ] as [typeof sortKey, string, 'left' | 'right' | 'center', string | null][]).map(([key, label, align, tooltip]) => (
                   <th key={key} onClick={() => setSortKey(key)}
