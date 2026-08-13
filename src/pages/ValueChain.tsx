@@ -2454,7 +2454,7 @@ const MarketSnapshotSection: React.FC<{
               </g>
             ))}
             {/* Axis labels */}
-            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP DENSITY</text>
+            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP / PATENT COUNTY</text>
             <text transform={`rotate(-90 ${16} ${M.top + ih / 2})`} x={16} y={M.top + ih / 2} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>MARKET PLAYERS</text>
 
             {/* Bubbles */}
