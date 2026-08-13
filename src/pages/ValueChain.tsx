@@ -2430,7 +2430,7 @@ const MarketSnapshotSection: React.FC<{
         <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Application Landscape</h4>
-            <p className="text-[10px] text-muted-foreground mt-0.5">IP density × market players</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">IP / Patent count × market players</p>
           </div>
         </div>
 
