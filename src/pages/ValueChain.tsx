@@ -1621,7 +1621,7 @@ const TechnologySnapshotSection: React.FC<{
                       ['feedstocks', 'Est. vol.', 'Est. feedstock vol. (M t/yr)', 'center'],
 
 
-                      ['ipScore', 'IP dens.', 'IP density', 'center'],
+                      ['ipScore', 'IP/Patents', 'IP/Patent count', 'center'],
                       ['ipScore', 'Research', 'Research density', 'center'],
                       ['trl', 'Maturity', 'Maturity', 'left'],
                     ] as [typeof sortKey, string, string, 'left' | 'right' | 'center'][]).map(([key, label, full, align], i) => (
