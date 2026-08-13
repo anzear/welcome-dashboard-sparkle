@@ -1447,7 +1447,7 @@ const TechnologySnapshotSection: React.FC<{
           {t.name}
         </div>
         <div className="mt-2 pt-2 border-t border-border/50 divide-y divide-border/40">
-          <Row label="IP density" value={`${t.patents.toLocaleString()} patents`} tone={ip} />
+          <Row label="IP / Patent count" value={`${t.patents.toLocaleString()} patents`} tone={ip} />
           <Row label="Energy" value={`${t.energy.toFixed(1)} kWh/kg`} tone={en} indicator={enInd} />
           <Row label="Feedstocks" value={`${t.feedstocks.length} ${t.feedstocks.length === 1 ? 'option' : 'options'}`} tone={fx} />
         </div>
