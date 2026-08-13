@@ -2539,9 +2539,9 @@ const MarketSnapshotSection: React.FC<{
       const maxIp = Math.max(...APPLICATIONS_DATA.map((a) => a.ipScore));
 
       const topApp = [...APPLICATIONS_DATA].sort((a, b) => b.signals - a.signals)[0];
-      const tiles: Array<{ label: string; value: string | number; unit: string; tooltip?: string; footer?: React.ReactNode }> = [
+      const tiles: Array<{ label: string; value: string | number; unit?: string; tooltip?: string; footer?: React.ReactNode }> = [
         { label: 'Applications', value: APPLICATIONS_DATA.length, unit: 'identified', tooltip: 'Total applications tracked', footer: `Top: ${topApp.name} · ${topApp.signals.toLocaleString()} players` },
-        { label: 'Top Market', value: topMarket.name, unit: undefined, footer: `${topMarket.count} application${topMarket.count === 1 ? '' : 's'} identified`, tooltip: 'Top market by application coverage' },
+        { label: 'Top Market', value: topMarket.name, footer: `${topMarket.count} application${topMarket.count === 1 ? '' : 's'} identified`, tooltip: 'Top market by application coverage' },
         { label: 'IP / Patent Count Range', value: `${minIp}–${maxIp}`, unit: 'IP / Patent count', footer: 'Across all applications' },
       ];
       return (
