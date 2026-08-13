@@ -2500,7 +2500,7 @@ const MarketSnapshotSection: React.FC<{
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Maturity</span><span className="font-semibold text-slate-900">{STAGE_META[hover.maturity].label}</span></div>
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Market players</span><span className="font-semibold text-slate-900">{hover.marketPlayers}</span></div>
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Top market</span><span className="font-semibold text-slate-900">{hover.topMarket}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP density</span><span className="font-semibold text-slate-900">{hover.ipScore}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP / Patent count</span><span className="font-semibold text-slate-900">{hover.ipScore}</span></div>
                 </div>
               </div>
             );
