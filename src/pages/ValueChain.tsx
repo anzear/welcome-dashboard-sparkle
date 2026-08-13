@@ -1447,7 +1447,7 @@ const TechnologySnapshotSection: React.FC<{
           {t.name}
         </div>
         <div className="mt-2 pt-2 border-t border-border/50 divide-y divide-border/40">
-          <Row label="IP density" value={`${t.patents.toLocaleString()} patents`} tone={ip} />
+          <Row label="IP / Patent count" value={`${t.patents.toLocaleString()} patents`} tone={ip} />
           <Row label="Energy" value={`${t.energy.toFixed(1)} kWh/kg`} tone={en} indicator={enInd} />
           <Row label="Feedstocks" value={`${t.feedstocks.length} ${t.feedstocks.length === 1 ? 'option' : 'options'}`} tone={fx} />
         </div>
@@ -1621,7 +1621,7 @@ const TechnologySnapshotSection: React.FC<{
                       ['feedstocks', 'Est. vol.', 'Est. feedstock vol. (M t/yr)', 'center'],
 
 
-                      ['ipScore', 'IP dens.', 'IP density', 'center'],
+                      ['ipScore', 'IP/Patents', 'IP/Patent count', 'center'],
                       ['ipScore', 'Research', 'Research density', 'center'],
                       ['trl', 'Maturity', 'Maturity', 'left'],
                     ] as [typeof sortKey, string, string, 'left' | 'right' | 'center'][]).map(([key, label, full, align], i) => (
@@ -1739,7 +1739,7 @@ const TechnologySnapshotSection: React.FC<{
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="rounded-lg bg-muted/40 border border-border/60 p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">IP density</div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">IP / Patent count</div>
                       <a
                         href={patentsUrl}
                         target="_blank"
@@ -2430,7 +2430,7 @@ const MarketSnapshotSection: React.FC<{
         <div className="px-4 py-2.5 border-b border-border/60 flex items-center justify-between flex-wrap gap-2">
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Application Landscape</h4>
-            <p className="text-[10px] text-muted-foreground mt-0.5">IP density × market players</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">IP / Patent count × market players</p>
           </div>
         </div>
 
@@ -2454,7 +2454,7 @@ const MarketSnapshotSection: React.FC<{
               </g>
             ))}
             {/* Axis labels */}
-            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP DENSITY</text>
+            <text x={M.left + iw / 2} y={CHART_H - 8} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>IP / PATENT COUNTY</text>
             <text transform={`rotate(-90 ${16} ${M.top + ih / 2})`} x={16} y={M.top + ih / 2} textAnchor="middle" fontSize={9} fill="#64748b" fontWeight={700} style={{ letterSpacing: '0.20em' }}>MARKET PLAYERS</text>
 
             {/* Bubbles */}
@@ -2500,7 +2500,7 @@ const MarketSnapshotSection: React.FC<{
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Maturity</span><span className="font-semibold text-slate-900">{STAGE_META[hover.maturity].label}</span></div>
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Market players</span><span className="font-semibold text-slate-900">{hover.marketPlayers}</span></div>
                   <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">Top market</span><span className="font-semibold text-slate-900">{hover.topMarket}</span></div>
-                  <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP density</span><span className="font-semibold text-slate-900">{hover.ipScore}</span></div>
+                  <div className="flex items-center justify-between"><span className="text-slate-400 text-[10px] uppercase tracking-wider">IP / Patent count</span><span className="font-semibold text-slate-900">{hover.ipScore}</span></div>
                 </div>
               </div>
             );
