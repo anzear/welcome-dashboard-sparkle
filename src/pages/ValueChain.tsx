@@ -2541,7 +2541,7 @@ const MarketSnapshotSection: React.FC<{
       const topApp = [...APPLICATIONS_DATA].sort((a, b) => b.signals - a.signals)[0];
       const tiles: Array<{ label: string; value: string | number; unit: string; tooltip?: string; footer?: React.ReactNode }> = [
         { label: 'Applications', value: APPLICATIONS_DATA.length, unit: 'identified', tooltip: 'Total applications tracked', footer: `Top: ${topApp.name} · ${topApp.signals.toLocaleString()} players` },
-        { label: 'Top Market', value: topMarket.name, unit: `${topMarket.count} app${topMarket.count === 1 ? '' : 's'}`, tooltip: 'Top market by average IP density', footer: <span className="font-semibold text-slate-900">avg IP density {topMarket.avgIp}</span> },
+        { label: 'Top Market', value: topMarket.name, unit: `${topMarket.count} app${topMarket.count === 1 ? '' : 's'}`, tooltip: 'Top market by application coverage' },
         { label: 'IP Density Range', value: `${minIp}–${maxIp}`, unit: 'IP density', footer: 'Across all applications' },
       ];
       return (
