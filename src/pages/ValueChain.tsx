@@ -1739,7 +1739,7 @@ const TechnologySnapshotSection: React.FC<{
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="rounded-lg bg-muted/40 border border-border/60 p-3">
                     <div className="flex items-center justify-between">
-                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">IP density</div>
+                      <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-500">IP / Patent count</div>
                       <a
                         href={patentsUrl}
                         target="_blank"
