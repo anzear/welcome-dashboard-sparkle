@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 
 const TABS = [
   { id: "register", label: "Register" },
-  { id: "grid", label: "Prioritisation" },
+  { id: "grid", label: "Visualisation" },
   { id: "scoring", label: "Driver Scoring" },
 ] as const;
 
