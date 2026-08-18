@@ -12,13 +12,14 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   CONTRIBUTORS,
+  CRITERIA,
   CRITERION_LABEL,
   DEFAULT_CONTRIBUTOR,
-  JUDGED_CRITERIA,
   assessmentKey,
 } from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
+  type AssessmentCriterion,
   type AssessmentEntry,
   type AssessmentState,
   type Contributor,
@@ -48,6 +49,20 @@ import {
 
 
 export const CURRENT_USER = "You";
+
+/**
+ * The criterion set is shared, so a change to it is not a change to one
+ * material. These are kept apart from material History for that reason.
+ */
+export interface CriterionSetEvent {
+  event_id: string;
+  action: "added" | "edited" | "removed";
+  criterion_id: string;
+  label: string;
+  detail: string | null;
+  changed_by: string;
+  changed_at: string;
+}
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
@@ -476,6 +491,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   /** Criterion-level evidence. Shared across the team, mock records only. */
   const [documents, setDocuments] = useState<SupportingDocument[]>(seedDocuments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
+  /** One shared criterion set. Every material reads this list. */
+  const [criteria, setCriteria] = useState<AssessmentCriterion[]>(CRITERIA);
+  const [criteriaEvents, setCriteriaEvents] = useState<CriterionSetEvent[]>([]);
+  const judgedCriteria = useMemo(() => criteria.filter((c) => c.kind === "judgement"), [criteria]);
+  const judgedCriteriaRef = judgedCriteria;
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
@@ -541,7 +561,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const disagreeIds = useMemo(() => {
     const byKey = new Map<string, number[]>();
     Object.values(assessments).forEach((e) => {
-      if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      if (!judgedCriteriaRef.some((c) => c.criterion_id === e.criterion_id)) return;
       /** Neutral is no visibility, not a low score — it can never make a split. */
       if (e.score === null) return;
       const key = `${e.material_id}::${e.criterion_id}`;
@@ -1097,11 +1117,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
     const teams = Array.from(new Set(mine.map((e) => e.team)));
     /** Only a 1–5 score counts as assessed. Neutral is a recorded absence of view. */
-    const criteriaAssessed = JUDGED_CRITERIA.filter((c) =>
+    const criteriaAssessed = judgedCriteria.filter((c) =>
       mine.some((e) => e.criterion_id === c.criterion_id && e.score !== null),
     ).length;
     const neutralEntries = mine.filter((e) => e.score === null).length;
-    const splits = JUDGED_CRITERIA.filter(
+    const splits = judgedCriteria.filter(
       (c) => assessmentState(materialId, c.criterion_id).flag === "split",
     ).length;
     const lastAssessedAt = mine.reduce<string | null>(
@@ -1110,7 +1130,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     );
     return {
       criteriaAssessed,
-      criteriaTotal: JUDGED_CRITERIA.length,
+      criteriaTotal: judgedCriteria.length,
       contributors,
       teams,
       splits,
