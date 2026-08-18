@@ -870,9 +870,9 @@ export const MaterialBrief: React.FC = () => {
       {/* Decision bar — the interactive layer above the reference material */}
       <div className="mt-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
 
-        <div className="flex flex-wrap items-start gap-y-4 px-4 py-3 [&>*+*]:border-l [&>*+*]:border-border/60 [&>*+*]:pl-5 [&>*]:pr-5">
+        <div className="flex flex-wrap items-start gap-y-4 px-4 py-3">
           {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
-          <BarField label="Status" className="w-[190px]" hint="Set in the Gate card">
+          <BarField label="Status" className="w-[190px] pr-5" hint="Set in the Gate card">
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
@@ -887,7 +887,7 @@ export const MaterialBrief: React.FC = () => {
           </BarField>
 
 
-          <BarField label="Owner" className="w-[190px]">
+          <BarField label="Owner" className="w-[190px] border-l border-border/60 px-5">
             <Select
               value={m.owner ?? UNASSIGNED}
               onValueChange={(v) => {
@@ -922,7 +922,7 @@ export const MaterialBrief: React.FC = () => {
 
           <BarField
             label="Priority period"
-            className="w-[200px]"
+            className="w-[210px] border-l border-border/60 px-5"
             hint={m.priority_period === null ? "Not prioritised" : undefined}
           >
             <div className="flex w-full items-center gap-2">
@@ -960,7 +960,7 @@ export const MaterialBrief: React.FC = () => {
 
           {draftStatus === null && (
             <div
-              className="ml-auto border-l-0 pl-0 sm:border-l sm:border-border/60 sm:pl-5"
+              className="ml-auto border-border/60 pl-5 sm:border-l"
               title="Calculated by the platform from the figures. Four separate positions, never combined into one score."
             >
               <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -981,7 +981,7 @@ export const MaterialBrief: React.FC = () => {
           )}
 
           {draftStatus !== null && (
-            <div className="ml-auto self-center border-l-0 pl-0 sm:border-l sm:border-border/60 sm:pl-5">
+            <div className="ml-auto self-center border-border/60 pl-5 sm:border-l">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-muted-foreground">
                   {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
