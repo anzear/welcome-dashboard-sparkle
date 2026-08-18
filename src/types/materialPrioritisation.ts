@@ -286,7 +286,9 @@ export type MaterialEventType =
   | "condition_met"
   | "hold_change"
   | "no_go_reason"
-  | "reopen";
+  | "reopen"
+  /** A decision document was circulated. Reading is not deciding. */
+  | "decision_export";
 
 export type BatchOrigin = "baselining" | "real_transition";
 
