@@ -231,7 +231,7 @@ const ScoreBulkPanel: React.FC<{
             </button>
           </div>
           <div className="flex items-center justify-between">
-            <p className="text-[10px] text-muted-foreground">-5 strong constraint · 0 neutral · +5 strong driver</p>
+            <p className="text-[10px] text-muted-foreground">1 weak driver · 5 strong driver</p>
             {hasStagedHere && (
               <button type="button" onClick={unstage} className="text-[10px] text-muted-foreground underline">
                 Remove

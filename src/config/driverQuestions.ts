@@ -1,8 +1,7 @@
 /**
- * The driver question set. One scale from -5 (strong constraint, pushes against
- * pursuing the material) through 0 (neutral or no view) to +5 (strong driver,
- * pushes toward pursuing it). The same question can be a driver at one material
- * and a constraint at another — that is the point of a single scale.
+ * The driver question set. One scale from 1 (weak driver, little push toward
+ * pursuing the material) to 5 (strong driver, pushes hard toward pursuing it).
+ * Every question is a driver; there is no negative end of the scale.
  *
  * This array is the account-level seed. At runtime the set lives in the register
  * store, shared by every material, and is edited from the Scores section.
@@ -13,7 +12,7 @@ export interface DriverQuestion {
   label: string;
   /** Compact label for the matrix header. */
   short: string;
-  /** One line describing what +5 and -5 mean. */
+  /** One line describing what 5 and 1 mean. */
   helper: string | null;
   order: number;
   archived: boolean;
@@ -39,73 +38,73 @@ const seed: Array<Pick<DriverQuestion, "question_id" | "label" | "short" | "help
     question_id: "business_importance",
     label: "Business importance",
     short: "BUS",
-    helper: "+5 = central to a strategic product line · -5 = peripheral, little business consequence",
+    helper: "5 = central to a strategic product line · 1 = peripheral, little business consequence",
   },
   {
     question_id: "regulatory_position",
     label: "Regulatory position",
     short: "REG",
-    helper: "+5 = restriction imminent, change is forced · -5 = regulation settled and comfortable",
+    helper: "5 = restriction imminent, change is forced · 1 = regulation settled and comfortable",
   },
   {
     question_id: "market_pull",
     label: "Market pull",
     short: "MKT",
-    helper: "+5 = customers actively asking and willing to pay · -5 = no interest, change unwanted",
+    helper: "5 = customers actively asking and willing to pay · 1 = no interest, change unwanted",
   },
   {
     question_id: "environmental_impact",
     label: "Environmental impact",
     short: "ENV",
-    helper: "+5 = large footprint reduction available · -5 = renewable route is worse on impact",
+    helper: "5 = large footprint reduction available · 1 = renewable route is worse on impact",
   },
   {
     question_id: "feedstock_availability",
     label: "Feedstock availability",
     short: "FDS",
-    helper: "+5 = renewable feedstock plentiful and proven · -5 = no credible feedstock at scale",
+    helper: "5 = renewable feedstock plentiful and proven · 1 = no credible feedstock at scale",
   },
   {
     question_id: "supply_security",
     label: "Supply security",
     short: "SEC",
-    helper: "+5 = change reduces exposure and single-sourcing · -5 = change adds fragility",
+    helper: "5 = change reduces exposure and single-sourcing · 1 = change adds fragility",
   },
   {
     question_id: "cost",
     label: "Cost",
     short: "CST",
-    helper: "+5 = renewable route is cheaper · -5 = prohibitive premium against current source",
+    helper: "5 = renewable route is cheaper · 1 = prohibitive premium against current source",
   },
   {
     question_id: "product_performance",
     label: "Product performance",
     short: "PRF",
-    helper: "+5 = performance improves in the formulation · -5 = performance loss customers would notice",
+    helper: "5 = performance improves in the formulation · 1 = performance loss customers would notice",
   },
   {
     question_id: "process_impact",
     label: "Production process impact",
     short: "PRC",
-    helper: "+5 = drops into the existing process · -5 = needs new plant, handling or process redesign",
+    helper: "5 = drops into the existing process · 1 = needs new plant, handling or process redesign",
   },
   {
     question_id: "internal_readiness",
     label: "Internal readiness",
     short: "RDY",
-    helper: "+5 = team, data and capacity in place today · -5 = no owner, no capacity, no know-how",
+    helper: "5 = team, data and capacity in place today · 1 = no owner, no capacity, no know-how",
   },
   {
     question_id: "timing_pressure",
     label: "Timing pressure",
     short: "TIM",
-    helper: "+5 = a dated commitment or deadline applies · -5 = no time pressure of any kind",
+    helper: "5 = a dated commitment or deadline applies · 1 = no time pressure of any kind",
   },
   {
     question_id: "competitor_activity",
     label: "Competitor activity",
     short: "CMP",
-    helper: "+5 = competitors already moved, we are behind · -5 = nobody in the sector is moving",
+    helper: "5 = competitors already moved, we are behind · 1 = nobody in the sector is moving",
   },
 ];
 
@@ -150,4 +149,4 @@ export const shortForLabel = (label: string) =>
 /** Sparse map key. Unscored pairs simply have no entry. */
 export const scoreKey = (materialId: string, questionId: string) => `${materialId}::${questionId}`;
 
-export const SCORE_POINTS = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5] as const;
+export const SCORE_POINTS = [1, 2, 3, 4, 5] as const;

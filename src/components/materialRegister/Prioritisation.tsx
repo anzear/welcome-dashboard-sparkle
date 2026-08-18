@@ -348,7 +348,6 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                       aria-label="Size"
                     >
                       <option value="drivers">Strong drivers (count)</option>
-                      <option value="constraints">Strong constraints (count)</option>
                     </select>
                   </label>
                 </div>

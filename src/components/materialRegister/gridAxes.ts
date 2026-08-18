@@ -8,7 +8,7 @@ export type AxisVarId = string;
 export const DRIVER_AXIS_PREFIX = "q:";
 export const driverAxisId = (questionId: string) => `${DRIVER_AXIS_PREFIX}${questionId}`;
 
-export type SizeVarId = "drivers" | "constraints";
+export type SizeVarId = "drivers";
 
 /** Read access to the team's judgements, for axes that read a single question. */
 export interface AxisCtx {
@@ -148,33 +148,20 @@ export const COUNT_VARS: AxisVar[] = [
     value: (_m, c) => (c.scored_count === null ? null : (c.strong_drivers as number)),
     fmt: (v) => `${v} strong drivers`,
   },
-  {
-    id: "constraints",
-    label: "Strong constraints",
-    noun: "strong constraints",
-    unit: "count",
-    kind: "judgement",
-    group: "driver",
-    domain: { min: 0, max: 12 },
-    value: (_m, c) => (c.scored_count === null ? null : (c.strong_constraints as number)),
-    fmt: (v) => `${v} strong constraints`,
-  },
 ];
 
-const signedScore = (v: number) => (v > 0 ? `+${v}` : String(v));
-
-/** One driver question as an axis: its recorded score, -5 to +5. Unscored is no position. */
+/** One driver question as an axis: its recorded score, 1 to 5. Unscored is no position. */
 export const driverAxis = (q: DriverQuestion): AxisVar => ({
   id: driverAxisId(q.question_id),
   label: q.label,
   noun: q.label.toLowerCase(),
-  unit: "-5..+5",
+  unit: "1..5",
   kind: "judgement",
   group: "driver",
-  domain: { min: -5, max: 5 },
+  domain: { min: 1, max: 5 },
   questionId: q.question_id,
   value: (_m, _c, ctx) => ctx.score(q.question_id),
-  fmt: (v) => `${q.label} ${signedScore(v)}`,
+  fmt: (v) => `${q.label} ${v}`,
 });
 
 /** Full selector list: lenses first, then every driver question, then the counts. */
@@ -212,7 +199,7 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "exposure against the cost barrier",
     x: "spend",
     y: driverAxisId("cost"),
-    size: "constraints",
+    size: "drivers",
   },
   {
     id: "emissions-regulatory",
@@ -228,7 +215,7 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "exposure against capacity to act",
     x: "spend",
     y: driverAxisId("internal_readiness"),
-    size: "constraints",
+    size: "drivers",
   },
 ];
 

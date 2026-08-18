@@ -4,40 +4,30 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitives";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 
-/** Thin read-only -5..+5 track. Fixed width so every zero tick lines up. */
+/** Thin read-only 1..5 track. Fixed width so every rail lines up. */
 const RAIL = "w-[128px]";
 
 /**
- * Fixed-width -5..+5 rail. The centre tick is always drawn, so the zero marks
- * form one continuous line down the block. A recorded 0 is a filled neutral dot;
- * an unscored question keeps an empty rail with a hollow marker instead.
+ * Fixed-width 1..5 rail. The fill grows from the left with the strength of the
+ * driver; an unscored question keeps an empty rail with a hollow marker.
  */
 const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
-  const pct = value === null ? 50 : ((value + 5) / 10) * 100;
-  const negative = value !== null && value < 0;
+  const pct = value === null ? 0 : ((value - 1) / 4) * 100;
   return (
     <div className={cn("relative h-3.5", RAIL)}>
       <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-      {value !== null && value !== 0 && (
+      {value !== null && (
         <div
-          className={cn(
-            "absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full",
-            negative ? "bg-sky-700/70" : "bg-teal-600/80",
-          )}
-          style={negative ? { right: "50%", width: `${50 - pct}%` } : { left: "50%", width: `${pct - 50}%` }}
+          className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-teal-600/80"
+          style={{ width: `${pct}%` }}
         />
       )}
-      <div className="absolute left-1/2 top-1/2 h-2.5 w-px -translate-x-1/2 -translate-y-1/2 bg-muted-foreground/40" />
       <div
         className={cn(
           "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
           value === null
             ? "h-2 w-2 border border-dotted border-muted-foreground/50 bg-background"
-            : value === 0
-              ? "h-2 w-2 bg-muted-foreground/60"
-              : negative
-                ? "h-2 w-2 bg-sky-700"
-                : "h-2 w-2 bg-teal-600",
+            : "h-2 w-2 bg-teal-600",
         )}
         style={{ left: `${pct}%` }}
       />
@@ -47,8 +37,8 @@ const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
 
 
 /**
- * Editable -5..+5 cell. Type a number (optionally with a leading minus) to record
- * a judgement; clear the box to remove it. Enter or blur commits.
+ * Editable 1..5 cell. Type a number to record a judgement; clear the box to
+ * remove it. Enter or blur commits.
  */
 const ScoreCell: React.FC<{
   value: number | null;
@@ -68,7 +58,7 @@ const ScoreCell: React.FC<{
     }
     const n = Number(t);
     if (Number.isNaN(n)) return;
-    onCommit(Math.max(-5, Math.min(5, Math.round(n))));
+    onCommit(Math.max(1, Math.min(5, Math.round(n))));
   };
 
   return (
@@ -79,7 +69,7 @@ const ScoreCell: React.FC<{
       placeholder="—"
       onChange={(e) => {
         const raw = e.target.value;
-        if (/^[+-]?\d?$/.test(raw)) setDraft(raw);
+        if (/^\d?$/.test(raw)) setDraft(raw);
       }}
       onBlur={commit}
       onKeyDown={(e) => {
@@ -91,13 +81,7 @@ const ScoreCell: React.FC<{
       }}
       className={cn(
         "w-full rounded-sm border border-transparent bg-transparent px-0.5 py-0 text-right font-mono text-[15px] font-medium tabular-nums outline-none hover:border-border focus:border-primary/40 focus:bg-background",
-        value === null
-          ? "text-muted-foreground/50 placeholder:text-muted-foreground/50"
-          : value === 0
-            ? "text-muted-foreground"
-            : value < 0
-              ? "text-sky-900"
-              : "text-teal-800",
+        value === null ? "text-muted-foreground/50 placeholder:text-muted-foreground/50" : "text-teal-800",
       )}
     />
   );
@@ -106,7 +90,7 @@ const ScoreCell: React.FC<{
 
 /**
  * Section 3 of the brief. Judgement, kept in its own tint and its own type —
- * one compact row per question at rest, expanding to the 11-point control on click.
+ * one compact row per question at rest, expanding to the 5-point control on click.
  */
 const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => {
   const { scoreFor, setScore, clearScore, countsFor, questions, canEditQuestionSet } = useRegister();
@@ -123,8 +107,6 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
           <>
             <span className="font-mono tabular-nums text-foreground">{counts.strong_drivers}</span> strong{" "}
             {counts.strong_drivers === 1 ? "driver" : "drivers"},{" "}
-            <span className="font-mono tabular-nums text-foreground">{counts.strong_constraints}</span> strong{" "}
-            {counts.strong_constraints === 1 ? "constraint" : "constraints"},{" "}
             <span className="font-mono tabular-nums text-foreground">{counts.scored_count}</span> of{" "}
             <span className="font-mono tabular-nums">{questions.length}</span> scored
           </>
@@ -133,11 +115,11 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
 
       {/* Axis key sits directly above the rails, its 0 on the same vertical line */}
       <div className="grid grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 px-1 pt-1 text-[10px] text-muted-foreground/60">
-        <span className="text-right">-5 constraint</span>
+        <span className="text-right">1 weak</span>
         <span className="relative block h-3 w-[128px]">
-          <span className="absolute left-1/2 top-0 -translate-x-1/2">0</span>
+          <span className="absolute left-1/2 top-0 -translate-x-1/2">3</span>
         </span>
-        <span className="whitespace-nowrap">+5 driver</span>
+        <span className="whitespace-nowrap">5 strong</span>
       </div>
 
 

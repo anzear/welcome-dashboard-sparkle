@@ -30,7 +30,7 @@ const DriverListView: React.FC<{ materials: Material[]; onOpenScoring: () => voi
     if (key === "name") return m.name;
     const lens = lenses.find((l) => l.id === key);
     if (lens)
-      return lens.value(m, { strong_drivers: null, strong_constraints: null, scored_count: null }, {
+      return lens.value(m, { strong_drivers: null, scored_count: null }, {
         score: () => null,
       });
     return scoreFor(m.material_id, key)?.score ?? null;
@@ -138,7 +138,7 @@ const DriverListView: React.FC<{ materials: Material[]; onOpenScoring: () => voi
                 {lenses.map((l) => {
                   const v = l.value(
                     m,
-                    { strong_drivers: null, strong_constraints: null, scored_count: null },
+                    { strong_drivers: null, scored_count: null },
                     { score: () => null },
                   );
                   return (

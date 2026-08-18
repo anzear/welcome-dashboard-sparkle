@@ -884,11 +884,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         (v): v is number => v !== null,
       );
     if (values.length === 0) {
-      return { strong_drivers: null, strong_constraints: null, scored_count: null };
+      return { strong_drivers: null, scored_count: null };
     }
     return {
       strong_drivers: values.filter((v) => v >= 3).length,
-      strong_constraints: values.filter((v) => v <= -3).length,
       scored_count: values.length,
     };
   };
