@@ -16,7 +16,7 @@ interface Props {
   materialId: string;
   gapMeasure?: MeasureId | null;
   gapSize?: number;
-  variant?: "compact" | "detail";
+  variant?: "compact" | "detail" | "inline";
 }
 
 const BAR_H = 28;
@@ -62,7 +62,44 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
     return { mm, rank, rankedCount, isActive, isAmber, coverage, gapSentence, frac, pos };
   });
 
+  if (variant === "inline") {
+    return (
+      <div className="flex items-end gap-4">
+        {entries.map((e) => (
+          <div key={e.mm.id} className="min-w-[64px]" title={`${e.coverage}${e.gapSentence}`}>
+            <div
+              className={cn(
+                "truncate text-[10px] leading-none",
+                e.isActive ? "text-primary/80" : e.isAmber ? "text-amber-700/80" : "text-muted-foreground",
+              )}
+            >
+              {e.mm.label}
+            </div>
+            <div
+              className={cn(
+                "pt-1 font-mono text-[13px] leading-none tabular-nums",
+                e.isActive
+                  ? "text-primary"
+                  : e.isAmber
+                    ? "text-amber-700"
+                    : e.rank === null
+                      ? "text-muted-foreground/50"
+                      : "text-foreground",
+              )}
+            >
+              {e.rank === null ? "—" : `#${e.rank}`}
+              <span className="pl-1 text-[10px] text-muted-foreground/60">
+                {e.rank === null ? "" : `/${e.rankedCount}`}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (!detail) {
+
     const tooltip = entries
       .map(
         (e) =>

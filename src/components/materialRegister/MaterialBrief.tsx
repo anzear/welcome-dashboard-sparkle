@@ -810,8 +810,21 @@ export const MaterialBrief: React.FC = () => {
           </BarField>
 
 
+          {draftStatus === null && (
+            <div className="ml-auto" title="Calculated by the platform from the figures. Four separate positions, never combined into one score.">
+              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
+              <PositionBlock
+                materialId={m.material_id}
+                gapMeasure={row?.gapMeasure ?? null}
+                gapSize={row?.gapSize ?? 0}
+                variant="inline"
+              />
+            </div>
+          )}
+
           {draftStatus !== null && (
             <div className="ml-auto flex items-center gap-2">
+
               <span className="text-[10px] text-muted-foreground">
                 {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
               </span>
@@ -1118,18 +1131,8 @@ export const MaterialBrief: React.FC = () => {
             <BriefDriverScores materialId={m.material_id} />
           </Section>
 
-          <Section
-            title="Position"
-            note="Calculated by the platform from the figures above. Four separate positions, never combined into one score."
-          >
-            <PositionBlock
-              materialId={m.material_id}
-              gapMeasure={row?.gapMeasure ?? null}
-              gapSize={row?.gapSize ?? 0}
-              variant="detail"
-            />
-            {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
-          </Section>
+
+
 
 
           <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
