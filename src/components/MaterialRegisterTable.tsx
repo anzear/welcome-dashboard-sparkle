@@ -173,6 +173,8 @@ export const MaterialRegisterTable: React.FC = () => {
     setToast,
     undo,
     highlightIds,
+    scope,
+    scopeLabel,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);

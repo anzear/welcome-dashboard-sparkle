@@ -95,6 +95,8 @@ const Prioritisation: React.FC = () => {
     toast,
     setToast,
     undo,
+    scope,
+    scopeLabel,
   } = useRegister();
 
   const axisVars = AXIS_VARS;
