@@ -36,7 +36,9 @@ export function useProductLines(): string[] {
   useEffect(() => {
     const l = () => bump((n) => n + 1);
     listeners.add(l);
-    return () => listeners.delete(l);
+    return () => {
+      listeners.delete(l);
+    };
   }, []);
   return PRODUCT_LINES;
 }
