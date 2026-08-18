@@ -965,6 +965,11 @@ export const MaterialBrief: React.FC = () => {
             <BriefAssessment material={m} />
           </Section>
 
+        </div>
+
+        <div className="space-y-4 self-start">
+          <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
+
 
 
 
