@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { shortDate } from "@/components/materialRegister/primitives";
+import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
 import type { AssessmentCriterion } from "@/types/materialPrioritisation";
 import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 
