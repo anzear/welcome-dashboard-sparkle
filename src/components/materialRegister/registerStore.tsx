@@ -509,6 +509,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const byKey = new Map<string, number[]>();
     Object.values(assessments).forEach((e) => {
       if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      /** Neutral is no visibility, not a low score — it can never make a split. */
+      if (e.score === null) return;
       const key = `${e.material_id}::${e.criterion_id}`;
       const list = byKey.get(key) ?? [];
       list.push(e.score);
