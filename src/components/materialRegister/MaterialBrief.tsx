@@ -388,7 +388,7 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 
-export const MaterialBrief: React.FC = () => {
+export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
     data,
     allMaterials,
@@ -401,6 +401,8 @@ export const MaterialBrief: React.FC = () => {
     updateMaterial,
     assessmentSummary,
   } = useRegister();
+
+  const goBack = onBack ?? closeBrief;
 
   const tagSuggestions = useMemo(() => tagVocabulary(allMaterials).map((t) => t.tag), [allMaterials]);
 
@@ -448,7 +450,7 @@ export const MaterialBrief: React.FC = () => {
       <div className="space-y-3">
         <button
           type="button"
-          onClick={closeBrief}
+          onClick={goBack}
           className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" /> Back to register
@@ -568,7 +570,7 @@ export const MaterialBrief: React.FC = () => {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={closeBrief}
+                onClick={goBack}
                 className="h-7 gap-1.5 text-xs"
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
