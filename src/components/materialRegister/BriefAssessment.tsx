@@ -72,8 +72,38 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
   const { assessmentState, myEntry, saveAssessment, clearAssessment, currentUser } = useRegister();
   const state = assessmentState(materialId, criterion.criterion_id);
   const mine = myEntry(materialId, criterion.criterion_id);
+
+  /** Draft, because a 1–5 score cannot be committed until a rationale exists. */
+  const savedValue: number | "neutral" | null = mine ? (mine.score === null ? "neutral" : mine.score) : null;
+  const [draft, setDraft] = useState<number | "neutral" | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState(false);
+
+  const value = draft ?? savedValue;
   const noteValue = note ?? mine?.note ?? "";
+  const needsReason = value !== null && value !== "neutral" && noteValue.trim() === "";
+  const dirty = value !== savedValue || (mine ? (mine.note ?? "") !== noteValue.trim() : noteValue.trim() !== "");
+
+  const reset = () => {
+    setDraft(null);
+    setNote(null);
+    setBlocked(false);
+  };
+
+  const commit = () => {
+    if (value === null) return;
+    const ok = saveAssessment(
+      materialId,
+      criterion.criterion_id,
+      value === "neutral" ? null : value,
+      noteValue.trim() || null,
+    );
+    if (!ok) {
+      setBlocked(true);
+      return;
+    }
+    reset();
+  };
 
   return (
     <div className="space-y-2 rounded-md border border-border/70 border-l-2 border-l-provenance-judgement/70 bg-card p-2.5">
@@ -83,6 +113,9 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
       </div>
 
       <p className="text-[10px] leading-snug text-muted-foreground">{criterion.helper}</p>
+      {criterion.anchors && (
+        <p className="text-[10px] leading-snug text-muted-foreground/80">{criterion.anchors}</p>
+      )}
 
       <div className="flex flex-wrap items-center gap-1.5">
         {state.entries.length === 0 ? (
@@ -103,27 +136,69 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
         </span>
         <ScoreRail
           size="sm"
-          value={mine?.score ?? null}
+          value={value}
           ariaLabel={`${criterion.label} score`}
-          onPick={(v) => saveAssessment(materialId, criterion.criterion_id, v, mine?.note ?? null)}
-          onClear={() => clearAssessment(materialId, criterion.criterion_id)}
+          onPick={(v) => {
+            setDraft(v);
+            setBlocked(false);
+          }}
+          onNeutral={() => {
+            setDraft("neutral");
+            setBlocked(false);
+          }}
+          onClear={() => {
+            if (mine) clearAssessment(materialId, criterion.criterion_id);
+            reset();
+          }}
         />
-        {mine && (
+        {mine && !dirty && (
           <span className="font-mono text-[10px] text-muted-foreground">{shortDate(mine.assessed_at)}</span>
         )}
       </div>
 
-      {mine && (
-        <input
-          value={noteValue}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={() => {
-            if ((mine.note ?? "") !== noteValue)
-              saveAssessment(materialId, criterion.criterion_id, mine.score, noteValue.trim() || null);
-          }}
-          placeholder="Why this score (optional)"
-          className="w-full rounded-md border border-input bg-background px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
-        />
+      {value !== null && (
+        <div className="space-y-1">
+          <input
+            value={noteValue}
+            onChange={(e) => {
+              setNote(e.target.value);
+              setBlocked(false);
+            }}
+            placeholder={
+              value === "neutral"
+                ? "Why no visibility (optional)"
+                : "Why this score — required before it can be saved"
+            }
+            className={cn(
+              "w-full rounded-md border bg-background px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring",
+              blocked && needsReason ? "border-amber-500/70" : "border-input",
+            )}
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={commit}
+              disabled={!dirty || needsReason}
+              className="inline-flex h-6 items-center rounded-md border border-border bg-foreground px-2.5 text-[10px] font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {mine ? "Save change" : "Save entry"}
+            </button>
+            {dirty && (
+              <button
+                type="button"
+                onClick={reset}
+                className="text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
+              >
+                Discard
+              </button>
+            )}
+            {needsReason && (
+              <span className="text-[10px] text-amber-700 dark:text-amber-400">
+                A rationale is required for a 1–5 score. Optional on Neutral.
+              </span>
+            )}
+          </div>
+        </div>
       )}
 
       {/* Evidence sits beside the rationale it supports, not in a separate card. */}
