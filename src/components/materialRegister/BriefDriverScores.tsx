@@ -126,13 +126,15 @@ const ScoreCell: React.FC<{
 
 /**
  * Section 3 of the brief. Judgement, kept in its own tint and its own type —
- * one compact row per question at rest, expanding to the 5-point control on click.
+ * one row per question, scored in place by clicking a stop on its rail.
  */
 const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => {
   const { scoreFor, setScore, clearScore, countsFor, questions, canEditQuestionSet } = useRegister();
   const [editorOpen, setEditorOpen] = useState(false);
   const counts = countsFor(materialId);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [hoverValue, setHoverValue] = useState<number | null>(null);
+
 
   return (
     <div className="space-y-2">
