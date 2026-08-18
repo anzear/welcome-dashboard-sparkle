@@ -199,8 +199,8 @@ const AssessmentCoverage: React.FC = () => {
 
       <p className="text-[11px] text-muted-foreground">
         A filled marker means at least one 1–5 score has been recorded; a dashed one means none has. Neutral —
-        this team has no visibility here — is recorded but never counted as a score. Open a material to record
-        or change your own entry.{" "}
+        this team has no visibility here — is recorded but never counted as a score. Tick materials to score
+        them in bulk, or open one to score it on its profile.{" "}
         <button
           type="button"
           onClick={() => setCriteriaOpen(true)}
@@ -210,6 +210,186 @@ const AssessmentCoverage: React.FC = () => {
         </button>
         {canEditCriteria && " — a change applies to every material."}
       </p>
+
+      {selected.length > 0 && criterion && (
+        <div className="space-y-3 rounded-xl border border-primary/40 bg-primary/5 p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-foreground">
+                Set scores
+              </div>
+              <div className="text-[11px] text-muted-foreground">
+                <span className="font-mono tabular-nums text-foreground">{selected.length}</span> material
+                {selected.length === 1 ? "" : "s"} selected · tick more rows below to add, or remove them here.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              Clear selection <X className="h-3 w-3" />
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-1.5">
+            {selectedMaterials.map((m) => (
+              <button
+                key={m.material_id}
+                type="button"
+                onClick={() => toggleRow(m.material_id)}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-0.5 text-[11px] text-foreground hover:border-foreground/40"
+                title={`Remove ${m.name} from the selection`}
+              >
+                {m.name} <X className="h-3 w-3 text-muted-foreground" />
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Criterion
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setCriterionIdx((i) => Math.max(0, i - 1))}
+                  disabled={criterionIdx === 0}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground disabled:opacity-40 hover:text-foreground"
+                  aria-label="Previous criterion"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <Select
+                  value={criterion.criterion_id}
+                  onValueChange={(v) =>
+                    setCriterionIdx(judgedCriteria.findIndex((c) => c.criterion_id === v))
+                  }
+                >
+                  <SelectTrigger className="h-7 flex-1 rounded-md bg-card text-[11px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {judgedCriteria.map((c) => (
+                      <SelectItem key={c.criterion_id} value={c.criterion_id} className="text-[11px]">
+                        {c.label}
+                        {staged[c.criterion_id] ? " ·  staged" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <button
+                  type="button"
+                  onClick={() => setCriterionIdx((i) => Math.min(judgedCriteria.length - 1, i + 1))}
+                  disabled={criterionIdx >= judgedCriteria.length - 1}
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border bg-card text-muted-foreground disabled:opacity-40 hover:text-foreground"
+                  aria-label="Next criterion"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                Criterion {criterionIdx + 1} of {judgedCriteria.length}
+                {criterion.anchors ? ` · ${criterion.anchors}` : ""}
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Value
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                {VALUES.map((v) => (
+                  <button
+                    key={String(v)}
+                    type="button"
+                    onClick={() => setValue(current?.value === v ? null : v)}
+                    aria-pressed={current?.value === v}
+                    className={cn(
+                      "inline-flex h-7 w-7 items-center justify-center rounded-md border font-mono text-[11px] tabular-nums transition-colors",
+                      current?.value === v
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {v}
+                  </button>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setValue(current?.value === "neutral" ? null : "neutral")}
+                  aria-pressed={current?.value === "neutral"}
+                  className={cn(
+                    "inline-flex h-7 items-center rounded-md border px-2 text-[11px] transition-colors",
+                    current?.value === "neutral"
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Neutral
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setValue(current?.value === "clear" ? null : "clear")}
+                  aria-pressed={current?.value === "clear"}
+                  className={cn(
+                    "inline-flex h-7 items-center rounded-md border px-2 text-[11px] transition-colors",
+                    current?.value === "clear"
+                      ? "border-destructive/60 bg-destructive/10 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  Clear entry
+                </button>
+              </div>
+              <div className="text-[10px] text-muted-foreground">{criterion.helper}</div>
+            </div>
+          </div>
+
+          {typeof current?.value === "number" && (
+            <div className="space-y-1">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Rationale · required
+              </div>
+              <Textarea
+                value={current.note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="Why this score holds for every material selected"
+                className="rounded-md bg-card text-[11px]"
+              />
+              <div className="text-[10px] text-muted-foreground">
+                The same rationale is written on each selected material.
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-[10px] text-muted-foreground">
+              <span className="font-mono tabular-nums text-foreground">{stagedCount}</span> criteri
+              {stagedCount === 1 ? "on" : "a"} staged. Nothing is written until you save.
+              {stagedIncomplete && (
+                <span className="text-destructive"> A 1–5 score needs a rationale.</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={clearSelection}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="h-7 text-[11px]"
+                disabled={stagedCount === 0 || stagedIncomplete}
+                onClick={applyStaged}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
         <table className="w-full border-collapse text-[11px]">
