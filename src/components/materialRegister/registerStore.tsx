@@ -305,6 +305,29 @@ interface Store {
   currentUser: Contributor;
   setCurrentUser: (userId: string) => void;
   contributors: Contributor[];
+  /**
+   * THE CRITERION SET. One shared set, used by every material. Editing a
+   * criterion changes it everywhere, and removing one deletes every entry and
+   * document recorded against it. Only a material owner may change the set.
+   */
+  criteria: AssessmentCriterion[];
+  judgedCriteria: AssessmentCriterion[];
+  criterionLabelOf: (id: string) => string;
+  criteriaEvents: CriterionSetEvent[];
+  /** True when this person owns at least one material in the portfolio. */
+  canEditCriteria: boolean;
+  /** How many entries and documents a removal would destroy, portfolio-wide. */
+  criterionFootprint: (criterionId: string) => {
+    materials: number;
+    entries: number;
+    documents: number;
+  };
+  addCriterion: (draft: { label: string; helper: string; anchors: string }) => boolean;
+  updateCriterion: (
+    criterionId: string,
+    patch: { label: string; helper: string; anchors: string },
+  ) => boolean;
+  removeCriterion: (criterionId: string) => boolean;
   /** Sparse entry map. A missing key means that person has no view recorded. */
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
