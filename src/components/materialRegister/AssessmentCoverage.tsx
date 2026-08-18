@@ -5,6 +5,7 @@ import { JUDGED_CRITERIA, TEAM_LABEL } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
+import { Paperclip } from "lucide-react";
 import { CoverageMark, FlagChip } from "@/components/materialRegister/assessmentPrimitives";
 import { shortDate } from "@/components/materialRegister/primitives";
 
@@ -25,6 +26,7 @@ const AssessmentCoverage: React.FC = () => {
     assessmentState,
     assessmentSummary,
     criterionCoverage,
+    documentCount,
     currentUser,
   } = useRegister();
 
@@ -146,11 +148,22 @@ const AssessmentCoverage: React.FC = () => {
                 </td>
                 {JUDGED_CRITERIA.map((c) => {
                   const state = assessmentState(m.material_id, c.criterion_id);
+                  const docs = documentCount(m.material_id, c.criterion_id);
                   return (
                     <td key={c.criterion_id} className="px-3 py-1.5">
                       <div className="flex items-center gap-2">
                         <CoverageMark state={state} />
                         {state.entries.length > 0 && <FlagChip state={state} />}
+                        {/* Presence of evidence, not a metric: never sorted or scored. */}
+                        {docs > 0 && (
+                          <span
+                            className="inline-flex items-center gap-0.5 text-muted-foreground"
+                            title={`${docs} supporting document${docs === 1 ? "" : "s"}`}
+                          >
+                            <Paperclip className="h-3 w-3" />
+                            <span className="font-mono text-[10px] tabular-nums">{docs}</span>
+                          </span>
+                        )}
                       </div>
                     </td>
                   );
