@@ -63,7 +63,7 @@ const DetailsDialog: React.FC<{ doc: SupportingDocument | null; onClose: () => v
             <p className="text-muted-foreground">No note recorded.</p>
           )}
           <div className="border-t border-border/70 pt-2 font-mono text-[10px] text-muted-foreground">
-            {doc.uploaded_by} · {shortDate(doc.uploaded_date)} · {doc.size} · {doc.file_type.toUpperCase()}
+            {doc.uploaded_by} · {shortDate(doc.uploaded_date)} · {doc.file_type.toUpperCase()}
           </div>
           <p className="text-[10px] leading-snug text-muted-foreground">
             Demo record. The file itself is not stored here and cannot be opened or downloaded.
@@ -203,18 +203,17 @@ const CriterionDocuments: React.FC<{
   const shown = showAll ? docs : docs.slice(0, 3);
 
   return (
-    <div className="space-y-1.5 border-t border-border/60 pt-2">
+    <div className="space-y-1.5 pt-1.5">
       {docs.length === 0 ? (
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <span>No supporting documents</span>
-          <button
-            type="button"
-            onClick={() => setAttachOpen(true)}
-            className="underline decoration-dotted underline-offset-2 hover:text-foreground"
-          >
-            Attach document
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-label={`Attach a document to ${criterionLabel}`}
+          title="Attach document"
+          onClick={() => setAttachOpen(true)}
+          className="inline-flex items-center text-muted-foreground/70 hover:text-foreground"
+        >
+          <Paperclip className="h-3 w-3" />
+        </button>
       ) : (
         <>
           <ul className="space-y-1">
@@ -222,12 +221,12 @@ const CriterionDocuments: React.FC<{
               <li key={d.document_id} className="flex items-start gap-2">
                 <DocIcon type={d.file_type} className="mt-0.5" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[11px] text-foreground" title={d.filename}>
+                  <div className="truncate text-[10px] text-foreground" title={d.filename}>
                     {d.filename}
                   </div>
-                  {d.note && <div className="text-[10px] leading-snug text-muted-foreground">“{d.note}”</div>}
+                  {d.note && <div className="text-[10px] leading-snug text-muted-foreground/90">“{d.note}”</div>}
                   <div className="font-mono text-[10px] text-muted-foreground">
-                    {d.uploaded_by} · {shortDate(d.uploaded_date)} · {d.size}
+                    {d.uploaded_by} · {shortDate(d.uploaded_date)}
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 pt-0.5">
