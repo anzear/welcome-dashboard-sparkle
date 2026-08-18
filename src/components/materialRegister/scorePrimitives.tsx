@@ -3,10 +3,9 @@ import { cn } from "@/lib/utils";
 import { SCORE_POINTS } from "@/config/driverQuestions";
 
 /**
- * Text-first diverging scale. Drivers sit on teal, constraints on sky — never on
- * red or orange, so nothing here can be mistaken for the amber divergence flag.
- * Intensity tracks magnitude; only strong values (>= +3, <= -3) carry a faint
- * background tint, so the extremes are what the eye catches.
+ * Text-first driver scale, 1 to 5. Drivers sit on teal — never on red or orange,
+ * so nothing here can be mistaken for the amber divergence flag. Intensity
+ * tracks magnitude; only strong values (>= 3) carry a faint background tint.
  */
 const POSITIVE = [
   "text-teal-700/60",
@@ -15,26 +14,16 @@ const POSITIVE = [
   "text-teal-900 bg-teal-600/15",
   "text-teal-950 bg-teal-600/20",
 ];
-const NEGATIVE = [
-  "text-sky-800/60",
-  "text-sky-800/80",
-  "text-sky-900 bg-sky-700/10",
-  "text-sky-950 bg-sky-700/15",
-  "text-sky-950 bg-sky-700/20",
-];
-
-/** Colour by sign, intensity by magnitude. A recorded 0 is neutral but present. */
+/** Intensity by strength of the driver. */
 export function scoreTone(score: number | null): string {
   if (score === null) return "border border-dotted border-muted-foreground/40 text-transparent";
-  if (score === 0) return "text-muted-foreground";
-  const mag = Math.abs(score);
-  return score > 0 ? POSITIVE[mag - 1] : NEGATIVE[mag - 1];
+  const mag = Math.min(5, Math.max(1, score));
+  return POSITIVE[mag - 1];
 }
 
-export const signed = (score: number | null) =>
-  score === null ? "—" : score > 0 ? `+${score}` : String(score);
+export const signed = (score: number | null) => (score === null ? "—" : String(score));
 
-/** 11-point control, -5..+5. Clickable; keyboard handled by the caller. */
+/** 5-point control, 1..5. Clickable; keyboard handled by the caller. */
 export const ScoreScale: React.FC<{
   value: number | null;
   onChange: (v: number) => void;

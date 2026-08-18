@@ -149,7 +149,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
 export interface DriverScore {
   material_id: string;
   question_id: string;
-  /** -5..+5, or null for a cleared judgement. Never a stand-in for zero. */
+  /** 1..5, or null for a cleared judgement. Never a stand-in for zero. */
   score: number | null;
   note: string | null;
   scored_by: string;
@@ -162,6 +162,5 @@ export interface DriverScore {
  */
 export interface DriverCounts {
   strong_drivers: number | null;
-  strong_constraints: number | null;
   scored_count: number | null;
 }
