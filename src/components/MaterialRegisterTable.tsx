@@ -518,24 +518,83 @@ export const MaterialRegisterTable: React.FC = () => {
           </PopoverTrigger>
           <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
             <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
+          <PopoverContent align="start" className="max-h-[70vh] w-72 overflow-y-auto p-2">
+            <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
               Optional columns
             </div>
-            {OPTIONAL_COLUMNS.map(([key, label, hint]) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-start gap-2 rounded-sm px-1 py-1 hover:bg-muted/60"
-              >
-                <Checkbox
-                  checked={cols[key]}
-                  onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
-                  className="mt-0.5 h-3.5 w-3.5"
-                />
-                <span className="min-w-0">
-                  <span className="block text-[11px] text-foreground">{label}</span>
-                  <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
-                </span>
-              </label>
-            ))}
+            <p className="pb-1.5 text-[10px] leading-tight text-muted-foreground/80">
+              Drag a row, or use the arrows, to change the column order. Rank stays pinned.
+            </p>
+            {(() => {
+              const rank = OPTIONAL_COLUMNS.find(([k]) => k === "rank")!;
+              const rest = colOrder
+                .map((k) => OPTIONAL_COLUMNS.find(([kk]) => kk === k)!)
+                .filter(Boolean);
+              const rows: [OptionalColumn, string, string, boolean][] = [
+                [rank[0], rank[1], rank[2], false],
+                ...rest.map(([k, l, h]) => [k, l, h, true] as [OptionalColumn, string, string, boolean]),
+              ];
+              return rows.map(([key, label, hint, movable], idx) => (
+                <div
+                  key={key}
+                  draggable={movable}
+                  onDragStart={() => movable && setDragKey(key)}
+                  onDragOver={(e) => {
+                    if (movable && dragKey) e.preventDefault();
+                  }}
+                  onDrop={() => {
+                    if (movable) dropCol(key);
+                    setDragKey(null);
+                  }}
+                  onDragEnd={() => setDragKey(null)}
+                  className={cn(
+                    "flex items-start gap-1.5 rounded-sm px-1 py-1 hover:bg-muted/60",
+                    dragKey === key && "opacity-50",
+                  )}
+                >
+                  {movable ? (
+                    <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-grab text-muted-foreground/50" />
+                  ) : (
+                    <span className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  )}
+                  <Checkbox
+                    checked={cols[key]}
+                    onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
+                    className="mt-0.5 h-3.5 w-3.5"
+                  />
+                  <label
+                    className="min-w-0 flex-1 cursor-pointer"
+                    onClick={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                  >
+                    <span className="block text-[11px] text-foreground">{label}</span>
+                    <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
+                  </label>
+                  {movable && (
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={`Move ${label} left`}
+                        disabled={idx <= 1}
+                        onClick={() => moveCol(key, -1)}
+                        className="rounded p-0.5 text-muted-foreground/70 hover:bg-muted hover:text-foreground disabled:opacity-25"
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${label} right`}
+                        disabled={idx === rows.length - 1}
+                        onClick={() => moveCol(key, 1)}
+                        className="rounded p-0.5 text-muted-foreground/70 hover:bg-muted hover:text-foreground disabled:opacity-25"
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              ));
+            })()}
+
           </PopoverContent>
         </Popover>
 
