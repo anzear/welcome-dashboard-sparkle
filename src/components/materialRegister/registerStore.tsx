@@ -327,6 +327,22 @@ interface Store {
   reopenGate: (materialId: string, note: string | null) => void;
   /** How many of the given rows carry at least one entry on that criterion. */
   criterionCoverage: (criterionId: string, rows: Material[]) => number;
+  /**
+   * Supporting documents. Criterion-level evidence, shared with everyone on the
+   * material. Mock records: no storage, no preview, no download.
+   */
+  documents: SupportingDocument[];
+  documentsFor: (materialId: string, criterionId: string) => SupportingDocument[];
+  documentCount: (materialId: string, criterionId: string) => number;
+  hasAnyDocuments: (materialId: string) => boolean;
+  addDocument: (
+    materialId: string,
+    criterionId: string,
+    file: { filename: string; file_type: DocumentFileType; size: string },
+    note: string | null,
+  ) => void;
+  canDeleteDocument: (doc: SupportingDocument) => boolean;
+  deleteDocument: (documentId: string) => void;
   /** Period the priority set is being assembled for. Free text. */
   priorityPeriod: string;
   setPriorityPeriod: (v: string) => void;
@@ -1256,6 +1272,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     assessmentState,
     assessmentSummary,
     criterionCoverage,
+    documents,
+    documentsFor,
+    documentCount,
+    hasAnyDocuments,
+    addDocument,
+    canDeleteDocument,
+    deleteDocument,
 
     priorityPeriod,
     setPriorityPeriod,
