@@ -16,7 +16,7 @@ interface Props {
   materialId: string;
   gapMeasure?: MeasureId | null;
   gapSize?: number;
-  variant?: "compact" | "detail";
+  variant?: "compact" | "detail" | "inline";
 }
 
 const BAR_H = 28;
