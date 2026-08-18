@@ -391,6 +391,27 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         if (!filters.priorityPeriods.includes(key)) return false;
       }
       if (filters.blockers.length && !filters.blockers.includes(m.blocker_category ?? NO_BLOCKER)) return false;
+
+      // VCG signals. Not assessed is its own state and never falls inside the range.
+      if (
+        filters.vcgSubstitutability.length &&
+        !filters.vcgSubstitutability.includes(m.substitutability_readiness)
+      )
+        return false;
+      if (filters.vcgCompetitor.length && !filters.vcgCompetitor.includes(m.competitor_activity)) return false;
+
+      const hasRange = filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null;
+      if (hasRange || filters.vcgSuppliersNotAssessed) {
+        const sa = m.supplier_availability;
+        const assessed = sa?.assessed && sa.value !== null;
+        const inRange =
+          hasRange && assessed
+            ? (filters.vcgSuppliersMin === null || sa.value! >= filters.vcgSuppliersMin) &&
+              (filters.vcgSuppliersMax === null || sa.value! <= filters.vcgSuppliersMax)
+            : false;
+        const notAssessedMatch = filters.vcgSuppliersNotAssessed && !assessed;
+        if (!inRange && !notAssessedMatch) return false;
+      }
       return true;
     });
   }, [data, filters]);
