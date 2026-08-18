@@ -494,11 +494,11 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
   const judged = criteria.filter((c) => c.kind === "judgement");
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
         <span>
           <span className="font-mono tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
-          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> scored
+          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> judged
         </span>
         <span className="text-border" aria-hidden>
           ·
@@ -518,15 +518,16 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
       </div>
 
       {/* Context, not work: smaller type, no borders, no cards. */}
-      <div className="space-y-1">
+      <div className="space-y-0.5">
         <FiguresStrip m={material} />
         <VcgStrip />
       </div>
 
-      <div className="divide-y divide-border/60">
+      <div className="space-y-6 pt-1">
         {judged.map((c) => (
-          <div key={c.criterion_id} className="py-2.5 first:pt-1">
-            <JudgementRow criterion={c} materialId={material.material_id} />
+          <JudgementRow key={c.criterion_id} criterion={c} materialId={material.material_id} />
+        ))}
+
           </div>
         ))}
       </div>
