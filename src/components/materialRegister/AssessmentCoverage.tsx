@@ -391,6 +391,23 @@ const AssessmentCoverage: React.FC = () => {
       )}
 
 
+      {/* Legend */}
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-[10px] text-muted-foreground">
+        <span className="font-semibold uppercase tracking-widest text-foreground/70">Legend</span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[3px] border border-provenance-judgement/50 bg-provenance-judgement/40" />
+          Score recorded — entries agree (Aligned / One view / Mixed)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[3px] border border-amber-500/60 bg-amber-500/40" />
+          Score recorded — entries disagree (Split)
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-block h-3 w-3 rounded-[3px] border border-dashed border-muted-foreground/40" />
+          No score recorded (No entries / Neutral only)
+        </span>
+      </div>
+
       <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
         <table className="w-full border-collapse text-[11px]">
           <thead>
@@ -484,22 +501,6 @@ const AssessmentCoverage: React.FC = () => {
         </table>
       </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 px-1 text-[10px] text-muted-foreground">
-        <span className="font-semibold uppercase tracking-widest text-foreground/70">Legend</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-[3px] border border-provenance-judgement/50 bg-provenance-judgement/40" />
-          Score recorded — entries agree (Aligned / One view / Mixed)
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-[3px] border border-amber-500/60 bg-amber-500/40" />
-          Score recorded — entries disagree (Split)
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="inline-block h-3 w-3 rounded-[3px] border border-dashed border-muted-foreground/40" />
-          No score recorded (No entries / Neutral only)
-        </span>
-      </div>
     </div>
   );
 };
