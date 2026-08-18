@@ -75,19 +75,19 @@ function buildSeed(): DriverScore[] {
       values[q.question_id] = clamp(TENDENCY[q.question_id] + (rand() * 4 - 2));
     });
 
-    // Spread the supply security judgement evenly across the full -5..+5 range,
+    // Spread the supply security judgement evenly across the full 1..5 range,
     // stepped by a co-prime index so it does not track the emissions ordering.
-    values.supply_security = clamp(-5 + ((mi * 7) % 11) + (rand() * 0.8 - 0.4));
+    values.supply_security = clamp(1 + ((mi * 7) % 5) + (rand() * 0.8 - 0.4));
 
     // Realistic tensions: forced by regulation but not ready; wanted but costly.
     if (values.regulatory_position !== undefined && values.regulatory_position >= 3 && values.internal_readiness !== undefined) {
-      values.internal_readiness = clamp(-2 - rand() * 3);
+      values.internal_readiness = clamp(1 + rand() * 1.4);
     }
     if (values.market_pull !== undefined && values.market_pull >= 3 && values.cost !== undefined) {
-      values.cost = clamp(-3 - rand() * 2);
+      values.cost = clamp(1 + rand());
     }
     if (values.environmental_impact !== undefined && values.environmental_impact >= 4 && values.process_impact !== undefined) {
-      values.process_impact = clamp(-2 - rand() * 3);
+      values.process_impact = clamp(1 + rand() * 1.4);
     }
 
     Object.entries(values).forEach(([questionId, score]) => {
