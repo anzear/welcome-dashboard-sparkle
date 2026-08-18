@@ -309,8 +309,16 @@ interface Store {
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
   myEntry: (materialId: string, criterionId: string) => AssessmentEntry | null;
-  /** Records or replaces the current user's entry on one criterion. */
-  saveAssessment: (materialId: string, criterionId: string, score: number, note: string | null) => void;
+  /**
+   * Records or replaces the current user's entry on one criterion. score null =
+   * Neutral. A 1–5 score without a rationale is refused; returns false.
+   */
+  saveAssessment: (
+    materialId: string,
+    criterionId: string,
+    score: number | null,
+    note: string | null,
+  ) => boolean;
   /** Withdraws the current user's entry. Absence, never a zero. */
   clearAssessment: (materialId: string, criterionId: string) => void;
   /** Spread and flag for one criterion. Counts only — entries are never averaged. */
@@ -322,6 +330,8 @@ interface Store {
     contributors: string[];
     teams: TeamId[];
     splits: number;
+    /** Neutral entries recorded. Never part of criteriaAssessed. */
+    neutralEntries: number;
     entryCount: number;
     lastAssessedAt: string | null;
   };
@@ -509,6 +519,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const byKey = new Map<string, number[]>();
     Object.values(assessments).forEach((e) => {
       if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      /** Neutral is no visibility, not a low score — it can never make a split. */
+      if (e.score === null) return;
       const key = `${e.material_id}::${e.criterion_id}`;
       const list = byKey.get(key) ?? [];
       list.push(e.score);
@@ -1028,31 +1040,44 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     assessments[assessmentKey(materialId, criterionId, currentUserId)] ?? null;
 
   /**
-   * Spread across the recorded entries. No entry is not a score, and the entries
-   * are never averaged — the flag reports how far apart people sit, nothing more.
+   * Spread across the recorded 1–5 scores. No entry is not a score, and Neutral
+   * is not a score either — neither enters the spread. The entries are never
+   * averaged; the flag reports how far apart people sit, nothing more.
    */
   const assessmentState = (materialId: string, criterionId: string): AssessmentState => {
     const entries = entriesFor(materialId, criterionId);
-    if (entries.length === 0) {
-      return { flag: "not_assessed", entries, low: null, high: null, spread: null, teams: [] };
+    const values = entries.map((e) => e.score).filter((s): s is number => s !== null);
+    const neutralCount = entries.length - values.length;
+    const teams = Array.from(new Set(entries.map((e) => e.team)));
+    if (values.length === 0) {
+      return {
+        flag: entries.length === 0 ? "not_assessed" : "neutral_only",
+        entries,
+        low: null,
+        high: null,
+        spread: null,
+        scoredCount: 0,
+        neutralCount,
+        teams,
+      };
     }
-    const values = entries.map((e) => e.score);
     const low = Math.min(...values);
     const high = Math.max(...values);
     const spread = high - low;
-    const teams = Array.from(new Set(entries.map((e) => e.team)));
     const flag =
-      entries.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
-    return { flag, entries, low, high, spread, teams };
+      values.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
+    return { flag, entries, low, high, spread, scoredCount: values.length, neutralCount, teams };
   };
 
   const assessmentSummary = (materialId: string) => {
     const mine = Object.values(assessments).filter((e) => e.material_id === materialId);
     const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
     const teams = Array.from(new Set(mine.map((e) => e.team)));
+    /** Only a 1–5 score counts as assessed. Neutral is a recorded absence of view. */
     const criteriaAssessed = JUDGED_CRITERIA.filter((c) =>
-      mine.some((e) => e.criterion_id === c.criterion_id),
+      mine.some((e) => e.criterion_id === c.criterion_id && e.score !== null),
     ).length;
+    const neutralEntries = mine.filter((e) => e.score === null).length;
     const splits = JUDGED_CRITERIA.filter(
       (c) => assessmentState(materialId, c.criterion_id).flag === "split",
     ).length;
@@ -1066,6 +1091,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       contributors,
       teams,
       splits,
+      neutralEntries,
       entryCount: mine.length,
       lastAssessedAt,
     };
@@ -1074,7 +1100,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const criterionCoverage = (criterionId: string, rowsIn: Material[]) =>
     rowsIn.filter((m) =>
       Object.values(assessments).some(
-        (e) => e.material_id === m.material_id && e.criterion_id === criterionId,
+        (e) => e.material_id === m.material_id && e.criterion_id === criterionId && e.score !== null,
       ),
     ).length;
 
@@ -1129,14 +1155,20 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
 
+  /**
+   * A 1–5 score cannot be saved without a rationale — a score with no reason
+   * cannot be challenged six months later. Neutral (score null) may be saved
+   * with no note. Returns false when the save was refused.
+   */
   const saveAssessment = (
     materialId: string,
     criterionId: string,
-    score: number,
+    score: number | null,
     note: string | null,
-  ) => {
+  ): boolean => {
+    const cleanNote = note?.trim() ? note.trim() : null;
+    if (score !== null && cleanNote === null) return false;
     const key = assessmentKey(materialId, criterionId, currentUserId);
-    const previous = assessments[key]?.score ?? null;
     setAssessments((prev) => ({
       ...prev,
       [key]: {
@@ -1145,18 +1177,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         user_id: currentUserId,
         team: currentUser.team,
         score,
-        note,
+        note: cleanNote,
         assessed_at: new Date().toISOString(),
       },
     }));
     // Assessment entries carry their own stamps in the Assessment card. History
     // is the record of decisions, not of opinions, so nothing is written here.
+    return true;
   };
 
   const clearAssessment = (materialId: string, criterionId: string) => {
     const key = assessmentKey(materialId, criterionId, currentUserId);
-    const previous = assessments[key]?.score ?? null;
-    if (previous === null) return;
+    if (!assessments[key]) return;
     setAssessments((prev) => {
       const next = { ...prev };
       delete next[key];

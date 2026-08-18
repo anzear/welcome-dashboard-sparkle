@@ -365,7 +365,7 @@ export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
 };
 
 /** Teams that contribute judgements. */
-export type TeamId = "rnd" | "procurement" | "sustainability" | "commercial";
+export type TeamId = "rnd" | "procurement" | "sustainability" | "marketing" | "regulatory";
 
 export interface Contributor {
   user_id: string;
@@ -388,6 +388,8 @@ export interface AssessmentCriterion {
   /** Where an evidence criterion reads from. Absent for judged criteria. */
   source?: "figures" | "vcg";
   helper: string;
+  /** What the ends of the 1–5 scale mean. Judged criteria only. */
+  anchors?: string;
 }
 
 /**
@@ -399,8 +401,11 @@ export interface AssessmentEntry {
   criterion_id: string;
   user_id: string;
   team: TeamId;
-  /** 1..5. Never 0, never a stand-in for "no view". */
-  score: number;
+  /**
+   * 1..5, or null for Neutral — this team has no visibility here. Neutral is not
+   * 3 and not 0: it never enters a spread, an average or any count of scores.
+   */
+  score: number | null;
   note: string | null;
   assessed_at: string;
 }
@@ -409,10 +414,17 @@ export interface AssessmentEntry {
  * How a criterion's entries sit against each other. Counts and spread only —
  * the entries are never averaged into a single score.
  */
-export type AssessmentFlag = "not_assessed" | "single_view" | "aligned" | "mixed" | "split";
+export type AssessmentFlag =
+  | "not_assessed"
+  | "neutral_only"
+  | "single_view"
+  | "aligned"
+  | "mixed"
+  | "split";
 
 export const ASSESSMENT_FLAG_LABEL: Record<AssessmentFlag, string> = {
   not_assessed: "No entries",
+  neutral_only: "Neutral only",
   single_view: "One view",
   aligned: "Aligned",
   mixed: "Mixed",
@@ -422,10 +434,13 @@ export const ASSESSMENT_FLAG_LABEL: Record<AssessmentFlag, string> = {
 export interface AssessmentState {
   flag: AssessmentFlag;
   entries: AssessmentEntry[];
-  /** null when nothing has been recorded — never 0. */
+  /** null when no 1–5 score has been recorded — never 0. Neutral is excluded. */
   low: number | null;
   high: number | null;
   spread: number | null;
+  /** Count of 1–5 scores only. Neutral entries are counted separately. */
+  scoredCount: number;
+  neutralCount: number;
   teams: TeamId[];
 }
 

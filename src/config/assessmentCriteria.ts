@@ -21,22 +21,29 @@ export const CRITERIA: AssessmentCriterion[] = [
     helper: "Read from the VCG signals: substitutability, suppliers, competitor activity.",
   },
   {
-    criterion_id: "technical_feasibility",
-    label: "Technical feasibility",
+    criterion_id: "market_claim_value",
+    label: "Market & claim value",
     kind: "judgement",
-    helper: "5 = a drop-in change we could qualify; 1 = reformulation with no known route.",
+    helper:
+      "What changing this material unlocks in front of customers. New claims, differentiation, a story sales and marketing do not have today.",
+    anchors:
+      "5 = unlocks a claim we could build a campaign on · 1 = no story here, consumers do not read this ingredient.",
   },
   {
-    criterion_id: "commercial_viability",
-    label: "Commercial viability",
+    criterion_id: "future_readiness",
+    label: "Future readiness",
     kind: "judgement",
-    helper: "5 = the switch carries itself commercially; 1 = the cost gap blocks it.",
+    helper:
+      "Whether changing this material gets us ahead of where regulation, feedstock cost and our own CO2 commitments are heading — or only delays the same conversation.",
+    anchors: "5 = ahead of the rules and the cost curve for the long term · 1 = buys three years, then we do this again.",
   },
   {
-    criterion_id: "strategic_fit",
-    label: "Strategic fit",
+    criterion_id: "risk_of_standing_still",
+    label: "Risk of standing still",
     kind: "judgement",
-    helper: "5 = squarely inside a stated commitment; 1 = outside current strategy.",
+    helper:
+      "What staying on the incumbent material exposes us to. Supply concentration, regulatory exposure today, reputational exposure. This scores the risk of NOT changing, not the risk of changing.",
+    anchors: "5 = staying put is the risky option · 1 = incumbent is stable, nothing pushing us off it.",
   },
 ];
 
@@ -60,11 +67,16 @@ export const SCORE_LABEL: Record<number, string> = {
   5: "5 — very strong",
 };
 
+/** Neutral is a recorded position, not a score. It never enters a count of scores. */
+export const NEUTRAL_LABEL = "Neutral";
+export const NEUTRAL_HELPER = "This team has no visibility here. Not 3, not 0 — never counted as a score.";
+
 export const TEAM_LABEL: Record<TeamId, string> = {
   rnd: "R&D",
   procurement: "Procurement",
   sustainability: "Sustainability",
-  commercial: "Commercial",
+  marketing: "Marketing",
+  regulatory: "Regulatory",
 };
 
 /** Demo account members. The switcher changes who an entry is recorded as. */
@@ -73,12 +85,12 @@ export const TEAM_LABEL: Record<TeamId, string> = {
  * so "Viewing as" can be compared against a material's owner for gate rights.
  */
 export const CONTRIBUTORS: Contributor[] = [
-  { user_id: "u-brandt", name: "K. Brandt", team: "rnd", role: "Formulation lead" },
-  { user_id: "u-haugen", name: "L. Haugen", team: "procurement", role: "Category manager" },
-  { user_id: "u-oyelaran", name: "M. Oyelaran", team: "sustainability", role: "Sustainability manager" },
-  { user_id: "u-vermeer", name: "A. Vermeer", team: "commercial", role: "Brand director" },
-  { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "procurement", role: "Sourcing manager" },
-  { user_id: "u-rautio", name: "S. Rautio", team: "rnd", role: "Process engineer" },
+  { user_id: "u-brandt", name: "K. Brandt", team: "procurement", role: "Category manager" },
+  { user_id: "u-oyelaran", name: "M. Oyelaran", team: "procurement", role: "Sourcing manager" },
+  { user_id: "u-rautio", name: "S. Rautio", team: "rnd", role: "Formulation lead" },
+  { user_id: "u-haugen", name: "L. Haugen", team: "sustainability", role: "Sustainability manager" },
+  { user_id: "u-vermeer", name: "A. Vermeer", team: "marketing", role: "Brand director" },
+  { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "regulatory", role: "Regulatory affairs manager" },
 ];
 
 /** Names available as a condition owner. */

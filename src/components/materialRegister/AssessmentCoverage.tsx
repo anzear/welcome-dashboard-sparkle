@@ -113,8 +113,9 @@ const AssessmentCoverage: React.FC = () => {
       <FilterChips />
 
       <p className="text-[11px] text-muted-foreground">
-        A filled marker means at least one person has recorded a view; a dashed one means nobody has. Open a
-        material to record or change your own entry.
+        A filled marker means at least one 1–5 score has been recorded; a dashed one means none has. Neutral —
+        this team has no visibility here — is recorded but never counted as a score. Open a material to record
+        or change your own entry.
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
