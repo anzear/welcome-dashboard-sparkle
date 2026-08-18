@@ -240,7 +240,7 @@ export type ProvenanceClass = "company_entered" | "vcg_computed" | "team_judgeme
 
 export const PROVENANCE_CLASS_LABEL: Record<ProvenanceClass, string> = {
   company_entered: "Company data",
-  vcg_computed: "VCG data",
+  vcg_computed: "VCG data peek",
   team_judgement: "Team judgement",
 };
 

@@ -127,8 +127,8 @@ export const provenanceStamp = (
   const cls = provenanceClassOf(field);
   const date = provenance?.date ? ` · ${fmtDate(provenance.date)}` : "";
   if (cls === "vcg_computed") {
-    if (!hasValue) return computedInputs ? `VCG computed from ${computedInputs} — no value recorded` : "VCG data — no value recorded";
-    return computedInputs ? `VCG computed: ${computedInputs}${date}` : `VCG data${date}`;
+    if (!hasValue) return computedInputs ? `VCG computed from ${computedInputs} — no value recorded` : "VCG data peek — no value recorded";
+    return computedInputs ? `VCG computed: ${computedInputs}${date}` : `VCG data peek${date}`;
   }
   if (cls === "team_judgement") {
     if (!hasValue) return "No judgement recorded";

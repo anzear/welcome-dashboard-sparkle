@@ -263,7 +263,7 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
  */
 const VcgStrip: React.FC = () => (
   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-provenance-vcg/20 bg-provenance-vcg/[0.04] px-3 py-1.5">
-    <span className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80">VCG data</span>
+    <span className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80">VCG data peek</span>
     <span className="h-3 w-px bg-provenance-vcg/20" aria-hidden />
     <span className="text-[10px] text-muted-foreground/80">Substitutability</span>
     <Missing />

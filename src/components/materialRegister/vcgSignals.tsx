@@ -69,12 +69,12 @@ export const CompetitorActivityMark: React.FC<{ value: CompetitorActivity; withL
 
 /** One shared VCG data date per material. */
 export const vcgStamp = (m: Material): string => {
-  if (!m.vcg_data_date) return "VCG data · date not recorded";
+  if (!m.vcg_data_date) return "VCG data peek · date not recorded";
   const d = new Date(m.vcg_data_date);
   const shown = Number.isNaN(d.getTime())
     ? m.vcg_data_date
     : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-  return `VCG data · ${shown}`;
+  return `VCG data peek · ${shown}`;
 };
 
 /**
