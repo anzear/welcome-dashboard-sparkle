@@ -76,3 +76,32 @@ export const vcgStamp = (m: Material): string => {
     : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   return `VCG data · ${shown}`;
 };
+
+/**
+ * VCG signals are not live yet. Until the intelligence layer runs, every place
+ * that would show a signal says so plainly instead of showing an empty value:
+ * a missing signal and an unbuilt signal are not the same statement.
+ */
+export const VCG_COMING_SOON = "Coming soon";
+
+export const ComingSoonTag: React.FC<{ className?: string; title?: string }> = ({ className, title }) => (
+  <span
+    title={title ?? "VCG signals are not live yet"}
+    className={cn(
+      "inline-flex items-center rounded-sm border border-provenance-vcg/30 bg-provenance-vcg/[0.07] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-provenance-vcg/80",
+      className,
+    )}
+  >
+    {VCG_COMING_SOON}
+  </span>
+);
+
+/** Table-cell form: quiet, aligned with the numbers, never mistaken for data. */
+export const ComingSoonCell: React.FC = () => (
+  <span
+    className="text-[10px] uppercase tracking-widest text-provenance-vcg/60"
+    title="VCG signals are not live yet"
+  >
+    Soon
+  </span>
+);

@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { shortDate } from "@/components/materialRegister/primitives";
+import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
 import type { AssessmentCriterion } from "@/types/materialPrioritisation";
 import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 
@@ -294,6 +295,7 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
           {evidence.map((c) => (
             <p key={c.criterion_id} className="text-[10px] text-muted-foreground">
               <span className="text-foreground">{c.label}</span> · {c.helper}
+              {c.source === "vcg" && <ComingSoonTag className="ml-1.5 align-middle" />}
             </p>
           ))}
         </div>

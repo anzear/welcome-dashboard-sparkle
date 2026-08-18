@@ -21,12 +21,7 @@ import {
   holdReviewOverdue,
   overdueConditions,
 } from "@/components/materialRegister/gate";
-import {
-  CompetitorActivityMark,
-  SubstitutabilityChip,
-  SupplierAvailabilityValue,
-  VCG_RULE,
-} from "@/components/materialRegister/vcgSignals";
+import { ComingSoonCell, VCG_RULE } from "@/components/materialRegister/vcgSignals";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
@@ -88,9 +83,9 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
-  ["vcgSubstitutability", "Substitutability (VCG)", "Whether a commercial substitution path exists today"],
-  ["vcgSuppliers", "Suppliers (VCG)", "Suppliers VCG detects for an alternative"],
-  ["vcgCompetitor", "Competitor activity (VCG)", "Whether competitor movement is detectable"],
+  ["vcgSubstitutability", "Substitutability (VCG)", "Whether a commercial substitution path exists today — coming soon"],
+  ["vcgSuppliers", "Suppliers (VCG)", "Suppliers VCG detects for an alternative — coming soon"],
+  ["vcgCompetitor", "Competitor activity (VCG)", "Whether competitor movement is detectable — coming soon"],
 ];
 
 /** Share of the expected record that is actually filled in. Never a score. */
@@ -559,7 +554,7 @@ export const MaterialRegisterTable: React.FC = () => {
               {/* VCG signals — ours, set apart from the company columns to their left. */}
               {cols.vcgSubstitutability && (
                 <th className={cn(HEAD, VCG_HEAD, VCG_RULE, "px-3 py-2.5 text-left")}>
-                  <div className={VCG_GROUP}>VCG signals</div>
+                  <div className={VCG_GROUP}>VCG signals · coming soon</div>
                   Substitutability
                 </th>
               )}
@@ -572,7 +567,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     "px-3 py-2.5 text-right",
                   )}
                 >
-                  <div className={VCG_GROUP}>{cols.vcgSubstitutability ? "\u00a0" : "VCG signals"}</div>
+                  <div className={VCG_GROUP}>{cols.vcgSubstitutability ? "\u00a0" : "VCG signals · coming soon"}</div>
                   Suppliers
                 </th>
               )}
@@ -586,7 +581,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   )}
                 >
                   <div className={VCG_GROUP}>
-                    {cols.vcgSubstitutability || cols.vcgSuppliers ? "\u00a0" : "VCG signals"}
+                    {cols.vcgSubstitutability || cols.vcgSuppliers ? "\u00a0" : "VCG signals · coming soon"}
                   </div>
                   Competitor activity
                 </th>
@@ -825,10 +820,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    {/* VCG signals. Not assessed renders an em dash, never a zero. */}
+                    {/* VCG signals are not live yet — the column says so, it never shows a value. */}
                     {cols.vcgSubstitutability && (
                       <td className={cn("px-3 py-2 align-middle", VCG_RULE, "bg-provenance-vcg/[0.04]")}>
-                        <SubstitutabilityChip value={m.substitutability_readiness} />
+                        <ComingSoonCell />
                       </td>
                     )}
                     {cols.vcgSuppliers && (
@@ -838,7 +833,7 @@ export const MaterialRegisterTable: React.FC = () => {
                           !cols.vcgSubstitutability && VCG_RULE,
                         )}
                       >
-                        <SupplierAvailabilityValue value={m.supplier_availability} />
+                        <ComingSoonCell />
                       </td>
                     )}
                     {cols.vcgCompetitor && (
@@ -848,7 +843,7 @@ export const MaterialRegisterTable: React.FC = () => {
                           !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
                         )}
                       >
-                        <CompetitorActivityMark value={m.competitor_activity} />
+                        <ComingSoonCell />
                       </td>
                     )}
                   </tr>
