@@ -960,7 +960,7 @@ export const MaterialBrief: React.FC = () => {
 
           <Section
             title="Assessment"
-            note="Five criteria. Two are read from data we already hold; three are judged by people, one entry each. They are never combined into a single score."
+            note="Judged by people, never combined into a score."
           >
             <BriefAssessment material={m} />
           </Section>
