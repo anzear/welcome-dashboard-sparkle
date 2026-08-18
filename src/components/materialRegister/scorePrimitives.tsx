@@ -3,16 +3,16 @@ import { cn } from "@/lib/utils";
 import { SCORE_POINTS } from "@/config/driverQuestions";
 
 /**
- * Text-first driver scale, 1 to 5. Drivers sit on teal — never on red or orange,
- * so nothing here can be mistaken for the amber divergence flag. Intensity
- * tracks magnitude; only strong values (>= 3) carry a faint background tint.
+ * Text-first driver scale, 1 to 5. Scores are team judgement, so they sit on the
+ * --provenance-judgement token — never teal, never red or orange. Intensity
+ * tracks magnitude, and weight varies so the class survives greyscale.
  */
 const POSITIVE = [
-  "text-teal-700/60",
-  "text-teal-700/80",
-  "text-teal-800 bg-teal-600/10",
-  "text-teal-900 bg-teal-600/15",
-  "text-teal-950 bg-teal-600/20",
+  "text-provenance-judgement/60",
+  "text-provenance-judgement/80",
+  "text-provenance-judgement bg-provenance-judgement/10 font-medium",
+  "text-provenance-judgement bg-provenance-judgement/15 font-medium",
+  "text-provenance-judgement bg-provenance-judgement/20 font-semibold",
 ];
 /** Intensity by strength of the driver. */
 export function scoreTone(score: number | null): string {
