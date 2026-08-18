@@ -421,8 +421,22 @@ const AssessmentCoverage: React.FC = () => {
           </thead>
           <tbody>
             {rows.map(({ m, summary }) => (
-              <tr key={m.material_id} className="border-b border-border/60 last:border-0 hover:bg-muted/30">
+              <tr
+                key={m.material_id}
+                className={cn(
+                  "border-b border-border/60 last:border-0 hover:bg-muted/30",
+                  selected.includes(m.material_id) && "bg-primary/5",
+                )}
+              >
                 <td className="px-3 py-1.5">
+                  <Checkbox
+                    checked={selected.includes(m.material_id)}
+                    onCheckedChange={() => toggleRow(m.material_id)}
+                    aria-label={`Select ${m.name}`}
+                  />
+                </td>
+                <td className="px-3 py-1.5">
+
                   <button
                     type="button"
                     onClick={() => openBrief(m.material_id)}
