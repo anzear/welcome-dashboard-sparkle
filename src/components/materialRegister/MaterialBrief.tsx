@@ -377,6 +377,9 @@ export const MaterialBrief: React.FC = () => {
   const [comments, setComments] = useState<
     Record<string, { id: string; author: string; at: string; body: string }[]>
   >({});
+  /** Mock thread: three seeded comments per material, so the card reads as used. */
+  const seeded = comments[material?.material_id ?? ""] ?? (material ? seedComments(material.material_id) : []);
+
   const [draft, setDraft] = useState<Record<string, string>>({});
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
