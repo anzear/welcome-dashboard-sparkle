@@ -16,7 +16,6 @@ import {
   holdReviewOverdue,
   outcomeBlockers,
   overdueConditions,
-  todayIso,
 } from "@/components/materialRegister/gate";
 import {
   GATE_OUTCOME_LABEL,
@@ -542,7 +541,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
 
       <p className="text-[10px] leading-relaxed text-muted-foreground">
         The gate is a judgement, not an output. Nothing here is derived from the assessment scores, and a gate never
-        advances itself — {todayIso() && "someone decides"}.
+        advances itself — someone decides.
       </p>
     </div>
   );
