@@ -48,14 +48,13 @@ const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-for
 
 type OptionalColumn =
   | "rank"
+  | "status"
   | "completeness"
   | "materialType"
-  | "materialCategory"
   | "volume"
   | "spend"
   | "emissions"
   | "applications"
-  | "status"
   | "priority"
   | "owner"
   | "intelligence"
@@ -64,14 +63,13 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
+  ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data filled", "Share of expected fields recorded"],
   ["materialType", "Entry type", "How the material enters the portfolio"],
-  ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["applications", "Applications", "Application categories the material serves"],
-  ["status", "Status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
