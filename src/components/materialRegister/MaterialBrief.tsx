@@ -1093,39 +1093,12 @@ export const MaterialBrief: React.FC = () => {
                 placeholder="e.g. Supplier-specific"
                 onSave={(raw) => saveText("ghg_data_basis", raw)}
               />
+            </div>
+          </Section>
 
-              <GroupLabel>Supply</GroupLabel>
-              <EditableFigure
-                label="Suppliers"
-                field="supplier_count"
-                value={m.supplier_count}
-                provenance={m.provenance.supplier_count}
-                placeholder="count"
-                onSave={(raw) => saveFigure("supplier_count", raw)}
-              />
-              <EditableFigure
-                wide
-                label="Supplier countries"
-                field="supplier_countries"
-                value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
-                provenance={m.provenance.supplier_countries}
-                placeholder="DE, FI, CN"
-                onSave={(raw) => {
-                  const next = raw
-                    .split(",")
-                    .map((x) => x.trim().toUpperCase())
-                    .filter(Boolean);
-                  updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
-                    {
-                      material_id: m.material_id,
-                      event_type: "field_correction",
-                      field: "supplier_countries",
-                      from_value: m.supplier_countries.join(", ") || null,
-                      to_value: next.join(", ") || null,
-                    },
-                  ]);
-                }}
-              />
+          {/* VCG signals — ours, computed, deliberately slim. */}
+          <VcgSignalsCard material={m} />
+
             </div>
           </Section>
 
