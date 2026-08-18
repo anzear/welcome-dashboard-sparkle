@@ -259,3 +259,10 @@ All colors MUST be HSL.
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
+/* Material Portfolio typography: pinned to Inter so it renders identically everywhere */
+.portfolio-type {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01", "tnum";
+}
