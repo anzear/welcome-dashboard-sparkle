@@ -16,6 +16,11 @@ import FilterChips from "@/components/materialRegister/FilterChips";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import {
+  hasOverdueCondition,
+  holdReviewOverdue,
+  overdueConditions,
+} from "@/components/materialRegister/gate";
+import {
   CompetitorActivityMark,
   SubstitutabilityChip,
   SupplierAvailabilityValue,
@@ -707,10 +712,31 @@ export const MaterialRegisterTable: React.FC = () => {
                     )}
                     {cols.status && (
                       <td className="px-3 py-2 align-middle">
-                        <StatusPill
-                          status={m.journey_status}
-                          entered={m.provenance.journey_status?.origin === "entered"}
-                        />
+                        <div className="flex items-center gap-1.5">
+                          <StatusPill
+                            status={m.journey_status}
+                            entered={m.provenance.journey_status?.origin === "entered"}
+                          />
+                          {/* Overdue is a visual flag only — no reminders, no email. */}
+                          {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
+                            <AlertTriangle
+                              className="h-3.5 w-3.5 shrink-0 text-amber-600"
+                              title={
+                                hasOverdueCondition(m)
+                                  ? `${overdueConditions(m).length} condition(s) overdue`
+                                  : "Hold review overdue"
+                              }
+                            />
+                          )}
+                          {m.reopened && (
+                            <span
+                              title="Went no-go and was reopened"
+                              className="rounded-sm border border-border bg-muted px-1 text-[9px] uppercase tracking-wide text-muted-foreground"
+                            >
+                              Reopened
+                            </span>
+                          )}
+                        </div>
                       </td>
                     )}
                     {cols.priority && (
