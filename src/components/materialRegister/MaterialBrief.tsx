@@ -1131,18 +1131,8 @@ export const MaterialBrief: React.FC = () => {
             <BriefDriverScores materialId={m.material_id} />
           </Section>
 
-          <Section
-            title="Position"
-            note="Calculated by the platform from the figures above. Four separate positions, never combined into one score."
-          >
-            <PositionBlock
-              materialId={m.material_id}
-              gapMeasure={row?.gapMeasure ?? null}
-              gapSize={row?.gapSize ?? 0}
-              variant="detail"
-            />
-            {gapSentence() && <p className="pt-2 text-[11px] text-amber-700">{gapSentence()}</p>}
-          </Section>
+
+
 
 
           <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
