@@ -1412,7 +1412,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         material_id: materialId,
         event_type: "reopen",
         field: "reopen",
-        from_value: "no_go",
+        from_value: m.journey_status,
         to_value: "under_evaluation",
         reason: note?.trim() ? note.trim() : null,
         changed_by: currentUser.name,
