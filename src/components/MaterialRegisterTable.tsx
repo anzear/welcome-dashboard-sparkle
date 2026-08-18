@@ -225,8 +225,205 @@ export const MaterialRegisterTable: React.FC = () => {
   const colCount = 2;
   const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
-  /** Pinned offset shifts when the rank column is switched off. */
-  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+  /** Column order is user-controlled; rank and Material stay pinned at the front. */
+  const orderedCols = colOrder.filter((k) => cols[k]);
+
+  const headCell = (key: OptionalColumn) => {
+    switch (key) {
+      case "completeness":
+        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
+      case "materialType":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
+      case "materialCategory":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>;
+      case "volume":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
+            Volume
+            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+          </th>
+        );
+      case "spend":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
+            Spend
+            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+          </th>
+        );
+      case "emissions":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
+            GHG contribution
+            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+          </th>
+        );
+      case "applications":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
+        );
+      case "status":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>;
+      case "priority":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>;
+      case "intelligence":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>;
+      case "owner":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>;
+      case "lastChange":
+        return <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>;
+      default:
+        return null;
+    }
+  };
+
+  const bodyCell = (key: OptionalColumn, m: Material) => {
+    switch (key) {
+      case "completeness":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <CompletenessCell m={m} />
+          </td>
+        );
+      case "materialType":
+        return (
+          <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
+            {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+          </td>
+        );
+      case "materialCategory":
+        return (
+          <td className="px-3 py-2 align-middle text-[12px]">
+            {m.material_class ? (
+              <span className="text-muted-foreground">{m.material_class}</span>
+            ) : (
+              <Missing />
+            )}
+          </td>
+        );
+      case "volume":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
+            <NumCell
+              value={m.annual_volume}
+              provenance={m.provenance.annual_volume}
+              emphasis={activeCol("volume")}
+            />
+          </td>
+        );
+      case "spend":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
+            <NumCell
+              value={m.annual_spend}
+              provenance={m.provenance.annual_spend}
+              emphasis={activeCol("spend")}
+            />
+          </td>
+        );
+      case "emissions":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
+            <NumCell
+              value={m.ghg_contribution}
+              provenance={m.provenance.ghg_contribution}
+              emphasis={activeCol("emissions")}
+            />
+          </td>
+        );
+      case "applications":
+        return (
+          <td className={cn("px-3 py-2 align-middle", colTint("applications"))}>
+            <ApplicationsCell values={m.application_categories} />
+          </td>
+        );
+      case "status":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <div className="flex items-center gap-1.5">
+              <StatusPill
+                status={m.journey_status}
+                entered={m.provenance.journey_status?.origin === "entered"}
+              />
+              {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
+                <span
+                  title={
+                    hasOverdueCondition(m)
+                      ? `${overdueConditions(m).length} condition(s) overdue`
+                      : "Hold review overdue"
+                  }
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                </span>
+              )}
+              {m.reopened && (
+                <span
+                  title="Went no-go and was reopened"
+                  className="rounded-sm border border-border bg-muted px-1 text-[9px] uppercase tracking-wide text-muted-foreground"
+                >
+                  Reopened
+                </span>
+              )}
+            </div>
+          </td>
+        );
+      case "priority":
+        return (
+          <td className="px-3 py-2 align-middle">
+            {m.priority_period ? (
+              <span className="text-[12px] text-foreground">{m.priority_period}</span>
+            ) : (
+              <Missing />
+            )}
+          </td>
+        );
+      case "intelligence":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <span className="text-[12px] text-muted-foreground">
+              {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
+            </span>
+          </td>
+        );
+      case "owner":
+        return (
+          <td className="px-3 py-2 align-middle">
+            {m.owner ? (
+              <span>
+                {m.provenance.owner?.origin === "entered" && (
+                  <span className="mr-0.5 text-muted-foreground/70">^</span>
+                )}
+                {m.owner}
+              </span>
+            ) : (
+              <span className="text-muted-foreground/60">Unassigned</span>
+            )}
+          </td>
+        );
+      case "lastChange":
+        return (
+          <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
+            {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
+              <>
+                <div className="leading-[1.15] text-foreground/80" title={m.last_status_change_date}>
+                  {relativeAge(m.last_status_change_date)}
+                </div>
+                <div className="text-[10px] leading-[1.15] text-muted-foreground">
+                  {m.last_status_user ?? "—"}
+                </div>
+              </>
+            ) : (
+              <span className="text-muted-foreground/60" title="Only a baselining event on record">
+                Never changed
+              </span>
+            )}
+          </td>
+        );
+      default:
+        return null;
+    }
+  };
+
+
 
 
 
