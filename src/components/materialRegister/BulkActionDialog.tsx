@@ -162,10 +162,12 @@ export const BulkActionDialog: React.FC<Props> = ({
   );
 
   const addMatches = useMemo(() => {
+    if (!isMulti) return [];
     const q = draft.trim().toLowerCase();
-    if (!q || !isMulti) return [];
+    // Product lines are a fixed set, so offer them all before anything is typed.
+    if (!q) return kind === "product_lines" ? suggestions.filter((t) => !hasTag(values, t)) : [];
     return suggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(values, t)).slice(0, 6);
-  }, [draft, suggestions, values, isMulti]);
+  }, [draft, suggestions, values, isMulti, kind]);
 
   const addValue = (raw: string) => {
     const t = normalizeTag(raw);
@@ -230,7 +232,11 @@ export const BulkActionDialog: React.FC<Props> = ({
           ? `${mode === "add" ? "Add" : "Remove"} application areas — ${materials.length} materials`
           : kind === "applications"
             ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
-            : kind === "priority_period"
+            : kind === "product_lines"
+              ? `${mode === "add" ? "Add" : "Remove"} product lines — ${materials.length} materials`
+              : kind === "tags"
+              ? `${mode === "add" ? "Add" : "Remove"} tags — ${materials.length} materials`
+              : kind === "priority_period"
               ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
               : kind === "entry_type"
                 ? `Set entry type for ${materials.length} materials`
