@@ -1010,11 +1010,12 @@ export const MaterialBrief: React.FC = () => {
           >
             <div className="flex min-h-0 flex-1 flex-col gap-3">
 
-              {(comments[m.material_id] ?? []).length === 0 ? (
+              {seeded.length === 0 ? (
                 <p className="flex-1 text-[11px] text-muted-foreground">No comments yet.</p>
               ) : (
                 <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-                  {(comments[m.material_id] ?? []).map((c) => (
+                  {seeded.map((c) => (
+
                     <li key={c.id} className="border-l-2 border-border/70 pl-3">
                       <div className="flex items-baseline gap-2">
                         <span className="text-[11px] font-medium text-foreground">{c.author}</span>
