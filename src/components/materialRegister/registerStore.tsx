@@ -1,24 +1,25 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
-import { seedDriverScores } from "@/data/driverScoresMock";
+import { seedAssessments } from "@/data/assessmentMock";
 import {
-  DRIVER_QUESTIONS,
-  scoreKey,
-  shortForLabel,
-  slugForLabel,
-  type DriverQuestion,
-  type QuestionSetEvent,
-} from "@/config/driverQuestions";
+  CONTRIBUTORS,
+  CRITERION_LABEL,
+  DEFAULT_CONTRIBUTOR,
+  JUDGED_CRITERIA,
+  assessmentKey,
+} from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
+  type AssessmentEntry,
+  type AssessmentState,
+  type Contributor,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
-  type DriverCounts,
-  type DriverScore,
   type BatchOrigin,
   type MaterialEvent,
   type MaterialEventType,
+  type TeamId,
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
@@ -26,6 +27,7 @@ import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/
 
 
 export const CURRENT_USER = "You";
+
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
 export type MeasureId = RankMeasureId | "all";
@@ -247,36 +249,35 @@ interface Store {
   events: MaterialEvent[];
   eventsFor: (id: string) => MaterialEvent[];
   recordEvents: (inputs: EventInput[]) => void;
-  /** Sparse judgement map. A missing key means no judgement, never a zero. */
-  scores: Record<string, DriverScore>;
-  scoreFor: (materialId: string, questionId: string) => DriverScore | null;
-  setScore: (materialId: string, questionId: string, score: number, note: string | null) => void;
-  /** Clears a judgement back to null. Null is absence, never a zero. */
-  clearScore: (materialId: string, questionId: string) => void;
   /**
-   * One driver, one value (or null to clear), applied to every selected material.
-   * Writes one event per changed material under a shared batch_id so Undo can
-   * revert the whole judgement in a single action.
+   * Who the session is acting as. Every assessment entry is recorded against
+   * this person, and each person holds at most one entry per criterion.
    */
-  applyScoreBulk: (questionId: string, value: number | null, ids: Set<string>) => void;
-  countsFor: (materialId: string) => DriverCounts;
-  questionCoverage: (questionId: string, rows: Material[]) => number;
-  /**
-   * Account-level driver question set, shared by every material. Active
-   * questions in display order; archived ones keep their scores but leave the
-   * brief, the matrix, exports and the derived counts.
-   */
-  questions: DriverQuestion[];
-  archivedQuestions: DriverQuestion[];
-  allQuestions: DriverQuestion[];
-  canEditQuestionSet: boolean;
-  addQuestion: (label: string, helper: string | null) => string;
-  renameQuestion: (questionId: string, label: string) => void;
-  setQuestionHelper: (questionId: string, helper: string | null) => void;
-  archiveQuestion: (questionId: string) => void;
-  restoreQuestion: (questionId: string) => void;
-  reorderQuestions: (ids: string[]) => void;
-  questionSetEvents: QuestionSetEvent[];
+  currentUser: Contributor;
+  setCurrentUser: (userId: string) => void;
+  contributors: Contributor[];
+  /** Sparse entry map. A missing key means that person has no view recorded. */
+  assessments: Record<string, AssessmentEntry>;
+  entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
+  myEntry: (materialId: string, criterionId: string) => AssessmentEntry | null;
+  /** Records or replaces the current user's entry on one criterion. */
+  saveAssessment: (materialId: string, criterionId: string, score: number, note: string | null) => void;
+  /** Withdraws the current user's entry. Absence, never a zero. */
+  clearAssessment: (materialId: string, criterionId: string) => void;
+  /** Spread and flag for one criterion. Counts only — entries are never averaged. */
+  assessmentState: (materialId: string, criterionId: string) => AssessmentState;
+  /** Per-material roll-up: criteria covered, contributors, split criteria. */
+  assessmentSummary: (materialId: string) => {
+    criteriaAssessed: number;
+    criteriaTotal: number;
+    contributors: string[];
+    teams: TeamId[];
+    splits: number;
+    entryCount: number;
+    lastAssessedAt: string | null;
+  };
+  /** How many of the given rows carry at least one entry on that criterion. */
+  criterionCoverage: (criterionId: string, rows: Material[]) => number;
   /** Period the priority set is being assembled for. Free text. */
   priorityPeriod: string;
   setPriorityPeriod: (v: string) => void;
@@ -288,16 +289,17 @@ interface Store {
     message: string;
     snapshot: Material[];
     batchId?: string;
-    scoreSnapshot?: Record<string, DriverScore>;
+    assessmentSnapshot?: Record<string, AssessmentEntry>;
   } | null;
   setToast: React.Dispatch<
     React.SetStateAction<{
       message: string;
       snapshot: Material[];
       batchId?: string;
-      scoreSnapshot?: Record<string, DriverScore>;
+      assessmentSnapshot?: Record<string, AssessmentEntry>;
     } | null>
   >;
+
   undo: () => void;
 
 }
@@ -316,10 +318,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 }) => {
   const [data, setData] = useState<Material[]>(rows);
   const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
-  const [scores, setScores] = useState<Record<string, DriverScore>>(seedDriverScores);
-  const [questionSet, setQuestionSet] = useState<DriverQuestion[]>(DRIVER_QUESTIONS);
-  const [questionSetEvents, setQuestionSetEvents] = useState<QuestionSetEvent[]>([]);
-  const canEditQuestionSet = true;
+  const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
+  const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
@@ -334,9 +334,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     message: string;
     snapshot: Material[];
     batchId?: string;
-    /** Judgement map before a bulk score, so Undo can restore it wholesale. */
-    scoreSnapshot?: Record<string, DriverScore>;
+    /** Entry map before a batch change, so Undo can restore it wholesale. */
+    assessmentSnapshot?: Record<string, AssessmentEntry>;
   } | null>(null);
+
 
 
   const measure = measureId === "all" ? null : MEASURES.find((x) => x.id === measureId)!;
@@ -800,147 +801,92 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     if (!toast) return;
     const byId = new Map(toast.snapshot.map((m) => [m.material_id, m]));
     setData((prev) => prev.map((m) => byId.get(m.material_id) ?? m));
-    if (toast.scoreSnapshot) setScores(toast.scoreSnapshot);
+    if (toast.assessmentSnapshot) setAssessments(toast.assessmentSnapshot);
     if (toast.batchId) setEvents((prev) => prev.filter((e) => e.batch_id !== toast.batchId));
     setToast(null);
   };
 
 
-  const activeQuestions = useMemo(
-    () => questionSet.filter((q) => !q.archived).sort((a, b) => a.order - b.order),
-    [questionSet],
-  );
-  const archivedQuestions = useMemo(
-    () => questionSet.filter((q) => q.archived).sort((a, b) => a.order - b.order),
-    [questionSet],
-  );
+  const currentUser =
+    CONTRIBUTORS.find((c) => c.user_id === currentUserId) ?? DEFAULT_CONTRIBUTOR;
 
-  const logQuestionSet = (
-    action: QuestionSetEvent["action"],
-    question_id: string,
-    from_label: string | null,
-    to_label: string | null,
-  ) =>
-    setQuestionSetEvents((prev) => [
-      {
-        event_id: `QSE-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        action,
-        question_id,
-        from_label,
-        to_label,
-        changed_by: CURRENT_USER,
-        changed_at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
+  const entriesFor = (materialId: string, criterionId: string): AssessmentEntry[] =>
+    Object.values(assessments)
+      .filter((e) => e.material_id === materialId && e.criterion_id === criterionId)
+      .sort((a, b) => a.assessed_at.localeCompare(b.assessed_at));
 
-  /** A new question appears on every material as unscored — never zero. */
-  const addQuestion = (label: string, helper: string | null) => {
-    const clean = label.trim();
-    const id = slugForLabel(clean, questionSet.map((q) => q.question_id));
-    const order = questionSet.reduce((max, q) => Math.max(max, q.order), 0) + 1;
-    setQuestionSet((prev) => [
-      ...prev,
-      {
-        question_id: id,
-        label: clean,
-        short: shortForLabel(clean),
-        helper: helper && helper.trim() ? helper.trim() : null,
-        order,
-        archived: false,
-        archived_at: null,
-        created_by: CURRENT_USER,
-        created_at: today(),
-      },
-    ]);
-    logQuestionSet("added", id, null, clean);
-    return id;
-  };
-
-  /** Renaming touches the label only. question_id never changes, so no score is orphaned. */
-  const renameQuestion = (questionId: string, label: string) => {
-    const clean = label.trim();
-    const current = questionSet.find((q) => q.question_id === questionId);
-    if (!current || !clean || clean === current.label) return;
-    setQuestionSet((prev) =>
-      prev.map((q) => (q.question_id === questionId ? { ...q, label: clean, short: shortForLabel(clean) } : q)),
-    );
-    logQuestionSet("renamed", questionId, current.label, clean);
-  };
-
-  const setQuestionHelper = (questionId: string, helper: string | null) => {
-    const clean = helper && helper.trim() ? helper.trim() : null;
-    setQuestionSet((prev) => prev.map((q) => (q.question_id === questionId ? { ...q, helper: clean } : q)));
-  };
-
-  /** Archive, never delete. Scores are retained and return intact on restore. */
-  const archiveQuestion = (questionId: string) => {
-    const current = questionSet.find((q) => q.question_id === questionId);
-    if (!current) return;
-    setQuestionSet((prev) =>
-      prev.map((q) =>
-        q.question_id === questionId ? { ...q, archived: true, archived_at: new Date().toISOString() } : q,
-      ),
-    );
-    logQuestionSet("archived", questionId, current.label, current.label);
-  };
-
-  const restoreQuestion = (questionId: string) => {
-    const current = questionSet.find((q) => q.question_id === questionId);
-    if (!current) return;
-    setQuestionSet((prev) =>
-      prev.map((q) => (q.question_id === questionId ? { ...q, archived: false, archived_at: null } : q)),
-    );
-    logQuestionSet("restored", questionId, current.label, current.label);
-  };
-
-  const reorderQuestions = (ids: string[]) => {
-    setQuestionSet((prev) =>
-      prev.map((q) => {
-        const i = ids.indexOf(q.question_id);
-        return i === -1 ? q : { ...q, order: i + 1 };
-      }),
-    );
-    logQuestionSet("reordered", ids[0] ?? "", null, null);
-  };
-
-  const scoreFor = (materialId: string, questionId: string) =>
-    scores[scoreKey(materialId, questionId)] ?? null;
+  const myEntry = (materialId: string, criterionId: string): AssessmentEntry | null =>
+    assessments[assessmentKey(materialId, criterionId, currentUserId)] ?? null;
 
   /**
-   * Counts of judgements only. Never summed, averaged or weighted into an index.
-   * A material with nothing scored has null counts, not zeroes.
+   * Spread across the recorded entries. No entry is not a score, and the entries
+   * are never averaged — the flag reports how far apart people sit, nothing more.
    */
-  const countsFor = (materialId: string): DriverCounts => {
-    const values = activeQuestions
-      .map((q) => scores[scoreKey(materialId, q.question_id)]?.score ?? null)
-      .filter(
-        (v): v is number => v !== null,
-      );
-    if (values.length === 0) {
-      return { strong_drivers: null, scored_count: null };
+  const assessmentState = (materialId: string, criterionId: string): AssessmentState => {
+    const entries = entriesFor(materialId, criterionId);
+    if (entries.length === 0) {
+      return { flag: "not_assessed", entries, low: null, high: null, spread: null, teams: [] };
     }
+    const values = entries.map((e) => e.score);
+    const low = Math.min(...values);
+    const high = Math.max(...values);
+    const spread = high - low;
+    const teams = Array.from(new Set(entries.map((e) => e.team)));
+    const flag =
+      entries.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
+    return { flag, entries, low, high, spread, teams };
+  };
+
+  const assessmentSummary = (materialId: string) => {
+    const mine = Object.values(assessments).filter((e) => e.material_id === materialId);
+    const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
+    const teams = Array.from(new Set(mine.map((e) => e.team)));
+    const criteriaAssessed = JUDGED_CRITERIA.filter((c) =>
+      mine.some((e) => e.criterion_id === c.criterion_id),
+    ).length;
+    const splits = JUDGED_CRITERIA.filter(
+      (c) => assessmentState(materialId, c.criterion_id).flag === "split",
+    ).length;
+    const lastAssessedAt = mine.reduce<string | null>(
+      (latest, e) => (latest === null || e.assessed_at > latest ? e.assessed_at : latest),
+      null,
+    );
     return {
-      strong_drivers: values.filter((v) => v >= 3).length,
-      scored_count: values.length,
+      criteriaAssessed,
+      criteriaTotal: JUDGED_CRITERIA.length,
+      contributors,
+      teams,
+      splits,
+      entryCount: mine.length,
+      lastAssessedAt,
     };
   };
 
-  const questionCoverage = (questionId: string, rows: Material[]) =>
-    rows.filter((m) => (scores[scoreKey(m.material_id, questionId)]?.score ?? null) !== null).length;
+  const criterionCoverage = (criterionId: string, rowsIn: Material[]) =>
+    rowsIn.filter((m) =>
+      Object.values(assessments).some(
+        (e) => e.material_id === m.material_id && e.criterion_id === criterionId,
+      ),
+    ).length;
 
-  const setScore = (materialId: string, questionId: string, score: number, note: string | null) => {
-    const key = scoreKey(materialId, questionId);
-    const previous = scores[key]?.score ?? null;
-    setScores((prev) => ({
+  const saveAssessment = (
+    materialId: string,
+    criterionId: string,
+    score: number,
+    note: string | null,
+  ) => {
+    const key = assessmentKey(materialId, criterionId, currentUserId);
+    const previous = assessments[key]?.score ?? null;
+    setAssessments((prev) => ({
       ...prev,
       [key]: {
         material_id: materialId,
-        question_id: questionId,
+        criterion_id: criterionId,
+        user_id: currentUserId,
+        team: currentUser.team,
         score,
-        note: note && note.trim() ? note.trim() : null,
-        scored_by: CURRENT_USER,
-        scored_at: new Date().toISOString(),
+        note,
+        assessed_at: new Date().toISOString(),
       },
     }));
     if (previous === score) return;
@@ -948,19 +894,19 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       {
         material_id: materialId,
         event_type: "score_change",
-        field: questionId,
+        field: criterionId,
         from_value: previous === null ? null : String(previous),
         to_value: String(score),
-        reason: note && note.trim() ? note.trim() : null,
+        changed_by: currentUser.name,
       },
     ]);
   };
 
-  const clearScore = (materialId: string, questionId: string) => {
-    const key = scoreKey(materialId, questionId);
-    const previous = scores[key]?.score ?? null;
+  const clearAssessment = (materialId: string, criterionId: string) => {
+    const key = assessmentKey(materialId, criterionId, currentUserId);
+    const previous = assessments[key]?.score ?? null;
     if (previous === null) return;
-    setScores((prev) => {
+    setAssessments((prev) => {
       const next = { ...prev };
       delete next[key];
       return next;
@@ -969,67 +915,14 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       {
         material_id: materialId,
         event_type: "score_change",
-        field: questionId,
+        field: criterionId,
         from_value: String(previous),
         to_value: null,
+        changed_by: currentUser.name,
       },
     ]);
   };
 
-  const applyScoreBulk = (questionId: string, value: number | null, ids: Set<string>) => {
-    if (ids.size === 0) return;
-    const batchId = `BATCH-${Date.now()}`;
-    const scoreSnapshot = { ...scores };
-    const stamp = new Date().toISOString();
-    const changed: string[] = [];
-
-    setScores((prev) => {
-      const next = { ...prev };
-      ids.forEach((id) => {
-        const key = scoreKey(id, questionId);
-        const previous = prev[key]?.score ?? null;
-        if (previous === value) return;
-        changed.push(id);
-        if (value === null) delete next[key];
-        else
-          next[key] = {
-            material_id: id,
-            question_id: questionId,
-            score: value,
-            note: prev[key]?.note ?? null,
-            scored_by: CURRENT_USER,
-            scored_at: stamp,
-          };
-      });
-      return next;
-    });
-
-    // One event per material that actually moved, all under the same batch.
-    recordEvents(
-      changed.map((id) => ({
-        material_id: id,
-        event_type: "score_change" as const,
-        field: questionId,
-        from_value: (() => {
-          const p = scoreSnapshot[scoreKey(id, questionId)]?.score ?? null;
-          return p === null ? null : String(p);
-        })(),
-        to_value: value === null ? null : String(value),
-        batch_id: batchId,
-      })),
-    );
-
-    const label = questionSet.find((q) => q.question_id === questionId)?.label ?? questionId;
-    setToast({
-      message:
-        value === null
-          ? `${label} cleared for ${changed.length} of ${ids.size} materials.`
-          : `${label} set to ${value > 0 ? `+${value}` : value} for ${changed.length} of ${ids.size} materials.`,
-      snapshot: data,
-      batchId,
-      scoreSnapshot,
-    });
-  };
 
   const value: Store = {
     data,
@@ -1067,24 +960,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     events,
     eventsFor,
     recordEvents,
-    scores,
-    scoreFor,
-    setScore,
-    clearScore,
-    applyScoreBulk,
-    countsFor,
-    questionCoverage,
-    questions: activeQuestions,
-    archivedQuestions,
-    allQuestions: questionSet,
-    canEditQuestionSet,
-    addQuestion,
-    renameQuestion,
-    setQuestionHelper,
-    archiveQuestion,
-    restoreQuestion,
-    reorderQuestions,
-    questionSetEvents,
+    currentUser,
+    setCurrentUser: setCurrentUserId,
+    contributors: CONTRIBUTORS,
+    assessments,
+    entriesFor,
+    myEntry,
+    saveAssessment,
+    clearAssessment,
+    assessmentState,
+    assessmentSummary,
+    criterionCoverage,
+
     priorityPeriod,
     setPriorityPeriod,
     prioritySetCount,

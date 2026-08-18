@@ -23,7 +23,7 @@ import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDial
 import { nf, provenanceLine, provenanceStamp, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
-import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
+import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefStepCards from "@/components/materialRegister/BriefStepCards";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 
@@ -474,7 +474,7 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 export const MaterialBrief: React.FC = () => {
-  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, countsFor } =
+  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, assessmentSummary } =
     useRegister();
 
   const tagSuggestions = useMemo(() => tagVocabulary(data).map((t) => t.tag), [data]);
@@ -1163,14 +1163,17 @@ export const MaterialBrief: React.FC = () => {
             title="Material requirements"
             note="What the replacement has to achieve. A requirement nobody stated stays empty."
           >
-            <BriefStepCards material={m} scoredCount={countsFor(m.material_id).scored_count ?? 0} />
+            <BriefStepCards material={m} />
           </Section>
         </div>
 
         {/* Right column */}
         <div className="space-y-4 self-start">
-          <Section title="Scores" note="These are judgements recorded by your team, not measured data.">
-            <BriefDriverScores materialId={m.material_id} />
+          <Section
+            title="Assessment"
+            note="Five criteria. Two are read from data we already hold; three are judged by people, one entry each. They are never combined into a single score."
+          >
+            <BriefAssessment material={m} />
           </Section>
 
 

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 
 import type { Material } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { ScoreScale } from "@/components/materialRegister/scorePrimitives";
 import type { AxisVar } from "@/components/materialRegister/gridAxes";
 
 /** One material, one entry. The entry states every gap the material has. */
@@ -67,7 +66,6 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
   entry,
   onSaved,
 }) => {
-  const { setScore } = useRegister();
   const [saved, setSaved] = useState(false);
   const { m, gaps } = entry;
 
@@ -96,17 +94,7 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
               {axis.label}
               {axis.kind === "measured" ? ` (${axis.unit})` : ""}
             </label>
-            {axis.questionId ? (
-              <ScoreScale
-                size="sm"
-                value={null}
-                ariaLabel={`${axis.label} for ${m.name}`}
-                onChange={(v) => {
-                  setScore(m.material_id, axis.questionId as string, v, null);
-                  confirm();
-                }}
-              />
-            ) : axis.field ? (
+            {axis.field ? (
               <FigureInput m={m} axis={axis} onCommitted={confirm} />
             ) : (
               <span className="font-mono text-[11px] text-muted-foreground">—</span>

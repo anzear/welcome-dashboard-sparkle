@@ -7,19 +7,14 @@ import {
   type MaterialEvent,
 } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { DRIVER_QUESTION_LABEL } from "@/config/driverQuestions";
+import { CRITERION_LABEL } from "@/config/assessmentCriteria";
 
 const statusLabel = (v: string | null) =>
   v && v in JOURNEY_STATUS_LABEL ? JOURNEY_STATUS_LABEL[v as JourneyStatus] : (v ?? "—");
 
-const fieldLabel = (f: string) => EVENT_FIELD_LABEL[f] ?? DRIVER_QUESTION_LABEL[f] ?? f;
+const fieldLabel = (f: string) => EVENT_FIELD_LABEL[f] ?? CRITERION_LABEL[f] ?? f;
 
-const signedValue = (v: string | null) => {
-  if (v === null || v === "") return "no score";
-  const n = Number(v);
-  if (Number.isNaN(n)) return v;
-  return n > 0 ? `+${n}` : String(n);
-};
+const signedValue = (v: string | null) => (v === null || v === "" ? "no score" : v);
 
 /** One plain sentence per event. No counts, no aggregates, no per-person metrics. */
 export function eventSentence(e: MaterialEvent): string {
@@ -40,7 +35,7 @@ export function eventSentence(e: MaterialEvent): string {
       return `Blocker recorded on ${statusLabel(e.from_value) !== "—" ? "status change" : "this material"}`;
     case "score_change":
       return e.from_value === null
-        ? `${fieldLabel(e.field)} scored ${signedValue(e.to_value)}`
+        ? `${fieldLabel(e.field)} assessed at ${signedValue(e.to_value)}`
         : `${fieldLabel(e.field)} changed from ${signedValue(e.from_value)} to ${signedValue(e.to_value)}`;
     case "tags_change":
       return `Tags changed from ${e.from_value ?? "none"} to ${e.to_value ?? "none"}`;

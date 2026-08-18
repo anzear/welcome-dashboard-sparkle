@@ -12,12 +12,12 @@ import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import { STATUS_DOT, StatusLegend, median, ordinal } from "@/components/materialRegister/gridPrimitives";
 import UnplottedList, { type UnplottedEntry } from "@/components/materialRegister/UnplottedList";
 import PlottedList from "@/components/materialRegister/PlottedList";
-import DriverListView from "@/components/materialRegister/DriverListView";
 import {
   AXIS_PRESETS,
   DEFAULT_PRESET,
   SIZE_MIN,
-  buildAxisVars,
+  SIZE_VARS,
+  AXIS_VARS,
   findAxisVar,
   quadrantReadings,
   scaleFor,
@@ -48,12 +48,12 @@ interface Dot {
   cx: number;
   cy: number;
   r: number;
-  /** Count behind the bubble size, or null when nothing has been scored. */
-  sizeCount: number | null;
-  scored: boolean;
+  /** People who have recorded an assessment. Drives the bubble size. */
+  sizeCount: number;
+  assessed: boolean;
 }
 
-/** Axis picker with lenses and drivers kept in separate labelled sections. */
+/** Axis picker. Lenses only — a team judgement is never plotted on an axis. */
 const AxisSelect: React.FC<{
   label: string;
   value: string;
@@ -68,29 +68,16 @@ const AxisSelect: React.FC<{
       className="h-7 max-w-56 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
       aria-label={label}
     >
-      <optgroup label="Lenses">
-        {vars
-          .filter((v) => v.group === "lens")
-          .map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.label} ({v.unit})
-            </option>
-          ))}
-      </optgroup>
-      <optgroup label="Drivers">
-        {vars
-          .filter((v) => v.group === "driver")
-          .map((v) => (
-            <option key={v.id} value={v.id}>
-              {v.label} ({v.unit})
-            </option>
-          ))}
-      </optgroup>
+      {vars.map((v) => (
+        <option key={v.id} value={v.id}>
+          {v.label} ({v.unit})
+        </option>
+      ))}
     </select>
   </label>
 );
 
-const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScoring }) => {
+const Prioritisation: React.FC = () => {
   const {
     setMeasureId,
     filters,
@@ -98,10 +85,8 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
     ordered,
     data,
     rankTables,
-    countsFor,
-    scoreFor,
     openBrief,
-    questions,
+    assessmentSummary,
     priorityPeriod,
     setPriorityPeriod,
     prioritySetCount,
@@ -112,17 +97,16 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
     undo,
   } = useRegister();
 
-  const axisVars = useMemo(() => buildAxisVars(questions), [questions]);
+  const axisVars = AXIS_VARS;
 
   const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
   const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
-  const [mode, setMode] = useState<"chart" | "list">("chart");
   const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
 
   const xv = findAxisVar(axisVars, xId);
   const yv = findAxisVar(axisVars, yId);
-  const sizeVar = findAxisVar(axisVars, sizeId);
+  const sizeVar = SIZE_VARS.find((v) => v.id === sizeId) ?? SIZE_VARS[0];
 
   /** The register's ranking measure follows the X axis so the readings stay coherent. */
   const pickX = (id: AxisVarId) => {
@@ -138,7 +122,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
     setSizeId(p.size);
   };
 
-  const activePreset = AXIS_PRESETS.find((p) => p.x === xId && p.y === yId && p.size === sizeId) ?? null;
+  const activePreset = AXIS_PRESETS.find((p) => p.x === xId && p.y === yId) ?? null;
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [prioritySetOnly, setPrioritySetOnly] = useState(false);
@@ -164,15 +148,14 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
   );
 
   const classified = useMemo(() => {
-    const plotted: { m: Material; x: number; y: number; sizeCount: number | null; scored: boolean }[] = [];
+    const plotted: { m: Material; x: number; y: number; sizeCount: number; assessed: boolean }[] = [];
     /** One entry per material, listing every axis it lacks a value for. */
     const entries: UnplottedEntry[] = [];
 
     rows.forEach(({ m }) => {
-      const counts = countsFor(m.material_id);
-      const ctx = { score: (qid: string) => scoreFor(m.material_id, qid)?.score ?? null };
-      const x = xv.value(m, counts, ctx);
-      const y = yv.value(m, counts, ctx);
+      const summary = assessmentSummary(m.material_id);
+      const x = xv.value(m);
+      const y = yv.value(m);
       if (x === null || y === null) {
         const gaps: AxisVar[] = [];
         if (x === null) gaps.push(xv);
@@ -184,8 +167,8 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         m,
         x,
         y,
-        sizeCount: counts.scored_count === null ? null : (sizeVar.value(m, counts, ctx) as number),
-        scored: counts.scored_count !== null,
+        sizeCount: summary.contributors.length,
+        assessed: summary.entryCount > 0,
       });
     });
 
@@ -198,7 +181,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
     });
 
     return { plotted, entries, unplottedTotal: entries.length };
-  }, [rows, xv, yv, sizeVar, countsFor, scoreFor]);
+  }, [rows, xv, yv, assessmentSummary]);
 
   const { plotted, entries, unplottedTotal } = classified;
 
@@ -219,7 +202,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
       ...p,
       cx: sx(p.x) + j.dx,
       cy: sy(p.y) + j.dy,
-      r: p.scored ? sizeRadius(p.sizeCount) : SIZE_MIN,
+      r: p.assessed ? sizeRadius(p.sizeCount) : SIZE_MIN,
     };
   });
 
@@ -283,7 +266,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
   const labelTick = (v: number, scale: typeof xScale, judgement: boolean) =>
     !judgement || v === 0 || v === scale.min || v === scale.max || v % 2 === 0;
 
-  const axisTitle = (v: AxisVar) => `${v.label} (${v.unit}) — ${v.kind}`;
+  const axisTitle = (v: AxisVar) => `${v.label} (${v.unit})`;
 
   return (
     <div className="w-full space-y-2">
@@ -297,8 +280,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         />
         <FilterSelects variant="popover" />
 
-        {mode === "chart" && (
-          <>
+        <>
             <div className="flex flex-wrap items-center gap-1">
               {AXIS_PRESETS.map((p) => (
                 <button
@@ -349,7 +331,11 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                       className="h-7 w-full rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
                       aria-label="Size"
                     >
-                      <option value="drivers">Strong drivers (count)</option>
+                      {SIZE_VARS.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.label} (count)
+                        </option>
+                      ))}
                     </select>
                   </label>
                 </div>
@@ -366,26 +352,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                 </div>
               </PopoverContent>
             </Popover>
-          </>
-        )}
-
-
-        <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-1">
-          {(["chart", "list"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={mode === v}
-              onClick={() => setMode(v)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
-                mode === v ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        </>
       </div>
 
 
@@ -394,15 +361,11 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         {activePreset && (
           <span className="hidden sm:inline">{activePreset.reading}</span>
         )}
-        {mode === "chart" && activePreset && (
-          <span className="hidden sm:inline text-border"> · </span>
-        )}
-        {mode === "chart" && (
-          <span className="hidden sm:inline">
+        {activePreset && <span className="hidden sm:inline text-border"> · </span>}
+        <span className="hidden sm:inline">
             <span className="text-foreground">{xv.label}</span> against{" "}
             <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
-          </span>
-        )}
+        </span>
         <span className="text-border"> · </span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in priority set
@@ -469,13 +432,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         </div>
       )}
 
-      {mode === "list" ? (
-        <DriverListView
-          materials={rows.map((r) => r.m)}
-          onOpenScoring={() => onOpenScoring?.()}
-        />
-      ) : (
-        <>
+      <>
           {/* Plot + legend side by side */}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px]">
             <div className="relative rounded-xl border border-border/70 bg-card p-1 shadow-sm">
@@ -506,7 +463,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
                 {/* y ticks */}
                 {yScale.ticks.map((t, i) => {
-                  const labelled = labelTick(t, yScale, yv.kind === "judgement");
+                  const labelled = labelTick(t, yScale, false);
                   return (
                     <g key={i}>
                       <line
@@ -533,7 +490,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
 
                 {/* x ticks */}
                 {xScale.ticks.map((t, i) => {
-                  const labelled = labelTick(t, xScale, xv.kind === "judgement");
+                  const labelled = labelTick(t, xScale, false);
                   if (!labelled) return null;
                   return (
                     <g key={i}>
@@ -686,11 +643,11 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                         cy={d.cy}
                         r={d.r}
                         className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
-                        fill={d.scored ? "currentColor" : "none"}
-                        fillOpacity={d.scored ? 0.75 : 0}
-                        stroke={isPicked ? "hsl(var(--primary))" : d.scored ? "hsl(var(--background))" : "currentColor"}
-                        strokeWidth={isPicked ? 2 : d.scored ? 0.8 : 1.3}
-                        strokeDasharray={d.scored ? undefined : "2 1.6"}
+                        fill={d.assessed ? "currentColor" : "none"}
+                        fillOpacity={d.assessed ? 0.75 : 0}
+                        stroke={isPicked ? "hsl(var(--primary))" : d.assessed ? "hsl(var(--background))" : "currentColor"}
+                        strokeWidth={isPicked ? 2 : d.assessed ? 0.8 : 1.3}
+                        strokeDasharray={d.assessed ? undefined : "2 1.6"}
                         onMouseEnter={enter}
                         onMouseLeave={() => setHover(null)}
                         onClick={click}
@@ -729,9 +686,9 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                   <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
                   {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
                   <p className="mt-1 text-muted-foreground">
-                    {hover.dot.scored
-                      ? `${hover.dot.sizeCount} ${sizeVar.noun}`
-                      : "Not yet scored — no judgement to size by"}
+                    {hover.dot.assessed
+                      ? `${hover.dot.sizeCount} ${hover.dot.sizeCount === 1 ? "person has" : "people have"} assessed it`
+                      : "Nobody has assessed it yet"}
                   </p>
                   <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
                 </div>
@@ -752,16 +709,16 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                     <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
                     <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
                   </svg>
-                  {sizeVar.noun} (0 to 12)
+                  {sizeVar.noun}
                 </span>
               </div>
               <div className="space-y-2">
-                <div className="text-[10px] font-medium text-foreground">Unscored</div>
+                <div className="text-[10px] font-medium text-foreground">Not assessed</div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <svg width="14" height="14" viewBox="0 0 14 14" className="text-muted-foreground/70">
                     <circle cx="7" cy="7" r="3.4" fill="none" stroke="currentColor" strokeDasharray="2 1.6" />
                   </svg>
-                  Hollow ring — no judgement yet
+                  Hollow ring — nobody has assessed it
                 </span>
               </div>
               <div className="mt-auto space-y-2">
@@ -808,8 +765,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             )}
           </div>
 
-        </>
-      )}
+      </>
 
       <PriorityDialog
         open={dialog !== null}

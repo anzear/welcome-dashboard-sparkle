@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
-import DriverScoring from "@/components/materialRegister/DriverScoring";
+import AssessmentCoverage from "@/components/materialRegister/AssessmentCoverage";
+import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
 import Prioritisation from "@/components/materialRegister/Prioritisation";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
@@ -14,7 +15,7 @@ import { Button } from "@/components/ui/button";
 const TABS = [
   { id: "register", label: "Register" },
   { id: "grid", label: "Visualisation" },
-  { id: "scoring", label: "Driver Scoring" },
+  { id: "assessment", label: "Assessment" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -30,6 +31,9 @@ const Inner: React.FC = () => {
     return (
       <div className="h-full w-full overflow-y-auto">
         <div className="mx-auto w-full max-w-[1400px] px-6 py-4">
+          <div className="mb-3 flex justify-end">
+            <ViewingAsSwitcher />
+          </div>
           <MaterialBrief />
         </div>
       </div>
@@ -44,12 +48,15 @@ const Inner: React.FC = () => {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </Button>
+          <div className="ml-auto flex items-center gap-3">
+            <ViewingAsSwitcher />
           {tab === "register" && (
             <Button size="sm" className="gap-1.5 h-7 text-xs bg-foreground text-background hover:bg-foreground/90" onClick={() => setAddOpen(true)}>
               <Plus className="w-3.5 h-3.5" />
               Add material
             </Button>
           )}
+          </div>
         </div>
 
         <header className="space-y-1">
@@ -80,8 +87,8 @@ const Inner: React.FC = () => {
         <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
 
         {tab === "register" && <MaterialRegisterTable />}
-        {tab === "grid" && <Prioritisation onOpenScoring={() => setTab("scoring")} />}
-        {tab === "scoring" && <DriverScoring />}
+        {tab === "grid" && <Prioritisation />}
+        {tab === "assessment" && <AssessmentCoverage />}
       </div>
     </div>
   );

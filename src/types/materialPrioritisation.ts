@@ -260,25 +260,68 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   material_added: "Material added",
 };
 
+/** Teams that contribute judgements. */
+export type TeamId = "rnd" | "procurement" | "sustainability" | "commercial";
+
+export interface Contributor {
+  user_id: string;
+  name: string;
+  team: TeamId;
+  role: string;
+}
+
+export type CriterionKind = "evidence" | "judgement";
+
 /**
- * One judgement on one question for one material. Stored sparsely: a missing
- * entry means no judgement at all, which is never the same as a recorded 0.
+ * One assessment criterion. `evidence` criteria are read off data the platform
+ * already holds and are never scored by a person. `judgement` criteria take one
+ * entry per person, 1..5.
  */
-export interface DriverScore {
-  material_id: string;
-  question_id: string;
-  /** 1..5, or null for a cleared judgement. Never a stand-in for zero. */
-  score: number | null;
-  note: string | null;
-  scored_by: string;
-  scored_at: string;
+export interface AssessmentCriterion {
+  criterion_id: string;
+  label: string;
+  kind: CriterionKind;
+  /** Where an evidence criterion reads from. Absent for judged criteria. */
+  source?: "figures" | "vcg";
+  helper: string;
 }
 
 /**
- * Counts of judgements, never a composite. All null when nothing is scored —
- * an unscored material has no counts, not counts of zero.
+ * One person's judgement on one criterion for one material. Stored sparsely: no
+ * entry means that person has not assessed it, which is never a recorded score.
  */
-export interface DriverCounts {
-  strong_drivers: number | null;
-  scored_count: number | null;
+export interface AssessmentEntry {
+  material_id: string;
+  criterion_id: string;
+  user_id: string;
+  team: TeamId;
+  /** 1..5. Never 0, never a stand-in for "no view". */
+  score: number;
+  note: string | null;
+  assessed_at: string;
 }
+
+/**
+ * How a criterion's entries sit against each other. Counts and spread only —
+ * the entries are never averaged into a single score.
+ */
+export type AssessmentFlag = "not_assessed" | "single_view" | "aligned" | "mixed" | "split";
+
+export const ASSESSMENT_FLAG_LABEL: Record<AssessmentFlag, string> = {
+  not_assessed: "No entries",
+  single_view: "One view",
+  aligned: "Aligned",
+  mixed: "Mixed",
+  split: "Split",
+};
+
+export interface AssessmentState {
+  flag: AssessmentFlag;
+  entries: AssessmentEntry[];
+  /** null when nothing has been recorded — never 0. */
+  low: number | null;
+  high: number | null;
+  spread: number | null;
+  teams: TeamId[];
+}
+
