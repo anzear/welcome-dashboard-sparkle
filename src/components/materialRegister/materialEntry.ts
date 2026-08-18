@@ -11,24 +11,24 @@ import type {
 
 export const ENTRY_TYPES: { id: EntryType; label: string; description: string }[] = [
   {
-    id: "drop_in_substitute",
-    label: "Drop-in substitute",
+    id: "drop_in",
+    label: "Drop-in",
     description: "Same material, renewable or circular source",
   },
   {
-    id: "new_substitute",
-    label: "New material",
+    id: "substitution",
+    label: "Substitution",
     description: "Different chemistry, replaces an existing material",
   },
   {
-    id: "new_application",
-    label: "New material, new application",
+    id: "new_material",
+    label: "New material",
     description: "Nothing being replaced",
   },
 ];
 
 /** Panel A only makes sense when something is actually being replaced. */
-export const showsReplacedPanel = (t: EntryType) => t !== "new_application";
+export const showsReplacedPanel = (t: EntryType) => t !== "new_material";
 
 /** Classes already in the register — the ontology the fake lookup resolves against. */
 export const SEEDED_CLASSES: string[] = [
@@ -127,7 +127,7 @@ export const requirementsOrNull = (r: MaterialRequirements): MaterialRequirement
 };
 
 /** A blank register row. Every figure starts null so nothing reads as measured. */
-export function blankMaterial(entry_type: EntryType = "drop_in_substitute"): Omit<Material, "material_id"> {
+export function blankMaterial(entry_type: EntryType = "drop_in"): Omit<Material, "material_id"> {
   return {
     customer_material_ids: [],
     name: "",
@@ -146,7 +146,7 @@ export function blankMaterial(entry_type: EntryType = "drop_in_substitute"): Omi
     ghg_data_basis: null,
     supplier_count: null,
     supplier_countries: [],
-    journey_status: "not_started" as JourneyStatus,
+    journey_status: "under_evaluation" as JourneyStatus,
     requirements: null,
     blocker_category: null,
     blocker_detail: null,
@@ -211,8 +211,8 @@ export const CSV_COLUMNS: CsvColumn[] = [
     field: "entry_type",
     label: "Entry type",
     kind: "entry_type",
-    example1: "drop_in_substitute",
-    example2: "new_substitute",
+    example1: "drop_in",
+    example2: "substitution",
   },
   { field: "annual_volume", label: "Annual volume (t/yr)", kind: "number", example1: "4200", example2: "" },
   { field: "unit_price", label: "Unit price (EUR/kg)", kind: "number", example1: "1.42", example2: "2.10" },
@@ -235,7 +235,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
   { field: "ghg_data_basis", label: "GHG data basis", kind: "text", example1: "Supplier-specific", example2: "" },
   { field: "supplier_count", label: "Supplier count", kind: "number", example1: "4", example2: "1" },
   { field: "supplier_countries", label: "Supplier countries", kind: "list", example1: "DE;BE;US", example2: "FR" },
-  { field: "journey_status", label: "Journey status", kind: "status", example1: "under_evaluation", example2: "" },
+  { field: "journey_status", label: "Gate status", kind: "status", example1: "under_evaluation", example2: "" },
   { field: "owner", label: "Owner", kind: "text", example1: "L. Haugen", example2: "" },
   { field: "target_volume", label: "Target volume (t/yr)", kind: "number", example1: "1000", example2: "" },
   { field: "price_ceiling", label: "Price ceiling (EUR/kg)", kind: "number", example1: "1.80", example2: "" },
@@ -326,14 +326,11 @@ export function autoMatch(headers: string[]): (string | null)[] {
 }
 
 export const STATUS_VALUES: JourneyStatus[] = [
-  "not_started",
   "under_evaluation",
-  "in_testing",
-  "qualified",
-  "sourcing",
-  "in_use",
-  "parked",
-  "rejected",
+  "go",
+  "go_with_conditions",
+  "hold",
+  "no_go",
 ];
 
 export type CellState = "clean" | "warning" | "error";
@@ -445,11 +442,11 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   const entryRaw = (v.entry_type ?? "").trim();
   const entry_type: EntryType = ENTRY_TYPES.some((e) => e.id === entryRaw)
     ? (entryRaw as EntryType)
-    : "drop_in_substitute";
+    : "drop_in";
   const statusRaw = (v.journey_status ?? "").trim();
   const journey_status: JourneyStatus = STATUS_VALUES.includes(statusRaw as JourneyStatus)
     ? (statusRaw as JourneyStatus)
-    : "not_started";
+    : "under_evaluation";
 
   const annual_volume = num("annual_volume");
   const unit_price = num("unit_price");

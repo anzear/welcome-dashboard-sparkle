@@ -1,3 +1,4 @@
+import { migrateJourneyStatus } from "@/types/materialPrioritisation";
 import type {
   FieldProvenance,
   IntelligenceStatus,
@@ -48,7 +49,8 @@ interface Row {
   ghg: number | null;
   sup: number | null;
   countries: string[];
-  status: JourneyStatus;
+  /** Legacy value set; migrated to the five gate statuses on projection. */
+  status: string;
   owner: string | null;
   apps: Application[];
   prods: Product[];
@@ -434,7 +436,7 @@ export const materials: Material[] = rows.map((row, i) => {
 
   // Positions and decisions.
   const decided = prov("entered", row.owner ?? "System import", statusDate);
-  put("journey_status", row.status, row.status === "not_started" ? loaded : decided);
+  put("journey_status", migrateJourneyStatus(row.status), row.status === "not_started" ? loaded : decided);
   put("owner", row.owner, decided);
   put("priority_period", row.priority ?? null, decided);
   put("intelligence_status", row.intel && row.intel !== "not_ordered" ? row.intel : null, decided);
@@ -456,7 +458,7 @@ export const materials: Material[] = rows.map((row, i) => {
     tags: [row.tag],
     application_categories: row.apps,
     product_categories: row.prods,
-    entry_type: i % 9 === 4 ? "new_substitute" : "drop_in_substitute",
+    entry_type: i % 9 === 4 ? "substitution" : "drop_in",
     requirements: (() => {
       const base = row.req ? { ...emptyRequirements(), ...row.req } : null;
       // Migrate the old `target` field into earliest_need_date when the
@@ -475,7 +477,7 @@ export const materials: Material[] = rows.map((row, i) => {
     ghg_data_basis: row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null,
     supplier_count: row.sup,
     supplier_countries: row.countries,
-    journey_status: row.status,
+    journey_status: migrateJourneyStatus(row.status),
     blocker_category: isBlocked ? (row.status === "rejected" ? "Regulatory / compliance" : "Supply availability") : null,
     blocker_detail: isBlocked
       ? row.status === "rejected"

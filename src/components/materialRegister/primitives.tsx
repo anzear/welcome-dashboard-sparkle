@@ -61,14 +61,11 @@ export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, e
  * outline for parked, lowest contrast for rejected.
  */
 export const STATUS_STYLES: Record<JourneyStatus, string> = {
-  not_started: "border-transparent text-muted-foreground/70",
   under_evaluation: "border-slate-200 text-slate-500",
-  in_testing: "border-slate-300 text-slate-600",
-  qualified: "border-slate-400 text-slate-700",
-  sourcing: "border-slate-500 text-slate-800",
-  in_use: "border-transparent bg-slate-800 text-slate-50",
-  parked: "border-amber-400/70 text-amber-700",
-  rejected: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
+  go: "border-transparent bg-slate-800 text-slate-50",
+  go_with_conditions: "border-slate-500 text-slate-800",
+  hold: "border-amber-400/70 text-amber-700",
+  no_go: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
 };
 
 export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (

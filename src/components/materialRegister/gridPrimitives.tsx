@@ -27,14 +27,11 @@ export const fmtMeasureCompact = (v: number, measure: Measure) => {
 
 /** Same muted families as the status pills, expressed as a dot colour. */
 export const STATUS_DOT: Record<JourneyStatus, string> = {
-  not_started: "text-muted-foreground/70",
   under_evaluation: "text-primary/80",
-  in_testing: "text-primary",
-  qualified: "text-emerald-600",
-  sourcing: "text-amber-600",
-  in_use: "text-emerald-700",
-  parked: "text-foreground/35",
-  rejected: "text-destructive/80",
+  go: "text-emerald-700",
+  go_with_conditions: "text-emerald-600",
+  hold: "text-amber-600",
+  no_go: "text-destructive/80",
 };
 
 export const median = (values: number[]): number | null => {

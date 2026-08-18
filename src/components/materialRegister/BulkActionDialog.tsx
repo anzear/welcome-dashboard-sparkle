@@ -35,14 +35,11 @@ export const BLOCKER_CATEGORIES = [
 ];
 
 const STATUS_ORDER: JourneyStatus[] = [
-  "not_started",
   "under_evaluation",
-  "in_testing",
-  "qualified",
-  "sourcing",
-  "in_use",
-  "parked",
-  "rejected",
+  "go",
+  "go_with_conditions",
+  "hold",
+  "no_go",
 ];
 
 export interface BulkPayload {
