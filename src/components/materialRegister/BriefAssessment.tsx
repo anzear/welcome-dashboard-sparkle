@@ -242,17 +242,25 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
 };
 
 
-/** VCG signals are not live: plain low-contrast text, no chip. */
+/**
+ * VCG signals are not live yet. The strip is given its own surface so it reads
+ * as a distinct block from the company figures above it, and the "Coming soon"
+ * tag replaces the old "Not yet assessed" line so it cannot be mistaken for
+ * missing data we hold.
+ */
 const VcgStrip: React.FC = () => (
-  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-    <span className="text-[10px] text-muted-foreground/70">Substitutability</span>
+  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-provenance-vcg/20 bg-provenance-vcg/[0.04] px-3 py-1.5">
+    <span className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80">VCG data</span>
+    <span className="h-3 w-px bg-provenance-vcg/20" aria-hidden />
+    <span className="text-[10px] text-muted-foreground/80">Substitutability</span>
     <Missing />
-    <span className="text-[10px] text-muted-foreground/70">Suppliers</span>
+    <span className="text-[10px] text-muted-foreground/80">Suppliers</span>
     <Missing />
-    <span className="text-[10px] text-muted-foreground/70">Competitors</span>
+    <span className="text-[10px] text-muted-foreground/80">Competitors</span>
     <Missing />
-    <span className="text-[10px] text-muted-foreground/50">Not yet assessed</span>
-    <span className="ml-auto text-[9px] uppercase tracking-widest text-provenance-vcg/70">VCG data</span>
+    <span className="ml-auto">
+      <ComingSoonTag />
+    </span>
   </div>
 );
 
