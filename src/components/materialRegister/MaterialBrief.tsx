@@ -1,10 +1,4 @@
-import {
-  CompetitorActivityMark,
-  SubstitutabilityChip,
-  SupplierAvailabilityValue,
-  VCG_RULE,
-  vcgStamp,
-} from "@/components/materialRegister/vcgSignals";
+import { ComingSoonTag, VCG_RULE } from "@/components/materialRegister/vcgSignals";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
