@@ -719,14 +719,15 @@ export const MaterialRegisterTable: React.FC = () => {
                           />
                           {/* Overdue is a visual flag only — no reminders, no email. */}
                           {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
-                            <AlertTriangle
-                              className="h-3.5 w-3.5 shrink-0 text-amber-600"
+                            <span
                               title={
                                 hasOverdueCondition(m)
                                   ? `${overdueConditions(m).length} condition(s) overdue`
                                   : "Hold review overdue"
                               }
-                            />
+                            >
+                              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                            </span>
                           )}
                           {m.reopened && (
                             <span

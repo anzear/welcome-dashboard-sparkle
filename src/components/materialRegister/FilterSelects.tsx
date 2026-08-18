@@ -121,6 +121,8 @@ const FilterSelects: React.FC<{
   const suppliersShown = !include || include.includes("vcgSubstitutability");
   const suppliersActive =
     filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null || filters.vcgSuppliersNotAssessed;
+  const gateActive =
+    filters.gateOverdueCondition || filters.gateHoldReviewOverdue || filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
     activeVcg.reduce((n, [, , , sel]) => n + sel.length, 0) +
@@ -178,8 +180,6 @@ const FilterSelects: React.FC<{
    * Gate section. The five statuses are categories — filtered, never ranked or
    * summed. Overdue is a fact about a date, not a score.
    */
-  const gateActive =
-    filters.gateOverdueCondition || filters.gateHoldReviewOverdue || filters.gateRecommendation !== "any";
 
   const gateSection = (
     <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">

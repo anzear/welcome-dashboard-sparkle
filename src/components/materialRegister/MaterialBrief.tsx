@@ -781,10 +781,12 @@ export const MaterialBrief: React.FC = () => {
             <div className="flex h-8 flex-wrap items-center gap-1.5">
               <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
-                <AlertTriangle
-                  className="h-3.5 w-3.5 text-amber-600"
+                <span
+                  className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
                   title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
-                />
+                >
+                  {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
+                </span>
               )}
             </div>
             <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
