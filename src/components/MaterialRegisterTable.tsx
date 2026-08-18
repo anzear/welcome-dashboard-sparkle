@@ -516,8 +516,6 @@ export const MaterialRegisterTable: React.FC = () => {
               <ChevronDown className="h-3 w-3 opacity-60" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
-            <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
           <PopoverContent align="start" className="max-h-[70vh] w-72 overflow-y-auto p-2">
             <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
               Optional columns
