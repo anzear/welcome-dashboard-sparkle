@@ -37,6 +37,7 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-react";
 
 const HEAD =
@@ -180,6 +181,8 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
   const [cols, setCols] = useState<Record<OptionalColumn, boolean>>(
     () =>
       Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])) as Record<
@@ -426,6 +429,7 @@ export const MaterialRegisterTable: React.FC = () => {
               ] as [BulkKind, string][]
 
             ).map(([k, label]) => (
+
               <button
                 key={k}
                 type="button"
@@ -435,6 +439,14 @@ export const MaterialRegisterTable: React.FC = () => {
                 {label}
               </button>
             ))}
+            {/* Circulating a decision is open to anyone — it is not deciding. */}
+            <button
+              type="button"
+              onClick={() => setExportOpen(true)}
+              className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
+            >
+              Export decisions
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -454,6 +466,14 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
+      {exportNote && (
+        <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
+          <span>{exportNote}</span>
+          <button type="button" className="ml-auto" onClick={() => setExportNote(null)}>
+            <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+          </button>
+        </div>
+      )}
 
       {toast && (
         <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
@@ -862,6 +882,16 @@ export const MaterialRegisterTable: React.FC = () => {
       </div>
 
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      {/* Batch export follows the scope: selection is drawn from scoped rows only. */}
+      <ExportDecisionDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        materials={selectedMaterials}
+        onExported={(count) =>
+          setExportNote(`Decision exported · ${count} material${count === 1 ? "" : "s"}`)
+        }
+      />
 
 
       <BulkActionDialog

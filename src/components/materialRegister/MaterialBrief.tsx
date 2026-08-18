@@ -25,6 +25,7 @@ import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import { isProductLineTag } from "@/components/materialRegister/productLines";
@@ -521,6 +522,9 @@ export const MaterialBrief: React.FC = () => {
     Record<string, { id: string; author: string; at: string; body: string }[]>
   >({});
   const [draft, setDraft] = useState<Record<string, string>>({});
+  /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
 
 
   /** Header condenses once it sticks. */
@@ -789,15 +793,37 @@ export const MaterialBrief: React.FC = () => {
 
           {/* Bottom-right: action buttons under pagination */}
           <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
-            <Button variant="outline" size="sm" className="h-7 text-xs">
-              Export brief
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setExportOpen(true)}
+            >
+              Export decision
             </Button>
             <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
               Order intelligence
             </Button>
           </div>
         </div>
+
+        {exportNote && (
+          <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
+            <span>{exportNote}</span>
+            <button type="button" className="ml-auto" onClick={() => setExportNote(null)}>
+              <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+            </button>
+          </div>
+        )}
       </header>
+
+      <ExportDecisionDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        materials={m ? [m] : []}
+        onExported={() => setExportNote("Decision exported · 1 material")}
+      />
+
 
       {/* Decision bar — the interactive layer above the reference material */}
       <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">

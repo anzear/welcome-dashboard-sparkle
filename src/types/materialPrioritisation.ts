@@ -286,7 +286,9 @@ export type MaterialEventType =
   | "condition_met"
   | "hold_change"
   | "no_go_reason"
-  | "reopen";
+  | "reopen"
+  /** A decision document was circulated. Reading is not deciding. */
+  | "decision_export";
 
 export type BatchOrigin = "baselining" | "real_transition";
 
@@ -328,6 +330,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   hold_review_date: "Hold review date",
   no_go_reason: "No-go reason",
   reopen: "Gate reopened",
+  decision_export: "Decision export",
 };
 
 /** A material with no gate act recorded yet. Absence, never a default outcome. */
