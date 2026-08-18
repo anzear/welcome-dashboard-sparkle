@@ -402,11 +402,10 @@ const DriverScoring: React.FC = () => {
                       </span>
                     </td>
 
-                    {questions.map((q, colIndex) => {
+                    {questions.map((q) => {
                       const rec = scoreFor(m.material_id, q.question_id);
                       const v = rec?.score ?? null;
                       const activeCol = sort?.key === q.question_id;
-                      const focused = cursor?.row === rowIndex && cursor?.col === colIndex;
                       return (
                         <td
                           key={q.question_id}
@@ -415,14 +414,7 @@ const DriverScoring: React.FC = () => {
                             activeCol && "bg-primary/10",
                           )}
                         >
-                          <button
-                            type="button"
-                            data-cell={`${rowIndex}-${colIndex}`}
-                            onFocus={() => setCursor({ row: rowIndex, col: colIndex })}
-                            onClick={() => {
-                              setCursor({ row: rowIndex, col: colIndex });
-                            }}
-                            onKeyDown={(e) => onCellKeyDown(e, m, q.question_id)}
+                          <span
                             title={
                               v === null
                                 ? `${m.name} · ${q.label} — not scored`
@@ -431,16 +423,16 @@ const DriverScoring: React.FC = () => {
                                   }`
                             }
                             className={cn(
-                              "mx-auto flex h-5 w-[30px] items-center justify-center rounded-[3px] font-mono text-[11px] tabular-nums outline-none",
-                              scoreTone(v),
-                              focused && "ring-2 ring-primary/60 ring-offset-1",
+                              "mx-auto block h-4 w-[26px] rounded-[3px]",
+                              v === null
+                                ? "border border-dotted border-muted-foreground/40"
+                                : "bg-teal-600/70",
                             )}
-                          >
-                            {v === null ? (focused ? "" : "·") : signed(v)}
-                          </button>
+                          />
                         </td>
                       );
                     })}
+
 
                     <td
                       className={cn(
