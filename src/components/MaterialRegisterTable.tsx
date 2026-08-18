@@ -20,7 +20,6 @@ import {
   SubstitutabilityChip,
   SupplierAvailabilityValue,
   VCG_RULE,
-  vcgStamp,
 } from "@/components/materialRegister/vcgSignals";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
