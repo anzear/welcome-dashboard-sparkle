@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
 import { blankMaterial } from "@/components/materialRegister/materialEntry";
@@ -16,6 +16,7 @@ import {
  * added as an empty row first, so the brief still belongs to the right material.
  */
 const Inner: React.FC = () => {
+  const navigate = useNavigate();
   const { topic } = useParams();
   const name = topic ? decodeURIComponent(topic).trim() : "";
   const { data, openId, openBrief, addMaterials } = useRegister();
@@ -43,7 +44,7 @@ const Inner: React.FC = () => {
         <div className="mb-3 flex justify-end">
           <ViewingAsSwitcher />
         </div>
-        {openId ? <MaterialBrief /> : null}
+        {openId ? <MaterialBrief onBack={() => navigate(-1)} /> : null}
       </div>
     </div>
   );
