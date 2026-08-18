@@ -294,7 +294,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
+                  "sticky right-0 z-30 w-[96px] min-w-[96px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
                   sort?.key === "last_changed" && "bg-primary/10",
                 )}
               >
