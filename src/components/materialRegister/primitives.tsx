@@ -39,7 +39,7 @@ export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, e
   return (
     <span
       className={cn(
-        "font-mono tabular-nums",
+        "tabular-nums",
         origin === "computed" && "border-b border-dotted border-muted-foreground/60",
         // The active measure is marked once, on the header and the column tint —
         // never by recolouring every value in the column.

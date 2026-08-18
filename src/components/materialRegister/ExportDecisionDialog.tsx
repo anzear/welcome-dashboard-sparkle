@@ -132,13 +132,13 @@ export const ExportDecisionDialog: React.FC<{
             <ul className="mt-1 space-y-0.5 text-xs">
               {breakdown.map((r) => (
                 <li key={r.outcome} className="flex items-baseline gap-2">
-                  <span className="w-6 text-right font-mono tabular-nums text-foreground">{r.count}</span>
+                  <span className="w-6 text-right tabular-nums text-foreground">{r.count}</span>
                   <span className="text-foreground">{GATE_OUTCOME_LABEL[r.outcome]}</span>
                 </li>
               ))}
               {undecided > 0 && (
                 <li className="flex items-baseline gap-2">
-                  <span className="w-6 text-right font-mono tabular-nums text-amber-700">{undecided}</span>
+                  <span className="w-6 text-right tabular-nums text-amber-700">{undecided}</span>
                   <span className="text-amber-700">under evaluation, no decision recorded</span>
                 </li>
               )}

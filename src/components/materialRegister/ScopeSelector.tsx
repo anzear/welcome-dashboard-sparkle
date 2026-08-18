@@ -36,7 +36,7 @@ const ScopeSelector: React.FC = () => {
       >
         <Check className={cn("h-3 w-3", active ? "text-primary" : "text-transparent")} />
         <span className="flex-1 text-foreground">{label}</span>
-        <span className="font-mono tabular-nums text-muted-foreground">{count}</span>
+        <span className="tabular-nums text-muted-foreground">{count}</span>
       </button>
     );
   };
@@ -59,13 +59,13 @@ const ScopeSelector: React.FC = () => {
               <>
                 {scopeLabel}
                 <span className="text-muted-foreground">
-                  · <span className="font-mono tabular-nums">{scopedTotal}</span> materials
+                  · <span className="tabular-nums">{scopedTotal}</span> materials
                 </span>
               </>
             ) : (
               <>
                 All materials ·{" "}
-                <span className="font-mono tabular-nums text-foreground">{totalCount}</span>
+                <span className="tabular-nums text-foreground">{totalCount}</span>
               </>
             )}
             <ChevronDown className="h-3 w-3 opacity-60" />

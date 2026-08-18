@@ -77,7 +77,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
             </div>
             <div
               className={cn(
-                "pt-1 font-mono text-[13px] leading-none tabular-nums",
+                "pt-1 text-[13px] leading-none tabular-nums",
                 e.isActive
                   ? "text-primary"
                   : e.isAmber
@@ -176,7 +176,7 @@ const PositionBlock: React.FC<Props> = ({ materialId, gapMeasure = null, gapSize
                   />
                 )}
               </span>
-              <span className={cn("justify-self-end font-mono text-[13px] tabular-nums", tone)}>
+              <span className={cn("justify-self-end text-[13px] tabular-nums", tone)}>
                 {e.rank === null ? "—" : `#${e.rank}`}
                 <span className="pl-1 text-[11px] text-muted-foreground/60">
                   {e.rank === null ? "" : `of ${e.rankedCount}`}

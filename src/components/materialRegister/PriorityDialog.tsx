@@ -39,12 +39,12 @@ const PriorityDialog: React.FC<Props> = ({ open, add, period, materials, onCance
 
         <div className="space-y-1.5 text-xs">
           <p className="text-foreground">
-            <span className="font-mono tabular-nums">{changing.length}</span>{" "}
+            <span className="tabular-nums">{changing.length}</span>{" "}
             {add ? "will be added" : "will be removed"}.
           </p>
           {untouched > 0 && (
             <p className="text-muted-foreground">
-              <span className="font-mono tabular-nums">{untouched}</span>{" "}
+              <span className="tabular-nums">{untouched}</span>{" "}
               {add ? "already in the set — unchanged" : "not in the set — unchanged"}.
             </p>
           )}

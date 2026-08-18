@@ -34,7 +34,7 @@ export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, o
         >
           {label}
           {selected.length > 0 && (
-            <span className="font-mono tabular-nums text-primary">{selected.length}</span>
+            <span className="tabular-nums text-primary">{selected.length}</span>
           )}
           <ChevronDown className="h-3 w-3 opacity-60" />
         </button>

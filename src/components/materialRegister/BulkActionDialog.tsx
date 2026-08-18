@@ -507,19 +507,19 @@ export const BulkActionDialog: React.FC<Props> = ({
                       </li>
                       {periodEffect.none > 0 && (
                         <li className="text-muted-foreground">
-                          <span className="font-mono tabular-nums">{periodEffect.none}</span> already not
+                          <span className="tabular-nums">{periodEffect.none}</span> already not
                           prioritised.
                         </li>
                       )}
                       {periodEffect.other.map(([p, n]) => (
                         <li key={p} className="text-muted-foreground">
-                          <span className="font-mono tabular-nums">{n}</span> currently in {p} —{" "}
+                          <span className="tabular-nums">{n}</span> currently in {p} —{" "}
                           {periodEffect.target === null ? "this removes it" : "this replaces it"}.
                         </li>
                       ))}
                       {periodEffect.same > 0 && periodEffect.target !== null && (
                         <li className="text-muted-foreground">
-                          <span className="font-mono tabular-nums">{periodEffect.same}</span> already in{" "}
+                          <span className="tabular-nums">{periodEffect.same}</span> already in{" "}
                           {periodEffect.target} — no change.
                         </li>
                       )}
@@ -534,11 +534,11 @@ export const BulkActionDialog: React.FC<Props> = ({
                       </div>
                       <ul className="space-y-0.5 text-[11px] text-muted-foreground">
                         <li>
-                          <span className="font-mono tabular-nums">{intelligenceEffect.none}</span> will be marked
+                          <span className="tabular-nums">{intelligenceEffect.none}</span> will be marked
                           requested.
                         </li>
                         <li>
-                          <span className="font-mono tabular-nums">{intelligenceEffect.already}</span> already have
+                          <span className="tabular-nums">{intelligenceEffect.already}</span> already have
                           an order — no change.
                         </li>
                       </ul>
@@ -549,7 +549,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                       <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                         What will be overwritten
                       </div>
-                      <ul className="space-y-0.5 font-mono text-[11px]">
+                      <ul className="space-y-0.5 tabular-nums text-[11px]">
                         {breakdown.map(([label, count]) => {
                           const noChange = targetLabel !== null && label === targetLabel;
                           return (

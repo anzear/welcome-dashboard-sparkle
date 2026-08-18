@@ -52,7 +52,7 @@ const LINK =
   "text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground";
 
 const Stamp: React.FC<{ by: string | null; date: string | null }> = ({ by, date }) => (
-  <span className="font-mono text-[10px] text-muted-foreground">
+  <span className="tabular-nums text-[10px] text-muted-foreground">
     {by ?? "Unknown"} · {formatDate(date)}
   </span>
 );
@@ -187,7 +187,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               type="date"
               value={c.due_date}
               onChange={(e) => setRows(rows.map((x, k) => (k === i ? { ...x, due_date: e.target.value } : x)))}
-              className="h-7 font-mono text-[11px]"
+              className="h-7 tabular-nums text-[11px]"
             />
           </div>
         </div>
@@ -220,7 +220,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             type="date"
             value={holdReview}
             onChange={(e) => setHoldReview(e.target.value)}
-            className="h-7 w-40 font-mono text-[11px]"
+            className="h-7 w-40 tabular-nums text-[11px]"
           />
         </div>
       )}
@@ -306,7 +306,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                         <p className={cn("text-[11px] text-foreground", c.met && "line-through opacity-70")}>
                           {c.text}
                         </p>
-                        <div className="flex flex-wrap items-center gap-x-2 font-mono text-[10px] text-muted-foreground">
+                        <div className="flex flex-wrap items-center gap-x-2 tabular-nums text-[10px] text-muted-foreground">
                           <span>{c.owner}</span>
                           <span>due {formatDate(c.due_date)}</span>
                           {late && <span className="text-amber-700 dark:text-amber-400">overdue</span>}
@@ -356,7 +356,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
           <p className="text-[11px] text-foreground">{m.hold_trigger_event ?? "No trigger recorded."}</p>
           <p
             className={cn(
-              "font-mono text-[10px]",
+              "tabular-nums text-[10px]",
               reviewLate ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
             )}
           >

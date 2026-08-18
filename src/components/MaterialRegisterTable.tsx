@@ -101,7 +101,7 @@ const CompletenessCell: React.FC<{ m: Material }> = ({ m }) => {
         />
       </div>
 
-      <span className="w-8 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+      <span className="w-8 text-right text-[11px] tabular-nums text-muted-foreground">
         {pct}%
       </span>
     </div>
@@ -120,7 +120,7 @@ const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => 
     <span className="text-[11px] text-muted-foreground" title={list.join(", ")}>
       {shown.join(", ")}
       {rest > 0 && (
-        <span className="ml-1 font-mono text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>
+        <span className="ml-1 text-[10px] tabular-nums text-muted-foreground/70">+{rest}</span>
       )}
     </span>
   );
@@ -268,21 +268,21 @@ export const MaterialRegisterTable: React.FC = () => {
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
             Volume
-            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>t/yr</div>
           </th>
         );
       case "spend":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
             Spend
-            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>EUR</div>
           </th>
         );
       case "emissions":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
             GHG contribution
-            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>tCO2e/yr</div>
           </th>
         );
       case "applications":
@@ -509,7 +509,7 @@ export const MaterialRegisterTable: React.FC = () => {
               <SlidersHorizontal className="h-3 w-3 opacity-70" />
               Columns
               {extraCols < OPTIONAL_COLUMNS.length && (
-                <span className="font-mono tabular-nums text-primary">
+                <span className="tabular-nums text-primary">
                   {OPTIONAL_COLUMNS.length - extraCols}
                 </span>
               )}
@@ -646,11 +646,11 @@ export const MaterialRegisterTable: React.FC = () => {
           </>
         )}
         <span>
-          <span className="font-mono tabular-nums text-foreground">{visible.length}</span>
+          <span className="tabular-nums text-foreground">{visible.length}</span>
           {visible.length !== data.length && (
             <>
               {" of "}
-              <span className="font-mono tabular-nums">{data.length}</span>
+              <span className="tabular-nums">{data.length}</span>
             </>
           )}{" "}
           {scope ? `${scopeLabel} materials` : "materials"}
@@ -667,11 +667,11 @@ export const MaterialRegisterTable: React.FC = () => {
       {selected.size > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-muted/50 px-2 py-1.5 text-[11px]">
           <span className="font-medium text-foreground">
-            <span className="font-mono tabular-nums">{selected.size}</span> selected
+            <span className="tabular-nums">{selected.size}</span> selected
             {hiddenSelectedCount > 0 && (
               <span className="text-amber-700">
                 {" "}
-                — <span className="font-mono tabular-nums">{hiddenSelectedCount}</span> hidden by current filters
+                — <span className="tabular-nums">{hiddenSelectedCount}</span> hidden by current filters
               </span>
             )}
           </span>
@@ -863,7 +863,7 @@ export const MaterialRegisterTable: React.FC = () => {
                       <td
                         className={cn(
                           STICK,
-                          "left-8 z-10 bg-card px-2 pr-4 py-2 text-right align-middle font-mono tabular-nums font-medium text-foreground/90 group-hover:bg-muted/30",
+                          "left-8 z-10 bg-card px-2 pr-4 py-2 text-right align-middle tabular-nums font-semibold text-foreground/90 group-hover:bg-muted/30",
                         )}
                       >
                         {rank === null ? <span className="text-muted-foreground/50">—</span> : rank}
@@ -905,7 +905,7 @@ export const MaterialRegisterTable: React.FC = () => {
       {/* Reference, not chrome. */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 text-[10px] text-muted-foreground/70">
         <span className="inline-flex items-center gap-1">
-          <span className="border-b border-dotted border-muted-foreground/60 font-mono">1 234</span> computed
+          <span className="border-b border-dotted border-muted-foreground/60 tabular-nums">1 234</span> computed
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="text-muted-foreground">^</span> entered

@@ -30,8 +30,8 @@ const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }>
   value === null ? (
     <Missing />
   ) : (
-    <span className="font-mono tabular-nums text-[10px] text-foreground">
-      {nf(decimals).format(value)} <span className="text-muted-foreground">{suffix}</span>
+    <span className="tabular-nums text-[10px] font-semibold text-foreground">
+      {nf(decimals).format(value)} {suffix}
     </span>
   );
 
@@ -157,7 +157,7 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
               if (e.key === "Enter") save();
               if (e.key === "Escape") reset();
             }}
-            className="h-7 w-24 rounded-md border border-input bg-background px-2 text-right font-mono text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
+            className="h-7 w-24 rounded-md border border-input bg-background px-2 text-right text-[11px] tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
           />
           <span className="text-[10px] text-muted-foreground">{meta.suffix}</span>
         </div>
@@ -229,9 +229,8 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
           {value === null ? (
             <Missing />
           ) : (
-            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
-              {nf(0).format(value)}{" "}
-              <span className="text-[10px] font-normal text-muted-foreground">{suffix}</span>
+            <span className="text-sm font-semibold tabular-nums text-foreground">
+              {nf(0).format(value)} {suffix}
             </span>
           )}
         </div>
@@ -294,7 +293,7 @@ const RationaleLine: React.FC<{ entry: AssessmentEntry; isMine: boolean }> = ({ 
     <div className="flex items-start gap-2" title={`${name} · ${shortDate(entry.assessed_at)}`}>
       <span
         className={cn(
-          "w-6 shrink-0 font-mono text-[10px]",
+          "w-6 shrink-0 tabular-nums text-[10px]",
           isMine ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
         )}
       >
@@ -377,7 +376,7 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
         <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
           {state.entries.length > 0 && (
             <span>
-              <span className="font-mono tabular-nums">{state.entries.length}</span>{" "}
+              <span className="tabular-nums">{state.entries.length}</span>{" "}
               {state.entries.length === 1 ? "entry" : "entries"}
             </span>
           )}
@@ -529,14 +528,14 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
         <span>
-          <span className="font-mono tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
-          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> judged
+          <span className="tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
+          <span className="tabular-nums">{summary.criteriaTotal}</span> judged
         </span>
         <span className="text-border" aria-hidden>
           ·
         </span>
         <span>
-          <span className="font-mono tabular-nums text-foreground">{summary.contributors.length}</span>{" "}
+          <span className="tabular-nums text-foreground">{summary.contributors.length}</span>{" "}
           {summary.contributors.length === 1 ? "person" : "people"}
         </span>
         <button
