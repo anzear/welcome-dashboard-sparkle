@@ -63,7 +63,7 @@ const FigureInput: React.FC<{
       inputMode="decimal"
       placeholder="—"
       aria-label={`${axis.label} (${axis.unit}) for ${m.name}`}
-      className="h-7 w-[90px] shrink-0 rounded-sm border border-border bg-background px-1.5 text-right font-mono text-[11px] tabular-nums"
+      className="h-7 w-[90px] shrink-0 rounded-sm border border-border bg-background px-1.5 text-right text-[11px] tabular-nums"
     />
   );
 };
@@ -118,7 +118,7 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
               ) : axis.field ? (
                 <FigureInput m={m} axis={axis} onCommitted={confirm} />
               ) : (
-                <span className="font-mono text-[11px] text-muted-foreground">—</span>
+                <span className="tabular-nums text-[11px] text-muted-foreground">—</span>
               )}
             </div>
           );
@@ -167,7 +167,7 @@ const UnplottedList: React.FC<{
   if (entries.length === 0) {
     return (
       <p className="text-[11px] text-muted-foreground">
-        All <span className="font-mono tabular-nums">{totalMaterials}</span> materials are plotted.
+        All <span className="tabular-nums">{totalMaterials}</span> materials are plotted.
       </p>
     );
   }
@@ -179,7 +179,7 @@ const UnplottedList: React.FC<{
     <section>
       <header className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          <span className="font-mono tabular-nums">{entries.length}</span> materials not plotted
+          <span className="tabular-nums">{entries.length}</span> materials not plotted
         </h2>
         <p className="text-[10px] text-muted-foreground/70">
           Add what you have. A judged criterion is scored in the brief, with a named contributor and a rationale.
@@ -203,7 +203,7 @@ const UnplottedList: React.FC<{
           onClick={() => setShowAll(true)}
           className="mt-3 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
         >
-          Show <span className="font-mono tabular-nums">{rest}</span> more
+          Show <span className="tabular-nums">{rest}</span> more
         </button>
       )}
     </section>

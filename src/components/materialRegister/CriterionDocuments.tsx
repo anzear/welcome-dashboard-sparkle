@@ -62,7 +62,7 @@ const DetailsDialog: React.FC<{ doc: SupportingDocument | null; onClose: () => v
           ) : (
             <p className="text-muted-foreground">No note recorded.</p>
           )}
-          <div className="border-t border-border/70 pt-2 font-mono text-[10px] text-muted-foreground">
+          <div className="border-t border-border/70 pt-2 tabular-nums text-[10px] text-muted-foreground">
             {doc.uploaded_by} · {shortDate(doc.uploaded_date)} · {doc.file_type.toUpperCase()}
           </div>
           <p className="text-[10px] leading-snug text-muted-foreground">
@@ -132,7 +132,7 @@ const AttachDialog: React.FC<{
               <span className="flex min-w-0 items-center gap-1.5 text-[11px]">
                 <DocIcon type={picked.file_type} />
                 <span className="truncate text-foreground">{picked.filename}</span>
-                <span className="font-mono text-[10px] text-muted-foreground">{picked.size}</span>
+                <span className="tabular-nums text-[10px] text-muted-foreground">{picked.size}</span>
               </span>
             ) : (
               <span className="text-[11px] text-muted-foreground">No file chosen</span>
@@ -225,7 +225,7 @@ const CriterionDocuments: React.FC<{
                     {d.filename}
                   </div>
                   {d.note && <div className="text-[10px] leading-snug text-muted-foreground/90">“{d.note}”</div>}
-                  <div className="font-mono text-[10px] text-muted-foreground">
+                  <div className="tabular-nums text-[10px] text-muted-foreground">
                     {d.uploaded_by} · {shortDate(d.uploaded_date)}
                   </div>
                 </div>

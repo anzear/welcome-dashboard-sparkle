@@ -70,7 +70,7 @@ export const NumberField: React.FC<NumberFieldProps> = ({
         }}
         onBlur={() => setDirty(false)}
         className={cn(
-          "h-7 font-mono text-[11px] tabular-nums",
+          "h-7 text-[11px] tabular-nums",
           computed && !overridden && "border-dotted text-foreground/80",
         )}
       />

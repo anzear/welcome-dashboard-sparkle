@@ -109,7 +109,7 @@ const HeadGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ lab
 );
 
 const NoneYet: React.FC = () => (
-  <span className="font-mono text-[10px] text-muted-foreground/50" title="Nothing recorded">
+  <span className="tabular-nums text-[10px] text-muted-foreground/50" title="Nothing recorded">
     —
   </span>
 );
@@ -167,7 +167,7 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
   return (
     <span
       className={cn(
-        "font-mono font-medium tabular-nums",
+        "font-medium tabular-nums",
         typeof value === "number" ? "text-[15px]" : "text-[13px]",
         hasValue ? "text-foreground" : "text-muted-foreground/50",
         hasValue && computed && "border-b border-dotted border-muted-foreground/60",
@@ -322,7 +322,7 @@ const TagsField: React.FC<{
             </span>
           ))
         ) : (
-          <span className="font-mono text-[15px] text-muted-foreground/50">—</span>
+          <span className="tabular-nums text-[15px] text-muted-foreground/50">—</span>
         )}
       </div>
       {open && (
@@ -593,7 +593,7 @@ export const MaterialBrief: React.FC = () => {
                 >
                   <ChevronRight className="h-3 w-3" />
                 </button>
-                <span className="font-mono tabular-nums">
+                <span className="tabular-nums">
                   {index + 1} of {visible.length}
                 </span>
               </span>
@@ -618,7 +618,7 @@ export const MaterialBrief: React.FC = () => {
             </h1>
 
             {!stuck && (
-              <div className="font-mono text-[11px] leading-tight text-muted-foreground">
+              <div className="tabular-nums text-[11px] leading-tight text-muted-foreground">
                 {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
               </div>
             )}
@@ -629,7 +629,7 @@ export const MaterialBrief: React.FC = () => {
                 {m.customer_material_ids.length > 0 ? (
                   m.customer_material_ids.map((id) => <Chip key={id}>{id}</Chip>)
                 ) : (
-                  <span className="font-mono text-[10px] text-muted-foreground/50">No customer IDs</span>
+                  <span className="tabular-nums text-[10px] text-muted-foreground/50">No customer IDs</span>
                 )}
               </div>
             )}
@@ -939,7 +939,7 @@ export const MaterialBrief: React.FC = () => {
                   commitPeriod(next);
                 }}
                 placeholder="e.g. H2 2026"
-                className="h-8 min-w-0 flex-1 bg-background font-mono text-[11px]"
+                className="h-8 min-w-0 flex-1 bg-background tabular-nums text-[11px]"
               />
               <datalist id="priority-periods-in-use">
                 {periodSuggestions.map((p) => (
@@ -1037,7 +1037,7 @@ export const MaterialBrief: React.FC = () => {
                     <li key={c.id} className="border-l-2 border-border/70 pl-3">
                       <div className="flex items-baseline gap-2">
                         <span className="text-[11px] font-medium text-foreground">{c.author}</span>
-                        <span className="font-mono text-[10px] text-muted-foreground">
+                        <span className="tabular-nums text-[10px] text-muted-foreground">
                           {new Date(c.at).toLocaleString()}
                         </span>
                       </div>

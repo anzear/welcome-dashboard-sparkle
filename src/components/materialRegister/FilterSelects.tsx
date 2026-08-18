@@ -203,7 +203,7 @@ const FilterSelects: React.FC<{
                 vcgSuppliersMin: e.target.value === "" ? null : Number(e.target.value),
               }))
             }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right font-mono text-[11px]"
+            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
           />
           <span className="text-[10px] text-muted-foreground">to</span>
           <input
@@ -217,7 +217,7 @@ const FilterSelects: React.FC<{
                 vcgSuppliersMax: e.target.value === "" ? null : Number(e.target.value),
               }))
             }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right font-mono text-[11px]"
+            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
           />
         </div>
       </div>
@@ -321,7 +321,7 @@ const FilterSelects: React.FC<{
             <Filter className="h-3 w-3 opacity-70" />
             Filters
             {activeCount > 0 && (
-              <span className="font-mono tabular-nums text-primary">{activeCount}</span>
+              <span className="tabular-nums text-primary">{activeCount}</span>
             )}
             <ChevronDown className="h-3 w-3 opacity-60" />
           </button>

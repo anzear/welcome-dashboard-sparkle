@@ -425,15 +425,15 @@ const Prioritisation: React.FC = () => {
         </span>
         <span className="text-border"> · </span>
         <span>
-          <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in priority set
+          <span className="tabular-nums text-foreground">{prioritySetCount}</span> in priority set
         </span>
         <span className="text-border"> · </span>
         <span>
-          <span className="font-mono tabular-nums text-foreground">{rows.length}</span>
+          <span className="tabular-nums text-foreground">{rows.length}</span>
           {rows.length !== data.length && (
             <>
               {" of "}
-              <span className="font-mono tabular-nums">{data.length}</span>
+              <span className="tabular-nums">{data.length}</span>
             </>
           )}{" "}
           {scope ? `${scopeLabel} materials` : "materials"}
@@ -447,7 +447,7 @@ const Prioritisation: React.FC = () => {
       {picked.size > 0 && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 text-[11px]">
           <span className="font-medium text-foreground">
-            <span className="font-mono tabular-nums">{picked.size}</span> selected
+            <span className="tabular-nums">{picked.size}</span> selected
           </span>
           <button
             type="button"
@@ -536,7 +536,7 @@ const Prioritisation: React.FC = () => {
                           x={PAD.l - 8}
                           y={sy(t) + 3}
                           textAnchor="end"
-                          className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                          className="fill-muted-foreground text-[9px] tabular-nums"
                         >
                           {yv.domain && yv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, yScale.step)}
                         </text>
@@ -556,7 +556,7 @@ const Prioritisation: React.FC = () => {
                         x={sx(t)}
                         y={PAD.t + PH + 15}
                         textAnchor="middle"
-                        className="fill-muted-foreground font-mono text-[9px] tabular-nums"
+                        className="fill-muted-foreground text-[9px] tabular-nums"
                       >
                         {xv.domain && xv.domain.min < 0 && t > 0 ? `+${t}` : tickLabel(t, xScale.step)}
                       </text>
@@ -812,12 +812,12 @@ const Prioritisation: React.FC = () => {
                 >
                   <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
                   <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
-                  <p className="mt-1 font-mono tabular-nums text-foreground">
+                  <p className="mt-1 tabular-nums text-foreground">
                     {hover.dot.xSpan
                       ? `${hover.dot.xSpan.low}-${hover.dot.xSpan.high}`
                       : xv.fmt(hover.dot.x)}
                   </p>
-                  <p className="font-mono tabular-nums text-foreground">
+                  <p className="tabular-nums text-foreground">
                     {hover.dot.ySpan
                       ? `${hover.dot.ySpan.low}-${hover.dot.ySpan.high}`
                       : yv.fmt(hover.dot.y)}
@@ -830,7 +830,7 @@ const Prioritisation: React.FC = () => {
                       {lines.map((e) => (
                         <p key={e.user_id} className="text-muted-foreground">
                           <span className="text-foreground">{TEAM_LABEL[e.team] ?? e.team}</span>{" "}
-                          <span className="font-mono tabular-nums text-foreground">
+                          <span className="tabular-nums text-foreground">
                             {e.score === null ? "Neutral" : e.score}
                           </span>
                           {e.note ? ` · ${e.note}` : ""}

@@ -19,7 +19,7 @@ import {
 export const VCG_RULE = "border-l-2 border-provenance-vcg/70";
 
 const NotAssessed: React.FC<{ title?: string }> = ({ title }) => (
-  <span className="font-mono text-[12px] text-muted-foreground/50" title={title ?? "Not assessed by VCG"}>
+  <span className="tabular-nums text-[12px] text-muted-foreground/50" title={title ?? "Not assessed by VCG"}>
     —
   </span>
 );
@@ -40,7 +40,7 @@ export const SupplierAvailabilityValue: React.FC<{ value: SupplierAvailability; 
   const text = formatSupplierAvailability(value);
   if (text === null) return <NotAssessed />;
   return (
-    <span className={cn("font-mono text-[13px] font-medium tabular-nums text-provenance-vcg", className)}>
+    <span className={cn("text-[13px] font-medium tabular-nums text-provenance-vcg", className)}>
       {text}
     </span>
   );

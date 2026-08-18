@@ -85,7 +85,7 @@ const PlottedList: React.FC<{
     <section>
       <header className="flex flex-wrap items-baseline gap-x-3">
         <h2 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          <span className="font-mono tabular-nums">{entries.length}</span> materials plotted
+          <span className="tabular-nums">{entries.length}</span> materials plotted
         </h2>
         <p className="text-[10px] text-muted-foreground/70">
           {bothMode
@@ -130,7 +130,7 @@ const PlottedList: React.FC<{
             key={e.m.material_id}
             className={`grid ${bothMode ? "grid-cols-[32px_minmax(0,1fr)_auto_auto_auto]" : "grid-cols-[32px_minmax(0,1fr)_auto_auto]"} items-center gap-x-4 px-4 py-2.5 transition-colors hover:bg-muted/40`}
           >
-            <span className="text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+            <span className="text-right text-[11px] tabular-nums text-muted-foreground">
               {i + 1}
             </span>
             <div className="min-w-0">
@@ -147,24 +147,24 @@ const PlottedList: React.FC<{
               </p>
             </div>
             <div className="w-[120px] text-right">
-              <span className="font-mono text-[11px] tabular-nums text-foreground">
+              <span className="text-[11px] tabular-nums text-foreground">
                 {fmt(e.x, xv)}
               </span>
-              <span className="ml-2 font-mono text-[10px] tabular-nums text-muted-foreground">
+              <span className="ml-2 text-[10px] tabular-nums text-muted-foreground">
                 #{xRank.get(e.m.material_id)}
               </span>
             </div>
             <div className="w-[120px] text-right">
-              <span className="font-mono text-[11px] tabular-nums text-foreground">
+              <span className="text-[11px] tabular-nums text-foreground">
                 {fmt(e.y, yv)}
               </span>
-              <span className="ml-2 font-mono text-[10px] tabular-nums text-muted-foreground">
+              <span className="ml-2 text-[10px] tabular-nums text-muted-foreground">
                 #{yRank.get(e.m.material_id)}
               </span>
             </div>
             {bothMode && (
               <div className="w-[72px] text-right">
-                <span className="font-mono text-[11px] tabular-nums text-foreground">
+                <span className="text-[11px] tabular-nums text-foreground">
                   {(avgRank.get(e.m.material_id) ?? 0).toFixed(1)}
                 </span>
               </div>
@@ -179,7 +179,7 @@ const PlottedList: React.FC<{
           onClick={() => setShowAll(true)}
           className="mt-3 text-[11px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
         >
-          Show <span className="font-mono tabular-nums">{rest}</span> more
+          Show <span className="tabular-nums">{rest}</span> more
         </button>
       )}
     </section>

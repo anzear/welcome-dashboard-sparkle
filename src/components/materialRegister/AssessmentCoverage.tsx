@@ -183,11 +183,11 @@ const AssessmentCoverage: React.FC = () => {
         Recording as <span className="text-foreground">{currentUser.name}</span> ·{" "}
         {TEAM_LABEL[currentUser.team]}
         <span className="text-border"> · </span>
-        <span className="font-mono tabular-nums text-foreground">{rows.length}</span>
+        <span className="tabular-nums text-foreground">{rows.length}</span>
         {rows.length !== data.length && (
           <>
             {" of "}
-            <span className="font-mono tabular-nums">{data.length}</span>
+            <span className="tabular-nums">{data.length}</span>
           </>
         )}{" "}
         {scope ? `${scopeLabel} materials` : "materials"}
@@ -219,7 +219,7 @@ const AssessmentCoverage: React.FC = () => {
                 Set scores
               </div>
               <div className="text-[11px] text-muted-foreground">
-                <span className="font-mono tabular-nums text-foreground">{selected.length}</span> material
+                <span className="tabular-nums text-foreground">{selected.length}</span> material
                 {selected.length === 1 ? "" : "s"} selected · tick more rows below to add, or remove them here.
               </div>
             </div>
@@ -307,7 +307,7 @@ const AssessmentCoverage: React.FC = () => {
                     onClick={() => setValue(current?.value === v ? null : v)}
                     aria-pressed={current?.value === v}
                     className={cn(
-                      "inline-flex h-7 w-7 items-center justify-center rounded-md border font-mono text-[11px] tabular-nums transition-colors",
+                      "inline-flex h-7 w-7 items-center justify-center rounded-md border text-[11px] tabular-nums transition-colors",
                       current?.value === v
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-card text-muted-foreground hover:text-foreground",
@@ -367,7 +367,7 @@ const AssessmentCoverage: React.FC = () => {
 
           <div className="flex items-center justify-between gap-3">
             <div className="text-[10px] text-muted-foreground">
-              <span className="font-mono tabular-nums text-foreground">{stagedCount}</span> criteri
+              <span className="tabular-nums text-foreground">{stagedCount}</span> criteri
               {stagedCount === 1 ? "on" : "a"} staged. Nothing is written until you save.
               {stagedIncomplete && (
                 <span className="text-destructive"> A 1–5 score needs a rationale.</span>
@@ -426,7 +426,7 @@ const AssessmentCoverage: React.FC = () => {
               {judgedCriteria.map((c) => (
                 <th key={c.criterion_id} className="px-3 py-2 font-semibold text-muted-foreground">
                   <div className="leading-tight">{c.label}</div>
-                  <div className="font-mono text-[10px] font-normal tabular-nums opacity-70">
+                  <div className="text-[10px] font-normal tabular-nums opacity-70">
                     {criterionCoverage(c.criterion_id, rowMaterials)}/{rowMaterials.length}
                   </div>
                 </th>
@@ -478,14 +478,14 @@ const AssessmentCoverage: React.FC = () => {
                             title={`${docs} supporting document${docs === 1 ? "" : "s"}`}
                           >
                             <Paperclip className="h-3 w-3" />
-                            <span className="font-mono text-[10px] tabular-nums">{docs}</span>
+                            <span className="text-[10px] tabular-nums">{docs}</span>
                           </span>
                         )}
                       </div>
                     </td>
                   );
                 })}
-                <td className="px-3 py-1.5 text-right font-mono tabular-nums text-muted-foreground">
+                <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">
                   {summary.lastAssessedAt ? shortDate(summary.lastAssessedAt) : "—"}
                 </td>
               </tr>

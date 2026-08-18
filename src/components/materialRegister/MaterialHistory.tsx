@@ -140,7 +140,7 @@ export const MaterialHistory: React.FC<{ materialId: string }> = ({ materialId }
         </label>
         {!showBaselining && baseliningCount > 0 && (
           <span className="text-[10px] text-muted-foreground">
-            <span className="font-mono tabular-nums">{baseliningCount}</span> baselining event
+            <span className="tabular-nums">{baseliningCount}</span> baselining event
             {baseliningCount === 1 ? "" : "s"} hidden
           </span>
         )}

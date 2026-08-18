@@ -197,7 +197,7 @@ export const CsvUploadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               Column mapping — <span className="font-mono">{filename}</span>
             </div>
             <div className="text-[10px] text-muted-foreground">
-              <span className="font-mono tabular-nums">{bodyRows.length}</span> rows detected
+              <span className="tabular-nums">{bodyRows.length}</span> rows detected
             </div>
           </div>
           <div className="max-h-[45vh] overflow-auto rounded-md border border-border">
@@ -264,10 +264,10 @@ export const CsvUploadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
       {stage === "preview" && (
         <>
           <div className="text-[11px] font-medium text-foreground">
-            <span className="font-mono tabular-nums">{counts.total}</span> rows —{" "}
-            <span className="font-mono tabular-nums">{counts.ready}</span> ready,{" "}
-            <span className="font-mono tabular-nums text-amber-700">{counts.warnings}</span> warnings,{" "}
-            <span className="font-mono tabular-nums text-destructive">{counts.errors}</span> errors
+            <span className="tabular-nums">{counts.total}</span> rows —{" "}
+            <span className="tabular-nums">{counts.ready}</span> ready,{" "}
+            <span className="tabular-nums text-amber-700">{counts.warnings}</span> warnings,{" "}
+            <span className="tabular-nums text-destructive">{counts.errors}</span> errors
           </div>
           <p className="text-[10px] text-muted-foreground">
             Rows with errors are skipped, the rest import. Two bad rows never fail the file.
@@ -288,7 +288,7 @@ export const CsvUploadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.index} className="border-t border-border/60 align-top">
-                    <td className="px-2 py-1 font-mono tabular-nums text-muted-foreground">{r.index + 1}</td>
+                    <td className="px-2 py-1 tabular-nums text-muted-foreground">{r.index + 1}</td>
                     {CSV_COLUMNS.filter((c) => expanded || mapping.includes(c.field)).map((c) => {
                       const cell = r.cells[c.field];
                       return (
@@ -358,9 +358,9 @@ export const CsvUploadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
       {stage === "done" && result && (
         <div className="space-y-3">
           <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-2 text-[11px] text-emerald-800">
-            <span className="font-mono tabular-nums">{result.added}</span> materials added,{" "}
-            <span className="font-mono tabular-nums">{result.warnings}</span> with warnings,{" "}
-            <span className="font-mono tabular-nums">{result.skipped}</span> skipped.
+            <span className="tabular-nums">{result.added}</span> materials added,{" "}
+            <span className="tabular-nums">{result.warnings}</span> with warnings,{" "}
+            <span className="tabular-nums">{result.skipped}</span> skipped.
           </div>
           <p className="text-[10px] text-muted-foreground">
             Loaded figures are recorded as ingested from <span className="font-mono">{filename}</span>, and the

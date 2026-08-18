@@ -72,7 +72,7 @@ const CriterionRail: React.FC<{
   return (
     <div className="group/rail">
       <div className="flex items-center gap-3">
-        <span className="w-2 shrink-0 font-mono text-[10px] text-muted-foreground/70">1</span>
+        <span className="w-2 shrink-0 tabular-nums text-[10px] text-muted-foreground/70">1</span>
 
         <div className="relative mx-2.5 h-5 flex-1">
           {/* track */}
@@ -152,12 +152,12 @@ const CriterionRail: React.FC<{
           )}
         </div>
 
-        <span className="w-2 shrink-0 font-mono text-[10px] text-muted-foreground/70">5</span>
+        <span className="w-2 shrink-0 tabular-nums text-[10px] text-muted-foreground/70">5</span>
 
         {/* Neutral sits off the rail. It is not a position on the scale. */}
         {neutral.length > 0 && (
           <div className="shrink-0 border-l border-border/60 pl-2 text-center" title={NEUTRAL_HELPER}>
-            <div className="font-mono text-[10px] font-medium text-muted-foreground">
+            <div className="tabular-nums text-[10px] font-medium text-muted-foreground">
               {neutral.map((e) => initialsOf(nameOf(e))).join(" ")}
             </div>
             <div className="text-[9px] text-muted-foreground/70">No view</div>
@@ -172,7 +172,7 @@ const CriterionRail: React.FC<{
           {[...byScore.entries()].map(([score, list]) => (
             <span
               key={`ini-${score}`}
-              className="absolute -translate-x-1/2 whitespace-nowrap font-mono text-[9px] font-medium text-muted-foreground"
+              className="absolute -translate-x-1/2 whitespace-nowrap tabular-nums text-[9px] font-medium text-muted-foreground"
               style={{ left: `${pct(score)}%` }}
             >
               {list.map((e) => initialsOf(nameOf(e))).join(" ")}

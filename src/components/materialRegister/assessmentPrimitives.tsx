@@ -47,7 +47,7 @@ export const FlagChip: React.FC<{ state: AssessmentState; className?: string }> 
   >
     {ASSESSMENT_FLAG_LABEL[state.flag]}
     {state.scoredCount > 0 && (
-      <span className="font-mono tabular-nums opacity-70">
+      <span className="tabular-nums opacity-70">
         {state.low === state.high ? state.low : `${state.low}–${state.high}`}
       </span>
     )}
@@ -83,7 +83,7 @@ export const ContributorMark: React.FC<{ entry: AssessmentEntry; name: string }>
     {entry.score === null ? (
       <span className="text-muted-foreground/80">{NEUTRAL_LABEL}</span>
     ) : (
-      <span className="font-mono tabular-nums font-medium text-provenance-judgement">{entry.score}</span>
+      <span className="tabular-nums font-medium text-provenance-judgement">{entry.score}</span>
     )}
   </span>
 );
@@ -111,7 +111,7 @@ export const ScoreRail: React.FC<{
           aria-pressed={active}
           onClick={() => (active && onClear ? onClear() : onPick(p))}
           className={cn(
-            "rounded-[3px] border font-mono tabular-nums transition-colors",
+            "rounded-[3px] border tabular-nums transition-colors",
             size === "sm" ? "h-5 w-5 text-[10px]" : "h-6 w-7 text-[11px]",
             active
               ? "border-provenance-judgement bg-provenance-judgement/15 font-semibold text-provenance-judgement"

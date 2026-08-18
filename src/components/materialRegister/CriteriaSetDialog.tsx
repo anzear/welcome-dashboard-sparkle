@@ -157,14 +157,14 @@ const CriterionRow: React.FC<{ criterion: AssessmentCriterion }> = ({ criterion 
             <p className="text-[10px] leading-snug text-muted-foreground/80">{criterion.anchors}</p>
           )}
           <p className="text-[10px] text-muted-foreground">
-            <span className="font-mono tabular-nums text-foreground">{foot.entries}</span>{" "}
+            <span className="tabular-nums text-foreground">{foot.entries}</span>{" "}
             {foot.entries === 1 ? "entry" : "entries"} across{" "}
-            <span className="font-mono tabular-nums">{foot.materials}</span>{" "}
+            <span className="tabular-nums">{foot.materials}</span>{" "}
             {foot.materials === 1 ? "material" : "materials"}
             {foot.documents > 0 && (
               <>
                 {" · "}
-                <span className="font-mono tabular-nums">{foot.documents}</span>{" "}
+                <span className="tabular-nums">{foot.documents}</span>{" "}
                 {foot.documents === 1 ? "document" : "documents"}
               </>
             )}
@@ -310,7 +310,7 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
             criteriaEvents.map((e) => (
               <p key={e.event_id} className="text-[10px] leading-snug text-muted-foreground">
                 <span className="text-foreground">{e.label}</span> {e.action} by {e.changed_by} ·{" "}
-                <span className="font-mono">{shortDate(e.changed_at)}</span>
+                <span className="tabular-nums">{shortDate(e.changed_at)}</span>
                 {e.detail && <span className="block text-muted-foreground/80">{e.detail}</span>}
               </p>
             ))
