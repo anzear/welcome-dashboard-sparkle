@@ -475,14 +475,25 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 export const MaterialBrief: React.FC = () => {
-  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, assessmentSummary } =
-    useRegister();
+  const {
+    data,
+    allMaterials,
+    visible,
+    rankTables,
+    measureId,
+    openBrief,
+    closeBrief,
+    openId,
+    updateMaterial,
+    assessmentSummary,
+  } = useRegister();
 
-  const tagSuggestions = useMemo(() => tagVocabulary(data).map((t) => t.tag), [data]);
+  const tagSuggestions = useMemo(() => tagVocabulary(allMaterials).map((t) => t.tag), [allMaterials]);
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
-  const material = data.find((m) => m.material_id === openId) ?? row?.m ?? null;
+  // Scope narrows the list, never the material: the brief reads the whole register.
+  const material = allMaterials.find((m) => m.material_id === openId) ?? row?.m ?? null;
 
   const [draftStatus, setDraftStatus] = useState<JourneyStatus | null>(null);
   const [statusReason, setStatusReason] = useState("");
