@@ -402,6 +402,8 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
     assessmentSummary,
   } = useRegister();
 
+  const goBack = onBack ?? closeBrief;
+
   const tagSuggestions = useMemo(() => tagVocabulary(allMaterials).map((t) => t.tag), [allMaterials]);
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
@@ -448,7 +450,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
       <div className="space-y-3">
         <button
           type="button"
-          onClick={closeBrief}
+          onClick={goBack}
           className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" /> Back to register
@@ -568,7 +570,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               <Button
                 variant="outline"
                 size="sm"
-                onClick={closeBrief}
+                onClick={goBack}
                 className="h-7 gap-1.5 text-xs"
               >
                 <ArrowLeft className="h-3.5 w-3.5" /> Back
