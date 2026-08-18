@@ -1,39 +1,75 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { ScoreScale, signed } from "@/components/materialRegister/scorePrimitives";
+import { signed } from "@/components/materialRegister/scorePrimitives";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
+import { SCORE_POINTS } from "@/config/driverQuestions";
 
-/** Thin read-only 1..5 track. Fixed width so every rail lines up. */
+/** Fixed rail width so every row lines up. */
 const RAIL = "w-[128px]";
 
 /**
- * Fixed-width 1..5 rail. The fill grows from the left with the strength of the
- * driver; an unscored question keeps an empty rail with a hollow marker.
+ * Directly scoreable 1..5 rail. Each of the five stops is a hit target; hovering
+ * previews the value, clicking commits it at once. Clicking the current value again
+ * removes the judgement (back to not scored — never zero).
  */
-const ScoreTrack: React.FC<{ value: number | null }> = ({ value }) => {
-  const pct = value === null ? 0 : ((value - 1) / 4) * 100;
+const ScoreTrack: React.FC<{
+  value: number | null;
+  ariaLabel: string;
+  onPick: (v: number) => void;
+  onClear: () => void;
+  onHover: (v: number | null) => void;
+  preview: number | null;
+}> = ({ value, ariaLabel, onPick, onClear, onHover, preview }) => {
+  const shown = preview ?? value;
+  const pct = (v: number) => ((v - 1) / 4) * 100;
   return (
-    <div className={cn("relative h-3.5", RAIL)}>
-      <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
-      {value !== null && (
+    <div className={cn("relative h-5", RAIL)} role="group" aria-label={ariaLabel}>
+      <div className="pointer-events-none absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 rounded-full bg-border" />
+      {shown !== null && (
         <div
-          className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-teal-600/80"
-          style={{ width: `${pct}%` }}
+          className={cn(
+            "pointer-events-none absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full transition-all duration-150",
+            preview !== null && preview !== value ? "bg-teal-500/50" : "bg-teal-600/80",
+          )}
+          style={{ width: `${pct(shown)}%` }}
         />
       )}
-      <div
-        className={cn(
-          "absolute top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full",
-          value === null
-            ? "h-2 w-2 border border-dotted border-muted-foreground/50 bg-background"
-            : "h-2 w-2 bg-teal-600",
-        )}
-        style={{ left: `${pct}%` }}
-      />
+      {SCORE_POINTS.map((p) => {
+        const active = shown !== null && p <= shown;
+        const isHead = shown === p;
+        return (
+          <button
+            key={p}
+            type="button"
+            aria-label={`${ariaLabel} ${p}`}
+            aria-pressed={value === p}
+            title={`Set ${p}${value === p ? " — click to clear" : ""}`}
+            onMouseEnter={() => onHover(p)}
+            onMouseLeave={() => onHover(null)}
+            onFocus={() => onHover(p)}
+            onBlur={() => onHover(null)}
+            onClick={() => (value === p ? onClear() : onPick(p))}
+            className="absolute top-0 h-5 w-6 -translate-x-1/2 outline-none"
+            style={{ left: `${pct(p)}%` }}
+          >
+            <span
+              className={cn(
+                "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-150",
+                isHead
+                  ? "h-2.5 w-2.5 bg-teal-600 ring-2 ring-teal-600/20"
+                  : active
+                    ? "h-1.5 w-1.5 bg-teal-600/70"
+                    : "h-1.5 w-1.5 border border-muted-foreground/30 bg-background",
+              )}
+            />
+          </button>
+        );
+      })}
     </div>
   );
 };
+
 
 
 /**
