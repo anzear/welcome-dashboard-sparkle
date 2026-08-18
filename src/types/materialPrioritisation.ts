@@ -365,7 +365,7 @@ export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
 };
 
 /** Teams that contribute judgements. */
-export type TeamId = "rnd" | "procurement" | "sustainability" | "commercial";
+export type TeamId = "rnd" | "procurement" | "sustainability" | "marketing" | "regulatory";
 
 export interface Contributor {
   user_id: string;
