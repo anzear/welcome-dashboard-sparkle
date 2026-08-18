@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { NEUTRAL_LABEL, TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
 import { today, useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, provenanceLine, shortDate } from "@/components/materialRegister/primitives";
-import { ComingSoonTag, VCG_RULE } from "@/components/materialRegister/vcgSignals";
+import { VCG_RULE } from "@/components/materialRegister/vcgSignals";
 import { ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
@@ -255,7 +255,12 @@ const VcgStrip: React.FC = () => (
     </span>
     <span className="text-[10px] text-muted-foreground">Competitors</span>
     <Missing />
-    <ComingSoonTag className="ml-1" title="Not yet assessed by VCG" />
+    <span
+      title="VCG signals are not live yet"
+      className="ml-1 inline-flex items-center rounded-sm border border-provenance-vcg/30 bg-provenance-vcg/[0.07] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-provenance-vcg/80"
+    >
+      Not yet assessed
+    </span>
     <span className="ml-auto text-[9px] uppercase tracking-widest text-provenance-vcg/80">VCG data</span>
   </div>
 );
