@@ -12,13 +12,14 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   CONTRIBUTORS,
+  CRITERIA,
   CRITERION_LABEL,
   DEFAULT_CONTRIBUTOR,
-  JUDGED_CRITERIA,
   assessmentKey,
 } from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
+  type AssessmentCriterion,
   type AssessmentEntry,
   type AssessmentState,
   type Contributor,
@@ -48,6 +49,20 @@ import {
 
 
 export const CURRENT_USER = "You";
+
+/**
+ * The criterion set is shared, so a change to it is not a change to one
+ * material. These are kept apart from material History for that reason.
+ */
+export interface CriterionSetEvent {
+  event_id: string;
+  action: "added" | "edited" | "removed";
+  criterion_id: string;
+  label: string;
+  detail: string | null;
+  changed_by: string;
+  changed_at: string;
+}
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
@@ -305,6 +320,29 @@ interface Store {
   currentUser: Contributor;
   setCurrentUser: (userId: string) => void;
   contributors: Contributor[];
+  /**
+   * THE CRITERION SET. One shared set, used by every material. Editing a
+   * criterion changes it everywhere, and removing one deletes every entry and
+   * document recorded against it. Only a material owner may change the set.
+   */
+  criteria: AssessmentCriterion[];
+  judgedCriteria: AssessmentCriterion[];
+  criterionLabelOf: (id: string) => string;
+  criteriaEvents: CriterionSetEvent[];
+  /** True when this person owns at least one material in the portfolio. */
+  canEditCriteria: boolean;
+  /** How many entries and documents a removal would destroy, portfolio-wide. */
+  criterionFootprint: (criterionId: string) => {
+    materials: number;
+    entries: number;
+    documents: number;
+  };
+  addCriterion: (draft: { label: string; helper: string; anchors: string }) => boolean;
+  updateCriterion: (
+    criterionId: string,
+    patch: { label: string; helper: string; anchors: string },
+  ) => boolean;
+  removeCriterion: (criterionId: string) => boolean;
   /** Sparse entry map. A missing key means that person has no view recorded. */
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
@@ -453,6 +491,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   /** Criterion-level evidence. Shared across the team, mock records only. */
   const [documents, setDocuments] = useState<SupportingDocument[]>(seedDocuments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
+  /** One shared criterion set. Every material reads this list. */
+  const [criteria, setCriteria] = useState<AssessmentCriterion[]>(CRITERIA);
+  const [criteriaEvents, setCriteriaEvents] = useState<CriterionSetEvent[]>([]);
+  const judgedCriteria = useMemo(() => criteria.filter((c) => c.kind === "judgement"), [criteria]);
+  const judgedCriteriaRef = judgedCriteria;
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
@@ -518,7 +561,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const disagreeIds = useMemo(() => {
     const byKey = new Map<string, number[]>();
     Object.values(assessments).forEach((e) => {
-      if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      if (!judgedCriteriaRef.some((c) => c.criterion_id === e.criterion_id)) return;
       /** Neutral is no visibility, not a low score — it can never make a split. */
       if (e.score === null) return;
       const key = `${e.material_id}::${e.criterion_id}`;
@@ -532,7 +575,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (Math.max(...scores) - Math.min(...scores) > 2) ids.add(key.split("::")[0]);
     });
     return ids;
-  }, [assessments]);
+  }, [assessments, judgedCriteriaRef]);
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -1074,11 +1117,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
     const teams = Array.from(new Set(mine.map((e) => e.team)));
     /** Only a 1–5 score counts as assessed. Neutral is a recorded absence of view. */
-    const criteriaAssessed = JUDGED_CRITERIA.filter((c) =>
+    const criteriaAssessed = judgedCriteria.filter((c) =>
       mine.some((e) => e.criterion_id === c.criterion_id && e.score !== null),
     ).length;
     const neutralEntries = mine.filter((e) => e.score === null).length;
-    const splits = JUDGED_CRITERIA.filter(
+    const splits = judgedCriteria.filter(
       (c) => assessmentState(materialId, c.criterion_id).flag === "split",
     ).length;
     const lastAssessedAt = mine.reduce<string | null>(
@@ -1087,7 +1130,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     );
     return {
       criteriaAssessed,
-      criteriaTotal: JUDGED_CRITERIA.length,
+      criteriaTotal: judgedCriteria.length,
       contributors,
       teams,
       splits,
@@ -1375,6 +1418,116 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
 
+  /* --------------------------------------------------------- the criterion set
+   * Shared by every material. An edit rewrites the question the whole portfolio
+   * has been answering, and a removal destroys the answers. Owner-only.
+   * -------------------------------------------------------------------------- */
+
+  /** Only a material owner may change the set the whole portfolio is scored on. */
+  const canEditCriteria = data.some((m) => (m.owner ?? null) === currentUser.name);
+
+  const criterionLabelOf = (id: string) =>
+    criteria.find((c) => c.criterion_id === id)?.label ?? CRITERION_LABEL[id] ?? id;
+
+  const criterionFootprint = (criterionId: string) => {
+    const entries = Object.values(assessments).filter((e) => e.criterion_id === criterionId);
+    return {
+      materials: new Set(entries.map((e) => e.material_id)).size,
+      entries: entries.length,
+      documents: documents.filter((d) => d.criterion_id === criterionId).length,
+    };
+  };
+
+  const logCriterionChange = (
+    action: CriterionSetEvent["action"],
+    criterion_id: string,
+    label: string,
+    detail: string | null,
+  ) =>
+    setCriteriaEvents((prev) => [
+      {
+        event_id: `cse-${Date.now()}-${prev.length + 1}`,
+        action,
+        criterion_id,
+        label,
+        detail,
+        changed_by: currentUser.name,
+        changed_at: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+
+  const addCriterion = (draft: { label: string; helper: string; anchors: string }) => {
+    if (!canEditCriteria) return false;
+    const label = draft.label.trim();
+    if (!label) return false;
+    const criterion_id = `crit_${Date.now().toString(36)}`;
+    setCriteria((prev) => [
+      ...prev,
+      {
+        criterion_id,
+        label,
+        kind: "judgement",
+        helper: draft.helper.trim(),
+        anchors: draft.anchors.trim() || undefined,
+      },
+    ]);
+    logCriterionChange("added", criterion_id, label, "Added to every material, with no entries yet.");
+    return true;
+  };
+
+  const updateCriterion = (
+    criterionId: string,
+    patch: { label: string; helper: string; anchors: string },
+  ) => {
+    if (!canEditCriteria) return false;
+    const existing = criteria.find((c) => c.criterion_id === criterionId);
+    if (!existing || existing.kind !== "judgement") return false;
+    const label = patch.label.trim();
+    if (!label) return false;
+    setCriteria((prev) =>
+      prev.map((c) =>
+        c.criterion_id === criterionId
+          ? { ...c, label, helper: patch.helper.trim(), anchors: patch.anchors.trim() || undefined }
+          : c,
+      ),
+    );
+    logCriterionChange(
+      "edited",
+      criterionId,
+      label,
+      existing.label === label ? "Wording changed." : `Renamed from "${existing.label}".`,
+    );
+    return true;
+  };
+
+  /** Removal is portfolio-wide and final: the entries and documents go with it. */
+  const removeCriterion = (criterionId: string) => {
+    if (!canEditCriteria) return false;
+    const existing = criteria.find((c) => c.criterion_id === criterionId);
+    if (!existing || existing.kind !== "judgement") return false;
+    const { entries, materials } = criterionFootprint(criterionId);
+    setCriteria((prev) => prev.filter((c) => c.criterion_id !== criterionId));
+    setAssessments((prev) => {
+      const next: Record<string, AssessmentEntry> = {};
+      Object.entries(prev).forEach(([k, e]) => {
+        if (e.criterion_id !== criterionId) next[k] = e;
+      });
+      return next;
+    });
+    setDocuments((prev) => prev.filter((d) => d.criterion_id !== criterionId));
+    logCriterionChange(
+      "removed",
+      criterionId,
+      existing.label,
+      entries === 0
+        ? "Removed from every material. No entries existed."
+        : `Removed from every material, with ${entries} ${entries === 1 ? "entry" : "entries"} across ${materials} ${materials === 1 ? "material" : "materials"}.`,
+    );
+    return true;
+  };
+
+
   const value: Store = {
     data: scoped,
     allMaterials: data,
@@ -1421,6 +1574,15 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     currentUser,
     setCurrentUser: setCurrentUserId,
     contributors: CONTRIBUTORS,
+    criteria,
+    judgedCriteria,
+    criterionLabelOf,
+    criteriaEvents,
+    canEditCriteria,
+    criterionFootprint,
+    addCriterion,
+    updateCriterion,
+    removeCriterion,
     assessments,
     entriesFor,
     myEntry,

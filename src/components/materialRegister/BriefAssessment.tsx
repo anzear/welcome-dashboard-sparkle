@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { CRITERIA, TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
+import { TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, shortDate } from "@/components/materialRegister/primitives";
 import {
@@ -11,6 +11,8 @@ import {
 } from "@/components/materialRegister/vcgSignals";
 import { ContributorMark, FlagChip, ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
+import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
+import { SlidersHorizontal } from "lucide-react";
 import type { AssessmentCriterion, Material } from "@/types/materialPrioritisation";
 
 const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }> = ({
@@ -216,8 +218,9 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
  * by people. Five separate readings — they are never combined into one score.
  */
 const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
-  const { assessmentSummary } = useRegister();
+  const { assessmentSummary, criteria, canEditCriteria } = useRegister();
   const summary = assessmentSummary(material.material_id);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
 
   return (
     <div className="space-y-2">
@@ -249,9 +252,21 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
             </span>
           </>
         )}
+        <span className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setCriteriaOpen(true)}
+            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
+          >
+            <SlidersHorizontal className="h-3 w-3" />
+            {canEditCriteria ? "Edit criteria" : "View criteria"}
+          </button>
+        </span>
       </div>
 
-      {CRITERIA.map((c) =>
+      <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
+
+      {criteria.map((c) =>
         c.kind === "evidence" ? (
           <EvidenceRow key={c.criterion_id} criterion={c} m={material} />
         ) : (
