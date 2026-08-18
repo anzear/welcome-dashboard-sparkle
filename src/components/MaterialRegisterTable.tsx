@@ -426,6 +426,7 @@ export const MaterialRegisterTable: React.FC = () => {
               ] as [BulkKind, string][]
 
             ).map(([k, label]) => (
+
               <button
                 key={k}
                 type="button"
