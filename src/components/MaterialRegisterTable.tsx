@@ -825,10 +825,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    {/* VCG signals. Not assessed renders an em dash, never a zero. */}
+                    {/* VCG signals are not live yet — the column says so, it never shows a value. */}
                     {cols.vcgSubstitutability && (
                       <td className={cn("px-3 py-2 align-middle", VCG_RULE, "bg-provenance-vcg/[0.04]")}>
-                        <SubstitutabilityChip value={m.substitutability_readiness} />
+                        <ComingSoonCell />
                       </td>
                     )}
                     {cols.vcgSuppliers && (
@@ -838,7 +838,7 @@ export const MaterialRegisterTable: React.FC = () => {
                           !cols.vcgSubstitutability && VCG_RULE,
                         )}
                       >
-                        <SupplierAvailabilityValue value={m.supplier_availability} />
+                        <ComingSoonCell />
                       </td>
                     )}
                     {cols.vcgCompetitor && (
@@ -848,7 +848,7 @@ export const MaterialRegisterTable: React.FC = () => {
                           !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
                         )}
                       >
-                        <CompetitorActivityMark value={m.competitor_activity} />
+                        <ComingSoonCell />
                       </td>
                     )}
                   </tr>
