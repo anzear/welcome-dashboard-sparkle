@@ -290,7 +290,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
         );
       case "status":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>;
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>;
       case "priority":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>;
       case "intelligence":
