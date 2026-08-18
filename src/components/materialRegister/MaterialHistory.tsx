@@ -176,7 +176,11 @@ export const MaterialHistory: React.FC<{ materialId: string }> = ({ materialId }
                       <span className={baselined ? undefined : "text-foreground"}>{eventSentence(e)}</span>
                       <span className="text-muted-foreground"> by {e.changed_by}</span>
                       {baselined && <Label>Baselined</Label>}
-                      {e.batch_id && !baselined && <Label tone="bulk">Bulk change</Label>}
+                      {e.batch_id && !baselined && (
+                        <Label tone="bulk">
+                          {e.event_type === "decision_export" ? "Batch export" : "Bulk change"}
+                        </Label>
+                      )}
                     </div>
 
                     {e.blocker_category && (
