@@ -68,13 +68,24 @@ export const TEAM_LABEL: Record<TeamId, string> = {
 };
 
 /** Demo account members. The switcher changes who an entry is recorded as. */
+/**
+ * The six demo users. Their names are the same vocabulary the Owner field uses,
+ * so "Viewing as" can be compared against a material's owner for gate rights.
+ */
 export const CONTRIBUTORS: Contributor[] = [
   { user_id: "u-brandt", name: "K. Brandt", team: "rnd", role: "Formulation lead" },
   { user_id: "u-haugen", name: "L. Haugen", team: "procurement", role: "Category manager" },
   { user_id: "u-oyelaran", name: "M. Oyelaran", team: "sustainability", role: "Sustainability manager" },
-  { user_id: "u-delacroix", name: "R. Delacroix", team: "commercial", role: "Brand director" },
+  { user_id: "u-vermeer", name: "A. Vermeer", team: "commercial", role: "Brand director" },
+  { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "procurement", role: "Sourcing manager" },
   { user_id: "u-rautio", name: "S. Rautio", team: "rnd", role: "Process engineer" },
 ];
+
+/** Names available as a condition owner. */
+export const DEMO_USER_NAMES = CONTRIBUTORS.map((c) => c.name);
+
+export const contributorByName = (name: string | null): Contributor | undefined =>
+  name ? CONTRIBUTORS.find((c) => c.name === name) : undefined;
 
 export const contributorById = (id: string): Contributor | undefined =>
   CONTRIBUTORS.find((c) => c.user_id === id);
