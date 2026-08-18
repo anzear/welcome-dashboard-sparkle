@@ -1142,14 +1142,20 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
 
+  /**
+   * A 1–5 score cannot be saved without a rationale — a score with no reason
+   * cannot be challenged six months later. Neutral (score null) may be saved
+   * with no note. Returns false when the save was refused.
+   */
   const saveAssessment = (
     materialId: string,
     criterionId: string,
-    score: number,
+    score: number | null,
     note: string | null,
-  ) => {
+  ): boolean => {
+    const cleanNote = note?.trim() ? note.trim() : null;
+    if (score !== null && cleanNote === null) return false;
     const key = assessmentKey(materialId, criterionId, currentUserId);
-    const previous = assessments[key]?.score ?? null;
     setAssessments((prev) => ({
       ...prev,
       [key]: {
@@ -1158,18 +1164,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         user_id: currentUserId,
         team: currentUser.team,
         score,
-        note,
+        note: cleanNote,
         assessed_at: new Date().toISOString(),
       },
     }));
     // Assessment entries carry their own stamps in the Assessment card. History
     // is the record of decisions, not of opinions, so nothing is written here.
+    return true;
   };
 
   const clearAssessment = (materialId: string, criterionId: string) => {
     const key = assessmentKey(materialId, criterionId, currentUserId);
-    const previous = assessments[key]?.score ?? null;
-    if (previous === null) return;
+    if (!assessments[key]) return;
     setAssessments((prev) => {
       const next = { ...prev };
       delete next[key];
