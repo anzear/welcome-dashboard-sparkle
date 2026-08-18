@@ -198,9 +198,9 @@ const AssessmentCoverage: React.FC = () => {
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
 
       <p className="text-[11px] text-muted-foreground">
-        A filled marker means at least one 1–5 score has been recorded; a dashed one means none has. Neutral —
-        this team has no visibility here — is recorded but never counted as a score. Tick materials to score
-        them in bulk, or open one to score it on its profile.{" "}
+        Evaluate each material as a company — every team member's judgement stands on its own, never merged
+        into a single score. A filled marker means at least one 1–5 score has been recorded; a dashed one
+        means none has. Tick materials to score them in bulk, or open one to score it on its profile.{" "}
         <button
           type="button"
           onClick={() => setCriteriaOpen(true)}
