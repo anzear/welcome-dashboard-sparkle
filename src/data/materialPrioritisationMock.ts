@@ -444,7 +444,7 @@ export const materials: Material[] = rows.map((row, i) => {
   put("ghg_data_basis", row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null, ghgProv);
   // VCG signals share one data date per material.
   const vcg = vcgSignalsFor(i, row.name);
-  const vcgProv = prov("computed", "VCG data", vcg.vcg_data_date);
+  const vcgProv = prov("computed", "VCG data peek", vcg.vcg_data_date);
   p.substitutability_readiness = vcgProv;
   p.supplier_availability = vcgProv;
   p.competitor_activity = vcgProv;
