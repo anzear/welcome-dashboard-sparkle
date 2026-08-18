@@ -76,9 +76,6 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
-  ["vcgSubstitutability", "Substitutability (VCG)", "Whether a commercial substitution path exists today — coming soon"],
-  ["vcgSuppliers", "Suppliers (VCG)", "Suppliers VCG detects for an alternative — coming soon"],
-  ["vcgCompetitor", "Competitor activity (VCG)", "Whether competitor movement is detectable — coming soon"],
 ];
 
 /** Share of the expected record that is actually filled in. Never a score. */
