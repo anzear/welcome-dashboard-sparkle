@@ -37,6 +37,13 @@ import {
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/materialRegister/tags";
+import { applyProductLines } from "@/data/productLinesMock";
+import {
+  inScope,
+  productLineCounts,
+  scopeLabel as labelForScope,
+  type Scope,
+} from "@/components/materialRegister/productLines";
 
 
 export const CURRENT_USER = "You";
@@ -223,6 +230,14 @@ export interface EventInput {
 interface Store {
 
   data: Material[];
+  /** The whole register, unscoped. Only briefs and lookups use this. */
+  allMaterials: Material[];
+  scope: Scope;
+  setScope: (next: Scope) => void;
+  scopeCounts: { lines: { value: string; label: string; count: number }[]; untagged: number };
+  scopeLabel: string;
+  scopedTotal: number;
+  totalCount: number;
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
   measure: Measure | null;
@@ -379,13 +394,40 @@ export const useRegister = () => {
 
 /** The register as seeded, with gate positions and their events folded in. */
 const gateSeed = applyGateSeed(seedMaterialsWithHistory);
-export const seededMaterials = gateSeed.materials;
+export const seededMaterials = applyProductLines(gateSeed.materials);
+
+const SCOPE_KEY = "material-portfolio-scope";
+
+const readScope = (): Scope => {
+  try {
+    const raw = window.localStorage.getItem(SCOPE_KEY);
+    return raw && raw !== "" ? raw : null;
+  } catch {
+    return null;
+  }
+};
 
 export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.ReactNode }> = ({
   rows = seededMaterials,
   children,
 }) => {
   const [data, setData] = useState<Material[]>(rows);
+  /** Product line scope. Narrows every list and every count below it, never a material. */
+  const [scope, setScopeState] = useState<Scope>(() => readScope());
+
+  const setScope = (next: Scope) => {
+    setScopeState(next);
+    try {
+      if (next === null) window.localStorage.removeItem(SCOPE_KEY);
+      else window.localStorage.setItem(SCOPE_KEY, next);
+    } catch {
+      /* scope is a view preference; a storage failure must not break the view */
+    }
+  };
+
+  /** Everything downstream reads this list. `allMaterials` stays whole for briefs. */
+  const scoped = useMemo(() => data.filter((m) => inScope(m, scope)), [data, scope]);
+  const scopeCounts = useMemo(() => productLineCounts(data), [data]);
   const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
   /** Criterion-level evidence. Shared across the team, mock records only. */
@@ -441,7 +483,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    return data.filter((m) => {
+    return scoped.filter((m) => {
       if (q) {
         const hay = [m.name, m.cas_number ?? "", ...(m.customer_material_ids ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
@@ -500,7 +542,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [data, filters]);
+  }, [scoped, filters, documentedIds]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
@@ -840,7 +882,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
   const inPrioritySet = (m: Material) => m.priority_period !== null;
-  const prioritySetCount = data.filter(inPrioritySet).length;
+  const prioritySetCount = scoped.filter(inPrioritySet).length;
 
   /** Priority set changes: one event per material, all sharing one batch_id. */
   const applyPriority = (ids: Set<string>, add: boolean) => {
@@ -1220,7 +1262,14 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
   const value: Store = {
-    data,
+    data: scoped,
+    allMaterials: data,
+    scope,
+    setScope,
+    scopeCounts,
+    scopeLabel: labelForScope(scope),
+    scopedTotal: scoped.length,
+    totalCount: data.length,
     measureId,
     setMeasureId,
     measure,
