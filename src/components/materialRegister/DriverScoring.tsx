@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 import ScoreBulkPanel from "@/components/materialRegister/ScoreBulkDialog";
-import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
+import { signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
 const HEAD = "text-[9px] font-semibold uppercase tracking-widest text-muted-foreground";
@@ -21,18 +21,12 @@ interface Sort {
   dir: SortDir;
 }
 
-interface Cursor {
-  row: number;
-  col: number;
-}
-
 const DriverScoring: React.FC = () => {
   const {
     ordered,
     scores,
     scoreFor,
-    setScore,
-    clearScore,
+    openBrief,
     countsFor,
     questionCoverage,
     questions,
@@ -49,9 +43,7 @@ const DriverScoring: React.FC = () => {
 
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [cursor, setCursor] = useState<Cursor | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const gridRef = useRef<HTMLTableSectionElement>(null);
 
   const scoreOf = (m: Material, questionId: string) => scoreFor(m.material_id, questionId)?.score ?? null;
 
@@ -116,58 +108,7 @@ const DriverScoring: React.FC = () => {
     ? (questions.find((q) => q.question_id === sort.key)?.label ?? null)
     : null;
 
-  /* ------------------------------- cell entry ------------------------------ */
 
-  const focusCell = (row: number, col: number) => {
-    const el = gridRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`);
-    el?.focus();
-  };
-
-  const move = (dr: number, dc: number) => {
-    if (!cursor) return;
-    const row = Math.max(0, Math.min(displayRows.length - 1, cursor.row + dr));
-    const col = Math.max(0, Math.min(questions.length - 1, cursor.col + dc));
-    setCursor({ row, col });
-    focusCell(row, col);
-  };
-
-  const onCellKeyDown = (e: React.KeyboardEvent, m: Material, questionId: string) => {
-    const key = e.key;
-    if (/^[1-5]$/.test(key)) {
-      e.preventDefault();
-      setScore(m.material_id, questionId, Number(key), scoreFor(m.material_id, questionId)?.note ?? null);
-      return;
-    }
-    if (key === "Backspace" || key === "Delete") {
-      e.preventDefault();
-      clearScore(m.material_id, questionId);
-      return;
-    }
-    if (key === "ArrowDown" || key === "Enter") {
-      e.preventDefault();
-      move(1, 0);
-      return;
-    }
-    if (key === "ArrowUp") {
-      e.preventDefault();
-      move(-1, 0);
-      return;
-    }
-    if (key === "ArrowRight" || (key === "Tab" && !e.shiftKey)) {
-      e.preventDefault();
-      move(0, 1);
-      return;
-    }
-    if (key === "ArrowLeft" || (key === "Tab" && e.shiftKey)) {
-      e.preventDefault();
-      move(0, -1);
-    }
-  };
-
-  useEffect(() => {
-    // A shrinking list must not leave the cursor pointing past the end.
-    if (cursor && cursor.row > displayRows.length - 1) setCursor(null);
-  }, [displayRows.length, cursor]);
 
   const arrow = (key: string) =>
     sort?.key !== key ? null : sort.dir === "desc" ? (
@@ -225,8 +166,8 @@ const DriverScoring: React.FC = () => {
             </>
           ) : (
             <span>
-              Click a driver heading to rank by that judgement; click a cell, then 1–5 to score, Backspace clears,
-              arrows move.
+              Click a driver heading to rank by that judgement. Select materials to score them in bulk, or click a
+              material to score it on its profile.
             </span>
           )}
         </div>
@@ -356,7 +297,7 @@ const DriverScoring: React.FC = () => {
             </tr>
           </thead>
 
-          <tbody ref={gridRef}>
+          <tbody>
             {displayRows.map((m, rowIndex) => {
               const counts = countsFor(m.material_id);
               const isSelected = selected.has(m.material_id);
@@ -397,16 +338,21 @@ const DriverScoring: React.FC = () => {
                         isSelected && "bg-primary/5",
                       )}
                     >
-                      <span className="block max-w-[260px] truncate leading-tight" title={m.name}>
+                      <button
+                        type="button"
+                        onClick={() => openBrief(m.material_id)}
+                        className="block max-w-[260px] truncate text-left leading-tight hover:text-primary"
+                        title={`${m.name} — open profile to score`}
+                      >
                         {m.name}
-                      </span>
+                      </button>
                     </td>
 
-                    {questions.map((q, colIndex) => {
+
+                    {questions.map((q) => {
                       const rec = scoreFor(m.material_id, q.question_id);
                       const v = rec?.score ?? null;
                       const activeCol = sort?.key === q.question_id;
-                      const focused = cursor?.row === rowIndex && cursor?.col === colIndex;
                       return (
                         <td
                           key={q.question_id}
@@ -415,14 +361,7 @@ const DriverScoring: React.FC = () => {
                             activeCol && "bg-primary/10",
                           )}
                         >
-                          <button
-                            type="button"
-                            data-cell={`${rowIndex}-${colIndex}`}
-                            onFocus={() => setCursor({ row: rowIndex, col: colIndex })}
-                            onClick={() => {
-                              setCursor({ row: rowIndex, col: colIndex });
-                            }}
-                            onKeyDown={(e) => onCellKeyDown(e, m, q.question_id)}
+                          <span
                             title={
                               v === null
                                 ? `${m.name} · ${q.label} — not scored`
@@ -431,16 +370,16 @@ const DriverScoring: React.FC = () => {
                                   }`
                             }
                             className={cn(
-                              "mx-auto flex h-5 w-[30px] items-center justify-center rounded-[3px] font-mono text-[11px] tabular-nums outline-none",
-                              scoreTone(v),
-                              focused && "ring-2 ring-primary/60 ring-offset-1",
+                              "mx-auto block h-4 w-[26px] rounded-[3px]",
+                              v === null
+                                ? "border border-dotted border-muted-foreground/40"
+                                : "bg-teal-600/70",
                             )}
-                          >
-                            {v === null ? (focused ? "" : "·") : signed(v)}
-                          </button>
+                          />
                         </td>
                       );
                     })}
+
 
                     <td
                       className={cn(
@@ -474,19 +413,11 @@ const DriverScoring: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(1))}>
-            1
-          </span>{" "}
-          weak driver
+          <span className="inline-block h-4 w-6 rounded-[3px] bg-teal-600/70" /> scored
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(5))}>
-            5
-          </span>{" "}
-          strong driver
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-4 w-6 rounded-[3px]", scoreTone(null))} /> not scored — not zero
+          <span className="inline-block h-4 w-6 rounded-[3px] border border-dotted border-muted-foreground/40" /> not
+          scored — not zero
         </span>
       </div>
 
