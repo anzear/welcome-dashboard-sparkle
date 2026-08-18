@@ -15,18 +15,18 @@ const SCORERS = ["K. Brandt", "L. Haugen", "M. Oyelaran", "R. Delacroix", "S. Ra
 
 /** Where each question tends to sit before material-specific variation. */
 const TENDENCY: Record<string, number> = {
-  business_importance: 2,
-  regulatory_position: 1,
-  market_pull: 2,
-  environmental_impact: 2,
-  feedstock_availability: 0,
-  supply_security: -1,
-  cost: -2,
-  product_performance: -1,
-  process_impact: -1,
-  internal_readiness: -2,
-  timing_pressure: 1,
-  competitor_activity: 1,
+  business_importance: 5,
+  regulatory_position: 4,
+  market_pull: 5,
+  environmental_impact: 5,
+  feedstock_availability: 3,
+  supply_security: 2,
+  cost: 2,
+  product_performance: 2,
+  process_impact: 2,
+  internal_readiness: 2,
+  timing_pressure: 4,
+  competitor_activity: 4,
 };
 
 const NOTES: Record<string, string[]> = {
@@ -38,7 +38,7 @@ const NOTES: Record<string, string[]> = {
   feedstock_availability: ["Certified feedstock volume is limited.", "Multiple suppliers offer mass-balance grades."],
 };
 
-const clamp = (n: number) => Math.max(-5, Math.min(5, Math.round(n)));
+const clamp = (n: number) => Math.max(1, Math.min(5, Math.round(n)));
 
 function buildSeed(): DriverScore[] {
   const rand = rng(20260810);
