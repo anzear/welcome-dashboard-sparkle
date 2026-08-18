@@ -224,7 +224,7 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
         <span>
           <span className="font-mono tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
-          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> judged criteria have entries
+          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> judged criteria have scores
         </span>
         <span className="text-border">·</span>
         <span>
@@ -232,6 +232,15 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
           {summary.contributors.length === 1 ? "person" : "people"}
           {summary.teams.length > 0 && ` across ${summary.teams.map((t) => TEAM_LABEL[t]).join(", ")}`}
         </span>
+        {summary.neutralEntries > 0 && (
+          <>
+            <span className="text-border">·</span>
+            <span>
+              <span className="font-mono tabular-nums">{summary.neutralEntries}</span> neutral (not counted as
+              scores)
+            </span>
+          </>
+        )}
         {summary.splits > 0 && (
           <>
             <span className="text-border">·</span>
