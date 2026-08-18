@@ -791,6 +791,47 @@ export const MaterialBrief: React.FC = () => {
                 )}
               </div>
             )}
+
+            {/* Classification, read here and corrected in the dialog. */}
+            {!stuck && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2">
+                <HeadGroup label="Tags">
+                  {m.tags.length > 0 ? (
+                    m.tags.map((t) => (
+                      <Chip key={t}>
+                        {isProductLineTag(t) && (
+                          <span className="mr-1 text-[8px] uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
+                            Line
+                          </span>
+                        )}
+                        {t}
+                      </Chip>
+                    ))
+                  ) : (
+                    <NoneYet />
+                  )}
+                </HeadGroup>
+                <HeadGroup label="Categories">
+                  {m.application_categories.length > 0 ? (
+                    m.application_categories.map((t) => <Chip key={t}>{t}</Chip>)
+                  ) : (
+                    <NoneYet />
+                  )}
+                </HeadGroup>
+                <HeadGroup label="Areas">
+                  {m.application_areas.length > 0 ? (
+                    m.application_areas.map((t) => <Chip key={t}>{t}</Chip>)
+                  ) : (
+                    <NoneYet />
+                  )}
+                </HeadGroup>
+                <HeadGroup label="Entry type">
+                  <span className="text-[11px] text-foreground">
+                    {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+                  </span>
+                </HeadGroup>
+              </div>
+            )}
           </div>
 
           {/* Bottom-right: action buttons under pagination */}
