@@ -37,6 +37,7 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
+import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-react";
 
 const HEAD =
