@@ -390,7 +390,7 @@ const Prioritisation: React.FC = () => {
                   <ChevronDown className="h-3 w-3 opacity-60" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" className="max-h-[70vh] w-72 overflow-y-auto p-2">
+              <PopoverContent align="start" className="portfolio-type max-h-[70vh] w-72 overflow-y-auto p-2">
                 <div className="space-y-1.5">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Axes</div>
                   <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />

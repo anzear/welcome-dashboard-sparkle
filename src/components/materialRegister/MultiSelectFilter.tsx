@@ -39,7 +39,7 @@ export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, o
           <ChevronDown className="h-3 w-3 opacity-60" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="max-h-72 w-56 overflow-auto p-1">
+      <PopoverContent align="start" className="portfolio-type max-h-72 w-56 overflow-auto p-1">
         {options.length === 0 && (
           <div className="px-2 py-1.5 text-[11px] text-muted-foreground">No values</div>
         )}

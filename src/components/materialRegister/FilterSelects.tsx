@@ -326,7 +326,7 @@ const FilterSelects: React.FC<{
             <ChevronDown className="h-3 w-3 opacity-60" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-64 p-2">
+        <PopoverContent align="end" className="portfolio-type w-64 p-2">
           <div className="space-y-1.5">
             {active.map(([key, label, opts, sel]) => (
               <div key={key} className="flex items-center justify-between gap-2">
