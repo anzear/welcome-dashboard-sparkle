@@ -255,71 +255,37 @@ const VcgStrip: React.FC = () => (
 );
 
 
-/** Small split dot. A marker beside the range, never the word "split". */
+/** Small split dot. A marker beside the count, never the word "split". */
 const SplitDot: React.FC = () => (
   <span
-    title="Teams disagree"
-    aria-label="Teams disagree"
-    className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500"
+    title="Teams gave different scores"
+    aria-label="Teams gave different scores"
+    className="inline-block h-1.5 w-1.5 rounded-full bg-provenance-judgement"
   />
 );
 
-/** One recorded entry: person, team, score, reason. Never initials and a number. */
-const EntryLine: React.FC<{ entry: AssessmentEntry; isMine: boolean; onEdit?: () => void }> = ({
-  entry,
-  isMine,
-  onEdit,
-}) => {
-  const [open, setOpen] = useState(false);
+/** One recorded reason. The rail already carries the score, so it is not repeated. */
+const RationaleLine: React.FC<{ entry: AssessmentEntry; isMine: boolean }> = ({ entry, isMine }) => {
   const name = contributorById(entry.user_id)?.name ?? entry.user_id;
   return (
-    <div className="flex items-start gap-2 py-[3px] text-[11px]">
+    <div className="flex items-start gap-2" title={`${name} · ${shortDate(entry.assessed_at)}`}>
       <span
-        className={cn("shrink-0 whitespace-nowrap", isMine ? "font-medium text-foreground" : "text-foreground")}
-        title={isMine ? "Your entry" : undefined}
+        className={cn(
+          "w-6 shrink-0 font-mono text-[10px]",
+          isMine ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
+        )}
       >
-        {name}
+        {initialsOf(name)}
       </span>
-      <span className="shrink-0 whitespace-nowrap text-[10px] text-muted-foreground">
-        {TEAM_LABEL[entry.team]}
+      <span className="w-20 shrink-0 text-[10px] text-muted-foreground/70">{TEAM_LABEL[entry.team]}</span>
+      <span className="min-w-0 flex-1 text-[11px] leading-snug text-foreground/90">
+        {entry.note ?? <span className="text-muted-foreground/60">No reason recorded</span>}
       </span>
-      {entry.score === null ? (
-        <span className="shrink-0 text-[10px] font-normal text-muted-foreground/80">{NEUTRAL_LABEL}</span>
-      ) : (
-        <span className="shrink-0 font-mono tabular-nums font-medium text-provenance-judgement">
-          {entry.score}
-        </span>
-      )}
-      {entry.note ? (
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className={cn(
-            "min-w-0 flex-1 text-left text-[11px] text-muted-foreground hover:text-foreground",
-            !open && "truncate",
-          )}
-          title={open ? undefined : entry.note}
-        >
-          {entry.note}
-          {open && (
-            <span className="ml-2 font-mono text-[10px] text-muted-foreground/70">
-              {shortDate(entry.assessed_at)}
-            </span>
-          )}
-        </button>
-      ) : (
-        <span className="min-w-0 flex-1" title={shortDate(entry.assessed_at)} />
-      )}
-      {isMine && onEdit && (
-        <button type="button" onClick={onEdit} className={cn(LINK, "shrink-0")}>
-          Edit
-        </button>
-      )}
     </div>
   );
 };
 
-/** One judged criterion: a row, not a box. Everyone's entries, then your own act. */
+/** One judged criterion: header, rail, reasons. The rail is the row. */
 const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: string }> = ({
   criterion,
   materialId,
@@ -333,7 +299,6 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
   const [draft, setDraft] = useState<number | "neutral" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
-  const [showAll, setShowAll] = useState(false);
 
   const value = draft ?? savedValue;
   const noteValue = note ?? mine?.note ?? "";
@@ -363,23 +328,16 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
     stop();
   };
 
-  // Every figure below is derived. Nothing here is a fixed sentence about a state.
-  const others = state.entries.filter((e) => e.user_id !== currentUser.user_id);
-  const ordered = mine ? [mine, ...others] : others;
-  const shown = showAll ? ordered : ordered.slice(0, 3);
-  const hidden = ordered.length - shown.length;
-
-  const range =
-    state.scoredCount === 0
-      ? null
-      : state.low === state.high
-        ? String(state.low)
-        : `${state.low}–${state.high}`;
+  const scored = state.entries.filter((e) => e.score !== null);
+  const neutral = state.entries.filter((e) => e.score === null);
+  const withReasons = mine
+    ? [mine, ...state.entries.filter((e) => e.user_id !== currentUser.user_id)]
+    : state.entries;
 
   return (
-    <div className="border-l-2 border-provenance-judgement/70 pl-2.5">
+    <div className="border-l-2 border-provenance-judgement/60 pl-3">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="flex items-center gap-1 text-[11px] font-medium text-foreground">
+        <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-foreground">
           {criterion.label}
           {criterion.helper && (
             <button
@@ -387,103 +345,62 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
               tabIndex={0}
               title={criterion.helper}
               aria-label={`About ${criterion.label}`}
-              className="text-muted-foreground/60 hover:text-foreground"
+              className="text-muted-foreground/50 hover:text-foreground"
             >
               <Info className="h-3 w-3" />
             </button>
           )}
         </span>
-        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          {ordered.length === 0 ? (
-            <Missing />
-          ) : (
-            <>
-              <span>
-                <span className="font-mono tabular-nums text-foreground">{ordered.length}</span>{" "}
-                {ordered.length === 1 ? "entry" : "entries"}
-              </span>
-              {range && (
-                <>
-                  <span className="text-border" aria-hidden>
-                    ·
-                  </span>
-                  <span className="font-mono tabular-nums text-foreground">{range}</span>
-                </>
-              )}
-              {state.flag === "split" && <SplitDot />}
-            </>
+        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
+          {state.entries.length > 0 && (
+            <span>
+              <span className="font-mono tabular-nums">{state.entries.length}</span>{" "}
+              {state.entries.length === 1 ? "entry" : "entries"}
+            </span>
           )}
+          {state.flag === "split" && <SplitDot />}
         </span>
       </div>
 
-      {ordered.length > 0 && (
-        <div className="mt-1 divide-y divide-border/40">
-          {shown.map((e) => (
-            <EntryLine
-              key={e.user_id}
-              entry={e}
-              isMine={e.user_id === currentUser.user_id}
-              onEdit={
-                e.user_id === currentUser.user_id
-                  ? () => {
-                      setEditing(true);
-                      setBlocked(false);
-                    }
-                  : undefined
-              }
-            />
-          ))}
-        </div>
-      )}
+      <div className="mt-2.5">
+        <CriterionRail
+          criterionId={criterion.criterion_id}
+          criterionLabel={criterion.label}
+          scored={scored}
+          neutral={neutral}
+          currentUserId={currentUser.user_id}
+          draft={editing && typeof value === "number" ? value : null}
+          onPick={(v) => {
+            setDraft(v);
+            setBlocked(false);
+            setEditing(true);
+          }}
+          onEditMine={() => {
+            setEditing(true);
+            setBlocked(false);
+          }}
+        />
+      </div>
 
-      {hidden > 0 && (
-        <button type="button" onClick={() => setShowAll(true)} className={cn(LINK, "mt-1")}>
-          {hidden} more
-        </button>
-      )}
-      {showAll && ordered.length > 3 && (
-        <button type="button" onClick={() => setShowAll(false)} className={cn(LINK, "mt-1")}>
-          Show fewer
-        </button>
-      )}
-
-      {!editing && !mine && (
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="mt-1.5 inline-flex h-6 items-center rounded-md border border-border bg-background px-2 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          Add your assessment
-        </button>
+      {state.entries.length === 0 && !editing && (
+        <p className="mt-1.5 text-[10px] text-muted-foreground/60">Nobody has judged this yet.</p>
       )}
 
       {editing && (
-        <div className="mt-2 space-y-1.5">
-          <ScoreRail
-            size="sm"
-            value={value}
-            ariaLabel={`${criterion.label} score`}
-            onPick={(v) => {
-              setDraft(v);
-              setBlocked(false);
-            }}
-            onNeutral={() => {
-              setDraft("neutral");
-              setBlocked(false);
-            }}
-            onClear={() => {
-              if (mine) clearAssessment(materialId, criterion.criterion_id);
-              stop();
-            }}
-          />
+        <div className="mt-2.5 space-y-1.5">
           {criterion.anchors && (
-            <p className="text-[10px] leading-snug text-muted-foreground/80">{criterion.anchors}</p>
+            <p className="text-[10px] leading-snug text-muted-foreground/70">{criterion.anchors}</p>
           )}
           <input
+            autoFocus
             value={noteValue}
             onChange={(e) => {
               setNote(e.target.value);
               setBlocked(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !needsReason && dirty) commit();
+              if (e.key === "Escape") stop();
             }}
             placeholder={
               value === "neutral"
@@ -505,6 +422,31 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
                 Save
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => {
+                setDraft("neutral");
+                setBlocked(false);
+              }}
+              className={cn(
+                LINK,
+                value === "neutral" && "text-foreground",
+              )}
+            >
+              {NEUTRAL_LABEL}
+            </button>
+            {mine && (
+              <button
+                type="button"
+                onClick={() => {
+                  clearAssessment(materialId, criterion.criterion_id);
+                  stop();
+                }}
+                className={LINK}
+              >
+                Remove mine
+              </button>
+            )}
             <button type="button" onClick={stop} className={LINK}>
               Cancel
             </button>
@@ -520,14 +462,25 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
         </div>
       )}
 
-      <CriterionDocuments
-        materialId={materialId}
-        criterionId={criterion.criterion_id}
-        criterionLabel={criterion.label}
-      />
+      {withReasons.length > 0 && (
+        <div className="mt-2.5 space-y-1">
+          {withReasons.map((e) => (
+            <RationaleLine key={e.user_id} entry={e} isMine={e.user_id === currentUser.user_id} />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-1.5">
+        <CriterionDocuments
+          materialId={materialId}
+          criterionId={criterion.criterion_id}
+          criterionLabel={criterion.label}
+        />
+      </div>
     </div>
   );
 };
+
 
 /**
  * The assessment card. Two reference rows read from data we hold sit as a quiet
