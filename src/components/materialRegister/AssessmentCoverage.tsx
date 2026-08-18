@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { TEAM_LABEL } from "@/config/assessmentCriteria";
+import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
@@ -30,10 +31,13 @@ const AssessmentCoverage: React.FC = () => {
     currentUser,
     scope,
     scopeLabel,
+    judgedCriteria,
+    canEditCriteria,
   } = useRegister();
 
   const [sort, setSort] = useState<SortId>("register");
   const [gapsOnly, setGapsOnly] = useState(false);
+  const [criteriaOpen, setCriteriaOpen] = useState(false);
 
   const rows = useMemo(() => {
     const base = ordered.map(({ m }) => ({ m, summary: assessmentSummary(m.material_id) }));
@@ -112,10 +116,20 @@ const AssessmentCoverage: React.FC = () => {
 
       <FilterChips />
 
+      <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
+
       <p className="text-[11px] text-muted-foreground">
         A filled marker means at least one 1–5 score has been recorded; a dashed one means none has. Neutral —
         this team has no visibility here — is recorded but never counted as a score. Open a material to record
-        or change your own entry.
+        or change your own entry.{" "}
+        <button
+          type="button"
+          onClick={() => setCriteriaOpen(true)}
+          className="underline decoration-dotted hover:text-foreground"
+        >
+          {canEditCriteria ? "Edit criteria" : "View criteria"}
+        </button>
+        {canEditCriteria && " — a change applies to every material."}
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-border/70 bg-card shadow-sm">
