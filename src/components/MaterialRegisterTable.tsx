@@ -87,13 +87,14 @@ const CompletenessCell: React.FC<{ m: Material }> = ({ m }) => {
     >
       <div className="h-1 w-10 overflow-hidden rounded-full bg-muted">
         <div
-          className={cn(
-            "h-full rounded-full",
-            pct >= 70 ? "bg-foreground/70" : pct >= 40 ? "bg-foreground/40" : "bg-foreground/20",
-          )}
-          style={{ width: `${Math.max(pct, 2)}%` }}
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.max(pct, 2)}%`,
+            backgroundColor: `hsl(${Math.round((pct / 100) * 130)} 72% 45%)`,
+          }}
         />
       </div>
+
       <span className="w-8 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
         {pct}%
       </span>
@@ -471,9 +472,9 @@ export const MaterialRegisterTable: React.FC = () => {
               {cols.completeness && (
                 <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>
                   Data filled
-                  <div className={UNIT}>(of expected)</div>
                 </th>
               )}
+
               {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material type</th>}
               {cols.materialCategory && (
                 <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
