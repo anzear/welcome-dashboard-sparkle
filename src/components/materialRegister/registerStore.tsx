@@ -413,7 +413,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.vcgSuppliersNotAssessed ||
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
-    filters.gateRecommendation !== "any";
+    filters.gateRecommendation !== "any" ||
+    filters.hasDocuments;
+
+  const documentedIds = useMemo(
+    () => new Set(documents.map((d) => d.material_id)),
+    [documents],
+  );
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -424,6 +430,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
+      if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
       if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
       if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
