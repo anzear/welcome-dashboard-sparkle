@@ -137,14 +137,55 @@ const FilterSelects: React.FC<{
     </div>
   );
 
+  /** Coverage of team judgement. "Not assessed" is the one word for zero entries. */
+  const assessmentSection = (
+    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">
+        Assessment
+      </div>
+      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={filters.notAssessed}
+          onChange={(e) => setFilters((f) => ({ ...f, notAssessed: e.target.checked }))}
+          className="h-3 w-3"
+        />
+        Not assessed
+      </label>
+      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={filters.teamsDisagree}
+          onChange={(e) => setFilters((f) => ({ ...f, teamsDisagree: e.target.checked }))}
+          className="h-3 w-3"
+        />
+        Teams disagree
+      </label>
+      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={filters.gateOverdue}
+          onChange={(e) => setFilters((f) => ({ ...f, gateOverdue: e.target.checked }))}
+          className="h-3 w-3"
+        />
+        Gate work overdue
+      </label>
+    </div>
+  );
+
   const gateActive =
-    filters.gateOverdueCondition || filters.gateHoldReviewOverdue || filters.gateRecommendation !== "any";
+    filters.gateOverdueCondition ||
+    filters.gateHoldReviewOverdue ||
+    filters.gateOverdue ||
+    filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
     activeVcg.reduce((n, [, , , sel]) => n + sel.length, 0) +
     (suppliersShown && suppliersActive ? 1 : 0) +
     (gateActive ? 1 : 0) +
-    (filters.hasDocuments ? 1 : 0);
+    (filters.hasDocuments ? 1 : 0) +
+    (filters.notAssessed ? 1 : 0) +
+    (filters.teamsDisagree ? 1 : 0);
 
   const suppliersRange = (
     <div className="space-y-1.5 pt-0.5">
@@ -300,6 +341,7 @@ const FilterSelects: React.FC<{
             ))}
           </div>
           {gateSection}
+          {assessmentSection}
           {evidenceSection}
           {vcgSection}
           {activeCount > 0 && (
@@ -316,6 +358,9 @@ const FilterSelects: React.FC<{
                   next.gateHoldReviewOverdue = false;
                   next.gateRecommendation = "any";
                   next.hasDocuments = false;
+                  next.notAssessed = false;
+                  next.teamsDisagree = false;
+                  next.gateOverdue = false;
                   return next;
                 })
               }

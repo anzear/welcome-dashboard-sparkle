@@ -152,8 +152,8 @@ export const MaterialRegisterTable: React.FC = () => {
     filters,
     setFilters,
     filtersActive,
-    onlyUnranked,
-    setOnlyUnranked,
+    onlyNoFigure,
+    setOnlyNoFigure,
     onlyDivergent,
     setOnlyDivergent,
     onlySelected,
@@ -225,8 +225,8 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const ownerNames = options.owners.filter((o) => o.value !== UNASSIGNED_OWNER).map((o) => o.value);
 
-  const firstUnrankedId =
-    onlyUnranked || onlyDivergent ? null : visible.find((r) => r.rank === null)?.m.material_id ?? null;
+  const firstNoFigureId =
+    onlyNoFigure || onlyDivergent ? null : visible.find((r) => r.rank === null)?.m.material_id ?? null;
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
@@ -367,10 +367,10 @@ export const MaterialRegisterTable: React.FC = () => {
           <>
             <button
               type="button"
-              onClick={() => setOnlyUnranked((v) => !v)}
+              onClick={() => setOnlyNoFigure((v) => !v)}
               className="underline decoration-dotted underline-offset-2 hover:text-foreground"
             >
-              {onlyUnranked ? "Show all" : `${missingCount} unranked`}
+              {onlyNoFigure ? "Show all" : `${missingCount} with no ${measure.noun} figure`}
             </button>
             <span className="text-border">·</span>
           </>
@@ -581,8 +581,8 @@ export const MaterialRegisterTable: React.FC = () => {
                   colSpan={colCount + extraCols}
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
-                  No material can be both unranked and divergent — an unranked material has no {measure.noun}{" "}
-                  position to diverge from. Turn off one filter.
+                  No material can be both without a figure and divergent — a material with no{" "}
+                  {measure.noun} figure has no position to diverge from. Turn off one filter.
                 </td>
               </tr>
             )}
@@ -608,11 +608,11 @@ export const MaterialRegisterTable: React.FC = () => {
               const isSelected = selected.has(m.material_id);
               return (
                 <React.Fragment key={m.material_id}>
-                  {m.material_id === firstUnrankedId && (
+                  {m.material_id === firstNoFigureId && (
                     <tr>
                       <td colSpan={colCount + extraCols} className="p-0">
                         <div className="border-t border-border px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                          Unranked — no {measure.noun} figure
+                          No {measure.noun} figure recorded
                         </div>
                       </td>
                     </tr>
@@ -851,7 +851,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="text-amber-700">amber bar</span> rank divergence
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="text-muted-foreground/50">—</span> no value (unranked)
+          <span className="text-muted-foreground/50">—</span> no value recorded
         </span>
         <span>
           Position bars: taller = better rank. Four independent scales, one per measure — never combined. Dotted

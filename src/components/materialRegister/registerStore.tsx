@@ -58,7 +58,7 @@ export interface Measure {
   label: string;
   /** compact chip label */
   short: string;
-  /** label used in the unranked divider, lower-case */
+  /** label used in the no-figure divider, lower-case */
   noun: string;
   /** axis / figure unit for the measure */
   unit: string;
@@ -176,6 +176,12 @@ export interface Filters {
   gateRecommendation: "yes" | "no" | "any";
   /** Evidence. Presence of supporting documents only — volume is never filtered. */
   hasDocuments: boolean;
+  /** Zero assessment entries from anyone. The one word for this state. */
+  notAssessed: boolean;
+  /** Either an overdue condition or an overdue hold review. */
+  gateOverdue: boolean;
+  /** Carries a split flag on at least one judged criterion. */
+  teamsDisagree: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -201,6 +207,9 @@ export const EMPTY_FILTERS: Filters = {
   gateHoldReviewOverdue: false,
   gateRecommendation: "any",
   hasDocuments: false,
+  notAssessed: false,
+  gateOverdue: false,
+  teamsDisagree: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -245,8 +254,8 @@ interface Store {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   filtersActive: boolean;
-  onlyUnranked: boolean;
-  setOnlyUnranked: React.Dispatch<React.SetStateAction<boolean>>;
+  onlyNoFigure: boolean;
+  setOnlyNoFigure: React.Dispatch<React.SetStateAction<boolean>>;
   onlyDivergent: boolean;
   setOnlyDivergent: React.Dispatch<React.SetStateAction<boolean>>;
   onlySelected: boolean;
@@ -438,7 +447,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [onlyUnranked, setOnlyUnranked] = useState(false);
+  const [onlyNoFigure, setOnlyNoFigure] = useState(false);
   const [onlyDivergent, setOnlyDivergent] = useState(false);
   const [onlySelected, setOnlySelected] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -475,12 +484,43 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
     filters.gateRecommendation !== "any" ||
-    filters.hasDocuments;
+    filters.hasDocuments ||
+    filters.notAssessed ||
+    filters.gateOverdue ||
+    filters.teamsDisagree;
 
   const documentedIds = useMemo(
     () => new Set(documents.map((d) => d.material_id)),
     [documents],
   );
+
+  /** Materials somebody has recorded at least one assessment entry for. */
+  const assessedIds = useMemo(
+    () => new Set(Object.values(assessments).map((e) => e.material_id)),
+    [assessments],
+  );
+
+  /**
+   * Split flag: entries on one judged criterion spanning more than two points.
+   * Computed here from the entries so the filter needs no ordering with the
+   * per-criterion reader below.
+   */
+  const disagreeIds = useMemo(() => {
+    const byKey = new Map<string, number[]>();
+    Object.values(assessments).forEach((e) => {
+      if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      const key = `${e.material_id}::${e.criterion_id}`;
+      const list = byKey.get(key) ?? [];
+      list.push(e.score);
+      byKey.set(key, list);
+    });
+    const ids = new Set<string>();
+    byKey.forEach((scores, key) => {
+      if (scores.length < 2) return;
+      if (Math.max(...scores) - Math.min(...scores) > 2) ids.add(key.split("::")[0]);
+    });
+    return ids;
+  }, [assessments]);
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -492,6 +532,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
+      if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
+      if (filters.gateOverdue && !hasOverdueCondition(m) && !holdReviewOverdue(m)) return false;
+      if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
       if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
       if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
@@ -543,7 +586,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [scoped, filters, documentedIds]);
+  }, [scoped, filters, documentedIds, assessedIds, disagreeIds]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
@@ -606,13 +649,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const filteredTotal = filtered.length;
   const missingCount = filteredTotal - rankedCount;
   const divergentCount = ordered.filter((r) => r.gapMeasure !== null).length;
-  const bothFilters = onlyUnranked && onlyDivergent;
+  const bothFilters = onlyNoFigure && onlyDivergent;
 
   const visible = bothFilters
     ? []
     : ordered.filter(
         (r) =>
-          (!onlyUnranked || r.rank === null) &&
+          (!onlyNoFigure || r.rank === null) &&
           (!onlyDivergent || r.gapMeasure !== null) &&
           (!onlySelected || selected.has(r.m.material_id)),
       );
@@ -1315,8 +1358,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters,
     setFilters,
     filtersActive,
-    onlyUnranked,
-    setOnlyUnranked,
+    onlyNoFigure,
+    setOnlyNoFigure,
     onlyDivergent,
     setOnlyDivergent,
     onlySelected,

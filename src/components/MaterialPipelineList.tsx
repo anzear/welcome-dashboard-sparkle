@@ -522,7 +522,7 @@ export default function MaterialPipelineList() {
               {unranked.length > 0 && (
                 <tr className="border-t border-border bg-muted/20">
                   <td colSpan={14} className="px-3 py-1.5 text-[9px] uppercase tracking-widest text-muted-foreground font-semibold">
-                    Unranked — no {MEASURES.find((m) => m.key === measure)?.label.toLowerCase()} value ({unranked.length})
+                    No figure — no {MEASURES.find((m) => m.key === measure)?.label.toLowerCase()} value ({unranked.length})
                   </td>
                 </tr>
               )}

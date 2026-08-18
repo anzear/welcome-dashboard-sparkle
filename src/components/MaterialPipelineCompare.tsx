@@ -92,7 +92,7 @@ export default function MaterialPipelineCompare({ rows }: { rows: MaterialRow[] 
         <AxisPicker label="Vertical axis" value={yKey} onChange={setYKey} />
         <div className="text-[11px] text-muted-foreground pb-1.5">
           plotting {points.items.length} of {rows.length}
-          {unranked > 0 && <> · {unranked} not ranked on both measures</>}
+          {unranked > 0 && <> · {unranked} without a figure on both measures</>}
         </div>
       </div>
 
