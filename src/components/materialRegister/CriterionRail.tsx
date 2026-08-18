@@ -43,6 +43,8 @@ const CriterionRail: React.FC<{
   onPick: (score: number) => void;
   /** Reopen the current user's own entry. */
   onEditMine: () => void;
+  /** Keep the pick positions visible — used while scoring. */
+  picking?: boolean;
 }> = ({
   criterionId,
   criterionLabel,
