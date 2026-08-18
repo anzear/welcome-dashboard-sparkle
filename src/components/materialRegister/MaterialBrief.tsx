@@ -521,6 +521,9 @@ export const MaterialBrief: React.FC = () => {
     Record<string, { id: string; author: string; at: string; body: string }[]>
   >({});
   const [draft, setDraft] = useState<Record<string, string>>({});
+  /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
 
 
   /** Header condenses once it sticks. */
