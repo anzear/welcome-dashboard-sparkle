@@ -294,6 +294,7 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
           {evidence.map((c) => (
             <p key={c.criterion_id} className="text-[10px] text-muted-foreground">
               <span className="text-foreground">{c.label}</span> · {c.helper}
+              {c.source === "vcg" && <ComingSoonTag className="ml-1.5 align-middle" />}
             </p>
           ))}
         </div>
