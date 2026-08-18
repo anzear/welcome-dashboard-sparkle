@@ -868,12 +868,12 @@ export const MaterialBrief: React.FC = () => {
 
 
       {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
 
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-start gap-y-4 px-4 py-3 [&>*+*]:border-l [&>*+*]:border-border/60 [&>*+*]:pl-5 [&>*]:pr-5">
           {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
-          <BarField label="Status" className="w-[180px]">
-            <div className="flex h-8 flex-wrap items-center gap-1.5">
+          <BarField label="Status" className="w-[190px]" hint="Set in the Gate card">
+            <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
                 <span
@@ -884,8 +884,8 @@ export const MaterialBrief: React.FC = () => {
                 </span>
               )}
             </div>
-            <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
           </BarField>
+
 
           <BarField label="Owner" className="w-[180px]">
             <Select
