@@ -36,7 +36,7 @@ import {
   type MeasureId,
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
-import { Plus, SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/30 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border/60 align-bottom";
