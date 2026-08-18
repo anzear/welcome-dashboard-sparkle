@@ -1,72 +1,137 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Check, Upload, UserPlus } from "lucide-react";
+import { Check, FileText, Paperclip, Plus, Trash2, Upload, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-export type EvidenceSlotId =
-  | "target_spec"
-  | "product_requirements"
-  | "sustainability_targets"
-  | "customer_requirements"
-  | "regulatory"
-  | "strategy";
+export interface RequirementDoc {
+  id: string;
+  name: string;
+  description: string;
+  fileName: string | null;
+  /** true = nobody uploaded it yet, it was requested from someone */
+  requested: boolean;
+  requestedFrom: string;
+}
 
-export type EvidenceState = Record<EvidenceSlotId, { link: string | null; requested: boolean }>;
+export type EvidenceState = RequirementDoc[];
 
-export const EVIDENCE_SLOTS: {
-  id: EvidenceSlotId;
-  title: string;
-  hint: string;
-  contributors: string;
-}[] = [
-  {
-    id: "target_spec",
-    title: "Target material specification",
-    hint: "target technical spec, desired properties, performance targets, candidate datasheets",
-    contributors: "R&D, Procurement",
-  },
-  {
-    id: "product_requirements",
-    title: "Product requirements",
-    hint: "formulation requirements, quality spec, application requirements",
-    contributors: "R&D, Product, Quality",
-  },
-  {
-    id: "sustainability_targets",
-    title: "Sustainability targets",
-    hint: "renewable carbon target, PCF target, Scope 3 reduction goal, circularity ambition",
-    contributors: "Sustainability",
-  },
-  {
-    id: "customer_requirements",
-    title: "Customer requirements",
-    hint: "customer spec, tender requirement, key account brief, customer sustainability requirement",
-    contributors: "Sales, Product",
-  },
-  {
-    id: "regulatory",
-    title: "Regulatory & compliance requirements",
-    hint: "REACH, FDA / food-contact, CLP, regional restrictions, certification requirements",
-    contributors: "Regulatory, Quality",
-  },
-  {
-    id: "strategy",
-    title: "Strategy",
-    hint: "innovation roadmap, sustainability roadmap, business case, investment rationale",
-    contributors: "Strategy, Business Unit",
-  },
-];
+export const emptyEvidence = (): EvidenceState => [];
 
-export const emptyEvidence = (): EvidenceState =>
-  EVIDENCE_SLOTS.reduce((acc, s) => {
-    acc[s.id] = { link: null, requested: false };
-    return acc;
-  }, {} as EvidenceState);
-
+/** Documents actually attached (a request with no file does not count). */
 export const evidenceFilledCount = (e: EvidenceState) =>
-  EVIDENCE_SLOTS.filter((s) => e[s.id]?.link).length;
+  (e ?? []).filter((d) => d.fileName).length;
+
+export const evidenceRequestedCount = (e: EvidenceState) =>
+  (e ?? []).filter((d) => d.requested && !d.fileName).length;
+
+const newId = () => Math.random().toString(36).slice(2, 10);
+
+const blankDoc = (requested: boolean): RequirementDoc => ({
+  id: newId(),
+  name: "",
+  description: "",
+  fileName: null,
+  requested,
+  requestedFrom: "",
+});
+
+const DocRow: React.FC<{
+  doc: RequirementDoc;
+  onChange: (patch: Partial<RequirementDoc>) => void;
+  onRemove: () => void;
+}> = ({ doc, onChange, onRemove }) => {
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="rounded-md border border-border bg-card p-3">
+      <div className="flex items-start gap-2">
+        <div className="mt-1.5 shrink-0 text-muted-foreground">
+          {doc.fileName ? <FileText className="h-3.5 w-3.5" /> : <Paperclip className="h-3.5 w-3.5" />}
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <Input
+            value={doc.name}
+            onChange={(e) => onChange({ name: e.target.value })}
+            placeholder="Document name"
+            className="h-8 text-[12px]"
+          />
+          <Textarea
+            value={doc.description}
+            onChange={(e) => onChange({ description: e.target.value })}
+            placeholder="What this document covers and why it matters"
+            rows={2}
+            className="min-h-0 resize-none text-[11px]"
+          />
+
+          {doc.requested && (
+            <Input
+              value={doc.requestedFrom}
+              onChange={(e) => onChange({ requestedFrom: e.target.value })}
+              placeholder="Requested from (person, team or function)"
+              className="h-8 text-[11px]"
+            />
+          )}
+
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileRef}
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onChange({ fileName: f.name });
+                e.target.value = "";
+              }}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-[11px]"
+              onClick={() => fileRef.current?.click()}
+            >
+              <Upload className="mr-1.5 h-3 w-3" />
+              {doc.fileName ? "Replace file" : "Upload file"}
+            </Button>
+            {doc.fileName ? (
+              <>
+                <span className="min-w-0 truncate text-[11px] text-foreground" title={doc.fileName}>
+                  {doc.fileName}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => onChange({ fileName: null })}
+                  className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                >
+                  remove file
+                </button>
+              </>
+            ) : (
+              <span
+                className={cn(
+                  "text-[10px]",
+                  doc.requested ? "text-amber-600" : "text-muted-foreground",
+                )}
+              >
+                {doc.requested ? "requested — not received" : "no file attached"}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={onRemove}
+              aria-label="Remove document"
+              className="ml-auto text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const MaterialRequirementsDialog: React.FC<{
   open: boolean;
@@ -74,15 +139,16 @@ const MaterialRequirementsDialog: React.FC<{
   value: EvidenceState;
   onSave: (v: EvidenceState) => void;
 }> = ({ open, onOpenChange, value, onSave }) => {
-  const [draft, setDraft] = useState<EvidenceState>(value);
-  const [editing, setEditing] = useState<EvidenceSlotId | null>(null);
-  const [linkText, setLinkText] = useState("");
+  const [draft, setDraft] = useState<EvidenceState>(value ?? []);
 
-  const filled = evidenceFilledCount(draft);
-  const pct = Math.round((filled / EVIDENCE_SLOTS.length) * 100);
+  const attached = evidenceFilledCount(draft);
+  const requested = evidenceRequestedCount(draft);
 
-  const set = (id: EvidenceSlotId, patch: Partial<EvidenceState[EvidenceSlotId]>) =>
-    setDraft((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
+  const patch = (id: string, p: Partial<RequirementDoc>) =>
+    setDraft((prev) => prev.map((d) => (d.id === id ? { ...d, ...p } : d)));
+
+  const uploads = draft.filter((d) => !d.requested);
+  const requests = draft.filter((d) => d.requested);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -92,127 +158,83 @@ const MaterialRequirementsDialog: React.FC<{
             <Upload className="h-4 w-4" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-foreground">
-              <span className="mr-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Step 3 ·
-              </span>
-              Material Requirements
-            </div>
-            <p className="text-[12px] text-muted-foreground">Upload supporting docs</p>
+            <div className="text-sm font-semibold text-foreground">Material requirements</div>
+            <p className="text-[12px] text-muted-foreground">
+              Upload any document, give it a name and a short description. Requests work the same way.
+            </p>
           </div>
-          <div className="pt-1 text-[12px] tabular-nums text-muted-foreground">{pct}%</div>
+          <div className="pt-1 text-right text-[11px] tabular-nums text-muted-foreground">
+            <div>{attached} attached</div>
+            {requested > 0 && <div className="text-amber-600">{requested} requested</div>}
+          </div>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto p-5">
-          <div className="rounded-lg border border-border p-4">
-            <div className="flex items-center gap-1.5">
-              <Upload className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="max-h-[70vh] space-y-5 overflow-y-auto p-5">
+          <section>
+            <div className="flex items-center justify-between">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Material requirements
+                Uploaded documents
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px]"
+                onClick={() => setDraft((p) => [...p, blankDoc(false)])}
+              >
+                <Plus className="mr-1.5 h-3 w-3" />
+                Add document
+              </Button>
             </div>
-            <p className="mt-1 max-w-2xl text-[12px] text-muted-foreground">
-              Upload or link the documents that define what this material must achieve, what it should be
-              benchmarked against, and what constraints must be considered.
-            </p>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              {EVIDENCE_SLOTS.map((s) => {
-                const st = draft[s.id];
-                const state = st?.link ? "attached" : st?.requested ? "requested" : "empty";
-                return (
-                  <div key={s.id} className="rounded-md border border-border p-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="text-[12px] font-semibold text-foreground">{s.title}</div>
-                      <span
-                        className={cn(
-                          "shrink-0 text-[10px]",
-                          state === "attached"
-                            ? "text-emerald-600"
-                            : state === "requested"
-                              ? "text-amber-600"
-                              : "text-muted-foreground",
-                        )}
-                      >
-                        {state}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-primary/80">{s.hint}</p>
-                    <p className="mt-1.5 text-[11px] text-muted-foreground">Contributors: {s.contributors}</p>
-
-                    {st?.link && (
-                      <p className="mt-1.5 truncate text-[11px] text-foreground" title={st.link}>
-                        {st.link}
-                      </p>
-                    )}
-
-                    {editing === s.id ? (
-                      <div className="mt-2 flex gap-2">
-                        <Input
-                          autoFocus
-                          value={linkText}
-                          onChange={(e) => setLinkText(e.target.value)}
-                          placeholder="Paste a link or file name"
-                          className="h-8 text-[12px]"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              set(s.id, { link: linkText.trim() || null });
-                              setEditing(null);
-                              setLinkText("");
-                            }
-                          }}
-                        />
-                        <Button
-                          size="sm"
-                          className="h-8 text-[11px]"
-                          onClick={() => {
-                            set(s.id, { link: linkText.trim() || null });
-                            setEditing(null);
-                            setLinkText("");
-                          }}
-                        >
-                          Attach
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="mt-2 grid grid-cols-2 gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-[11px]"
-                          onClick={() => {
-                            setEditing(s.id);
-                            setLinkText(st?.link ?? "");
-                          }}
-                        >
-                          <Upload className="mr-1.5 h-3 w-3" />
-                          Upload / link
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 text-[11px]"
-                          onClick={() => set(s.id, { requested: !st?.requested })}
-                        >
-                          <UserPlus className="mr-1.5 h-3 w-3" />
-                          {st?.requested ? "Requested" : "Request"}
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+            <div className="mt-2 space-y-2">
+              {uploads.length === 0 ? (
+                <p className="rounded-md border border-dashed border-border px-3 py-4 text-center text-[11px] text-muted-foreground">
+                  No documents yet.
+                </p>
+              ) : (
+                uploads.map((d) => (
+                  <DocRow
+                    key={d.id}
+                    doc={d}
+                    onChange={(p) => patch(d.id, p)}
+                    onRemove={() => setDraft((prev) => prev.filter((x) => x.id !== d.id))}
+                  />
+                ))
+              )}
             </div>
+          </section>
 
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
-              <div className="text-[12px] font-semibold text-foreground">Evidence readiness</div>
-              <div className="text-[11px] text-muted-foreground">
-                {filled === 0
-                  ? "No evidence uploaded"
-                  : `${filled} of ${EVIDENCE_SLOTS.length} areas covered`}
+          <section>
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Requested documents
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[11px]"
+                onClick={() => setDraft((p) => [...p, blankDoc(true)])}
+              >
+                <UserPlus className="mr-1.5 h-3 w-3" />
+                Request document
+              </Button>
             </div>
-          </div>
+            <div className="mt-2 space-y-2">
+              {requests.length === 0 ? (
+                <p className="rounded-md border border-dashed border-border px-3 py-4 text-center text-[11px] text-muted-foreground">
+                  Nothing requested. Name what is missing and who should provide it.
+                </p>
+              ) : (
+                requests.map((d) => (
+                  <DocRow
+                    key={d.id}
+                    doc={d}
+                    onChange={(p) => patch(d.id, p)}
+                    onRemove={() => setDraft((prev) => prev.filter((x) => x.id !== d.id))}
+                  />
+                ))
+              )}
+            </div>
+          </section>
         </div>
 
         <div className="flex justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">
@@ -223,7 +245,7 @@ const MaterialRequirementsDialog: React.FC<{
             size="sm"
             className="h-8 text-[12px]"
             onClick={() => {
-              onSave(draft);
+              onSave(draft.filter((d) => d.name.trim() || d.fileName || d.description.trim()));
               onOpenChange(false);
             }}
           >
