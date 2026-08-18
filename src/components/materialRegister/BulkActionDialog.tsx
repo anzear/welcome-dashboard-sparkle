@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,12 @@ import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
-import { isProductLineTag, PRODUCT_LINES } from "@/components/materialRegister/productLines";
+import {
+  isProductLineTag,
+  PRODUCT_LINES,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 export type BulkKind =
   | "status"
@@ -128,6 +135,8 @@ export const BulkActionDialog: React.FC<Props> = ({
   const [values, setValues] = useState<string[]>([]);
   const [mode, setMode] = useState<BulkMode>("add");
   const [draft, setDraft] = useState("");
+  const [asLine, setAsLine] = useState(false);
+  const productLines = useProductLines();
   const [blockerCategory, setBlockerCategory] = useState<string>("");
   const [blockerDetail, setBlockerDetail] = useState<string>("");
   const [showList, setShowList] = useState(false);
@@ -141,6 +150,7 @@ export const BulkActionDialog: React.FC<Props> = ({
     setBlockerCategory("");
     setBlockerDetail("");
     setShowList(false);
+    setAsLine(false);
   }, [kind]);
 
   const isMulti = Boolean(kind && MULTI[kind]);
@@ -164,16 +174,22 @@ export const BulkActionDialog: React.FC<Props> = ({
   const addMatches = useMemo(() => {
     if (!isMulti) return [];
     const q = draft.trim().toLowerCase();
-    // Product lines are a fixed set, so offer them all before anything is typed.
-    if (!q) return kind === "product_lines" ? suggestions.filter((t) => !hasTag(values, t)) : [];
-    return suggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(values, t)).slice(0, 6);
-  }, [draft, suggestions, values, isMulti, kind]);
+    const pool =
+      kind === "tags" ? [...new Set([...productLines, ...suggestions])] : suggestions;
+    const available = pool.filter((t) => !hasTag(values, t));
+    // Product lines and the tag vocabulary are offered before anything is typed.
+    if (!q) return kind === "product_lines" || kind === "tags" ? available.slice(0, 12) : [];
+    return available.filter((t) => t.toLowerCase().includes(q)).slice(0, 8);
+  }, [draft, suggestions, values, isMulti, kind, productLines]);
 
-  const addValue = (raw: string) => {
+  const addValue = (raw: string, markLine?: boolean) => {
     const t = normalizeTag(raw);
     setDraft("");
-    if (!t || hasTag(values, t)) return;
-    setValues((prev) => [...prev, t]);
+    if (!t) return;
+    const stored =
+      kind === "tags" && (markLine ?? asLine) ? (registerProductLine(t) ?? t) : t;
+    if (hasTag(values, stored)) return;
+    setValues((prev) => [...prev, stored]);
   };
 
   /** Per-value consequence sentence: who gains it, who already has it. */
@@ -324,8 +340,16 @@ export const BulkActionDialog: React.FC<Props> = ({
                       {values.map((t) => (
                         <span
                           key={t}
-                          className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]",
+                            kind === "tags" && isProductLineTag(t)
+                              ? "border border-primary/40 bg-primary/10 font-medium"
+                              : "bg-muted",
+                          )}
                         >
+                          {kind === "tags" && isProductLineTag(t) && (
+                            <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
+                          )}
                           {t}
                           <button
                             type="button"
@@ -353,18 +377,41 @@ export const BulkActionDialog: React.FC<Props> = ({
                         className="min-w-[10rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
                       />
                     </div>
+                    {kind === "tags" && (
+                      <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <Checkbox
+                          checked={asLine}
+                          onCheckedChange={(v) => setAsLine(v === true)}
+                          className="h-3 w-3"
+                        />
+                        This tag is a product line
+                      </label>
+                    )}
                     {addMatches.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {addMatches.map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => addValue(t)}
-                            className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                          >
-                            {t}
-                          </button>
-                        ))}
+                      <div className="space-y-1">
+                        <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
+                          {draft.trim() ? "Matches" : `Existing ${cfgNoun}s`}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {addMatches.map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => addValue(t, isProductLineTag(t))}
+                              className={cn(
+                                "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
+                                kind === "tags" && isProductLineTag(t)
+                                  ? "border-primary/40 text-primary"
+                                  : "border-border",
+                              )}
+                            >
+                              {kind === "tags" && isProductLineTag(t) && (
+                                <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
+                              )}
+                              {t}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>

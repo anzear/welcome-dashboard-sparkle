@@ -277,7 +277,8 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             onChange={(v) => setTags(cleanTags(v))}
             suggestions={suggestions.tags}
             placeholder="e.g. Solvents"
-            hint="Free text, your own labels. Nothing is derived from tags."
+            typedTags
+            hint="Free text, your own labels. Tick the box to record a tag as a product line."
           />
 
           <div className="space-y-1">

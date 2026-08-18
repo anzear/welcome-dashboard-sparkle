@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  isProductLineTag,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 export const LABEL = "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground";
 
@@ -98,6 +104,8 @@ interface TagInputProps {
   suggestions?: string[];
   placeholder?: string;
   hint?: string;
+  /** Tags carry a type: a new tag can be marked as a product line as it is added. */
+  typedTags?: boolean;
 }
 
 /** Multi-select with free entry. Suggestions never restrict what can be typed. */
@@ -108,18 +116,26 @@ export const TagInput: React.FC<TagInputProps> = ({
   suggestions = [],
   placeholder = "Type and press Enter",
   hint,
+  typedTags,
 }) => {
   const [draft, setDraft] = useState("");
-  const matches = draft.trim()
-    ? suggestions
-        .filter((s) => s.toLowerCase().includes(draft.trim().toLowerCase()) && !values.includes(s))
-        .slice(0, 6)
-    : [];
+  const [asLine, setAsLine] = useState(false);
+  const lines = useProductLines();
+  const q = draft.trim().toLowerCase();
+  const pool = typedTags ? [...new Set([...lines, ...suggestions])] : suggestions;
+  const available = pool.filter((s) => !values.some((v) => v.toLowerCase() === s.toLowerCase()));
+  const matches = q
+    ? available.filter((s) => s.toLowerCase().includes(q)).slice(0, 8)
+    : typedTags
+      ? available.slice(0, 12)
+      : [];
 
-  const add = (v: string) => {
+  const add = (v: string, markLine?: boolean) => {
     const t = v.trim();
-    if (!t || values.includes(t)) return setDraft("");
-    onChange([...values, t]);
+    if (!t) return setDraft("");
+    const stored = typedTags && (markLine ?? asLine) ? (registerProductLine(t) ?? t) : t;
+    if (values.some((x) => x.toLowerCase() === stored.toLowerCase())) return setDraft("");
+    onChange([...values, stored]);
     setDraft("");
   };
 
@@ -130,8 +146,16 @@ export const TagInput: React.FC<TagInputProps> = ({
         {values.map((v) => (
           <span
             key={v}
-            className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted/60 px-1.5 py-0.5 text-[10px]"
+            className={cn(
+              "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px]",
+              typedTags && isProductLineTag(v)
+                ? "border-primary/40 bg-primary/10 font-medium"
+                : "border-border bg-muted/60",
+            )}
           >
+            {typedTags && isProductLineTag(v) && (
+              <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
+            )}
             {v}
             <button type="button" onClick={() => onChange(values.filter((x) => x !== v))}>
               <X className="h-3 w-3 opacity-60 hover:opacity-100" />
@@ -153,18 +177,37 @@ export const TagInput: React.FC<TagInputProps> = ({
           className="min-w-[7rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
         />
       </div>
+      {typedTags && (
+        <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <Checkbox checked={asLine} onCheckedChange={(v) => setAsLine(v === true)} className="h-3 w-3" />
+          This tag is a product line
+        </label>
+      )}
       {matches.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {matches.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => add(s)}
-              className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              {s}
-            </button>
-          ))}
+        <div className="space-y-1">
+          {typedTags && (
+            <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
+              {q ? "Matches" : "Existing tags"}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-1">
+            {matches.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => add(s, isProductLineTag(s))}
+                className={cn(
+                  "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
+                  typedTags && isProductLineTag(s) ? "border-primary/40 text-primary" : "border-border",
+                )}
+              >
+                {typedTags && isProductLineTag(s) && (
+                  <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
+                )}
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
       {hint && <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>}

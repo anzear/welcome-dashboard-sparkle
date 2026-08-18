@@ -29,7 +29,11 @@ import BriefGate from "@/components/materialRegister/BriefGate";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
-import { isProductLineTag } from "@/components/materialRegister/productLines";
+import {
+  isProductLineTag,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 import {
   CURRENT_USER,
@@ -260,19 +264,29 @@ const TagsField: React.FC<{
 
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
-  const add = (raw?: string) => {
+  const [asLine, setAsLine] = useState(false);
+  const lines = useProductLines();
+  const add = (raw?: string, markLine?: boolean) => {
     const v = normalizeTag(raw ?? draft);
-    if (!v || hasTag(values, v)) {
+    if (!v) {
       setDraft("");
       return;
     }
-    onSave([...values, v]);
+    const asProductLine = markLine ?? asLine;
+    const stored = typedTags && asProductLine ? (registerProductLine(v) ?? v) : v;
+    if (hasTag(values, stored)) {
+      setDraft("");
+      return;
+    }
+    onSave([...values, stored]);
     setDraft("");
   };
   const q = draft.trim().toLowerCase();
+  const pool = typedTags ? [...new Set([...lines, ...suggestions])] : suggestions;
+  const available = pool.filter((s) => !hasTag(values, s));
   const matches = q
-    ? suggestions.filter((s) => s.toLowerCase().includes(q) && !hasTag(values, s)).slice(0, 6)
-    : [];
+    ? available.filter((s) => s.toLowerCase().includes(q)).slice(0, 8)
+    : available.slice(0, 12);
   return (
     <div className={cn("group min-h-[46px] px-1 py-1", wideField && "sm:col-span-2")}>
       <div className="flex items-baseline justify-between gap-2">
@@ -350,18 +364,39 @@ const TagsField: React.FC<{
           </Button>
         </div>
       )}
+      {open && typedTags && (
+        <label className="flex items-center gap-1.5 pt-1.5 text-[10px] text-muted-foreground">
+          <Checkbox
+            checked={asLine}
+            onCheckedChange={(v) => setAsLine(v === true)}
+            className="h-3 w-3"
+          />
+          This tag is a product line
+        </label>
+      )}
       {open && matches.length > 0 && (
-        <div className="flex flex-wrap gap-1 pt-1">
-          {matches.map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => add(s)}
-              className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-            >
-              {s}
-            </button>
-          ))}
+        <div className="pt-1.5">
+          <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
+            {q ? "Matches" : "Existing tags"}
+          </div>
+          <div className="flex flex-wrap gap-1 pt-1">
+            {matches.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => add(s, isProductLineTag(s))}
+                className={cn(
+                  "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
+                  typedTags && isProductLineTag(s) ? "border-primary/40 text-primary" : "border-border",
+                )}
+              >
+                {typedTags && isProductLineTag(s) && (
+                  <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
+                )}
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
