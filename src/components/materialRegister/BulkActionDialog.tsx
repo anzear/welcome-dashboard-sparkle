@@ -150,6 +150,7 @@ export const BulkActionDialog: React.FC<Props> = ({
     setBlockerCategory("");
     setBlockerDetail("");
     setShowList(false);
+    setAsLine(false);
   }, [kind]);
 
   const isMulti = Boolean(kind && MULTI[kind]);
