@@ -201,7 +201,8 @@ export interface MaterialEvent {
 }
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
-  journey_status: "Status",
+  journey_status: "Gate status",
+  entry_type: "Entry type",
   owner: "Owner",
   priority_period: "Priority period",
   blocker_category: "Blocker",

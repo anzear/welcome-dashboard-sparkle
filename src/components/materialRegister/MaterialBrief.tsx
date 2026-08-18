@@ -712,7 +712,7 @@ export const MaterialBrief: React.FC = () => {
       <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
 
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <BarField label="Status" className="w-[180px]">
+          <BarField label="Gate status" className="w-[180px]">
             <Select
               value={draftStatus ?? m.journey_status}
               onValueChange={(v) => beginStatusChange(v as JourneyStatus)}

@@ -58,14 +58,14 @@ type OptionalColumn =
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["completeness", "Data filled", "Share of expected fields recorded"],
-  ["materialType", "Material type", "How the material enters the portfolio"],
+  ["materialType", "Entry type", "How the material enters the portfolio"],
   ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["suppliers", "Suppliers", "Count of qualified suppliers"],
   ["applications", "Applications", "Application categories the material serves"],
-  ["status", "Status", "Where the material sits in the journey"],
+  ["status", "Gate status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
@@ -393,7 +393,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="ml-auto flex items-center gap-1.5">
             {(
               [
-                ["status", "Set status"],
+                ["status", "Set gate status"],
                 ["owner", "Set owner"],
                 ["products", "Set product"],
                 ["applications", "Set application"],
@@ -475,7 +475,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 </th>
               )}
 
-              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material type</th>}
+              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>}
               {cols.materialCategory && (
                 <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
               )}
@@ -501,7 +501,7 @@ export const MaterialRegisterTable: React.FC = () => {
               {cols.applications && (
                 <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
               )}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>}
+              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>}
               {cols.priority && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>}
               {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
               {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
