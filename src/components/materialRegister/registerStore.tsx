@@ -10,12 +10,14 @@ import {
   statusForOutcome,
   todayIso,
 } from "@/components/materialRegister/gate";
+import { seedComments } from "@/components/materialRegister/briefComments";
 import {
   CONTRIBUTORS,
   CRITERIA,
   CRITERION_LABEL,
   DEFAULT_CONTRIBUTOR,
   assessmentKey,
+  contributorById,
 } from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
