@@ -953,7 +953,7 @@ export const MaterialBrief: React.FC = () => {
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
             title="Gate"
-            note="Two acts, kept apart. The owner recommends and reasons; the owner decides. Neither is calculated from the assessment."
+            note="Set by the owner. Never calculated from the assessment."
           >
             <BriefGate material={m} />
           </Section>

@@ -1383,15 +1383,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     setGateOutcome(materialId, "go_with_conditions", { conditions });
   };
 
-  /** Reopening clears the live reason but keeps the argument on the record. */
+  /**
+   * Back to under evaluation. From a no-go this clears the live reason but keeps
+   * the argument on the record; from any other status it simply reopens.
+   */
   const reopenGate = (materialId: string, note: string | null) => {
     const m = data.find((x) => x.material_id === materialId);
-    if (!m || !gateWritable(m) || m.journey_status !== "no_go") return;
+    if (!m || !gateWritable(m) || m.journey_status === "under_evaluation") return;
     const stamp = todayIso();
     patchMaterial(materialId, (prev) => ({
       ...prev,
       journey_status: "under_evaluation",
-      reopened: true,
+      reopened: prev.journey_status === "no_go" ? true : prev.reopened,
       previous_no_go: prev.no_go_reason
         ? {
             reason: prev.no_go_reason,
@@ -1409,7 +1412,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         material_id: materialId,
         event_type: "reopen",
         field: "reopen",
-        from_value: "no_go",
+        from_value: m.journey_status,
         to_value: "under_evaluation",
         reason: note?.trim() ? note.trim() : null,
         changed_by: currentUser.name,
