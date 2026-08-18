@@ -119,7 +119,10 @@ const CriterionRail: React.FC<{
                   "h-[18px] w-[18px] rounded-full border border-dashed transition-opacity",
                   draft === p
                     ? "border-provenance-judgement bg-provenance-judgement/20 opacity-100"
-                    : "border-provenance-judgement/50 opacity-0 group-hover/rail:opacity-60",
+                    : cn(
+                        "border-provenance-judgement/50 group-hover/rail:opacity-70",
+                        picking ? "opacity-60" : "opacity-25",
+                      ),
                 )}
               />
             </button>
