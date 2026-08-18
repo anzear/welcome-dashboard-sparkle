@@ -491,7 +491,7 @@ export const MaterialBrief: React.FC = () => {
 
   /** Records a numeric figure as entered, recomputing anything derived from it. */
   const saveFigure = (
-    field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
+    field: "annual_volume" | "unit_price" | "ghg_emission_factor",
     raw: string,
   ) => {
     const parsed = raw === "" ? null : Number(raw.replace(/[,\s]/g, ""));

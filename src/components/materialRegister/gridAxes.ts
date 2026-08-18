@@ -102,17 +102,6 @@ export const LENS_VARS: AxisVar[] = [
     fmt: (v) => `${nf(2).format(v)} kgCO2e/kg`,
   },
   {
-    id: "suppliers",
-    label: "Suppliers",
-    noun: "supplier count",
-    unit: "count",
-    kind: "measured",
-    group: "lens",
-    field: "supplier_count",
-    value: (m) => m.supplier_count,
-    fmt: (v) => `${nf(0).format(v)} suppliers`,
-  },
-  {
     id: "applications",
     label: "Applications",
     noun: "applications",
