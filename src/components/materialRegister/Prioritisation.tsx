@@ -25,6 +25,7 @@ import {
   type AxisVarId,
 } from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
+import { TEAM_LABEL } from "@/config/assessmentCriteria";
 
 const W = 600;
 const H = 300;
@@ -263,8 +264,8 @@ const Prioritisation: React.FC = () => {
     const j = jitter(p.m.material_id);
     return {
       ...p,
-      cx: sx(p.x) + j.dx,
-      cy: sy(p.y) + j.dy,
+      cx: p.xSpan ? sx((p.xSpan.low + p.xSpan.high) / 2) : sx(p.x) + j.dx,
+      cy: p.ySpan ? sy((p.ySpan.low + p.ySpan.high) / 2) : sy(p.y) + j.dy,
       r: DOT_R,
     };
   });
@@ -329,7 +330,17 @@ const Prioritisation: React.FC = () => {
   const labelTick = (v: number, scale: typeof xScale, judgement: boolean) =>
     !judgement || v === 0 || v === scale.min || v === scale.max || v % 2 === 0;
 
-  const axisTitle = (v: AxisVar) => `${v.label} (${v.unit})`;
+  const axisTitle = (v: AxisVar) =>
+    v.kind === "judgement" ? `${v.label} (1-5)` : `${v.label} (${v.unit})`;
+
+  const judgementAxes = [xv, yv].filter((v) => v.kind === "judgement");
+
+  /** Entries behind a judged position, listed in the hover panel. Never summarised. */
+  const judgementLines = (m: Material) =>
+    judgementAxes.map((v) => ({
+      axis: v,
+      rows: entriesFor(m.material_id, v.criterionId!),
+    }));
 
   return (
     <div className="w-full space-y-2">
@@ -384,23 +395,6 @@ const Prioritisation: React.FC = () => {
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Axes</div>
                   <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
                   <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
-                  <label className="flex items-center gap-1.5">
-                    <span className="w-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      ●
-                    </span>
-                    <select
-                      value={sizeId}
-                      onChange={(e) => setSizeId(e.target.value as SizeVarId)}
-                      className="h-7 w-full rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-                      aria-label="Size"
-                    >
-                      {SIZE_VARS.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label} (count)
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                 </div>
 
                 <div className="mt-2 space-y-1.5 border-t border-border pt-2">
@@ -701,20 +695,93 @@ const Prioritisation: React.FC = () => {
                           strokeWidth={1.2}
                         />
                       )}
-                      <circle
-                        cx={d.cx}
-                        cy={d.cy}
-                        r={d.r}
-                        className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
-                        fill={d.assessed ? "currentColor" : "none"}
-                        fillOpacity={d.assessed ? 0.75 : 0}
-                        stroke={isPicked ? "hsl(var(--primary))" : d.assessed ? "hsl(var(--background))" : "currentColor"}
-                        strokeWidth={isPicked ? 2 : d.assessed ? 0.8 : 1.3}
-                        strokeDasharray={d.assessed ? undefined : "2 1.6"}
-                        onMouseEnter={enter}
-                        onMouseLeave={() => setHover(null)}
-                        onClick={click}
-                      />
+                      {d.xSpan && d.ySpan ? (
+                        /* Both criteria diverge — a light rectangle over both ranges */
+                        <rect
+                          x={Math.min(sx(d.xSpan.low), sx(d.xSpan.high))}
+                          y={Math.min(sy(d.ySpan.low), sy(d.ySpan.high))}
+                          width={Math.abs(sx(d.xSpan.high) - sx(d.xSpan.low))}
+                          height={Math.abs(sy(d.ySpan.high) - sy(d.ySpan.low))}
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          fill="currentColor"
+                          fillOpacity={0.14}
+                          stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                          strokeOpacity={isPicked ? 1 : 0.6}
+                          strokeWidth={isPicked ? 2 : 1}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        />
+                      ) : d.xSpan || d.ySpan ? (
+                        /* One criterion diverges — a capped segment across its range */
+                        <g
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        >
+                          {d.xSpan ? (
+                            <>
+                              <line
+                                x1={sx(d.xSpan.low)}
+                                y1={d.cy}
+                                x2={sx(d.xSpan.high)}
+                                y2={d.cy}
+                                stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                strokeWidth={isPicked ? 2.4 : 1.6}
+                              />
+                              {[d.xSpan.low, d.xSpan.high].map((v) => (
+                                <line
+                                  key={v}
+                                  x1={sx(v)}
+                                  y1={d.cy - 3.4}
+                                  x2={sx(v)}
+                                  y2={d.cy + 3.4}
+                                  stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                  strokeWidth={isPicked ? 2.4 : 1.6}
+                                />
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              <line
+                                x1={d.cx}
+                                y1={sy(d.ySpan!.low)}
+                                x2={d.cx}
+                                y2={sy(d.ySpan!.high)}
+                                stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                strokeWidth={isPicked ? 2.4 : 1.6}
+                              />
+                              {[d.ySpan!.low, d.ySpan!.high].map((v) => (
+                                <line
+                                  key={v}
+                                  x1={d.cx - 3.4}
+                                  y1={sy(v)}
+                                  x2={d.cx + 3.4}
+                                  y2={sy(v)}
+                                  stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                  strokeWidth={isPicked ? 2.4 : 1.6}
+                                />
+                              ))}
+                            </>
+                          )}
+                        </g>
+                      ) : (
+                        <circle
+                          cx={d.cx}
+                          cy={d.cy}
+                          r={d.r}
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          fill={d.assessed ? "currentColor" : "none"}
+                          fillOpacity={d.assessed ? 0.75 : 0}
+                          stroke={isPicked ? "hsl(var(--primary))" : d.assessed ? "hsl(var(--background))" : "currentColor"}
+                          strokeWidth={isPicked ? 2 : d.assessed ? 0.8 : 1.3}
+                          strokeDasharray={d.assessed ? undefined : "2 1.6"}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        />
+                      )}
                     </g>
                   );
                 })}
@@ -745,8 +812,32 @@ const Prioritisation: React.FC = () => {
                 >
                   <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
                   <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
-                  <p className="mt-1 font-mono tabular-nums text-foreground">{xv.fmt(hover.dot.x)}</p>
-                  <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
+                  <p className="mt-1 font-mono tabular-nums text-foreground">
+                    {hover.dot.xSpan
+                      ? `${hover.dot.xSpan.low}-${hover.dot.xSpan.high}`
+                      : xv.fmt(hover.dot.x)}
+                  </p>
+                  <p className="font-mono tabular-nums text-foreground">
+                    {hover.dot.ySpan
+                      ? `${hover.dot.ySpan.low}-${hover.dot.ySpan.high}`
+                      : yv.fmt(hover.dot.y)}
+                  </p>
+                  {judgementLines(hover.dot.m).map(({ axis, rows: lines }) => (
+                    <div key={axis.id} className="mt-1.5 border-t border-border/60 pt-1.5">
+                      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        {axis.label}
+                      </p>
+                      {lines.map((e) => (
+                        <p key={e.user_id} className="text-muted-foreground">
+                          <span className="text-foreground">{TEAM_LABEL[e.team] ?? e.team}</span>{" "}
+                          <span className="font-mono tabular-nums text-foreground">
+                            {e.score === null ? "Neutral" : e.score}
+                          </span>
+                          {e.rationale ? ` · ${e.rationale}` : ""}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
                   {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
                   <p className="mt-1 text-muted-foreground">
                     {hover.dot.assessed
@@ -765,16 +856,19 @@ const Prioritisation: React.FC = () => {
                 <div className="text-[10px] font-medium text-foreground">Status colour</div>
                 <StatusLegend statuses={statusesPresent} />
               </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-medium text-foreground">Bubble size</div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
-                    <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
-                    <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
-                  </svg>
-                  {sizeVar.noun}
-                </span>
-              </div>
+              {judgementAxes.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] font-medium text-foreground">Range</div>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
+                      <line x1="4" y1="6" x2="22" y2="6" stroke="currentColor" strokeWidth="1.6" />
+                      <line x1="4" y1="2.6" x2="4" y2="9.4" stroke="currentColor" strokeWidth="1.6" />
+                      <line x1="22" y1="2.6" x2="22" y2="9.4" stroke="currentColor" strokeWidth="1.6" />
+                    </svg>
+                    Segment — teams gave different scores, the line spans their range
+                  </span>
+                </div>
+              )}
               <div className="space-y-2">
                 <div className="text-[10px] font-medium text-foreground">Not assessed</div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
