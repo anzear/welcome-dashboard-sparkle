@@ -10,7 +10,7 @@ export const nf = (decimals = 0) =>
   });
 
 export const Missing: React.FC = () => (
-  <span className="text-muted-foreground/50" title="No value recorded — unranked">
+  <span className="text-muted-foreground/50" title="No value recorded">
     —
   </span>
 );

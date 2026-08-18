@@ -58,7 +58,7 @@ export interface Measure {
   label: string;
   /** compact chip label */
   short: string;
-  /** label used in the unranked divider, lower-case */
+  /** label used in the no-figure divider, lower-case */
   noun: string;
   /** axis / figure unit for the measure */
   unit: string;
@@ -254,8 +254,8 @@ interface Store {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   filtersActive: boolean;
-  onlyUnranked: boolean;
-  setOnlyUnranked: React.Dispatch<React.SetStateAction<boolean>>;
+  onlyNoFigure: boolean;
+  setOnlyNoFigure: React.Dispatch<React.SetStateAction<boolean>>;
   onlyDivergent: boolean;
   setOnlyDivergent: React.Dispatch<React.SetStateAction<boolean>>;
   onlySelected: boolean;
@@ -447,7 +447,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
-  const [onlyUnranked, setOnlyUnranked] = useState(false);
+  const [onlyNoFigure, setOnlyNoFigure] = useState(false);
   const [onlyDivergent, setOnlyDivergent] = useState(false);
   const [onlySelected, setOnlySelected] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -649,13 +649,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const filteredTotal = filtered.length;
   const missingCount = filteredTotal - rankedCount;
   const divergentCount = ordered.filter((r) => r.gapMeasure !== null).length;
-  const bothFilters = onlyUnranked && onlyDivergent;
+  const bothFilters = onlyNoFigure && onlyDivergent;
 
   const visible = bothFilters
     ? []
     : ordered.filter(
         (r) =>
-          (!onlyUnranked || r.rank === null) &&
+          (!onlyNoFigure || r.rank === null) &&
           (!onlyDivergent || r.gapMeasure !== null) &&
           (!onlySelected || selected.has(r.m.material_id)),
       );
@@ -1358,8 +1358,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters,
     setFilters,
     filtersActive,
-    onlyUnranked,
-    setOnlyUnranked,
+    onlyNoFigure,
+    setOnlyNoFigure,
     onlyDivergent,
     setOnlyDivergent,
     onlySelected,

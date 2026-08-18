@@ -184,7 +184,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   return (
     <div className="space-y-5">
       <p className="rounded-md border border-border bg-muted/40 px-2 py-1.5 text-[11px] text-muted-foreground">
-        Add what you have. Missing figures show as unranked.
+        Add what you have. Missing figures carry no rank on that measure.
       </p>
 
       {/* Step 1 */}

@@ -152,8 +152,8 @@ export const MaterialRegisterTable: React.FC = () => {
     filters,
     setFilters,
     filtersActive,
-    onlyUnranked,
-    setOnlyUnranked,
+    onlyNoFigure,
+    setOnlyNoFigure,
     onlyDivergent,
     setOnlyDivergent,
     onlySelected,
@@ -226,7 +226,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const ownerNames = options.owners.filter((o) => o.value !== UNASSIGNED_OWNER).map((o) => o.value);
 
   const firstUnrankedId =
-    onlyUnranked || onlyDivergent ? null : visible.find((r) => r.rank === null)?.m.material_id ?? null;
+    onlyNoFigure || onlyDivergent ? null : visible.find((r) => r.rank === null)?.m.material_id ?? null;
 
   const activeCol = (id: MeasureId) => measureId === id;
   const emphHead = (id: MeasureId) => (activeCol(id) ? "text-primary" : undefined);
@@ -367,10 +367,10 @@ export const MaterialRegisterTable: React.FC = () => {
           <>
             <button
               type="button"
-              onClick={() => setOnlyUnranked((v) => !v)}
+              onClick={() => setOnlyNoFigure((v) => !v)}
               className="underline decoration-dotted underline-offset-2 hover:text-foreground"
             >
-              {onlyUnranked ? "Show all" : `${missingCount} unranked`}
+              {onlyNoFigure ? "Show all" : `${missingCount} unranked`}
             </button>
             <span className="text-border">·</span>
           </>
