@@ -279,8 +279,13 @@ const DriverScoring: React.FC = () => {
                       onClick={() => cycleSort(q.question_id)}
                       className="flex w-full flex-col items-center gap-0.5"
                     >
-                      <span className={cn(HEAD, "hover:text-foreground", active && "text-primary")}>
-                        {q.short}
+                      <span
+                        className={cn(
+                          "text-center text-[9px] font-semibold uppercase leading-[1.15] tracking-wide",
+                          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {q.label}
                         {arrow(q.question_id)}
                       </span>
                       <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
