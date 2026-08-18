@@ -1,4 +1,27 @@
-export type EntryType = "drop_in_substitute" | "new_substitute" | "new_application";
+export type EntryType = "drop_in" | "substitution" | "new_material";
+
+export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
+  drop_in: "Drop-in",
+  substitution: "Substitution",
+  new_material: "New material",
+};
+
+/** Legacy entry-type values seen in stored/mock data. */
+export const migrateEntryType = (v: unknown): EntryType => {
+  switch (v) {
+    case "drop_in":
+    case "drop_in_substitute":
+      return "drop_in";
+    case "substitution":
+    case "new_substitute":
+      return "substitution";
+    case "new_material":
+    case "new_application":
+      return "new_material";
+    default:
+      return "drop_in";
+  }
+};
 
 /**
  * What the replacement has to achieve. Every field optional — a requirement the
