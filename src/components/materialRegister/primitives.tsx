@@ -111,6 +111,33 @@ export const provenanceLine = (
   return `Source: ${p.source ?? "unknown"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
 };
 
+/**
+ * Class-aware stamp for the Material brief. The class is fixed per field, so a
+ * missing value still reports its class — it reads "no value recorded", never 0.
+ *   company_entered  "ERP extract 2026-Q1 · 18 Jan 2026"
+ *   vcg_computed     "VCG data · 12 Feb 2026"
+ *   team_judgement   "K. Brandt · 27 Jan 2026"
+ */
+export const provenanceStamp = (
+  field: string,
+  provenance: FieldProvenance | undefined,
+  hasValue: boolean,
+  computedInputs?: string,
+): string => {
+  const cls = provenanceClassOf(field);
+  const date = provenance?.date ? ` · ${fmtDate(provenance.date)}` : "";
+  if (cls === "vcg_computed") {
+    if (!hasValue) return computedInputs ? `VCG computed from ${computedInputs} — no value recorded` : "VCG data — no value recorded";
+    return computedInputs ? `VCG computed: ${computedInputs}${date}` : `VCG data${date}`;
+  }
+  if (cls === "team_judgement") {
+    if (!hasValue) return "No judgement recorded";
+    return `${provenance?.source ?? "Unattributed"}${date}`;
+  }
+  if (!hasValue) return "No value recorded";
+  return `${provenance?.source ?? "Source unknown"}${date}`;
+};
+
 /** Relative readout for a planned date. Undated is a state, never "today". */
 export const relativeDate = (
   iso: string | null,
