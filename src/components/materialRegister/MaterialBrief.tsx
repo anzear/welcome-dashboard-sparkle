@@ -369,16 +369,19 @@ const TagsField: React.FC<{
 };
 
 /** Compact labelled control for the decision bar. */
-const BarField: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({
+const BarField: React.FC<{ label: string; children: React.ReactNode; className?: string; hint?: string }> = ({
   label,
   children,
   className,
+  hint,
 }) => (
-  <div className={cn("min-w-0 space-y-1", className)}>
-    <div className="text-[11px] text-muted-foreground">{label}</div>
-    {children}
+  <div className={cn("min-w-0", className)}>
+    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</div>
+    <div className="flex h-8 items-center">{children}</div>
+    <div className="mt-1 h-[13px] text-[10px] leading-[13px] text-muted-foreground">{hint}</div>
   </div>
 );
+
 
 export const MaterialBrief: React.FC = () => {
   const {
@@ -865,12 +868,12 @@ export const MaterialBrief: React.FC = () => {
 
 
       {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
+      <div className="mt-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
 
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+        <div className="flex flex-wrap items-start gap-y-4 px-4 py-3">
           {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
-          <BarField label="Status" className="w-[180px]">
-            <div className="flex h-8 flex-wrap items-center gap-1.5">
+          <BarField label="Status" className="w-[190px] pr-5" hint="Set in the Gate card">
+            <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
                 <span
@@ -881,10 +884,10 @@ export const MaterialBrief: React.FC = () => {
                 </span>
               )}
             </div>
-            <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
           </BarField>
 
-          <BarField label="Owner" className="w-[180px]">
+
+          <BarField label="Owner" className="w-[190px] border-l border-border/60 px-5">
             <Select
               value={m.owner ?? UNASSIGNED}
               onValueChange={(v) => {
@@ -901,7 +904,7 @@ export const MaterialBrief: React.FC = () => {
                 ]);
               }}
             >
-              <SelectTrigger className="h-8 bg-background text-xs">
+              <SelectTrigger className="h-8 w-full bg-background text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="portfolio-type">
@@ -917,8 +920,12 @@ export const MaterialBrief: React.FC = () => {
             </Select>
           </BarField>
 
-          <BarField label="Priority period" className="w-[220px]">
-            <div className="flex items-center gap-2">
+          <BarField
+            label="Priority period"
+            className="w-[210px] border-l border-border/60 px-5"
+            hint={m.priority_period === null ? "Not prioritised" : undefined}
+          >
+            <div className="flex w-full items-center gap-2">
               <Input
                 list="priority-periods-in-use"
                 defaultValue={m.priority_period ?? ""}
@@ -931,8 +938,8 @@ export const MaterialBrief: React.FC = () => {
                   if (next === (m.priority_period ?? null)) return;
                   commitPeriod(next);
                 }}
-                placeholder="Not prioritised"
-                className="h-8 bg-background font-mono text-[11px]"
+                placeholder="e.g. H2 2026"
+                className="h-8 min-w-0 flex-1 bg-background font-mono text-[11px]"
               />
               <datalist id="priority-periods-in-use">
                 {periodSuggestions.map((p) => (
@@ -951,33 +958,44 @@ export const MaterialBrief: React.FC = () => {
             </div>
           </BarField>
 
-
           {draftStatus === null && (
-            <div className="ml-auto" title="Calculated by the platform from the figures. Four separate positions, never combined into one score.">
-              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
-              <PositionBlock
-                materialId={m.material_id}
-                gapMeasure={row?.gapMeasure ?? null}
-                gapSize={row?.gapSize ?? 0}
-                variant="inline"
-              />
+            <div
+              className="ml-auto border-border/60 pl-5 sm:border-l"
+              title="Calculated by the platform from the figures. Four separate positions, never combined into one score."
+            >
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Position
+              </div>
+              <div className="flex h-8 items-center">
+                <PositionBlock
+                  materialId={m.material_id}
+                  gapMeasure={row?.gapMeasure ?? null}
+                  gapSize={row?.gapSize ?? 0}
+                  variant="inline"
+                />
+              </div>
+              <div className="mt-1 h-[13px] text-[10px] leading-[13px] text-muted-foreground">
+                Four separate rankings
+              </div>
             </div>
           )}
 
           {draftStatus !== null && (
-            <div className="ml-auto flex items-center gap-2">
-
-              <span className="text-[10px] text-muted-foreground">
-                {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
-              </span>
-              <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
-                Save changes
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
-                Discard
-              </Button>
+            <div className="ml-auto self-center border-border/60 pl-5 sm:border-l">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">
+                  {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
+                </span>
+                <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
+                  Save changes
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
+                  Discard
+                </Button>
+              </div>
             </div>
           )}
+
         </div>
 
       </div>
