@@ -465,6 +465,14 @@ export const MaterialRegisterTable: React.FC = () => {
         </div>
       )}
 
+      {exportNote && (
+        <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
+          <span>{exportNote}</span>
+          <button type="button" className="ml-auto" onClick={() => setExportNote(null)}>
+            <X className="h-3 w-3 opacity-60 hover:opacity-100" />
+          </button>
+        </div>
+      )}
 
       {toast && (
         <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
