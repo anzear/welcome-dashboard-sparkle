@@ -833,7 +833,7 @@ const Prioritisation: React.FC = () => {
                           <span className="font-mono tabular-nums text-foreground">
                             {e.score === null ? "Neutral" : e.score}
                           </span>
-                          {e.rationale ? ` · ${e.rationale}` : ""}
+                          {e.note ? ` · ${e.note}` : ""}
                         </p>
                       ))}
                     </div>
@@ -841,7 +841,7 @@ const Prioritisation: React.FC = () => {
                   {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
                   <p className="mt-1 text-muted-foreground">
                     {hover.dot.assessed
-                      ? `${hover.dot.sizeCount} ${hover.dot.sizeCount === 1 ? "person has" : "people have"} assessed it`
+                      ? `${hover.dot.contributorCount} ${hover.dot.contributorCount === 1 ? "person has" : "people have"} assessed it`
                       : "Nobody has assessed it yet"}
                   </p>
                   <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
