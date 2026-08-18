@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
+import { applyGateSeed } from "@/data/gateMock";
 import { seedAssessments } from "@/data/assessmentMock";
+import {
+  canSetGate,
+  hasOverdueCondition,
+  holdReviewOverdue,
+  statusForOutcome,
+  todayIso,
+} from "@/components/materialRegister/gate";
 import {
   CONTRIBUTORS,
   CRITERION_LABEL,
@@ -14,6 +22,8 @@ import {
   type AssessmentState,
   type Contributor,
   type FieldProvenance,
+  type GateCondition,
+  type GateOutcome,
   type JourneyStatus,
   type Material,
   type BatchOrigin,
@@ -148,6 +158,11 @@ export interface Filters {
   vcgSuppliersMax: number | null;
   /** Deliberately outside the range: not assessed is not a number. */
   vcgSuppliersNotAssessed: boolean;
+  /** Gate section. The five statuses are categories, never an ordered scale. */
+  gateOverdueCondition: boolean;
+  gateHoldReviewOverdue: boolean;
+  /** yes / no / any — a recommendation either exists or it does not. */
+  gateRecommendation: "yes" | "no" | "any";
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -169,6 +184,9 @@ export const EMPTY_FILTERS: Filters = {
   vcgSuppliersMin: null,
   vcgSuppliersMax: null,
   vcgSuppliersNotAssessed: false,
+  gateOverdueCondition: false,
+  gateHoldReviewOverdue: false,
+  gateRecommendation: "any",
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -312,12 +330,16 @@ export const useRegister = () => {
   return v;
 };
 
+/** The register as seeded, with gate positions and their events folded in. */
+const gateSeed = applyGateSeed(seedMaterialsWithHistory);
+export const seededMaterials = gateSeed.materials;
+
 export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.ReactNode }> = ({
-  rows = seedMaterialsWithHistory,
+  rows = seededMaterials,
   children,
 }) => {
   const [data, setData] = useState<Material[]>(rows);
-  const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
+  const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
@@ -357,7 +379,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.vcgCompetitor.length > 0 ||
     filters.vcgSuppliersMin !== null ||
     filters.vcgSuppliersMax !== null ||
-    filters.vcgSuppliersNotAssessed;
+    filters.vcgSuppliersNotAssessed ||
+    filters.gateOverdueCondition ||
+    filters.gateHoldReviewOverdue ||
+    filters.gateRecommendation !== "any";
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -368,6 +393,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
+      if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
+      if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
+      if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
+      if (filters.gateRecommendation === "no" && m.recommendation !== null) return false;
       if (filters.owners.length && !filters.owners.includes(m.owner ?? UNASSIGNED_OWNER)) return false;
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
       if (
