@@ -34,7 +34,7 @@ export const AddMaterialDialog: React.FC<Props> = ({ open, onOpenChange }) => {
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
+      <DialogContent className="portfolio-type max-h-[90vh] max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-sm">Add material</DialogTitle>
           <DialogDescription className="text-[11px]">

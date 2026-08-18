@@ -228,7 +228,7 @@ export const CsvUploadPanel: React.FC<{ onClose: () => void }> = ({ onClose }) =
                         <SelectTrigger className="h-6 w-64 text-[11px]">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="portfolio-type">
                           <SelectItem value={UNMAPPED} className="text-[11px]">
                             Ignore this column
                           </SelectItem>

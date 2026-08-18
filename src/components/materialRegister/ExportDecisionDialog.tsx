@@ -111,7 +111,7 @@ export const ExportDecisionDialog: React.FC<{
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="portfolio-type max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-sm">
             {batch

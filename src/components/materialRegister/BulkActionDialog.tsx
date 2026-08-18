@@ -267,7 +267,7 @@ export const BulkActionDialog: React.FC<Props> = ({
 
   return (
     <Dialog open={kind !== null} onOpenChange={(o) => !o && onCancel()}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="portfolio-type max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-sm">{title}</DialogTitle>
           <DialogDescription className="text-xs">
@@ -421,7 +421,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Select a value" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="portfolio-type">
                     {kind === "entry_type"
                       ? ENTRY_TYPES.map((e) => (
                           <SelectItem key={e.id} value={e.id} className="text-xs">
@@ -459,7 +459,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                 <SelectTrigger className="h-8 text-xs">
                   <SelectValue placeholder="Blocker category (required)" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="portfolio-type">
                   {BLOCKER_CATEGORIES.map((b) => (
                     <SelectItem key={b} value={b} className="text-xs">
                       {b}

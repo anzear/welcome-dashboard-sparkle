@@ -327,7 +327,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
                 <SelectTrigger className="h-7 text-[11px]">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="portfolio-type">
                   {STATUS_ORDER.map((s) => (
                     <SelectItem key={s} value={s} className="text-[11px]">
                       {JOURNEY_STATUS_LABEL[s]}

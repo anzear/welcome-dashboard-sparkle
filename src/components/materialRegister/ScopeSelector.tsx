@@ -71,7 +71,7 @@ const ScopeSelector: React.FC = () => {
             <ChevronDown className="h-3 w-3 opacity-60" />
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-60 p-1.5">
+        <PopoverContent align="start" className="portfolio-type w-60 p-1.5">
           <div className="px-2 pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
             Product line
           </div>

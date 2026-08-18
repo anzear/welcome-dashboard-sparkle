@@ -270,7 +270,7 @@ const AssessmentCoverage: React.FC = () => {
                   <SelectTrigger className="h-7 flex-1 rounded-md bg-card text-[11px]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="portfolio-type">
                     {judgedCriteria.map((c) => (
                       <SelectItem key={c.criterion_id} value={c.criterion_id} className="text-[11px]">
                         {c.label}
