@@ -969,12 +969,6 @@ export const MaterialBrief: React.FC = () => {
 
         <div className="space-y-4 self-start">
           <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
-
-
-
-
-
-          <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
             <div className="space-y-3">
               {(comments[m.material_id] ?? []).length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">No comments yet.</p>
