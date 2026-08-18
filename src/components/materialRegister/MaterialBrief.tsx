@@ -709,7 +709,7 @@ export const MaterialBrief: React.FC = () => {
 
       {/* Classification is corrected here, not in the page body. */}
       <Dialog open={classOpen} onOpenChange={setClassOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="portfolio-type max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-sm">Classification</DialogTitle>
             <DialogDescription className="text-xs">
@@ -842,7 +842,7 @@ export const MaterialBrief: React.FC = () => {
                   <SelectTrigger className="mt-1 h-8 max-w-[240px] text-xs">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="portfolio-type">
                     {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
                       <SelectItem key={k} value={k} className="text-xs">
                         {ENTRY_TYPE_LABEL[k]}
@@ -904,7 +904,7 @@ export const MaterialBrief: React.FC = () => {
               <SelectTrigger className="h-8 bg-background text-xs">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="portfolio-type">
                 {ownerNames.map((o) => (
                   <SelectItem key={o} value={o} className="text-xs">
                     {o}

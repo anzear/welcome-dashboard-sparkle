@@ -221,7 +221,7 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] max-w-xl overflow-y-auto">
+      <DialogContent className="portfolio-type max-h-[85vh] max-w-xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-[13px]">Judged criteria</DialogTitle>
           <DialogDescription className="text-[11px]">

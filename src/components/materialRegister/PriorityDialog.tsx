@@ -27,7 +27,7 @@ const PriorityDialog: React.FC<Props> = ({ open, add, period, materials, onCance
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onCancel()}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="portfolio-type max-w-md">
         <DialogHeader>
           <DialogTitle className="text-sm">
             {add ? `Add to the ${period} priority set` : `Remove from the ${period} priority set`}

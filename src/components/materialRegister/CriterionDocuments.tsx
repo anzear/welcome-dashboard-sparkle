@@ -47,7 +47,7 @@ const DocIcon: React.FC<{ type: DocumentFileType; className?: string }> = ({ typ
 /** Metadata and the note. Deliberately not "Open" — there is no file behind it. */
 const DetailsDialog: React.FC<{ doc: SupportingDocument | null; onClose: () => void }> = ({ doc, onClose }) => (
   <Dialog open={doc !== null} onOpenChange={(o) => !o && onClose()}>
-    <DialogContent className="max-w-md">
+    <DialogContent className="portfolio-type max-w-md">
       <DialogHeader>
         <DialogTitle className="text-[11px] font-bold uppercase tracking-widest">Document details</DialogTitle>
       </DialogHeader>
@@ -100,7 +100,7 @@ const AttachDialog: React.FC<{
         onOpenChange(v);
       }}
     >
-      <DialogContent className="max-w-md">
+      <DialogContent className="portfolio-type max-w-md">
         <DialogHeader>
           <DialogTitle className="text-[11px] font-bold uppercase tracking-widest">
             Attach document · {criterionLabel}

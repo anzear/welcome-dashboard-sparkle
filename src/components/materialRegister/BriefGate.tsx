@@ -175,7 +175,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               <SelectTrigger className="h-7 text-[11px]">
                 <SelectValue placeholder="Owner" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="portfolio-type">
                 {DEMO_USER_NAMES.map((n) => (
                   <SelectItem key={n} value={n} className="text-xs">
                     {n}
@@ -457,7 +457,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             <SelectTrigger className="h-7 text-[11px]">
               <SelectValue placeholder="What should happen?" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="portfolio-type">
               {(["go", "go_with_conditions", "hold", "no_go"] as GateOutcome[]).map((o) => (
                 <SelectItem key={o} value={o} className="text-xs">
                   {GATE_OUTCOME_LABEL[o]}

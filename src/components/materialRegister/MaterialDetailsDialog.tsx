@@ -94,7 +94,7 @@ const MaterialDetailsDialog: React.FC<{
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0">
+      <DialogContent className="portfolio-type max-w-3xl gap-0 overflow-hidden p-0">
         {/* Header */}
         <div className="flex items-start gap-3 border-b border-border bg-muted/40 px-5 py-4">
           <div className="flex h-9 w-9 items-center justify-center rounded-md border border-border bg-card">
@@ -146,7 +146,7 @@ const MaterialDetailsDialog: React.FC<{
                 <SelectTrigger className="h-9 text-[13px]">
                   <SelectValue placeholder="Select a category" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-popover">
+                <SelectContent className="portfolio-type z-50 bg-popover">
                   {classes.map((c) => (
                     <SelectItem key={c} value={c} className="text-[13px]">
                       {c}
@@ -162,7 +162,7 @@ const MaterialDetailsDialog: React.FC<{
                 <SelectTrigger className="h-9 text-[13px]">
                   <SelectValue placeholder="Select an application area" />
                 </SelectTrigger>
-                <SelectContent className="z-50 bg-popover">
+                <SelectContent className="portfolio-type z-50 bg-popover">
                   {applicationOptions.map((a) => (
                     <SelectItem key={a} value={a} className="text-[13px]">
                       {a}
@@ -234,7 +234,7 @@ const MaterialDetailsDialog: React.FC<{
                   <SelectTrigger className="h-9 text-[13px]">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="z-50 bg-popover">
+                  <SelectContent className="portfolio-type z-50 bg-popover">
                     <SelectItem value={UNASSIGNED_OWNER} className="text-[13px]">
                       Unassigned
                     </SelectItem>

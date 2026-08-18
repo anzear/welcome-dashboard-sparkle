@@ -26,7 +26,7 @@ const Inner: React.FC = () => {
 
   if (openId) {
     return (
-      <div className="h-full w-full overflow-y-auto">
+      <div className="portfolio-type h-full w-full overflow-y-auto">
         <div className="mx-auto w-full max-w-[1400px] px-6 py-4">
           <div className="mb-3 flex justify-end">
             <ViewingAsSwitcher />
@@ -38,7 +38,7 @@ const Inner: React.FC = () => {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto">
+    <div className="portfolio-type h-full w-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1400px] space-y-4 px-6 pb-16 pt-4">
         <div className="flex items-center justify-end gap-3">
           <ViewingAsSwitcher />
