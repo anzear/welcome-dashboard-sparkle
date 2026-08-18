@@ -65,6 +65,8 @@ export function eventSentence(e: MaterialEvent): string {
       return `No-go reason recorded`;
     case "reopen":
       return `Reopened — gate back to Under evaluation`;
+    case "decision_export":
+      return e.batch_id ? "Decision exported as part of a batch export" : "Decision exported";
     case "tags_change":
       return `Tags changed from ${e.from_value ?? "none"} to ${e.to_value ?? "none"}`;
 
