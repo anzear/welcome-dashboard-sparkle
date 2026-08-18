@@ -4,6 +4,13 @@ import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -540,6 +547,7 @@ export const MaterialBrief: React.FC = () => {
   const [draft, setDraft] = useState<Record<string, string>>({});
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
+  const [classOpen, setClassOpen] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
 
 
@@ -854,6 +862,14 @@ export const MaterialBrief: React.FC = () => {
               variant="outline"
               size="sm"
               className="h-7 text-xs"
+              onClick={() => setClassOpen(true)}
+            >
+              Edit classification
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
               onClick={() => setExportOpen(true)}
             >
               Export decision
@@ -874,138 +890,16 @@ export const MaterialBrief: React.FC = () => {
         )}
       </header>
 
-      <ExportDecisionDialog
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        materials={m ? [m] : []}
-        onExported={() => setExportNote("Decision exported · 1 material")}
-      />
-
-
-      {/* Decision bar — the interactive layer above the reference material */}
-      <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
-
-        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
-          <BarField label="Gate status" className="w-[180px]">
-            <div className="flex h-8 flex-wrap items-center gap-1.5">
-              <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
-              {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
-                <span
-                  className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
-                  title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
-                >
-                  {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
-                </span>
-              )}
-            </div>
-            <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
-          </BarField>
-
-          <BarField label="Owner" className="w-[180px]">
-            <Select
-              value={m.owner ?? UNASSIGNED}
-              onValueChange={(v) => {
-                const next = v === UNASSIGNED ? null : v;
-                if (next === m.owner) return;
-                updateMaterial(m.material_id, { owner: next }, ["owner"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "owner_change",
-                    field: "owner",
-                    from_value: m.owner,
-                    to_value: next,
-                  },
-                ]);
-              }}
-            >
-              <SelectTrigger className="h-8 bg-background text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ownerNames.map((o) => (
-                  <SelectItem key={o} value={o} className="text-xs">
-                    {o}
-                  </SelectItem>
-                ))}
-                <SelectItem value={UNASSIGNED} className="text-xs">
-                  Unassigned
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </BarField>
-
-          <BarField label="Priority period" className="w-[220px]">
-            <div className="flex items-center gap-2">
-              <Input
-                list="priority-periods-in-use"
-                defaultValue={m.priority_period ?? ""}
-                key={m.material_id + (m.priority_period ?? "")}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                }}
-                onBlur={(e) => {
-                  const next = e.target.value.trim() || null;
-                  if (next === (m.priority_period ?? null)) return;
-                  commitPeriod(next);
-                }}
-                placeholder="Not prioritised"
-                className="h-8 bg-background font-mono text-[11px]"
-              />
-              <datalist id="priority-periods-in-use">
-                {periodSuggestions.map((p) => (
-                  <option key={p} value={p} />
-                ))}
-              </datalist>
-              {m.priority_period !== null && (
-                <button
-                  type="button"
-                  onClick={() => commitPeriod(null)}
-                  className="shrink-0 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-          </BarField>
-
-
-          {draftStatus === null && (
-            <div className="ml-auto" title="Calculated by the platform from the figures. Four separate positions, never combined into one score.">
-              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
-              <PositionBlock
-                materialId={m.material_id}
-                gapMeasure={row?.gapMeasure ?? null}
-                gapSize={row?.gapSize ?? 0}
-                variant="inline"
-              />
-            </div>
-          )}
-
-          {draftStatus !== null && (
-            <div className="ml-auto flex items-center gap-2">
-
-              <span className="text-[10px] text-muted-foreground">
-                {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
-              </span>
-              <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
-                Save changes
-              </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
-                Discard
-              </Button>
-            </div>
-          )}
-        </div>
-
-      </div>
-
-      {/* Body — 55 / 45. Neither column scrolls. */}
-      <div className="mt-4 grid items-start gap-x-4 gap-y-4 lg:grid-cols-[55fr_45fr]">
-
-        {/* Left column */}
-        <div className="space-y-4 self-start">
-          <Section title="Classification" note="Identity and classification. Corrections are written to the event log.">
+      {/* Classification is corrected here, not in the page body. */}
+      <Dialog open={classOpen} onOpenChange={setClassOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Classification</DialogTitle>
+            <DialogDescription className="text-xs">
+              Identity and classification for {m.name}. Corrections are written to the event log.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto pr-1">
             <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
               <DerivedField
                 label="Name"
@@ -1141,7 +1035,141 @@ export const MaterialBrief: React.FC = () => {
                 </Select>
               </div>
             </div>
-          </Section>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <ExportDecisionDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        materials={m ? [m] : []}
+        onExported={() => setExportNote("Decision exported · 1 material")}
+      />
+
+
+      {/* Decision bar — the interactive layer above the reference material */}
+      <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
+
+        <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
+          <BarField label="Gate status" className="w-[180px]">
+            <div className="flex h-8 flex-wrap items-center gap-1.5">
+              <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
+              {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
+                <span
+                  className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
+                  title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
+                >
+                  {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
+          </BarField>
+
+          <BarField label="Owner" className="w-[180px]">
+            <Select
+              value={m.owner ?? UNASSIGNED}
+              onValueChange={(v) => {
+                const next = v === UNASSIGNED ? null : v;
+                if (next === m.owner) return;
+                updateMaterial(m.material_id, { owner: next }, ["owner"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "owner_change",
+                    field: "owner",
+                    from_value: m.owner,
+                    to_value: next,
+                  },
+                ]);
+              }}
+            >
+              <SelectTrigger className="h-8 bg-background text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ownerNames.map((o) => (
+                  <SelectItem key={o} value={o} className="text-xs">
+                    {o}
+                  </SelectItem>
+                ))}
+                <SelectItem value={UNASSIGNED} className="text-xs">
+                  Unassigned
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </BarField>
+
+          <BarField label="Priority period" className="w-[220px]">
+            <div className="flex items-center gap-2">
+              <Input
+                list="priority-periods-in-use"
+                defaultValue={m.priority_period ?? ""}
+                key={m.material_id + (m.priority_period ?? "")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                }}
+                onBlur={(e) => {
+                  const next = e.target.value.trim() || null;
+                  if (next === (m.priority_period ?? null)) return;
+                  commitPeriod(next);
+                }}
+                placeholder="Not prioritised"
+                className="h-8 bg-background font-mono text-[11px]"
+              />
+              <datalist id="priority-periods-in-use">
+                {periodSuggestions.map((p) => (
+                  <option key={p} value={p} />
+                ))}
+              </datalist>
+              {m.priority_period !== null && (
+                <button
+                  type="button"
+                  onClick={() => commitPeriod(null)}
+                  className="shrink-0 text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+          </BarField>
+
+
+          {draftStatus === null && (
+            <div className="ml-auto" title="Calculated by the platform from the figures. Four separate positions, never combined into one score.">
+              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
+              <PositionBlock
+                materialId={m.material_id}
+                gapMeasure={row?.gapMeasure ?? null}
+                gapSize={row?.gapSize ?? 0}
+                variant="inline"
+              />
+            </div>
+          )}
+
+          {draftStatus !== null && (
+            <div className="ml-auto flex items-center gap-2">
+
+              <span className="text-[10px] text-muted-foreground">
+                {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
+              </span>
+              <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
+                Save changes
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
+                Discard
+              </Button>
+            </div>
+          )}
+        </div>
+
+      </div>
+
+      {/* Body — 55 / 45. Neither column scrolls. */}
+      <div className="mt-4 grid items-start gap-x-4 gap-y-4 lg:grid-cols-[55fr_45fr]">
+
+        {/* Left column */}
+        <div className="space-y-4 self-start">
 
           <Section
             title="Figures"
