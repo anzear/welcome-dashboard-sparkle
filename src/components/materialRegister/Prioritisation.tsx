@@ -15,16 +15,14 @@ import PlottedList from "@/components/materialRegister/PlottedList";
 import {
   AXIS_PRESETS,
   DEFAULT_PRESET,
-  SIZE_MIN,
-  SIZE_VARS,
+  DOT_R,
   AXIS_VARS,
   findAxisVar,
+  judgementAxisVars,
   quadrantReadings,
   scaleFor,
-  sizeRadius,
   type AxisVar,
   type AxisVarId,
-  type SizeVarId,
 } from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
 
@@ -41,41 +39,67 @@ const jitter = (id: string) => {
   return { dx: ((h % 13) - 6) * 0.55, dy: (((h >> 2) % 13) - 6) * 0.55 };
 };
 
-interface Dot {
+/** Lowest and highest score recorded on a judged criterion. Never averaged. */
+interface Span {
+  low: number;
+  high: number;
+}
+
+interface PlacedPoint {
   m: Material;
   x: number;
   y: number;
-  cx: number;
-  cy: number;
-  r: number;
-  /** People who have recorded an assessment. Drives the bubble size. */
-  sizeCount: number;
+  /** Present only when contributors gave different scores on that axis. */
+  xSpan: Span | null;
+  ySpan: Span | null;
+  contributorCount: number;
   assessed: boolean;
 }
 
-/** Axis picker. Lenses only — a team judgement is never plotted on an axis. */
+interface Dot extends PlacedPoint {
+  cx: number;
+  cy: number;
+  r: number;
+}
+
+/** Axis picker. Measured lenses, plus the judged criteria as 1-5 axes. */
 const AxisSelect: React.FC<{
   label: string;
   value: string;
   vars: AxisVar[];
   onChange: (id: string) => void;
-}> = ({ label, value, vars, onChange }) => (
-  <label className="flex items-center gap-1.5">
-    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-7 max-w-56 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-      aria-label={label}
-    >
-      {vars.map((v) => (
-        <option key={v.id} value={v.id}>
-          {v.label} ({v.unit})
-        </option>
-      ))}
-    </select>
-  </label>
-);
+}> = ({ label, value, vars, onChange }) => {
+  const lenses = vars.filter((v) => v.group === "lens");
+  const judgements = vars.filter((v) => v.group === "judgement");
+  return (
+    <label className="flex items-center gap-1.5">
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 max-w-56 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
+        aria-label={label}
+      >
+        <optgroup label="Company figures">
+          {lenses.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.label} ({v.unit})
+            </option>
+          ))}
+        </optgroup>
+        {judgements.length > 0 && (
+          <optgroup label="Team judgement">
+            {judgements.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label} (1-5)
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+    </label>
+  );
+};
 
 const Prioritisation: React.FC = () => {
   const {
@@ -97,18 +121,35 @@ const Prioritisation: React.FC = () => {
     undo,
     scope,
     scopeLabel,
+    criteria,
+    entriesFor,
   } = useRegister();
 
-  const axisVars = AXIS_VARS;
+  const judgedCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement"),
+    [criteria],
+  );
+
+  /** Only 1-5 entries count. Neutral records an absence of view, never a position. */
+  const scoresFor = React.useCallback(
+    (materialId: string, criterionId: string) =>
+      entriesFor(materialId, criterionId)
+        .map((e) => e.score)
+        .filter((v): v is number => v !== null),
+    [entriesFor],
+  );
+
+  const axisVars = useMemo(
+    () => [...AXIS_VARS, ...judgementAxisVars(judgedCriteria, scoresFor)],
+    [judgedCriteria, scoresFor],
+  );
 
   const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
-  const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
   const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
 
   const xv = findAxisVar(axisVars, xId);
   const yv = findAxisVar(axisVars, yId);
-  const sizeVar = SIZE_VARS.find((v) => v.id === sizeId) ?? SIZE_VARS[0];
 
   /** The register's ranking measure follows the X axis so the readings stay coherent. */
   const pickX = (id: AxisVarId) => {
@@ -121,7 +162,6 @@ const Prioritisation: React.FC = () => {
     const p = AXIS_PRESETS.find((x) => x.id === presetId)!;
     pickX(p.x);
     setYId(p.y);
-    setSizeId(p.size);
   };
 
   const activePreset = AXIS_PRESETS.find((p) => p.x === xId && p.y === yId) ?? null;
@@ -149,10 +189,21 @@ const Prioritisation: React.FC = () => {
     [ordered, prioritySetOnly, inPrioritySet],
   );
 
+  /** Why a judged criterion cannot place a material. Neutral is not a position. */
+  const judgementGap = (m: Material, v: AxisVar): "no_entries" | "all_neutral" => {
+    const all = entriesFor(m.material_id, v.criterionId!);
+    return all.length === 0 ? "no_entries" : "all_neutral";
+  };
+
   const classified = useMemo(() => {
-    const plotted: { m: Material; x: number; y: number; sizeCount: number; assessed: boolean }[] = [];
+    const plotted: PlacedPoint[] = [];
     /** One entry per material, listing every axis it lacks a value for. */
     const entries: UnplottedEntry[] = [];
+
+    const spanOf = (m: Material, v: AxisVar): Span | null => {
+      const r = v.range?.(m);
+      return r && r.high > r.low ? r : null;
+    };
 
     rows.forEach(({ m }) => {
       const summary = assessmentSummary(m.material_id);
@@ -160,16 +211,25 @@ const Prioritisation: React.FC = () => {
       const y = yv.value(m);
       if (x === null || y === null) {
         const gaps: AxisVar[] = [];
-        if (x === null) gaps.push(xv);
-        if (y === null) gaps.push(yv);
-        entries.push({ m, gaps, sortValue: x === null ? y : x });
+        const reasons: Record<string, "no_entries" | "all_neutral"> = {};
+        if (x === null) {
+          gaps.push(xv);
+          if (xv.kind === "judgement") reasons[xv.id] = judgementGap(m, xv);
+        }
+        if (y === null) {
+          gaps.push(yv);
+          if (yv.kind === "judgement") reasons[yv.id] = judgementGap(m, yv);
+        }
+        entries.push({ m, gaps, sortValue: x === null ? y : x, reasons });
         return;
       }
       plotted.push({
         m,
         x,
         y,
-        sizeCount: summary.contributors.length,
+        xSpan: spanOf(m, xv),
+        ySpan: spanOf(m, yv),
+        contributorCount: summary.contributors.length,
         assessed: summary.entryCount > 0,
       });
     });
@@ -183,14 +243,15 @@ const Prioritisation: React.FC = () => {
     });
 
     return { plotted, entries, unplottedTotal: entries.length };
-  }, [rows, xv, yv, assessmentSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, xv, yv, assessmentSummary, entriesFor]);
 
   const { plotted, entries, unplottedTotal } = classified;
 
 
   /** Fixed domains for judgement axes; round derived scales for measured ones. */
-  const xScale = scaleFor(xv, plotted.map((p) => p.x));
-  const yScale = scaleFor(yv, plotted.map((p) => p.y));
+  const xScale = scaleFor(xv, plotted.map((p) => (p.xSpan ? p.xSpan.high : p.x)));
+  const yScale = scaleFor(yv, plotted.map((p) => (p.ySpan ? p.ySpan.high : p.y)));
 
   const sx = (v: number) => PAD.l + ((v - xScale.min) / (xScale.max - xScale.min)) * PW;
   const sy = (v: number) => PAD.t + PH - ((v - yScale.min) / (yScale.max - yScale.min)) * PH;
@@ -204,7 +265,7 @@ const Prioritisation: React.FC = () => {
       ...p,
       cx: sx(p.x) + j.dx,
       cy: sy(p.y) + j.dy,
-      r: p.assessed ? sizeRadius(p.sizeCount) : SIZE_MIN,
+      r: DOT_R,
     };
   });
 
@@ -366,7 +427,7 @@ const Prioritisation: React.FC = () => {
         {activePreset && <span className="hidden sm:inline text-border"> · </span>}
         <span className="hidden sm:inline">
             <span className="text-foreground">{xv.label}</span> against{" "}
-            <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
+            <span className="text-foreground">{yv.label}</span>
         </span>
         <span className="text-border"> · </span>
         <span>
