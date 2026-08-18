@@ -388,7 +388,7 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 
-export const MaterialBrief: React.FC = () => {
+export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   const {
     data,
     allMaterials,
