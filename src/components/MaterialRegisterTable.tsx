@@ -180,6 +180,8 @@ export const MaterialRegisterTable: React.FC = () => {
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
   const [addOpen, setAddOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportNote, setExportNote] = useState<string | null>(null);
   const [cols, setCols] = useState<Record<OptionalColumn, boolean>>(
     () =>
       Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])) as Record<
