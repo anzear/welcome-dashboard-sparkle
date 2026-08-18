@@ -4,7 +4,10 @@ import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
   type JourneyStatus,
+  type Material,
 } from "@/types/materialPrioritisation";
+import { completenessOf } from "@/components/materialRegister/completeness";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
