@@ -527,10 +527,8 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
         {judged.map((c) => (
           <JudgementRow key={c.criterion_id} criterion={c} materialId={material.material_id} />
         ))}
-
-          </div>
-        ))}
       </div>
+
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
     </div>
