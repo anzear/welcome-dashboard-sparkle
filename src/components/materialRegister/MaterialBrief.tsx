@@ -21,7 +21,7 @@ import {
   type Material,
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
-import { nf, provenanceLine, provenanceStamp, StatusPill } from "@/components/materialRegister/primitives";
+import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
@@ -1107,80 +1107,8 @@ export const MaterialBrief: React.FC = () => {
 
       </div>
 
-      {/* Body — 55 / 45. Neither column scrolls. */}
-      <div className="mt-4 grid items-start gap-x-4 gap-y-4 lg:grid-cols-[55fr_45fr]">
-
-        {/* Left column */}
-        <div className="space-y-4 self-start">
-
-          <Section
-            title="Figures"
-            note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
-          >
-            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-              <GroupLabel first>Volume and cost</GroupLabel>
-              <EditableFigure
-                label="Annual volume (t/yr)"
-                field="annual_volume"
-                value={m.annual_volume}
-                provenance={m.provenance.annual_volume}
-                placeholder="t/yr"
-                onSave={(raw) => saveFigure("annual_volume", raw)}
-              />
-              <EditableFigure
-                label="Unit price (EUR/kg)"
-                field="unit_price"
-                value={m.unit_price}
-                decimals={2}
-                provenance={m.provenance.unit_price}
-                placeholder="EUR/kg"
-                onSave={(raw) => saveFigure("unit_price", raw)}
-              />
-              <Figure
-                label="Annual spend (EUR)"
-                field="annual_spend"
-                value={m.annual_spend}
-                provenance={m.provenance.annual_spend}
-                computedInputs="volume x price"
-              />
-
-              <GroupLabel>Emissions</GroupLabel>
-              <EditableFigure
-                label="GHG emission factor (kgCO2e/kg)"
-                field="ghg_emission_factor"
-                value={m.ghg_emission_factor}
-                decimals={2}
-                provenance={m.provenance.ghg_emission_factor}
-                placeholder="kgCO2e/kg"
-                onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
-              />
-              <Figure
-                label="GHG contribution (tCO2e/yr)"
-                field="ghg_contribution"
-                value={m.ghg_contribution}
-                provenance={m.provenance.ghg_contribution}
-                computedInputs="volume x emission factor"
-              />
-              <EditableFigure
-                label="GHG boundary"
-                field="ghg_boundary"
-                value={m.ghg_boundary}
-                provenance={m.provenance.ghg_boundary}
-                placeholder="e.g. Cradle-to-gate (A1-A3)"
-                onSave={(raw) => saveText("ghg_boundary", raw)}
-              />
-              <EditableFigure
-                label="GHG data basis"
-                field="ghg_data_basis"
-                value={m.ghg_data_basis}
-                provenance={m.provenance.ghg_data_basis}
-                placeholder="e.g. Supplier-specific"
-                onSave={(raw) => saveText("ghg_data_basis", raw)}
-              />
-            </div>
-          </Section>
-
-        </div>
+      {/* Body — single column. Figures live inside the assessment now. */}
+      <div className="mt-4 space-y-4">
 
         {/* Right column */}
         <div className="space-y-4 self-start">
