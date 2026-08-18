@@ -67,11 +67,16 @@ export const SCORE_LABEL: Record<number, string> = {
   5: "5 — very strong",
 };
 
+/** Neutral is a recorded position, not a score. It never enters a count of scores. */
+export const NEUTRAL_LABEL = "Neutral";
+export const NEUTRAL_HELPER = "This team has no visibility here. Not 3, not 0 — never counted as a score.";
+
 export const TEAM_LABEL: Record<TeamId, string> = {
   rnd: "R&D",
   procurement: "Procurement",
   sustainability: "Sustainability",
-  commercial: "Commercial",
+  marketing: "Marketing",
+  regulatory: "Regulatory",
 };
 
 /** Demo account members. The switcher changes who an entry is recorded as. */
@@ -80,12 +85,12 @@ export const TEAM_LABEL: Record<TeamId, string> = {
  * so "Viewing as" can be compared against a material's owner for gate rights.
  */
 export const CONTRIBUTORS: Contributor[] = [
-  { user_id: "u-brandt", name: "K. Brandt", team: "rnd", role: "Formulation lead" },
-  { user_id: "u-haugen", name: "L. Haugen", team: "procurement", role: "Category manager" },
-  { user_id: "u-oyelaran", name: "M. Oyelaran", team: "sustainability", role: "Sustainability manager" },
-  { user_id: "u-vermeer", name: "A. Vermeer", team: "commercial", role: "Brand director" },
-  { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "procurement", role: "Sourcing manager" },
-  { user_id: "u-rautio", name: "S. Rautio", team: "rnd", role: "Process engineer" },
+  { user_id: "u-brandt", name: "K. Brandt", team: "procurement", role: "Category manager" },
+  { user_id: "u-oyelaran", name: "M. Oyelaran", team: "procurement", role: "Sourcing manager" },
+  { user_id: "u-rautio", name: "S. Rautio", team: "rnd", role: "Formulation lead" },
+  { user_id: "u-haugen", name: "L. Haugen", team: "sustainability", role: "Sustainability manager" },
+  { user_id: "u-vermeer", name: "A. Vermeer", team: "marketing", role: "Brand director" },
+  { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "regulatory", role: "Regulatory affairs manager" },
 ];
 
 /** Names available as a condition owner. */
