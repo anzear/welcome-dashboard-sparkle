@@ -176,6 +176,10 @@ export interface Filters {
   gateRecommendation: "yes" | "no" | "any";
   /** Evidence. Presence of supporting documents only — volume is never filtered. */
   hasDocuments: boolean;
+  /** Zero assessment entries from anyone. The one word for this state. */
+  notAssessed: boolean;
+  /** Carries a split flag on at least one judged criterion. */
+  teamsDisagree: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -201,6 +205,8 @@ export const EMPTY_FILTERS: Filters = {
   gateHoldReviewOverdue: false,
   gateRecommendation: "any",
   hasDocuments: false,
+  notAssessed: false,
+  teamsDisagree: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -475,11 +481,19 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
     filters.gateRecommendation !== "any" ||
-    filters.hasDocuments;
+    filters.hasDocuments ||
+    filters.notAssessed ||
+    filters.teamsDisagree;
 
   const documentedIds = useMemo(
     () => new Set(documents.map((d) => d.material_id)),
     [documents],
+  );
+
+  /** Materials somebody has recorded at least one assessment entry for. */
+  const assessedIds = useMemo(
+    () => new Set(Object.values(assessments).map((e) => e.material_id)),
+    [assessments],
   );
 
   const filtered = useMemo(() => {
@@ -492,6 +506,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
+      if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
+      if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
       if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
       if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
@@ -543,7 +559,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [scoped, filters, documentedIds]);
+  }, [scoped, filters, documentedIds, assessedIds, disagreeIds]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
