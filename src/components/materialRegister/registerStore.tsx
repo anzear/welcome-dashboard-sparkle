@@ -372,6 +372,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [data, setData] = useState<Material[]>(rows);
   const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
+  /** Criterion-level evidence. Shared across the team, mock records only. */
+  const [documents, setDocuments] = useState<SupportingDocument[]>(seedDocuments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
