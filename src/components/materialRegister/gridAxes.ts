@@ -5,8 +5,6 @@ import type { MeasureId } from "@/components/materialRegister/registerStore";
 /** Axis ids are the fixed lens ids. Judgements are never used as an axis. */
 export type AxisVarId = string;
 
-export type SizeVarId = "contributors";
-
 export interface AxisVar {
   id: AxisVarId;
   /** Control label. */
@@ -14,9 +12,11 @@ export interface AxisVar {
   /** Lower-case noun used in corner readings and sentences. */
   noun: string;
   unit: string;
-  /** Every axis is a measured figure. Assessments are shown, never plotted. */
-  kind: "measured";
-  group: "lens";
+  /** A measured figure, or a judged criterion plotted as a 1-5 range. */
+  kind: "measured" | "judgement";
+  group: "lens" | "judgement";
+  /** Set on judgement axes. The criterion the entries belong to. */
+  criterionId?: string;
   /** Present only for variables the register already ranks. */
   measureId?: MeasureId;
   /** Fixed axis domain. Absent for open-ended measured figures. */
@@ -24,6 +24,8 @@ export interface AxisVar {
   /** Numeric field behind a measured lens, so a gap can be filled inline. */
   field?: keyof Material;
   value: (m: Material) => number | null;
+  /** Judgement axes only: the lowest and highest score recorded, never an average. */
+  range?: (m: Material) => { low: number; high: number } | null;
   fmt: (v: number) => string;
 }
 
@@ -113,12 +115,37 @@ export const LENS_VARS: AxisVar[] = [
   },
 ];
 
-/** Bubble size encodes how many people have recorded an assessment. */
-export const SIZE_VARS: { id: SizeVarId; label: string; noun: string }[] = [
-  { id: "contributors", label: "Assessments recorded", noun: "assessments recorded" },
-];
+/** Judged criteria as axes. 1-5 integers only; a range when contributors disagree. */
+export const judgementAxisVars = (
+  criteria: { criterion_id: string; label: string }[],
+  scoresFor: (materialId: string, criterionId: string) => number[],
+): AxisVar[] =>
+  criteria.map((c) => {
+    const scores = (m: Material) => scoresFor(m.material_id, c.criterion_id);
+    return {
+      id: `judgement:${c.criterion_id}`,
+      label: c.label,
+      noun: c.label.toLowerCase(),
+      unit: "1-5",
+      kind: "judgement" as const,
+      group: "judgement" as const,
+      criterionId: c.criterion_id,
+      domain: { min: 1, max: 5 },
+      /** Position of a single view. A spread of views plots as a range instead. */
+      value: (m: Material) => {
+        const v = scores(m);
+        return v.length === 0 ? null : Math.min(...v);
+      },
+      range: (m: Material) => {
+        const v = scores(m);
+        if (v.length === 0) return null;
+        return { low: Math.min(...v), high: Math.max(...v) };
+      },
+      fmt: (v: number) => String(v),
+    };
+  });
 
-/** Full selector list. Lenses only — a judgement is never an axis. */
+/** Measured lenses only. Judgement axes are built from the live criterion set. */
 export const AXIS_VARS: AxisVar[] = LENS_VARS;
 
 export const findAxisVar = (vars: AxisVar[], id: AxisVarId): AxisVar =>
@@ -130,10 +157,9 @@ export interface AxisPreset {
   reading: string;
   x: AxisVarId;
   y: AxisVarId;
-  size: SizeVarId;
 }
 
-/** One click sets both axes and the size encoding. Any axis stays free to change afterwards. */
+/** One click sets both axes. Any axis stays free to change afterwards. */
 export const AXIS_PRESETS: AxisPreset[] = [
   {
     id: "spend-emissions",
@@ -141,7 +167,6 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "spend against emissions impact",
     x: "spend",
     y: "emissions",
-    size: "contributors",
   },
   {
     id: "spend-volume",
@@ -149,7 +174,6 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "spend against the volume behind it",
     x: "spend",
     y: "volume",
-    size: "contributors",
   },
   {
     id: "emissions-factor",
@@ -157,7 +181,6 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "total impact against carbon intensity",
     x: "emissions",
     y: "ghg_factor",
-    size: "contributors",
   },
   {
     id: "spend-applications",
@@ -165,20 +188,13 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "spend against how widely it is used",
     x: "spend",
     y: "applications",
-    size: "contributors",
   },
 ];
 
 export const DEFAULT_PRESET = AXIS_PRESETS[0];
 
-/** Bubble radius from a count of recorded assessments. Zero keeps a visible floor. */
-export const SIZE_MIN = 3.4;
-export const SIZE_MAX = 11;
-export const SIZE_CEILING = 6;
-export const sizeRadius = (count: number | null) =>
-  count === null || count <= 0
-    ? SIZE_MIN
-    : SIZE_MIN + (Math.min(count, SIZE_CEILING) / SIZE_CEILING) * (SIZE_MAX - SIZE_MIN);
+/** Every dot is the same size. Nothing is encoded in radius. */
+export const DOT_R = 4.2;
 
 /** Two- or three-word corner readings. Orientation, not a verdict. */
 export const quadrantReadings = (x: AxisVar, y: AxisVar) => ({
