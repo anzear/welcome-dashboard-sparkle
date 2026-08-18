@@ -62,11 +62,6 @@ const Section: React.FC<{
   </section>
 );
 
-
-    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</span>
-  </div>
-);
-
 const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
     {children}
