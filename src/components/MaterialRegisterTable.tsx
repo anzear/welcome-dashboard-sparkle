@@ -15,6 +15,13 @@ import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
+import {
+  CompetitorActivityMark,
+  SubstitutabilityChip,
+  SupplierAvailabilityValue,
+  VCG_RULE,
+  vcgStamp,
+} from "@/components/materialRegister/vcgSignals";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
@@ -46,13 +53,15 @@ type OptionalColumn =
   | "volume"
   | "spend"
   | "emissions"
-  | "suppliers"
   | "applications"
   | "status"
   | "priority"
   | "owner"
   | "intelligence"
-  | "lastChange";
+  | "lastChange"
+  | "vcgSubstitutability"
+  | "vcgSuppliers"
+  | "vcgCompetitor";
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
@@ -63,13 +72,15 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
-  ["suppliers", "Suppliers", "Count of qualified suppliers"],
   ["applications", "Applications", "Application categories the material serves"],
   ["status", "Gate status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
+  ["vcgSubstitutability", "Substitutability (VCG)", "Whether a commercial substitution path exists today"],
+  ["vcgSuppliers", "Suppliers (VCG)", "Suppliers VCG detects for an alternative"],
+  ["vcgCompetitor", "Competitor activity (VCG)", "Whether competitor movement is detectable"],
 ];
 
 /** Share of the expected record that is actually filled in. Never a score. */
@@ -497,7 +508,6 @@ export const MaterialRegisterTable: React.FC = () => {
                   <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
                 </th>
               )}
-              {cols.suppliers && <th className={cn(HEAD, "px-3 py-2.5 text-right")}>Suppliers</th>}
               {cols.applications && (
                 <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
               )}
@@ -506,6 +516,42 @@ export const MaterialRegisterTable: React.FC = () => {
               {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
               {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
+
+              {/* VCG signals — ours, set apart from the company columns to their left. */}
+              {cols.vcgSubstitutability && (
+                <th className={cn(HEAD, VCG_HEAD, VCG_RULE, "px-3 py-2.5 text-left")}>
+                  <div className={VCG_GROUP}>VCG signals</div>
+                  Substitutability
+                </th>
+              )}
+              {cols.vcgSuppliers && (
+                <th
+                  className={cn(
+                    HEAD,
+                    VCG_HEAD,
+                    !cols.vcgSubstitutability && VCG_RULE,
+                    "px-3 py-2.5 text-right",
+                  )}
+                >
+                  <div className={VCG_GROUP}>{cols.vcgSubstitutability ? "\u00a0" : "VCG signals"}</div>
+                  Suppliers
+                </th>
+              )}
+              {cols.vcgCompetitor && (
+                <th
+                  className={cn(
+                    HEAD,
+                    VCG_HEAD,
+                    !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
+                    "px-3 pr-6 py-2.5 text-left",
+                  )}
+                >
+                  <div className={VCG_GROUP}>
+                    {cols.vcgSubstitutability || cols.vcgSuppliers ? "\u00a0" : "VCG signals"}
+                  </div>
+                  Competitor activity
+                </th>
+              )}
 
             </tr>
           </thead>
@@ -649,11 +695,6 @@ export const MaterialRegisterTable: React.FC = () => {
                           provenance={m.provenance.ghg_contribution}
                           emphasis={activeCol("emissions")}
                         />
-                      </td>
-                    )}
-                    {cols.suppliers && (
-                      <td className="px-3 py-2 text-right align-middle">
-                        <NumCell value={m.supplier_count} provenance={m.provenance.supplier_count} />
                       </td>
                     )}
                     {cols.applications && (
