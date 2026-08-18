@@ -62,16 +62,15 @@ const Section: React.FC<{
 );
 
 /**
- * VCG signals card. Three computed flags and nothing behind them: no expand, no
- * drill-down, no hover reveal. The absence is deliberate — pathway detail,
- * supplier identity and competitor breakdown sit behind an intelligence order.
+ * VCG signals card — announced, not yet live. The three signals are named so the
+ * team knows what is coming, but no value is shown: an unbuilt signal must never
+ * read as a measured one.
  */
 const VcgSignalsCard: React.FC<{ material: Material }> = ({ material }) => {
-  const stamp = vcgStamp(material);
-  const rows: [string, React.ReactNode][] = [
-    ["Substitutability", <SubstitutabilityChip value={material.substitutability_readiness} />],
-    ["Suppliers", <SupplierAvailabilityValue value={material.supplier_availability} />],
-    ["Competitor activity", <CompetitorActivityMark value={material.competitor_activity} withLabel />],
+  const rows: [string, string][] = [
+    ["Substitutability", "Whether a commercial substitution path exists today"],
+    ["Suppliers", "How many suppliers VCG can find for an alternative"],
+    ["Competitor activity", "Whether competitor movement is detectable"],
   ];
 
   return (
@@ -82,30 +81,39 @@ const VcgSignalsCard: React.FC<{ material: Material }> = ({ material }) => {
       )}
     >
       <div className="border-b border-border/70 pb-1.5">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-provenance-vcg">VCG signals</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-provenance-vcg">VCG signals</h2>
+          <ComingSoonTag />
+        </div>
         <p className="pt-1 text-xs leading-snug text-muted-foreground">
-          Computed by VCG from our data. Not measurements taken by your team, and not the full intelligence
-          set.
+          Computed by VCG from our data — not measurements taken by your team. Not live yet, so nothing here
+          feeds a decision.
         </p>
       </div>
 
       <div className="divide-y divide-border/50">
-        {rows.map(([label, value]) => (
+        {rows.map(([label, what]) => (
           <div key={label} className="flex items-start justify-between gap-4 py-2">
             <div>
               <div className="text-xs font-medium text-foreground">{label}</div>
-              <div className="pt-0.5 text-[10px] text-muted-foreground">{stamp}</div>
+              <div className="pt-0.5 text-[10px] leading-snug text-muted-foreground">{what}</div>
             </div>
-            <div className="shrink-0 pt-0.5">{value}</div>
+            <div className="shrink-0 pt-0.5">
+              <ComingSoonTag />
+            </div>
           </div>
         ))}
       </div>
 
       <p className="border-t border-border/50 pt-2.5 text-xs leading-snug text-muted-foreground">
-        Signals only. Pathway detail, supplier identity, and competitor breakdown sit behind an intelligence
-        order.
+        Signals only. Pathway detail, supplier identity, and competitor breakdown will sit behind an
+        intelligence order.
       </p>
-      <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
+      <Button
+        size="sm"
+        disabled
+        className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
+      >
         Order intelligence
       </Button>
     </section>
