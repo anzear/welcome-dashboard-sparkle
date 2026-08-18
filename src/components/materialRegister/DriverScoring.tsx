@@ -11,7 +11,7 @@ import { signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
 const HEAD = "text-[9px] font-semibold uppercase tracking-widest text-muted-foreground";
-const CELL_W = "w-[38px] min-w-[38px]";
+const CELL_W = "w-[52px] min-w-[52px]";
 
 /** null sorts to its own block at the bottom, never as a zero. */
 type SortDir = "desc" | "asc";
@@ -256,7 +256,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky left-8 z-30 min-w-[280px] border-b border-r border-border bg-card px-3 py-2 text-left",
+                  "sticky left-8 z-30 min-w-[200px] border-b border-r border-border bg-card px-3 py-2 text-left",
                 )}
               >
                 Material
@@ -279,8 +279,13 @@ const DriverScoring: React.FC = () => {
                       onClick={() => cycleSort(q.question_id)}
                       className="flex w-full flex-col items-center gap-0.5"
                     >
-                      <span className={cn(HEAD, "hover:text-foreground", active && "text-primary")}>
-                        {q.short}
+                      <span
+                        className={cn(
+                          "text-center text-[9px] font-semibold uppercase leading-[1.15] tracking-wide",
+                          active ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        {q.label}
                         {arrow(q.question_id)}
                       </span>
                       <span className="font-mono text-[9px] tabular-nums text-muted-foreground/70">
@@ -294,7 +299,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
+                  "sticky right-0 z-30 w-[96px] min-w-[96px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
                   sort?.key === "last_changed" && "bg-primary/10",
                 )}
               >
@@ -352,7 +357,7 @@ const DriverScoring: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openBrief(m.material_id)}
-                        className="block max-w-[260px] truncate text-left leading-tight hover:text-primary"
+                        className="block max-w-[180px] truncate text-left leading-tight hover:text-primary"
                         title={`${m.name} — open profile to score`}
                       >
                         {m.name}
