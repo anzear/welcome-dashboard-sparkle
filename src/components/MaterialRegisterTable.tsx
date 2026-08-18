@@ -436,6 +436,14 @@ export const MaterialRegisterTable: React.FC = () => {
                 {label}
               </button>
             ))}
+            {/* Circulating a decision is open to anyone — it is not deciding. */}
+            <button
+              type="button"
+              onClick={() => setExportOpen(true)}
+              className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
+            >
+              Export decisions
+            </button>
             <button
               type="button"
               onClick={() => {
