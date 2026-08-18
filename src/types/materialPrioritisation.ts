@@ -388,6 +388,8 @@ export interface AssessmentCriterion {
   /** Where an evidence criterion reads from. Absent for judged criteria. */
   source?: "figures" | "vcg";
   helper: string;
+  /** What the ends of the 1–5 scale mean. Judged criteria only. */
+  anchors?: string;
 }
 
 /**
