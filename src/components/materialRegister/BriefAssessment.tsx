@@ -226,7 +226,14 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
             {label}
           </span>
-          <Num value={value} suffix={suffix} />
+          {value === null ? (
+            <Missing />
+          ) : (
+            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+              {nf(0).format(value)}{" "}
+              <span className="text-[10px] font-normal text-muted-foreground">{suffix}</span>
+            </span>
+          )}
         </div>
       ))}
       <button
