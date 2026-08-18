@@ -260,19 +260,29 @@ const TagsField: React.FC<{
 
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
-  const add = (raw?: string) => {
+  const [asLine, setAsLine] = useState(false);
+  const lines = useProductLines();
+  const add = (raw?: string, markLine?: boolean) => {
     const v = normalizeTag(raw ?? draft);
-    if (!v || hasTag(values, v)) {
+    if (!v) {
       setDraft("");
       return;
     }
-    onSave([...values, v]);
+    const asProductLine = markLine ?? asLine;
+    const stored = typedTags && asProductLine ? (registerProductLine(v) ?? v) : v;
+    if (hasTag(values, stored)) {
+      setDraft("");
+      return;
+    }
+    onSave([...values, stored]);
     setDraft("");
   };
   const q = draft.trim().toLowerCase();
+  const pool = typedTags ? [...new Set([...lines, ...suggestions])] : suggestions;
+  const available = pool.filter((s) => !hasTag(values, s));
   const matches = q
-    ? suggestions.filter((s) => s.toLowerCase().includes(q) && !hasTag(values, s)).slice(0, 6)
-    : [];
+    ? available.filter((s) => s.toLowerCase().includes(q)).slice(0, 8)
+    : available.slice(0, 12);
   return (
     <div className={cn("group min-h-[46px] px-1 py-1", wideField && "sm:col-span-2")}>
       <div className="flex items-baseline justify-between gap-2">
