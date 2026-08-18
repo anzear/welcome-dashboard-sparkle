@@ -775,32 +775,6 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    {/* VCG signals are not live yet — the column says so, it never shows a value. */}
-                    {cols.vcgSubstitutability && (
-                      <td className={cn("px-3 py-2 align-middle", VCG_RULE, "bg-provenance-vcg/[0.04]")}>
-                        <ComingSoonCell />
-                      </td>
-                    )}
-                    {cols.vcgSuppliers && (
-                      <td
-                        className={cn(
-                          "px-3 py-2 text-right align-middle bg-provenance-vcg/[0.04]",
-                          !cols.vcgSubstitutability && VCG_RULE,
-                        )}
-                      >
-                        <ComingSoonCell />
-                      </td>
-                    )}
-                    {cols.vcgCompetitor && (
-                      <td
-                        className={cn(
-                          "px-3 pr-6 py-2 align-middle bg-provenance-vcg/[0.04]",
-                          !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
-                        )}
-                      >
-                        <ComingSoonCell />
-                      </td>
-                    )}
                   </tr>
                 </React.Fragment>
               );
