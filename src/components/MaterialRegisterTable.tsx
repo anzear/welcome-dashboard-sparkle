@@ -541,41 +541,6 @@ export const MaterialRegisterTable: React.FC = () => {
               {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
-              {/* VCG signals — ours, set apart from the company columns to their left. */}
-              {cols.vcgSubstitutability && (
-                <th className={cn(HEAD, VCG_HEAD, VCG_RULE, "px-3 py-2.5 text-left")}>
-                  <div className={VCG_GROUP}>VCG signals · coming soon</div>
-                  Substitutability
-                </th>
-              )}
-              {cols.vcgSuppliers && (
-                <th
-                  className={cn(
-                    HEAD,
-                    VCG_HEAD,
-                    !cols.vcgSubstitutability && VCG_RULE,
-                    "px-3 py-2.5 text-right",
-                  )}
-                >
-                  <div className={VCG_GROUP}>{cols.vcgSubstitutability ? "\u00a0" : "VCG signals · coming soon"}</div>
-                  Suppliers
-                </th>
-              )}
-              {cols.vcgCompetitor && (
-                <th
-                  className={cn(
-                    HEAD,
-                    VCG_HEAD,
-                    !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
-                    "px-3 pr-6 py-2.5 text-left",
-                  )}
-                >
-                  <div className={VCG_GROUP}>
-                    {cols.vcgSubstitutability || cols.vcgSuppliers ? "\u00a0" : "VCG signals · coming soon"}
-                  </div>
-                  Competitor activity
-                </th>
-              )}
 
             </tr>
           </thead>
