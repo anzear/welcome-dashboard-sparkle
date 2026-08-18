@@ -1,14 +1,25 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { TEAM_LABEL } from "@/config/assessmentCriteria";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
-import { Paperclip } from "lucide-react";
+import { Paperclip, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { CoverageMark, FlagChip } from "@/components/materialRegister/assessmentPrimitives";
 import { shortDate } from "@/components/materialRegister/primitives";
+
 
 type SortId = "register" | "coverage" | "splits" | "recent";
 
