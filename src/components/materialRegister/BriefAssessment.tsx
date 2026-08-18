@@ -38,8 +38,9 @@ const EvidenceRow: React.FC<{ criterion: AssessmentCriterion; m: Material }> = (
   >
     <div className="flex items-baseline justify-between gap-2">
       <span className="text-[11px] font-medium text-foreground">{criterion.label}</span>
-      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+      <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
         {criterion.source === "vcg" ? "VCG data" : "Company data"}
+        {criterion.source === "vcg" && <ComingSoonTag />}
       </span>
     </div>
 
@@ -53,16 +54,19 @@ const EvidenceRow: React.FC<{ criterion: AssessmentCriterion; m: Material }> = (
         <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
       </div>
     ) : (
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        <span className="text-[10px] text-muted-foreground">Substitutability</span>
-        <SubstitutabilityChip value={m.substitutability_readiness} />
-        <span className="text-[10px] text-muted-foreground">Suppliers</span>
-        <SupplierAvailabilityValue value={m.supplier_availability} />
-        <span className="text-[10px] text-muted-foreground">Competitors</span>
-        <CompetitorActivityMark value={m.competitor_activity} withLabel />
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] text-muted-foreground">
+        <span>Substitutability</span>
+        <span aria-hidden>·</span>
+        <span>Suppliers</span>
+        <span aria-hidden>·</span>
+        <span>Competitors</span>
       </div>
     )}
-    <p className="text-[10px] leading-snug text-muted-foreground">{criterion.helper}</p>
+    <p className="text-[10px] leading-snug text-muted-foreground">
+      {criterion.source === "vcg"
+        ? "These signals are not live yet. Nothing here is scored or read into the assessment until VCG runs the check."
+        : criterion.helper}
+    </p>
   </div>
 );
 
