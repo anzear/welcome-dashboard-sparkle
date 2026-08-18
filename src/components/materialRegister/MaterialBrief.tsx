@@ -21,7 +21,7 @@ import {
   type Material,
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
-import { nf, provenanceLine, provenanceStamp, StatusPill } from "@/components/materialRegister/primitives";
+import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
@@ -60,18 +60,6 @@ const Section: React.FC<{
     </div>
     {children}
   </section>
-);
-
-
-const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
-  <div
-    className={cn(
-      "sm:col-span-2",
-      first ? "" : "mt-2 border-t border-border/50 pt-4",
-    )}
-  >
-    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</span>
-  </div>
 );
 
 const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
@@ -160,103 +148,6 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
 };
 
 /** Read-only measured / computed figure. Provenance always visible. */
-const Figure: React.FC<{
-  label: string;
-  field?: string;
-  value: number | string | null;
-  decimals?: number;
-  provenance?: FieldProvenance;
-  computedInputs?: string;
-  wide?: boolean;
-}> = ({ label, field, value, decimals = 0, provenance, computedInputs, wide }) => {
-  const hasValue = value !== null && value !== undefined && value !== "";
-  return (
-    <DataRow
-      wide={wide}
-      label={label}
-      provenance={field ? provenanceStamp(field, provenance, hasValue, computedInputs) : provenanceLine(provenance, hasValue, computedInputs)}
-      value={
-        <ValueText
-          value={value}
-          decimals={decimals}
-          computed={(provenance?.origin ?? "ingested") === "computed"}
-        />
-      }
-    />
-  );
-};
-
-/** Editable figure. Whole row is the target; affordance appears on hover only. */
-const EditableFigure: React.FC<{
-  label: string;
-  field?: string;
-  value: number | string | null;
-  decimals?: number;
-  provenance?: FieldProvenance;
-  placeholder?: string;
-  wide?: boolean;
-  onSave: (raw: string) => void;
-}> = ({ label, field, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const hasValue = value !== null && value !== undefined && value !== "";
-
-  const begin = () => {
-    setDraft(value === null || value === undefined ? "" : String(value));
-    setEditing(true);
-  };
-
-  const commit = () => {
-    onSave(draft.trim());
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
-        <div className="text-[13px] text-muted-foreground">{label}</div>
-        <div className="flex items-center gap-1 pt-1">
-          <Input
-            autoFocus
-            value={draft}
-            placeholder={placeholder}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commit();
-              if (e.key === "Escape") setEditing(false);
-            }}
-            className="h-8 text-right font-mono text-xs tabular-nums"
-          />
-          <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
-            Cancel
-          </Button>
-        </div>
-        <div className="pt-0.5 text-[11px] text-muted-foreground/50">
-          {field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <DataRow
-      wide={wide}
-      label={label}
-      provenance={field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
-      onClick={begin}
-      value={
-        <ValueText
-          value={value}
-          decimals={decimals}
-          entered={provenance?.origin === "entered"}
-        />
-      }
-    />
-  );
-};
 
 /** Classification field. Text value, same right-aligned mono column. */
 const DerivedField: React.FC<{
@@ -546,58 +437,7 @@ export const MaterialBrief: React.FC = () => {
 
 
 
-  /** Records a numeric figure as entered, recomputing anything derived from it. */
-  const saveFigure = (
-    field: "annual_volume" | "unit_price" | "ghg_emission_factor",
-    raw: string,
-  ) => {
-    const parsed = raw === "" ? null : Number(raw.replace(/[,\s]/g, ""));
-    if (parsed !== null && !Number.isFinite(parsed)) return;
-    const before = m[field];
-    if (before === parsed) return;
 
-    const patch: Partial<Material> = { [field]: parsed } as Partial<Material>;
-    const provenance = { ...m.provenance };
-
-    const volume = field === "annual_volume" ? parsed : m.annual_volume;
-    const price = field === "unit_price" ? parsed : m.unit_price;
-    const factor = field === "ghg_emission_factor" ? parsed : m.ghg_emission_factor;
-
-    if (field === "annual_volume" || field === "unit_price") {
-      patch.annual_spend = volume !== null && price !== null ? Math.round(volume * 1000 * price) : null;
-      provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
-    }
-    if (field === "annual_volume" || field === "ghg_emission_factor") {
-      patch.ghg_contribution = volume !== null && factor !== null ? Math.round(volume * factor) : null;
-      provenance.ghg_contribution = { origin: "computed", source: "emission factor x volume", date: today() };
-    }
-    patch.provenance = provenance;
-
-    updateMaterial(m.material_id, patch, [field], [
-      {
-        material_id: m.material_id,
-        event_type: "field_correction",
-        field,
-        from_value: before === null ? null : String(before),
-        to_value: parsed === null ? null : String(parsed),
-      },
-    ]);
-  };
-
-  /** Records a free-text figure qualifier as entered. */
-  const saveText = (field: "ghg_boundary" | "ghg_data_basis", raw: string) => {
-    const next = raw === "" ? null : raw;
-    if (next === m[field]) return;
-    updateMaterial(m.material_id, { [field]: next } as Partial<Material>, [field], [
-      {
-        material_id: m.material_id,
-        event_type: "field_correction",
-        field,
-        from_value: m[field],
-        to_value: next,
-      },
-    ]);
-  };
 
   const draftNeedsBlocker = draftStatus === "hold" || draftStatus === "no_go";
   const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
@@ -1107,80 +947,8 @@ export const MaterialBrief: React.FC = () => {
 
       </div>
 
-      {/* Body — 55 / 45. Neither column scrolls. */}
-      <div className="mt-4 grid items-start gap-x-4 gap-y-4 lg:grid-cols-[55fr_45fr]">
-
-        {/* Left column */}
-        <div className="space-y-4 self-start">
-
-          <Section
-            title="Figures"
-            note="Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero."
-          >
-            <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
-              <GroupLabel first>Volume and cost</GroupLabel>
-              <EditableFigure
-                label="Annual volume (t/yr)"
-                field="annual_volume"
-                value={m.annual_volume}
-                provenance={m.provenance.annual_volume}
-                placeholder="t/yr"
-                onSave={(raw) => saveFigure("annual_volume", raw)}
-              />
-              <EditableFigure
-                label="Unit price (EUR/kg)"
-                field="unit_price"
-                value={m.unit_price}
-                decimals={2}
-                provenance={m.provenance.unit_price}
-                placeholder="EUR/kg"
-                onSave={(raw) => saveFigure("unit_price", raw)}
-              />
-              <Figure
-                label="Annual spend (EUR)"
-                field="annual_spend"
-                value={m.annual_spend}
-                provenance={m.provenance.annual_spend}
-                computedInputs="volume x price"
-              />
-
-              <GroupLabel>Emissions</GroupLabel>
-              <EditableFigure
-                label="GHG emission factor (kgCO2e/kg)"
-                field="ghg_emission_factor"
-                value={m.ghg_emission_factor}
-                decimals={2}
-                provenance={m.provenance.ghg_emission_factor}
-                placeholder="kgCO2e/kg"
-                onSave={(raw) => saveFigure("ghg_emission_factor", raw)}
-              />
-              <Figure
-                label="GHG contribution (tCO2e/yr)"
-                field="ghg_contribution"
-                value={m.ghg_contribution}
-                provenance={m.provenance.ghg_contribution}
-                computedInputs="volume x emission factor"
-              />
-              <EditableFigure
-                label="GHG boundary"
-                field="ghg_boundary"
-                value={m.ghg_boundary}
-                provenance={m.provenance.ghg_boundary}
-                placeholder="e.g. Cradle-to-gate (A1-A3)"
-                onSave={(raw) => saveText("ghg_boundary", raw)}
-              />
-              <EditableFigure
-                label="GHG data basis"
-                field="ghg_data_basis"
-                value={m.ghg_data_basis}
-                provenance={m.provenance.ghg_data_basis}
-                placeholder="e.g. Supplier-specific"
-                onSave={(raw) => saveText("ghg_data_basis", raw)}
-              />
-            </div>
-          </Section>
-
-        </div>
+      {/* Body — single column. Figures live inside the assessment now. */}
+      <div className="mt-4 space-y-4">
 
         {/* Right column */}
         <div className="space-y-4 self-start">
