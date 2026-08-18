@@ -330,6 +330,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   hold_review_date: "Hold review date",
   no_go_reason: "No-go reason",
   reopen: "Gate reopened",
+  decision_export: "Decision export",
 };
 
 /** A material with no gate act recorded yet. Absence, never a default outcome. */
