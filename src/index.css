@@ -39,6 +39,14 @@ All colors MUST be HSL.
     --background: 220 20% 97%;
     --foreground: 220 10% 8%;
 
+    /* Provenance classes. Exactly three, used nowhere else.
+       company = baseline text, no accent, no chip.
+       vcg     = teal, reserved for VCG-computed values and VCG panels.
+       judgement = slate blue-grey, reserved for team judgement values. */
+    --provenance-company: 220 10% 8%;
+    --provenance-vcg: 174 41% 51%;
+    --provenance-judgement: 218 22% 45%;
+
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
 
