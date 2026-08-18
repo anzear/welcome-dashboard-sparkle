@@ -395,7 +395,17 @@ const AssessmentCoverage: React.FC = () => {
         <table className="w-full border-collapse text-[11px]">
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left">
+              <th className="w-8 px-3 py-2">
+                <Checkbox
+                  checked={allShownSelected}
+                  onCheckedChange={(v) =>
+                    setSelected(v ? rows.map((r) => r.m.material_id) : [])
+                  }
+                  aria-label="Select all shown materials"
+                />
+              </th>
               <th className="w-[210px] px-3 py-2 font-semibold text-muted-foreground">Material</th>
+
               {judgedCriteria.map((c) => (
                 <th key={c.criterion_id} className="px-3 py-2 font-semibold text-muted-foreground">
                   <div className="leading-tight">{c.label}</div>
