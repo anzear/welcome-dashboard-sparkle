@@ -44,11 +44,14 @@ const AssessmentCoverage: React.FC = () => {
     scopeLabel,
     judgedCriteria,
     canEditCriteria,
+    saveAssessment,
+    clearAssessment,
   } = useRegister();
 
   const [sort, setSort] = useState<SortId>("register");
   const [gapsOnly, setGapsOnly] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
+
 
   const rows = useMemo(() => {
     const base = ordered.map(({ m }) => ({ m, summary: assessmentSummary(m.material_id) }));
