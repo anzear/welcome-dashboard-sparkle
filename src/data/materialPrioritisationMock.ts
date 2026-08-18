@@ -1,5 +1,8 @@
-import { migrateJourneyStatus } from "@/types/materialPrioritisation";
+import { migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
 import type {
+  CompetitorActivity,
+  SubstitutabilityReadiness,
+  SupplierAvailability,
   FieldProvenance,
   IntelligenceStatus,
   JourneyStatus,
@@ -342,6 +345,58 @@ const emptyRequirements = (): MaterialRequirements => ({
   notes: null,
 });
 
+/**
+ * VCG signals per material. Deterministic, deliberately uneven: VCG coverage is
+ * never complete, and the gap is a real reportable state, not a zero.
+ */
+const VCG_DATES = ["2025-11-14", "2025-12-03", "2025-12-19", "2026-01-09", "2026-01-27", "2026-02-12"];
+
+interface VcgSignals {
+  substitutability_readiness: SubstitutabilityReadiness;
+  supplier_availability: SupplierAvailability;
+  competitor_activity: CompetitorActivity;
+  vcg_data_date: string;
+}
+
+function vcgSignalsFor(i: number, name: string): VcgSignals {
+  const h = [...name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
+  const vcg_data_date = VCG_DATES[h % VCG_DATES.length];
+
+  // Roughly eight of the 42 materials have not been assessed at all.
+  if (i % 5 === 3) {
+    return {
+      substitutability_readiness: "not_assessed",
+      supplier_availability: { value: null, capped: false, assessed: false },
+      competitor_activity: "not_assessed",
+      vcg_data_date,
+    };
+  }
+
+  const bucket = h % 10;
+  const readiness: SubstitutabilityReadiness =
+    bucket < 4 ? "established" : bucket < 8 ? "emerging" : "none_found";
+
+  // Established paths carry more detected suppliers; none found mostly carries 0.
+  const raw =
+    readiness === "established"
+      ? 4 + (h % 9)
+      : readiness === "emerging"
+        ? 1 + (h % 5)
+        : h % 7 === 0
+          ? 1
+          : 0;
+  const capped = raw > SUPPLIER_CEILING;
+  const supplier_availability: SupplierAvailability = {
+    value: capped ? SUPPLIER_CEILING + 1 : raw,
+    capped,
+    assessed: true,
+  };
+
+  const competitor_activity: CompetitorActivity = h % 3 === 0 ? "detected" : "none_detected";
+
+  return { substitutability_readiness: readiness, supplier_availability, competitor_activity, vcg_data_date };
+}
+
 export const materials: Material[] = rows.map((row, i) => {
   const annual_spend = row.vol !== null && row.price !== null ? round(row.vol * 1000 * row.price, 0) : null;
   const ghg_contribution = row.vol !== null && row.ghg !== null ? round(row.vol * row.ghg, 0) : null;
@@ -387,8 +442,12 @@ export const materials: Material[] = rows.map((row, i) => {
   put("ghg_contribution", ghg_contribution, prov("computed", "emission factor x annual volume", ERP_DATE));
   put("ghg_boundary", row.ghg !== null ? "Cradle-to-gate (A1-A3)" : null, ghgProv);
   put("ghg_data_basis", row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null, ghgProv);
-  put("supplier_count", row.sup, prov("ingested", "Procurement master data", "2026-02-02"));
-  put("supplier_countries", row.countries, prov("ingested", "Procurement master data", "2026-02-02"));
+  // VCG signals share one data date per material.
+  const vcg = vcgSignalsFor(i, row.name);
+  const vcgProv = prov("computed", "VCG data", vcg.vcg_data_date);
+  p.substitutability_readiness = vcgProv;
+  p.supplier_availability = vcgProv;
+  p.competitor_activity = vcgProv;
 
   // Positions and decisions.
   const decided = prov("entered", row.owner ?? "System import", statusDate);
@@ -431,8 +490,10 @@ export const materials: Material[] = rows.map((row, i) => {
     ghg_contribution,
     ghg_boundary: row.ghg !== null ? "Cradle-to-gate (A1-A3)" : null,
     ghg_data_basis: row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null,
-    supplier_count: row.sup,
-    supplier_countries: row.countries,
+    substitutability_readiness: vcg.substitutability_readiness,
+    supplier_availability: vcg.supplier_availability,
+    competitor_activity: vcg.competitor_activity,
+    vcg_data_date: vcg.vcg_data_date,
     journey_status: migrateJourneyStatus(row.status),
     blocker_category: isBlocked ? (row.status === "rejected" ? "Regulatory / compliance" : "Supply availability") : null,
     blocker_detail: isBlocked
@@ -478,8 +539,6 @@ const PROVENANCE_TRACKED: (keyof Material)[] = [
   "ghg_contribution",
   "ghg_boundary",
   "ghg_data_basis",
-  "supplier_count",
-  "supplier_countries",
   "owner",
 ];
 
