@@ -314,16 +314,6 @@ export const MaterialRegisterTable: React.FC = () => {
             {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
           </td>
         );
-      case "materialCategory":
-        return (
-          <td className="px-3 py-2 align-middle text-[12px]">
-            {m.material_class ? (
-              <span className="text-muted-foreground">{m.material_class}</span>
-            ) : (
-              <Missing />
-            )}
-          </td>
-        );
       case "volume":
         return (
           <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
