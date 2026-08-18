@@ -504,42 +504,10 @@ export const MaterialRegisterTable: React.FC = () => {
                 Material
               </th>
 
-              {cols.completeness && (
-                <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>
-                  Data filled
-                </th>
-              )}
+              {orderedCols.map((key) => (
+                <React.Fragment key={key}>{headCell(key)}</React.Fragment>
+              ))}
 
-              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>}
-              {cols.materialCategory && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
-              )}
-              {cols.volume && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
-                  Volume
-                  <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-                </th>
-              )}
-              {cols.spend && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
-                  Spend
-                  <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
-                </th>
-              )}
-              {cols.emissions && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
-                  GHG contribution
-                  <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
-                </th>
-              )}
-              {cols.applications && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
-              )}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
-              {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
-              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
 
             </tr>
