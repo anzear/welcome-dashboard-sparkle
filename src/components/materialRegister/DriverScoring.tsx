@@ -357,7 +357,7 @@ const DriverScoring: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => openBrief(m.material_id)}
-                        className="block max-w-[260px] truncate text-left leading-tight hover:text-primary"
+                        className="block max-w-[180px] truncate text-left leading-tight hover:text-primary"
                         title={`${m.name} — open profile to score`}
                       >
                         {m.name}
