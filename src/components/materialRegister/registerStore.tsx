@@ -575,7 +575,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (Math.max(...scores) - Math.min(...scores) > 2) ids.add(key.split("::")[0]);
     });
     return ids;
-  }, [assessments]);
+  }, [assessments, judgedCriteriaRef]);
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -1418,6 +1418,116 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
 
+  /* --------------------------------------------------------- the criterion set
+   * Shared by every material. An edit rewrites the question the whole portfolio
+   * has been answering, and a removal destroys the answers. Owner-only.
+   * -------------------------------------------------------------------------- */
+
+  /** Only a material owner may change the set the whole portfolio is scored on. */
+  const canEditCriteria = data.some((m) => (m.owner ?? null) === currentUser.name);
+
+  const criterionLabelOf = (id: string) =>
+    criteria.find((c) => c.criterion_id === id)?.label ?? CRITERION_LABEL[id] ?? id;
+
+  const criterionFootprint = (criterionId: string) => {
+    const entries = Object.values(assessments).filter((e) => e.criterion_id === criterionId);
+    return {
+      materials: new Set(entries.map((e) => e.material_id)).size,
+      entries: entries.length,
+      documents: documents.filter((d) => d.criterion_id === criterionId).length,
+    };
+  };
+
+  const logCriterionChange = (
+    action: CriterionSetEvent["action"],
+    criterion_id: string,
+    label: string,
+    detail: string | null,
+  ) =>
+    setCriteriaEvents((prev) => [
+      {
+        event_id: `cse-${Date.now()}-${prev.length + 1}`,
+        action,
+        criterion_id,
+        label,
+        detail,
+        changed_by: currentUser.name,
+        changed_at: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+
+  const addCriterion = (draft: { label: string; helper: string; anchors: string }) => {
+    if (!canEditCriteria) return false;
+    const label = draft.label.trim();
+    if (!label) return false;
+    const criterion_id = `crit_${Date.now().toString(36)}`;
+    setCriteria((prev) => [
+      ...prev,
+      {
+        criterion_id,
+        label,
+        kind: "judgement",
+        helper: draft.helper.trim(),
+        anchors: draft.anchors.trim() || undefined,
+      },
+    ]);
+    logCriterionChange("added", criterion_id, label, "Added to every material, with no entries yet.");
+    return true;
+  };
+
+  const updateCriterion = (
+    criterionId: string,
+    patch: { label: string; helper: string; anchors: string },
+  ) => {
+    if (!canEditCriteria) return false;
+    const existing = criteria.find((c) => c.criterion_id === criterionId);
+    if (!existing || existing.kind !== "judgement") return false;
+    const label = patch.label.trim();
+    if (!label) return false;
+    setCriteria((prev) =>
+      prev.map((c) =>
+        c.criterion_id === criterionId
+          ? { ...c, label, helper: patch.helper.trim(), anchors: patch.anchors.trim() || undefined }
+          : c,
+      ),
+    );
+    logCriterionChange(
+      "edited",
+      criterionId,
+      label,
+      existing.label === label ? "Wording changed." : `Renamed from "${existing.label}".`,
+    );
+    return true;
+  };
+
+  /** Removal is portfolio-wide and final: the entries and documents go with it. */
+  const removeCriterion = (criterionId: string) => {
+    if (!canEditCriteria) return false;
+    const existing = criteria.find((c) => c.criterion_id === criterionId);
+    if (!existing || existing.kind !== "judgement") return false;
+    const { entries, materials } = criterionFootprint(criterionId);
+    setCriteria((prev) => prev.filter((c) => c.criterion_id !== criterionId));
+    setAssessments((prev) => {
+      const next: Record<string, AssessmentEntry> = {};
+      Object.entries(prev).forEach(([k, e]) => {
+        if (e.criterion_id !== criterionId) next[k] = e;
+      });
+      return next;
+    });
+    setDocuments((prev) => prev.filter((d) => d.criterion_id !== criterionId));
+    logCriterionChange(
+      "removed",
+      criterionId,
+      existing.label,
+      entries === 0
+        ? "Removed from every material. No entries existed."
+        : `Removed from every material, with ${entries} ${entries === 1 ? "entry" : "entries"} across ${materials} ${materials === 1 ? "material" : "materials"}.`,
+    );
+    return true;
+  };
+
+
   const value: Store = {
     data: scoped,
     allMaterials: data,
@@ -1464,6 +1574,15 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     currentUser,
     setCurrentUser: setCurrentUserId,
     contributors: CONTRIBUTORS,
+    criteria,
+    judgedCriteria,
+    criterionLabelOf,
+    criteriaEvents,
+    canEditCriteria,
+    criterionFootprint,
+    addCriterion,
+    updateCriterion,
+    removeCriterion,
     assessments,
     entriesFor,
     myEntry,
