@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { JOURNEY_STATUS_LABEL, type FieldProvenance, type JourneyStatus } from "@/types/materialPrioritisation";
+import { JOURNEY_STATUS_LABEL, provenanceClassOf, type FieldProvenance, type JourneyStatus } from "@/types/materialPrioritisation";
 
 export const nf = (decimals = 0) =>
   new Intl.NumberFormat("en-GB", {
