@@ -414,7 +414,7 @@ export const MaterialRegisterTable: React.FC = () => {
               [
                 ["status", "Set gate status"],
                 ["owner", "Set owner"],
-                ["products", "Set product"],
+                ["products", "Set application area"],
                 ["applications", "Set application"],
                 ["priority_period", "Set priority period"],
                 ["intelligence", "Order intelligence"],
