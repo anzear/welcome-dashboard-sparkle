@@ -468,6 +468,12 @@ export const MaterialRegisterTable: React.FC = () => {
                 Material
               </th>
 
+              {cols.completeness && (
+                <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>
+                  Data filled
+                  <div className={UNIT}>(of expected)</div>
+                </th>
+              )}
               {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material type</th>}
               {cols.materialCategory && (
                 <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
