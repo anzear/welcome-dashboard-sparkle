@@ -870,6 +870,9 @@ export const MaterialRegisterTable: React.FC = () => {
         ownerOptions={ownerNames}
         productSuggestions={[...new Set(data.flatMap((m) => m.application_areas ?? []))].sort()}
         applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
+        tagSuggestions={[
+          ...new Set(data.flatMap((m) => (m.tags ?? []).filter((t) => !isProductLineTag(t)))),
+        ].sort()}
         periodSuggestions={[
           ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),
         ].sort()}
