@@ -2,6 +2,12 @@ import React, { useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  isProductLineTag,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 export const LABEL = "text-[10px] font-semibold uppercase tracking-widest text-muted-foreground";
 
