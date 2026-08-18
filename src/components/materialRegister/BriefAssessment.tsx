@@ -267,14 +267,7 @@ const EvidenceRow: React.FC<{ criterion: AssessmentCriterion; m: Material }> = (
     </div>
 
     {criterion.source === "figures" ? (
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="text-[10px] text-muted-foreground">Spend</span>
-        <Num value={m.annual_spend} suffix="EUR/yr" />
-        <span className="text-[10px] text-muted-foreground">Volume</span>
-        <Num value={m.annual_volume} suffix="t/yr" />
-        <span className="text-[10px] text-muted-foreground">GHG</span>
-        <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
-      </div>
+      <FiguresEvidence m={m} />
     ) : (
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] text-muted-foreground">
         <span>Substitutability</span>
