@@ -125,8 +125,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     setFactor(null);
     setGhg(null);
     setGhgOverridden(false);
-    setSupplierCount(null);
-    setCountries([]);
     setBoundary(null);
     setDataBasis(null);
     setReq(emptyRequirements());

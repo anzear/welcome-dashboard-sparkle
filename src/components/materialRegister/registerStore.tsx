@@ -376,8 +376,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         if (!filters.priorityPeriods.includes(key)) return false;
       }
       if (filters.blockers.length && !filters.blockers.includes(m.blocker_category ?? NO_BLOCKER)) return false;
-      if (filters.countries.length && !(m.supplier_countries ?? []).some((c) => filters.countries.includes(c)))
-        return false;
       return true;
     });
   }, [data, filters]);
