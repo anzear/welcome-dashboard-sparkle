@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
 import QuestionSetDialog from "@/components/materialRegister/QuestionSetDialog";
 import ScoreBulkPanel from "@/components/materialRegister/ScoreBulkDialog";
-import { scoreTone, signed } from "@/components/materialRegister/scorePrimitives";
+import { signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
 const HEAD = "text-[9px] font-semibold uppercase tracking-widest text-muted-foreground";
@@ -21,18 +21,12 @@ interface Sort {
   dir: SortDir;
 }
 
-interface Cursor {
-  row: number;
-  col: number;
-}
-
 const DriverScoring: React.FC = () => {
   const {
     ordered,
     scores,
     scoreFor,
-    setScore,
-    clearScore,
+    openBrief,
     countsFor,
     questionCoverage,
     questions,
@@ -49,9 +43,7 @@ const DriverScoring: React.FC = () => {
 
   const [sort, setSort] = useState<Sort | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [cursor, setCursor] = useState<Cursor | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const gridRef = useRef<HTMLTableSectionElement>(null);
 
   const scoreOf = (m: Material, questionId: string) => scoreFor(m.material_id, questionId)?.score ?? null;
 
@@ -116,7 +108,6 @@ const DriverScoring: React.FC = () => {
     ? (questions.find((q) => q.question_id === sort.key)?.label ?? null)
     : null;
 
-  const arrowIcons = null;
 
 
   const arrow = (key: string) =>
@@ -175,8 +166,8 @@ const DriverScoring: React.FC = () => {
             </>
           ) : (
             <span>
-              Click a driver heading to rank by that judgement; click a cell, then 1–5 to score, Backspace clears,
-              arrows move.
+              Click a driver heading to rank by that judgement. Select materials to score them in bulk, or click a
+              material to score it on its profile.
             </span>
           )}
         </div>
@@ -306,7 +297,7 @@ const DriverScoring: React.FC = () => {
             </tr>
           </thead>
 
-          <tbody ref={gridRef}>
+          <tbody>
             {displayRows.map((m, rowIndex) => {
               const counts = countsFor(m.material_id);
               const isSelected = selected.has(m.material_id);
@@ -422,19 +413,11 @@ const DriverScoring: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(1))}>
-            1
-          </span>{" "}
-          weak driver
+          <span className="inline-block h-4 w-6 rounded-[3px] bg-teal-600/70" /> scored
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(5))}>
-            5
-          </span>{" "}
-          strong driver
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={cn("inline-block h-4 w-6 rounded-[3px]", scoreTone(null))} /> not scored — not zero
+          <span className="inline-block h-4 w-6 rounded-[3px] border border-dotted border-muted-foreground/40" /> not
+          scored — not zero
         </span>
       </div>
 
