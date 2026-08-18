@@ -3,12 +3,7 @@ import { cn } from "@/lib/utils";
 import { TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, shortDate } from "@/components/materialRegister/primitives";
-import {
-  CompetitorActivityMark,
-  SubstitutabilityChip,
-  SupplierAvailabilityValue,
-  VCG_RULE,
-} from "@/components/materialRegister/vcgSignals";
+import { ComingSoonTag, VCG_RULE } from "@/components/materialRegister/vcgSignals";
 import { ContributorMark, FlagChip, ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
