@@ -192,6 +192,7 @@ export const EMPTY_FILTERS: Filters = {
   gateOverdueCondition: false,
   gateHoldReviewOverdue: false,
   gateRecommendation: "any",
+  hasDocuments: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
