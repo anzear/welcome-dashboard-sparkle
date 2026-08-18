@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
+import { isProductLineTag } from "@/components/materialRegister/productLines";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import {
@@ -173,6 +174,8 @@ export const MaterialRegisterTable: React.FC = () => {
     setToast,
     undo,
     highlightIds,
+    scope,
+    scopeLabel,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
@@ -202,9 +205,9 @@ export const MaterialRegisterTable: React.FC = () => {
         value: v,
         label: ENTRY_TYPE_LABEL[v] ?? v,
       })),
-      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+      products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
         value: v,
-        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+        label: `${v} (${data.filter((m) => (m.application_areas ?? []).includes(v)).length})`,
       })),
       applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
         value: v,
@@ -380,7 +383,7 @@ export const MaterialRegisterTable: React.FC = () => {
               <span className="font-mono tabular-nums">{data.length}</span>
             </>
           )}{" "}
-          materials
+          {scope ? `${scopeLabel} materials` : "materials"}
         </span>
       </div>
 
@@ -412,11 +415,13 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="ml-auto flex items-center gap-1.5">
             {(
               [
-                ["status", "Set gate status"],
                 ["owner", "Set owner"],
-                ["products", "Set product"],
-                ["applications", "Set application"],
                 ["priority_period", "Set priority period"],
+                ["product_lines", "Product lines"],
+                ["tags", "Tags"],
+                ["entry_type", "Set entry type"],
+                ["products", "Set application area"],
+                ["applications", "Set application"],
                 ["intelligence", "Order intelligence"],
               ] as [BulkKind, string][]
 
@@ -441,8 +446,14 @@ export const MaterialRegisterTable: React.FC = () => {
               Clear selection
             </button>
           </span>
+          {/* Judgement stays per material: never settable across a selection. */}
+          <p className="w-full text-[10px] text-muted-foreground">
+            Bulk edits cover factual attributes only. Gate outcome, recommendation and assessment scores are
+            set one material at a time.
+          </p>
         </div>
       )}
+
 
       {toast && (
         <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
@@ -858,8 +869,11 @@ export const MaterialRegisterTable: React.FC = () => {
         materials={selectedMaterials}
         hiddenCount={hiddenSelectedCount}
         ownerOptions={ownerNames}
-        productSuggestions={[...new Set(data.flatMap((m) => m.product_categories ?? []))].sort()}
+        productSuggestions={[...new Set(data.flatMap((m) => m.application_areas ?? []))].sort()}
         applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
+        tagSuggestions={[
+          ...new Set(data.flatMap((m) => (m.tags ?? []).filter((t) => !isProductLineTag(t)))),
+        ].sort()}
         periodSuggestions={[
           ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),
         ].sort()}

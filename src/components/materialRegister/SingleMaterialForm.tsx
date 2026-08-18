@@ -87,7 +87,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     return {
       tags: tagVocabulary(data).map((t) => t.tag),
       applications: uniq(data.flatMap((m) => m.application_categories)),
-      products: uniq(data.flatMap((m) => m.product_categories)),
+      products: uniq(data.flatMap((m) => m.application_areas)),
       owners: uniq(data.map((m) => m.owner)),
       classes: SEEDED_CLASSES,
     };
@@ -162,7 +162,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       customer_material_ids: customerIds.map((v) => v.trim()).filter(Boolean),
       tags: cleanTags(tags),
       application_categories: applications,
-      product_categories: products,
+      application_areas: products,
       owner: toNullString(owner),
       journey_status: status,
       annual_volume: showPanelA ? volume : null,
@@ -345,7 +345,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             suggestions={suggestions.applications}
           />
           <TagInput
-            label="Product categories"
+            label="Application areas"
             values={products}
             onChange={setProducts}
             suggestions={suggestions.products}

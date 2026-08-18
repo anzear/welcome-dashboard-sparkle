@@ -5,6 +5,7 @@ import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import AssessmentCoverage from "@/components/materialRegister/AssessmentCoverage";
 import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
 import Prioritisation from "@/components/materialRegister/Prioritisation";
+import ScopeSelector from "@/components/materialRegister/ScopeSelector";
 import { RegisterProvider, useRegister } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import { Plus, ArrowLeft } from "lucide-react";
@@ -60,9 +61,12 @@ const Inner: React.FC = () => {
         </div>
 
         <header className="space-y-1">
-          <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Material Portfolio
-          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Material Portfolio
+            </h1>
+            <ScopeSelector />
+          </div>
           <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
         </header>
 

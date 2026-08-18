@@ -37,6 +37,14 @@ import {
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/materialRegister/tags";
+import { applyProductLines } from "@/data/productLinesMock";
+import {
+  inScope,
+  isProductLineTag,
+  productLineCounts,
+  scopeLabel as labelForScope,
+  type Scope,
+} from "@/components/materialRegister/productLines";
 
 
 export const CURRENT_USER = "You";
@@ -144,7 +152,7 @@ export interface Filters {
   entryTypes: string[];
   /** Tag values, matched with ANY. May include UNTAGGED. */
   tags: string[];
-  /** Product categories, matched with ANY. */
+  /** Application areas, matched with ANY. */
   products: string[];
   /** Application categories, matched with ANY. */
   applications: string[];
@@ -223,6 +231,14 @@ export interface EventInput {
 interface Store {
 
   data: Material[];
+  /** The whole register, unscoped. Only briefs and lookups use this. */
+  allMaterials: Material[];
+  scope: Scope;
+  setScope: (next: Scope) => void;
+  scopeCounts: { lines: { value: string; label: string; count: number }[]; untagged: number };
+  scopeLabel: string;
+  scopedTotal: number;
+  totalCount: number;
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
   measure: Measure | null;
@@ -379,13 +395,40 @@ export const useRegister = () => {
 
 /** The register as seeded, with gate positions and their events folded in. */
 const gateSeed = applyGateSeed(seedMaterialsWithHistory);
-export const seededMaterials = gateSeed.materials;
+export const seededMaterials = applyProductLines(gateSeed.materials);
+
+const SCOPE_KEY = "material-portfolio-scope";
+
+const readScope = (): Scope => {
+  try {
+    const raw = window.localStorage.getItem(SCOPE_KEY);
+    return raw && raw !== "" ? raw : null;
+  } catch {
+    return null;
+  }
+};
 
 export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.ReactNode }> = ({
   rows = seededMaterials,
   children,
 }) => {
   const [data, setData] = useState<Material[]>(rows);
+  /** Product line scope. Narrows every list and every count below it, never a material. */
+  const [scope, setScopeState] = useState<Scope>(() => readScope());
+
+  const setScope = (next: Scope) => {
+    setScopeState(next);
+    try {
+      if (next === null) window.localStorage.removeItem(SCOPE_KEY);
+      else window.localStorage.setItem(SCOPE_KEY, next);
+    } catch {
+      /* scope is a view preference; a storage failure must not break the view */
+    }
+  };
+
+  /** Everything downstream reads this list. `allMaterials` stays whole for briefs. */
+  const scoped = useMemo(() => data.filter((m) => inScope(m, scope)), [data, scope]);
+  const scopeCounts = useMemo(() => productLineCounts(data), [data]);
   const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
   /** Criterion-level evidence. Shared across the team, mock records only. */
@@ -441,7 +484,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
-    return data.filter((m) => {
+    return scoped.filter((m) => {
       if (q) {
         const hay = [m.name, m.cas_number ?? "", ...(m.customer_material_ids ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
@@ -457,7 +500,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
       if (
         filters.products.length &&
-        !(m.product_categories ?? []).some((c) => filters.products.includes(c))
+        !(m.application_areas ?? []).some((c) => filters.products.includes(c))
       )
         return false;
       if (
@@ -500,7 +543,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [data, filters]);
+  }, [scoped, filters, documentedIds]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
@@ -674,11 +717,21 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           next.owner = payload.value;
           next.provenance.owner = enteredProvenance();
         } else if (payload.kind === "products") {
-          next.product_categories = nextList(m.product_categories ?? []);
-          next.provenance.product_categories = enteredProvenance();
+          next.application_areas = nextList(m.application_areas ?? []);
+          next.provenance.application_areas = enteredProvenance();
         } else if (payload.kind === "applications") {
           next.application_categories = nextList(m.application_categories ?? []);
           next.provenance.application_categories = enteredProvenance();
+        } else if (payload.kind === "product_lines" || payload.kind === "tags") {
+          // Tags are one array with two types; each action touches only its own partition.
+          const isLine = payload.kind === "product_lines";
+          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
+          const others = (m.tags ?? []).filter((t) => isProductLineTag(t) !== isLine);
+          next.tags = [...others, ...nextList(mine)];
+          next.provenance.tags = enteredProvenance();
+        } else if (payload.kind === "entry_type") {
+          next.entry_type = payload.value as Material["entry_type"];
+          next.provenance.entry_type = enteredProvenance();
         } else if (payload.kind === "priority_period") {
           next.priority_period = payload.value && payload.value.trim() ? payload.value.trim() : null;
           next.provenance.priority_period = enteredProvenance();
@@ -729,6 +782,28 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
+        if (payload.kind === "entry_type") {
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "entry_type",
+            from_value: m.entry_type,
+            to_value: payload.value,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        if (payload.kind === "product_lines" || payload.kind === "tags") {
+          const isLine = payload.kind === "product_lines";
+          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "tags",
+            from_value: formatTags(mine) || null,
+            to_value: formatTags(nextList(mine)) || null,
+            batch_id: batchId,
+          } as EventInput;
+        }
         if (payload.kind === "intelligence") {
           return {
             material_id: m.material_id,
@@ -739,8 +814,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
-        const field = payload.kind === "products" ? "product_categories" : "application_categories";
-        const existing = (payload.kind === "products" ? m.product_categories : m.application_categories) ?? [];
+        const field = payload.kind === "products" ? "application_areas" : "application_categories";
+        const existing = (payload.kind === "products" ? m.application_areas : m.application_categories) ?? [];
         return {
           material_id: m.material_id,
           event_type: "field_correction",
@@ -758,12 +833,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         : payload.kind === "owner"
           ? "Owner"
           : payload.kind === "products"
-            ? "Product categories"
+            ? "Application areas"
             : payload.kind === "applications"
               ? "Application categories"
               : payload.kind === "priority_period"
                 ? "Priority period"
-                : "Intelligence";
+                : payload.kind === "entry_type"
+                  ? "Entry type"
+                  : payload.kind === "product_lines"
+                    ? "Product lines"
+                    : payload.kind === "tags"
+                      ? "Tags"
+                      : "Intelligence";
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 
@@ -840,7 +921,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   };
 
   const inPrioritySet = (m: Material) => m.priority_period !== null;
-  const prioritySetCount = data.filter(inPrioritySet).length;
+  const prioritySetCount = scoped.filter(inPrioritySet).length;
 
   /** Priority set changes: one event per material, all sharing one batch_id. */
   const applyPriority = (ids: Set<string>, add: boolean) => {
@@ -1220,7 +1301,14 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
   const value: Store = {
-    data,
+    data: scoped,
+    allMaterials: data,
+    scope,
+    setScope,
+    scopeCounts,
+    scopeLabel: labelForScope(scope),
+    scopedTotal: scoped.length,
+    totalCount: data.length,
     measureId,
     setMeasureId,
     measure,

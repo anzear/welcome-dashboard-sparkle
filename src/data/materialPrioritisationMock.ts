@@ -424,7 +424,7 @@ export const materials: Material[] = rows.map((row, i) => {
   put("tags", [row.tag], loaded);
   put("customer_material_ids", ["x"], loaded);
   put("application_categories", row.apps, loaded);
-  put("product_categories", row.prods, loaded);
+  put("application_areas", row.prods, loaded);
   p.entry_type = loaded;
 
   // Measured figures.
@@ -472,7 +472,7 @@ export const materials: Material[] = rows.map((row, i) => {
     material_class: row.cls,
     tags: [row.tag],
     application_categories: row.apps,
-    product_categories: row.prods,
+    application_areas: row.prods,
     entry_type: i % 9 === 4 ? "substitution" : "drop_in",
     requirements: (() => {
       const base = row.req ? { ...emptyRequirements(), ...row.req } : null;
@@ -533,7 +533,7 @@ const PROVENANCE_TRACKED: (keyof Material)[] = [
   "material_class",
   "tags",
   "application_categories",
-  "product_categories",
+  "application_areas",
   "annual_volume",
   "unit_price",
   "annual_spend",

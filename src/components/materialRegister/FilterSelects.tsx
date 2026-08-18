@@ -64,9 +64,9 @@ const FilterSelects: React.FC<{
       })),
       classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
 
-      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+      products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
         value: v,
-        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+        label: `${v} (${data.filter((m) => (m.application_areas ?? []).includes(v)).length})`,
       })),
       applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
         value: v,
@@ -104,7 +104,7 @@ const FilterSelects: React.FC<{
     ["owners", "Owner", options.owners, filters.owners],
     ["entryTypes", "Entry type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
-    ["products", "Product", options.products, filters.products],
+    ["products", "Application area", options.products, filters.products],
     ["applications", "Application", options.applications, filters.applications],
     ["tags", "Tags", options.tags, filters.tags],
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],

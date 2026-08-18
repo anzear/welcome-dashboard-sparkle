@@ -27,6 +27,7 @@ import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefGate from "@/components/materialRegister/BriefGate";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
+import { isProductLineTag } from "@/components/materialRegister/productLines";
 
 import {
   CURRENT_USER,
@@ -356,7 +357,7 @@ const DerivedField: React.FC<{
   );
 };
 
-/** Editable list of tags (application / product categories). */
+/** Editable list of tags (application / application areas). */
 const TagsField: React.FC<{
   label: string;
   values: string[];
@@ -364,7 +365,9 @@ const TagsField: React.FC<{
   suggestions?: string[];
   /** Only the tag vocabulary spans both halves; category groups sit two per row. */
   wideField?: boolean;
-}> = ({ label, values, onSave, suggestions = [], wideField }) => {
+  /** Tags carry a type: product line tags render as brand lines, never as general tags. */
+  typedTags?: boolean;
+}> = ({ label, values, onSave, suggestions = [], wideField, typedTags }) => {
 
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
@@ -397,11 +400,25 @@ const TagsField: React.FC<{
       </div>
       <div className="flex flex-wrap items-center gap-1 pt-1">
         {values.length > 0 ? (
-          values.map((c) => (
+          [...values]
+            .sort((a, b) =>
+              typedTags
+                ? Number(isProductLineTag(b)) - Number(isProductLineTag(a))
+                : 0,
+            )
+            .map((c) => (
             <span
               key={c}
-              className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 text-[10px]"
+              className={cn(
+                "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px]",
+                typedTags && isProductLineTag(c)
+                  ? "border-primary/40 bg-primary/10 font-medium text-foreground"
+                  : "border-border/70 bg-muted/50",
+              )}
             >
+              {typedTags && isProductLineTag(c) && (
+                <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
+              )}
               {c}
               {open && (
                 <button
@@ -475,14 +492,25 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 export const MaterialBrief: React.FC = () => {
-  const { data, visible, rankTables, measureId, openBrief, closeBrief, openId, updateMaterial, assessmentSummary } =
-    useRegister();
+  const {
+    data,
+    allMaterials,
+    visible,
+    rankTables,
+    measureId,
+    openBrief,
+    closeBrief,
+    openId,
+    updateMaterial,
+    assessmentSummary,
+  } = useRegister();
 
-  const tagSuggestions = useMemo(() => tagVocabulary(data).map((t) => t.tag), [data]);
+  const tagSuggestions = useMemo(() => tagVocabulary(allMaterials).map((t) => t.tag), [allMaterials]);
 
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
-  const material = data.find((m) => m.material_id === openId) ?? row?.m ?? null;
+  // Scope narrows the list, never the material: the brief reads the whole register.
+  const material = allMaterials.find((m) => m.material_id === openId) ?? row?.m ?? null;
 
   const [draftStatus, setDraftStatus] = useState<JourneyStatus | null>(null);
   const [statusReason, setStatusReason] = useState("");
@@ -952,6 +980,7 @@ export const MaterialBrief: React.FC = () => {
               />
               <TagsField
                 wideField
+                typedTags
                 label="Tags"
 
                 values={m.tags}
@@ -985,15 +1014,15 @@ export const MaterialBrief: React.FC = () => {
                 }
               />
               <TagsField
-                label="Product categories"
-                values={m.product_categories}
+                label="Application areas"
+                values={m.application_areas}
                 onSave={(v) =>
-                  updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
+                  updateMaterial(m.material_id, { application_areas: v }, ["application_areas"], [
                     {
                       material_id: m.material_id,
                       event_type: "field_correction",
-                      field: "product_categories",
-                      from_value: m.product_categories.join(", ") || null,
+                      field: "application_areas",
+                      from_value: m.application_areas.join(", ") || null,
                       to_value: v.join(", ") || null,
                     },
                   ])

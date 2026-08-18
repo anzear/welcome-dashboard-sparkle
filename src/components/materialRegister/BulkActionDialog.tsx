@@ -19,8 +19,19 @@ import {
 import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { isProductLineTag, PRODUCT_LINES } from "@/components/materialRegister/productLines";
 
-export type BulkKind = "status" | "owner" | "products" | "applications" | "priority_period" | "intelligence";
+export type BulkKind =
+  | "status"
+  | "owner"
+  | "products"
+  | "applications"
+  | "priority_period"
+  | "entry_type"
+  | "product_lines"
+  | "tags"
+  | "intelligence";
 
 /** Multi-value actions add by default; remove is an explicit mode. */
 export type BulkMode = "add" | "remove";
@@ -60,6 +71,8 @@ interface Props {
   /** Vocabulary in use across the register, for autocomplete. */
   productSuggestions: string[];
   applicationSuggestions: string[];
+  /** General tag vocabulary in use, for autocomplete on the tag action. */
+  tagSuggestions: string[];
   /** Priority periods already in use. */
   periodSuggestions: string[];
   onCancel: () => void;
@@ -69,14 +82,20 @@ interface Props {
 const UNASSIGNED = "__unassigned__";
 
 const MULTI: Record<string, { field: keyof Material; noun: string }> = {
-  products: { field: "product_categories", noun: "product category" },
+  products: { field: "application_areas", noun: "application area" },
   applications: { field: "application_categories", noun: "application category" },
+  product_lines: { field: "tags", noun: "product line" },
+  tags: { field: "tags", noun: "tag" },
 };
 
+/** Tags carry a type, so the two tag actions never see each other's vocabulary. */
 const valuesOf = (m: Material, kind: BulkKind): string[] => {
   const cfg = MULTI[kind];
   if (!cfg) return [];
-  return ((m[cfg.field] as string[] | null) ?? []) as string[];
+  const list = ((m[cfg.field] as string[] | null) ?? []) as string[];
+  if (kind === "product_lines") return list.filter(isProductLineTag);
+  if (kind === "tags") return list.filter((t) => !isProductLineTag(t));
+  return list;
 };
 
 /** Vocabulary present on the selection, with counts — the only removable set. */
@@ -100,6 +119,7 @@ export const BulkActionDialog: React.FC<Props> = ({
   ownerOptions,
   productSuggestions,
   applicationSuggestions,
+  tagSuggestions,
   periodSuggestions,
   onCancel,
   onApply,
@@ -123,9 +143,18 @@ export const BulkActionDialog: React.FC<Props> = ({
     setShowList(false);
   }, [kind]);
 
-  const isMulti = kind === "products" || kind === "applications";
+  const isMulti = Boolean(kind && MULTI[kind]);
   const cfgNoun = kind && MULTI[kind] ? MULTI[kind].noun : "";
-  const suggestions = kind === "products" ? productSuggestions : applicationSuggestions;
+  const suggestions =
+    kind === "products"
+      ? productSuggestions
+      : kind === "applications"
+        ? applicationSuggestions
+        : kind === "product_lines"
+          ? [...PRODUCT_LINES]
+          : kind === "tags"
+            ? tagSuggestions
+            : [];
 
   const selectionVocab = useMemo(
     () => (isMulti && kind ? vocabulary(materials, kind) : []),
@@ -133,10 +162,12 @@ export const BulkActionDialog: React.FC<Props> = ({
   );
 
   const addMatches = useMemo(() => {
+    if (!isMulti) return [];
     const q = draft.trim().toLowerCase();
-    if (!q || !isMulti) return [];
+    // Product lines are a fixed set, so offer them all before anything is typed.
+    if (!q) return kind === "product_lines" ? suggestions.filter((t) => !hasTag(values, t)) : [];
     return suggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(values, t)).slice(0, 6);
-  }, [draft, suggestions, values, isMulti]);
+  }, [draft, suggestions, values, isMulti, kind]);
 
   const addValue = (raw: string) => {
     const t = normalizeTag(raw);
@@ -198,25 +229,37 @@ export const BulkActionDialog: React.FC<Props> = ({
       : kind === "owner"
         ? `Set owner for ${materials.length} materials`
         : kind === "products"
-          ? `${mode === "add" ? "Add" : "Remove"} product categories — ${materials.length} materials`
+          ? `${mode === "add" ? "Add" : "Remove"} application areas — ${materials.length} materials`
           : kind === "applications"
             ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
-            : kind === "priority_period"
+            : kind === "product_lines"
+              ? `${mode === "add" ? "Add" : "Remove"} product lines — ${materials.length} materials`
+              : kind === "tags"
+              ? `${mode === "add" ? "Add" : "Remove"} tags — ${materials.length} materials`
+              : kind === "priority_period"
               ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
-              : `Order intelligence for ${materials.length} materials`;
+              : kind === "entry_type"
+                ? `Set entry type for ${materials.length} materials`
+                : `Order intelligence for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
     if (!kind || isMulti || !value) return null;
     if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
     if (kind === "owner") return value === UNASSIGNED ? "Unassigned" : value;
+    if (kind === "entry_type") return ENTRY_TYPES.find((e) => e.id === value)?.label ?? value;
     return null;
   }, [kind, isMulti, value]);
 
   const breakdown = useMemo(() => {
-    if (kind !== "status" && kind !== "owner") return [];
+    if (kind !== "status" && kind !== "owner" && kind !== "entry_type") return [];
     const counts = new Map<string, number>();
     materials.forEach((m) => {
-      const l = kind === "status" ? JOURNEY_STATUS_LABEL[m.journey_status] : (m.owner ?? "Unassigned");
+      const l =
+        kind === "status"
+          ? JOURNEY_STATUS_LABEL[m.journey_status]
+          : kind === "entry_type"
+            ? (ENTRY_TYPES.find((e) => e.id === m.entry_type)?.label ?? m.entry_type)
+            : (m.owner ?? "Unassigned");
       counts.set(l, (counts.get(l) ?? 0) + 1);
     });
     return [...counts.entries()].sort((a, b) => b[1] - a[1]);
@@ -269,7 +312,9 @@ export const BulkActionDialog: React.FC<Props> = ({
                     ? "New owner"
                     : kind === "priority_period"
                       ? "Priority period"
-                      : `${mode === "add" ? "Values to add" : "Values to remove"}`}
+                      : kind === "entry_type"
+                        ? "New entry type"
+                        : `${mode === "add" ? "Values to add" : "Values to remove"}`}
               </div>
 
               {isMulti ? (
@@ -377,7 +422,13 @@ export const BulkActionDialog: React.FC<Props> = ({
                     <SelectValue placeholder="Select a value" />
                   </SelectTrigger>
                   <SelectContent>
-                    {kind === "status"
+                    {kind === "entry_type"
+                      ? ENTRY_TYPES.map((e) => (
+                          <SelectItem key={e.id} value={e.id} className="text-xs">
+                            {e.label}
+                          </SelectItem>
+                        ))
+                      : kind === "status"
                       ? STATUS_ORDER.map((s) => (
                           <SelectItem key={s} value={s} className="text-xs">
                             {JOURNEY_STATUS_LABEL[s]}

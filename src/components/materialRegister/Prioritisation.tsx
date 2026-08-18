@@ -95,6 +95,8 @@ const Prioritisation: React.FC = () => {
     toast,
     setToast,
     undo,
+    scope,
+    scopeLabel,
   } = useRegister();
 
   const axisVars = AXIS_VARS;
@@ -379,7 +381,7 @@ const Prioritisation: React.FC = () => {
               <span className="font-mono tabular-nums">{data.length}</span>
             </>
           )}{" "}
-          materials
+          {scope ? `${scopeLabel} materials` : "materials"}
         </span>
       </div>
 
