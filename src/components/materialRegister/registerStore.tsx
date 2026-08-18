@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
 import { applyGateSeed } from "@/data/gateMock";
 import { seedAssessments } from "@/data/assessmentMock";
+import { seedDocuments } from "@/data/documentsMock";
 import {
   canSetGate,
   hasOverdueCondition,
