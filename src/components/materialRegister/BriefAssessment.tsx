@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { NEUTRAL_LABEL, TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
+import { NEUTRAL_LABEL, TEAM_LABEL, contributorById, initialsOf } from "@/config/assessmentCriteria";
 import { today, useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, provenanceLine, shortDate } from "@/components/materialRegister/primitives";
-import { VCG_RULE } from "@/components/materialRegister/vcgSignals";
-import { ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
+import CriterionRail from "@/components/materialRegister/CriterionRail";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { Info, SlidersHorizontal, Pencil } from "lucide-react";
