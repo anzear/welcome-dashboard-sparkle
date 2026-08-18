@@ -603,6 +603,12 @@ export const MaterialRegisterTable: React.FC = () => {
                       </div>
                     </td>
 
+                    {cols.completeness && (
+                      <td className="px-3 py-2 align-middle">
+                        <CompletenessCell m={m} />
+                      </td>
+                    )}
+
                     {cols.materialType && (
                       <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
                         {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
