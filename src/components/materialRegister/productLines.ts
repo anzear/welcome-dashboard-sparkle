@@ -2,15 +2,44 @@
 // it is actually used in. The only thing that separates a product line tag from a
 // general tag is its type — the storage is the same Tags array.
 
+import { useEffect, useState } from "react";
 import type { Material } from "@/types/materialPrioritisation";
-import { tagKey } from "@/components/materialRegister/tags";
+import { normalizeTag, tagKey } from "@/components/materialRegister/tags";
 
 export type TagType = "product_line" | "general";
 
-/** The commercial brand lines in play. Company-entered vocabulary. */
-export const PRODUCT_LINES = ["Persil", "Pril", "Perwoll", "Somat", "Bref"] as const;
+/**
+ * The commercial brand lines in play. Company-entered vocabulary, so the list is
+ * open: marking a new tag as a product line adds it here for the whole session.
+ */
+export const PRODUCT_LINES: string[] = ["Persil", "Pril", "Perwoll", "Somat", "Bref"];
 
 const PRODUCT_LINE_KEYS = new Set(PRODUCT_LINES.map((p) => tagKey(p)));
+
+const listeners = new Set<() => void>();
+
+/** Records a tag as a product line. Returns the canonical spelling stored. */
+export function registerProductLine(raw: string): string | null {
+  const t = normalizeTag(raw);
+  if (!t) return null;
+  const k = tagKey(t);
+  if (PRODUCT_LINE_KEYS.has(k)) return PRODUCT_LINES.find((p) => tagKey(p) === k) ?? t;
+  PRODUCT_LINE_KEYS.add(k);
+  PRODUCT_LINES.push(t);
+  listeners.forEach((l) => l());
+  return t;
+}
+
+/** Re-renders a component when the product line vocabulary grows. */
+export function useProductLines(): string[] {
+  const [, bump] = useState(0);
+  useEffect(() => {
+    const l = () => bump((n) => n + 1);
+    listeners.add(l);
+    return () => listeners.delete(l);
+  }, []);
+  return PRODUCT_LINES;
+}
 
 export const tagTypeOf = (tag: string): TagType =>
   PRODUCT_LINE_KEYS.has(tagKey(tag)) ? "product_line" : "general";
