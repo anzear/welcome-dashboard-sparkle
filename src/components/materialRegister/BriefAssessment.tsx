@@ -526,6 +526,9 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
 
   return (
     <div className="space-y-4">
+      {/* Company figures: the real business data, up top. */}
+      <FiguresStrip m={material} />
+
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
         <span>
           <span className="tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
@@ -548,8 +551,6 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
         </button>
       </div>
 
-      {/* Company figures: the real business data, up top. */}
-      <FiguresStrip m={material} />
 
       <div className="space-y-6 pt-1">
         {judged.map((c) => (
