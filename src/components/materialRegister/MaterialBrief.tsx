@@ -947,11 +947,9 @@ export const MaterialBrief: React.FC = () => {
 
       </div>
 
-      {/* Body — single column. Figures live inside the assessment now. */}
-      <div className="mt-4 space-y-4">
-
-        {/* Right column */}
-        <div className="space-y-4 self-start">
+      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments. */}
+      <div className="mt-4 grid items-start gap-4 lg:grid-cols-3">
+        <div className="space-y-4 self-start lg:col-span-2">
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
             title="Gate"
