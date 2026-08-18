@@ -475,7 +475,7 @@ const AssessmentCoverage: React.FC = () => {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={judgedCriteria.length + 2} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={judgedCriteria.length + 3} className="px-3 py-6 text-center text-muted-foreground">
                   No materials match the current filters.
                 </td>
               </tr>
