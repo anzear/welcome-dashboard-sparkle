@@ -11,6 +11,7 @@ import { ChevronDown, SlidersHorizontal } from "lucide-react";
 import PriorityDialog from "@/components/materialRegister/PriorityDialog";
 import { STATUS_DOT, StatusLegend, median, ordinal } from "@/components/materialRegister/gridPrimitives";
 import UnplottedList, { type UnplottedEntry } from "@/components/materialRegister/UnplottedList";
+import PlottedList from "@/components/materialRegister/PlottedList";
 import DriverListView from "@/components/materialRegister/DriverListView";
 import {
   AXIS_PRESETS,
@@ -117,6 +118,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
   const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
   const [mode, setMode] = useState<"chart" | "list">("chart");
+  const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
 
   const xv = findAxisVar(axisVars, xId);
   const yv = findAxisVar(axisVars, yId);
