@@ -78,6 +78,48 @@ export interface FieldProvenance {
   date: string | null;
 }
 
+/**
+ * VCG signals — three slim computed signals per material. They report whether
+ * something exists, never what it is: no pathway names, no supplier identities,
+ * no competitor names. The detail sits behind an intelligence order.
+ */
+export type SubstitutabilityReadiness = "established" | "emerging" | "none_found" | "not_assessed";
+
+export const SUBSTITUTABILITY_LABEL: Record<SubstitutabilityReadiness, string> = {
+  established: "Established",
+  emerging: "Emerging",
+  none_found: "None found",
+  not_assessed: "Not assessed",
+};
+
+export type CompetitorActivity = "detected" | "none_detected" | "not_assessed";
+
+export const COMPETITOR_ACTIVITY_LABEL: Record<CompetitorActivity, string> = {
+  detected: "Detected",
+  none_detected: "None detected",
+  not_assessed: "Not assessed",
+};
+
+/**
+ * Suppliers VCG detects who could supply an alternative, capped at the ceiling.
+ * `assessed: false` is not zero suppliers — it means VCG has not run the check.
+ */
+export interface SupplierAvailability {
+  value: number | null;
+  capped: boolean;
+  assessed: boolean;
+}
+
+export const SUPPLIER_CEILING = 9;
+
+export const NOT_ASSESSED_SUPPLIERS: SupplierAvailability = { value: null, capped: false, assessed: false };
+
+/** "0" | "3" | "10+" | null when not assessed. Never blank, never a fake 0. */
+export const formatSupplierAvailability = (s: SupplierAvailability | undefined): string | null => {
+  if (!s || !s.assessed || s.value === null) return null;
+  return s.capped ? `${SUPPLIER_CEILING + 1}+` : String(s.value);
+};
+
 export interface Material {
   material_id: string;
   customer_material_ids: string[];
@@ -96,8 +138,12 @@ export interface Material {
   ghg_contribution: number | null;
   ghg_boundary: string | null;
   ghg_data_basis: string | null;
-  supplier_count: number | null;
-  supplier_countries: string[];
+  /** VCG signals. Computed by us, never entered by the client. */
+  substitutability_readiness: SubstitutabilityReadiness;
+  supplier_availability: SupplierAvailability;
+  competitor_activity: CompetitorActivity;
+  /** One VCG data date per material, shared by all three signals. */
+  vcg_data_date: string | null;
   journey_status: JourneyStatus;
   /** null when no requirement has been stated at all. */
   requirements: MaterialRequirements | null;
@@ -154,8 +200,9 @@ export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
   ghg_boundary: "company_entered",
   ghg_data_basis: "company_entered",
   ghg_contribution: "vcg_computed",
-  supplier_count: "company_entered",
-  supplier_countries: "company_entered",
+  substitutability_readiness: "vcg_computed",
+  supplier_availability: "vcg_computed",
+  competitor_activity: "vcg_computed",
   owner: "company_entered",
   entry_type: "company_entered",
   tags: "company_entered",

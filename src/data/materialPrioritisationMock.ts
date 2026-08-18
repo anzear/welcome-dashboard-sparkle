@@ -1,5 +1,8 @@
-import { migrateJourneyStatus } from "@/types/materialPrioritisation";
+import { migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
 import type {
+  CompetitorActivity,
+  SubstitutabilityReadiness,
+  SupplierAvailability,
   FieldProvenance,
   IntelligenceStatus,
   JourneyStatus,
@@ -47,8 +50,6 @@ interface Row {
   price: number | null;
   /** kg CO2e per kg */
   ghg: number | null;
-  sup: number | null;
-  countries: string[];
   /** Legacy value set; migrated to the five gate statuses on projection. */
   status: string;
   owner: string | null;
@@ -68,8 +69,7 @@ const rows: Row[] = [
   // ---------------------------------------------------------------- Surfactants
   {
     name: "Sodium laureth sulfate", cas: "9004-82-4", cls: "Ethoxylated alkyl sulfate", tag: "Surfactants",
-    vol: 3100, price: 1.35, ghg: 2.6, sup: 4, countries: ["DE", "TR", "MY"],
-    status: "under_evaluation", owner: "M. Oyelaran",
+    vol: 3100, price: 1.35, ghg: 2.6, status: "under_evaluation", owner: "M. Oyelaran",
     apps: ["Surfactancy"], prods: ["Shampoo base", "Body wash"],
     target: "2026-06-30", intel: "delivered", intelScope: "Bio-based and sulfate-free surfactant suppliers, EU",
     priority: "H2 2026",
@@ -77,164 +77,140 @@ const rows: Row[] = [
   },
   {
     name: "Sodium lauryl sulfate", cas: "151-21-3", cls: "Alkyl sulfate", tag: "Surfactants",
-    vol: 1450, price: 1.28, ghg: 2.45, sup: 3, countries: ["DE", "MY"],
-    status: "not_started", owner: null,
+    vol: 1450, price: 1.28, ghg: 2.45, status: "not_started", owner: null,
     apps: ["Surfactancy"], prods: ["Liquid detergent", "Hand soap"],
   },
   {
     name: "Cocamidopropyl betaine", cas: "61789-40-0", cls: "Amphoteric betaine", tag: "Surfactants",
-    vol: 1850, price: 1.68, ghg: 2.2, sup: 3, countries: ["DE", "MY"],
-    status: "in_testing", owner: "S. Rautio",
+    vol: 1850, price: 1.68, ghg: 2.2, status: "in_testing", owner: "S. Rautio",
     apps: ["Surfactancy", "Viscosity control"], prods: ["Shampoo base", "Hand soap"],
     target: "2026-09-15", intel: "in_progress", intelScope: "Coconut-free amphoteric routes",
   },
   {
     name: "Coco glucoside", cas: "141464-42-8", cls: "Alkyl polyglucoside", tag: "Surfactants",
-    vol: 950, price: 2.1, ghg: 1.9, sup: 3, countries: ["DE", "MY"],
-    status: "qualified", owner: "S. Rautio",
+    vol: 950, price: 2.1, ghg: 1.9, status: "qualified", owner: "S. Rautio",
     apps: ["Surfactancy"], prods: ["Body wash", "Hand soap"],
     target: "2026-05-01", priority: "H2 2026",
   },
   {
     name: "Decyl glucoside", cas: "141464-42-8", cls: "Alkyl polyglucoside", tag: "Surfactants",
-    vol: 610, price: 2.28, ghg: 1.95, sup: 2, countries: ["DE", "MY"],
-    status: "in_use", owner: "S. Rautio",
+    vol: 610, price: 2.28, ghg: 1.95, status: "in_use", owner: "S. Rautio",
     apps: ["Surfactancy"], prods: ["Surface cleaner", "Body wash"],
   },
   {
     name: "Lauryl glucoside", cas: "110615-47-9", cls: "Alkyl polyglucoside", tag: "Surfactants",
-    vol: 430, price: 2.34, ghg: null, sup: 2, countries: ["FR", "ID"],
-    status: "under_evaluation", owner: "S. Rautio",
+    vol: 430, price: 2.34, ghg: null, status: "under_evaluation", owner: "S. Rautio",
     apps: ["Surfactancy"], prods: ["Shampoo base"],
     intel: "requested", intelScope: "Palm-free C12 glucoside supply",
   },
   {
     name: "Caprylyl glucoside", cas: "68515-73-1", cls: "Alkyl polyglucoside", tag: "Surfactants",
-    vol: 155, price: 2.75, ghg: 2.05, sup: 1, countries: ["DE"],
-    status: "not_started", owner: null,
+    vol: 155, price: 2.75, ghg: 2.05, status: "not_started", owner: null,
     apps: ["Surfactancy"], prods: ["Surface cleaner"],
   },
   {
     name: "Sodium C14-16 olefin sulfonate", cas: "68439-57-6", cls: "Olefin sulfonate", tag: "Surfactants",
-    vol: 780, price: 1.42, ghg: 2.5, sup: 2, countries: ["DE", "SA"],
-    status: "not_started", owner: null,
+    vol: 780, price: 1.42, ghg: 2.5, status: "not_started", owner: null,
     apps: [], prods: ["Liquid detergent"],
   },
   {
     name: "C12-C14 fatty alcohol", cas: "80206-82-2", cls: "C12-C14 fatty alcohol", tag: "Surfactants",
-    vol: 2400, price: 1.95, ghg: 2.85, sup: 3, countries: ["MY", "ID", "DE"],
-    status: "sourcing", owner: "K. Brandt",
+    vol: 2400, price: 1.95, ghg: 2.85, status: "sourcing", owner: "K. Brandt",
     apps: ["Surfactancy"], prods: ["Liquid detergent", "Body wash"],
     target: "2026-07-01", intel: "delivered", intelScope: "Certified palm kernel alcohols, second source",
     priority: "H2 2026",
   },
   {
     name: "Cocamide MEA", cas: "68140-00-1", cls: "Fatty acid alkanolamide", tag: "Rheology",
-    vol: 320, price: 2.55, ghg: 2.7, sup: 1, countries: ["DE"],
-    status: "not_started", owner: null,
+    vol: 320, price: 2.55, ghg: 2.7, status: "not_started", owner: null,
     apps: ["Viscosity control"], prods: ["Shampoo base"],
   },
   {
     name: "Nonylphenol ethoxylate", cas: "9016-45-9", cls: "Alkylphenol ethoxylate", tag: "Surfactants",
-    vol: 210, price: 2.05, ghg: 3.4, sup: 1, countries: ["CN"],
-    status: "rejected", owner: "K. Brandt",
+    vol: 210, price: 2.05, ghg: 3.4, status: "rejected", owner: "K. Brandt",
     apps: ["Surfactancy"], prods: ["Surface cleaner"],
   },
 
   // -------------------------------------------------------------- Preservatives
   {
     name: "Phenoxyethanol", cas: "122-99-6", cls: "Aromatic ether preservative", tag: "Preservatives",
-    vol: 260, price: 3.55, ghg: 3.9, sup: 2, countries: ["DE", "IN"],
-    status: "under_evaluation", owner: "L. Haugen",
+    vol: 260, price: 3.55, ghg: 3.9, status: "under_evaluation", owner: "L. Haugen",
     apps: ["Preservation"], prods: ["Shampoo base", "Conditioner", "Body wash"],
     target: "2026-03-31", intel: "delivered", intelScope: "Fermentation-route preservative systems",
   },
   {
     name: "Benzyl alcohol", cas: "100-51-6", cls: "Aromatic alcohol preservative", tag: "Preservatives",
-    vol: 180, price: 2.9, ghg: 2.8, sup: 2, countries: ["DE", "CN"],
-    status: "not_started", owner: null,
+    vol: 180, price: 2.9, ghg: 2.8, status: "not_started", owner: null,
     apps: ["Preservation", "Fragrance carrier"], prods: ["Body wash", "Hand soap"],
   },
   {
     name: "Sodium benzoate", cas: "532-32-1", cls: "Benzoate salt preservative", tag: "Preservatives",
-    vol: 320, price: null, ghg: 1.95, sup: 2, countries: ["NL", "CN"],
-    status: "not_started", owner: null,
+    vol: 320, price: null, ghg: 1.95, status: "not_started", owner: null,
     apps: ["Preservation"], prods: ["Liquid detergent", "Surface cleaner"],
   },
   {
     name: "Methylisothiazolinone", cas: "2682-20-4", cls: "Isothiazolinone biocide", tag: "Preservatives",
-    vol: null, price: 14.2, ghg: null, sup: 1, countries: ["DE"],
-    status: "rejected", owner: "S. Rautio",
+    vol: null, price: 14.2, ghg: null, status: "rejected", owner: "S. Rautio",
     apps: ["Preservation"], prods: ["Surface cleaner"],
   },
 
   // ------------------------------------------------------------------ Chelants
   {
     name: "Tetrasodium EDTA", cas: "64-02-8", cls: "Aminopolycarboxylate chelant", tag: "Chelants",
-    vol: 720, price: 1.95, ghg: 3.35, sup: 3, countries: ["DE", "CN"],
-    status: "under_evaluation", owner: "M. Oyelaran",
+    vol: 720, price: 1.95, ghg: 3.35, status: "under_evaluation", owner: "M. Oyelaran",
     apps: ["Chelation"], prods: ["Liquid detergent", "Surface cleaner"],
     target: "2026-04-30", priority: "H2 2026",
     req: { target_volume: 720, price_ceiling: 2.4, required_certifications: ["Readily biodegradable (OECD 301)"], earliest_need_date: "2026-10-01", notes: "Must hold chelation at pH 9 wash conditions." },
   },
   {
     name: "Trisodium GLDA", cas: "51981-21-6", cls: "Biodegradable chelant", tag: "Chelants",
-    vol: null, price: 2.6, ghg: 2.15, sup: 2, countries: ["NL"],
-    status: "in_testing", owner: "M. Oyelaran",
+    vol: null, price: 2.6, ghg: 2.15, status: "in_testing", owner: "M. Oyelaran",
     apps: ["Chelation"], prods: ["Liquid detergent"],
     intel: "in_progress", intelScope: "GLDA capacity outlook to 2028",
   },
   {
     name: "Sodium gluconate", cas: "527-07-1", cls: "Gluconate chelant", tag: "Chelants",
-    vol: 540, price: null, ghg: 1.45, sup: 2, countries: ["CN", "FR"],
-    status: "not_started", owner: null,
+    vol: 540, price: null, ghg: 1.45, status: "not_started", owner: null,
     apps: ["Chelation"], prods: ["Surface cleaner"],
   },
   {
     name: "Sodium phytate", cas: "14306-25-3", cls: "Phytate chelant", tag: "Chelants",
-    vol: 40, price: 8.6, ghg: null, sup: 1, countries: ["JP"],
-    status: "not_started", owner: null,
+    vol: 40, price: 8.6, ghg: null, status: "not_started", owner: null,
     apps: [], prods: ["Conditioner"],
   },
   {
     name: "Sodium citrate", cas: "68-04-2", cls: "Citrate builder", tag: "Builders",
-    vol: 880, price: 1.15, ghg: 1.55, sup: 3, countries: ["NL", "CN"],
-    status: "not_started", owner: null,
+    vol: 880, price: 1.15, ghg: 1.55, status: "not_started", owner: null,
     apps: ["Chelation"], prods: ["Liquid detergent", "Surface cleaner"],
   },
   {
     name: "Citric acid", cas: "77-92-9", cls: "Hydroxy acid", tag: "pH control",
-    vol: 640, price: 1.32, ghg: 1.6, sup: 4, countries: ["AT", "CN"],
-    status: "in_use", owner: "K. Brandt",
+    vol: 640, price: 1.32, ghg: 1.6, status: "in_use", owner: "K. Brandt",
     apps: ["Chelation"], prods: ["Surface cleaner", "Liquid detergent"],
   },
 
   // --------------------------------------------------- Humectants and solvents
   {
     name: "Glycerine (vegetable)", cas: "56-81-5", cls: "Polyol humectant", tag: "Emollients",
-    vol: 2600, price: 1.05, ghg: 1.35, sup: 4, countries: ["MY", "ID", "DE"],
-    status: "sourcing", owner: "L. Haugen",
+    vol: 2600, price: 1.05, ghg: 1.35, status: "sourcing", owner: "L. Haugen",
     apps: [], prods: ["Shampoo base", "Body wash", "Conditioner"],
     target: "2026-02-28", priority: "H1 2027",
   },
   {
     name: "Propylene glycol", cas: "57-55-6", cls: "Glycol solvent", tag: "Solvents",
-    vol: 1400, price: 1.42, ghg: 3.1, sup: 4, countries: ["DE", "BE", "US"],
-    status: "under_evaluation", owner: "L. Haugen",
+    vol: 1400, price: 1.42, ghg: 3.1, status: "under_evaluation", owner: "L. Haugen",
     apps: ["Fragrance carrier"], prods: ["Conditioner", "Surface cleaner"],
     target: "2026-11-30", intel: "requested", intelScope: "Bio-PG availability in Europe",
   },
   {
     name: "Isopropyl alcohol", cas: "67-63-0", cls: "Short-chain alcohol solvent", tag: "Solvents",
-    vol: 1900, price: 1.08, ghg: 1.85, sup: 5, countries: ["DE", "SA", "CN"],
-    status: "sourcing", owner: "M. Oyelaran",
+    vol: 1900, price: 1.08, ghg: 1.85, status: "sourcing", owner: "M. Oyelaran",
     apps: ["Fragrance carrier"], prods: ["Surface cleaner"],
     target: "2026-12-31",
   },
   {
     name: "d-Limonene", cas: "5989-27-5", cls: "Terpene solvent", tag: "Fragrance",
-    vol: 240, price: 5.4, ghg: 1.15, sup: 2, countries: ["BR", "US"],
-    status: "in_testing", owner: "L. Haugen",
+    vol: 240, price: 5.4, ghg: 1.15, status: "in_testing", owner: "L. Haugen",
     apps: ["Fragrance carrier"], prods: ["Surface cleaner", "Liquid detergent"],
     intel: "delivered", intelScope: "Citrus feedstock volatility",
   },
@@ -242,98 +218,84 @@ const rows: Row[] = [
   // ------------------------------------------------------ Emulsifiers, emollients
   {
     name: "Glyceryl stearate", cas: "31566-31-1", cls: "Nonionic emulsifier", tag: "Emollients",
-    vol: 340, price: 3.2, ghg: 2.9, sup: 2, countries: ["DE", "FR"],
-    status: "under_evaluation", owner: "A. Vermeer",
+    vol: 340, price: 3.2, ghg: 2.9, status: "under_evaluation", owner: "A. Vermeer",
     apps: ["Emulsification"], prods: ["Conditioner"],
   },
   {
     name: "Cetearyl alcohol", cas: "67762-27-0", cls: "Fatty alcohol emulsifier", tag: "Emollients",
-    vol: 620, price: 2.4, ghg: 2.75, sup: 3, countries: ["MY", "DE"],
-    status: "in_testing", owner: "A. Vermeer",
+    vol: 620, price: 2.4, ghg: 2.75, status: "in_testing", owner: "A. Vermeer",
     apps: ["Emulsification", "Viscosity control"], prods: ["Conditioner", "Body wash"],
     target: "2026-08-31", priority: "H2 2026",
   },
   {
     name: "Sorbitan oleate", cas: "1338-43-8", cls: "Sorbitan ester emulsifier", tag: "Emollients",
-    vol: 85, price: 4.35, ghg: null, sup: 1, countries: ["FR"],
-    status: "not_started", owner: null,
+    vol: 85, price: 4.35, ghg: null, status: "not_started", owner: null,
     apps: ["Emulsification"], prods: ["Conditioner"],
   },
   {
     name: "PEG-40 hydrogenated castor oil", cas: "61788-85-0", cls: "Ethoxylated castor oil", tag: "Emollients",
-    vol: 210, price: 4.9, ghg: 3.15, sup: 2, countries: ["DE", "IN"],
-    status: "under_evaluation", owner: "A. Vermeer",
+    vol: 210, price: 4.9, ghg: 3.15, status: "under_evaluation", owner: "A. Vermeer",
     apps: ["Emulsification"], prods: ["Shampoo base"],
     intel: "requested", intelScope: "Ethoxylate-free solubiliser options",
   },
   {
     name: "Isopropyl myristate", cas: "110-27-0", cls: "Ester emollient", tag: "Emollients",
-    vol: 130, price: 3.75, ghg: 2.6, sup: 2, countries: ["DE", "US"],
-    status: "not_started", owner: null,
+    vol: 130, price: 3.75, ghg: 2.6, status: "not_started", owner: null,
     apps: [], prods: ["Body wash"],
   },
 
   // ------------------------------------------------------------- Conditioning
   {
     name: "Dimethicone (350 cSt)", cas: "63148-62-9", cls: "Silicone fluid", tag: "Conditioning",
-    vol: 420, price: 6.2, ghg: 5.4, sup: 2, countries: ["DE", "US"],
-    status: "parked", owner: "N. Kowalczyk",
+    vol: 420, price: 6.2, ghg: 5.4, status: "parked", owner: "N. Kowalczyk",
     apps: [], prods: ["Conditioner", "Shampoo base"],
     unknownOrigin: ["ghg_emission_factor"],
   },
   {
     name: "Behentrimonium chloride", cas: "17301-53-0", cls: "Quaternary ammonium conditioner", tag: "Conditioning",
-    vol: 180, price: 5.1, ghg: 4.2, sup: 1, countries: ["DE"],
-    status: "under_evaluation", owner: "N. Kowalczyk",
+    vol: 180, price: 5.1, ghg: 4.2, status: "under_evaluation", owner: "N. Kowalczyk",
     apps: ["Emulsification"], prods: ["Conditioner"],
     target: "2027-03-31",
   },
   {
     name: "Guar hydroxypropyltrimonium chloride", cas: "65497-29-2", cls: "Cationic guar", tag: "Conditioning",
-    vol: 95, price: 7.4, ghg: 2.1, sup: 2, countries: ["IN", "DE"],
-    status: "in_testing", owner: "N. Kowalczyk",
+    vol: 95, price: 7.4, ghg: 2.1, status: "in_testing", owner: "N. Kowalczyk",
     apps: ["Viscosity control"], prods: ["Shampoo base", "Conditioner"],
     intel: "in_progress", intelScope: "Guar price and origin risk",
   },
   {
     name: "Polyquaternium-10", cas: "68610-92-4", cls: "Cationic cellulose", tag: "Conditioning",
-    vol: 70, price: 9.2, ghg: null, sup: 1, countries: ["US"],
-    status: "not_started", owner: null,
+    vol: 70, price: 9.2, ghg: null, status: "not_started", owner: null,
     apps: ["Viscosity control"], prods: ["Shampoo base"],
   },
 
   // ---------------------------------------------------------------- Rheology
   {
     name: "Xanthan gum", cas: "11138-66-2", cls: "Biopolymer thickener", tag: "Rheology",
-    vol: 240, price: 4.6, ghg: 2.3, sup: 3, countries: ["AT", "CN"],
-    status: "qualified", owner: null,
+    vol: 240, price: 4.6, ghg: 2.3, status: "qualified", owner: null,
     apps: ["Viscosity control"], prods: ["Hand soap", "Surface cleaner"],
     target: "2026-01-31",
   },
   {
     name: "Carbomer", cas: "9003-01-4", cls: "Crosslinked polyacrylate", tag: "Rheology",
-    vol: 110, price: 8.9, ghg: 6.1, sup: 1, countries: ["US"],
-    status: "not_started", owner: null,
+    vol: 110, price: 8.9, ghg: 6.1, status: "not_started", owner: null,
     apps: [], prods: ["Hand soap"],
   },
   {
     name: "Acrylates copolymer", cas: "25133-97-5", cls: "Acrylates copolymer", tag: "Rheology",
-    vol: 300, price: 3.3, ghg: 3.6, sup: 2, countries: ["DE", "NL"],
-    status: "parked", owner: "A. Vermeer",
+    vol: 300, price: 3.3, ghg: 3.6, status: "parked", owner: "A. Vermeer",
     apps: ["Viscosity control", "Opacification"], prods: ["Body wash"],
   },
 
   // --------------------------------------------------------------- Opacifiers
   {
     name: "Glycol distearate", cas: "627-83-8", cls: "Wax opacifier", tag: "Opacifiers",
-    vol: 150, price: 3.05, ghg: 2.85, sup: 2, countries: ["DE", "MY"],
-    status: "not_started", owner: null,
+    vol: 150, price: 3.05, ghg: 2.85, status: "not_started", owner: null,
     apps: ["Opacification"], prods: ["Shampoo base", "Body wash"],
   },
   {
     name: "Titanium dioxide (rutile)", cas: "13463-67-7", cls: "Titanium dioxide pigment", tag: "Opacifiers",
-    vol: 240, price: 3.05, ghg: 8.4, sup: 3, countries: ["DE", "FI", "CN"],
-    status: "under_evaluation", owner: "A. Vermeer",
+    vol: 240, price: 3.05, ghg: 8.4, status: "under_evaluation", owner: "A. Vermeer",
     apps: ["Opacification"], prods: ["Hand soap", "Surface cleaner"],
     // Priority set for a later period on purpose — the register must still show it.
     priority: "H1 2027", target: "2027-01-31",
@@ -342,8 +304,7 @@ const rows: Row[] = [
   },
   {
     name: "Mica", cas: "12001-26-2", cls: "Mineral pearlescent", tag: "Opacifiers",
-    vol: 35, price: 6.4, ghg: null, sup: 1, countries: ["IN"],
-    status: "not_started", owner: null,
+    vol: 35, price: 6.4, ghg: null, status: "not_started", owner: null,
     apps: ["Opacification"], prods: ["Body wash"],
     unknownOrigin: ["unit_price"],
   },
@@ -351,14 +312,12 @@ const rows: Row[] = [
   // ------------------------------------------------------------------ Builders
   {
     name: "Sodium chloride", cas: "7647-14-5", cls: "Inorganic salt", tag: "Rheology",
-    vol: 2100, price: 0.18, ghg: 0.25, sup: 2, countries: ["DE", "NL"],
-    status: "not_started", owner: null,
+    vol: 2100, price: 0.18, ghg: 0.25, status: "not_started", owner: null,
     apps: ["Viscosity control"], prods: ["Shampoo base", "Body wash"],
   },
   {
     name: "Protease enzyme blend", cas: null, cls: "Detergent enzyme", tag: "Enzymes",
-    vol: 45, price: 11.8, ghg: 3.05, sup: 1, countries: ["DK"],
-    status: "in_testing", owner: "M. Oyelaran",
+    vol: 45, price: 11.8, ghg: 3.05, status: "in_testing", owner: "M. Oyelaran",
     apps: [], prods: ["Liquid detergent"],
     intel: "in_progress", intelScope: "Enzyme supplier landscape outside DK",
   },
@@ -385,6 +344,58 @@ const emptyRequirements = (): MaterialRequirements => ({
   earliest_need_date: null,
   notes: null,
 });
+
+/**
+ * VCG signals per material. Deterministic, deliberately uneven: VCG coverage is
+ * never complete, and the gap is a real reportable state, not a zero.
+ */
+const VCG_DATES = ["2025-11-14", "2025-12-03", "2025-12-19", "2026-01-09", "2026-01-27", "2026-02-12"];
+
+interface VcgSignals {
+  substitutability_readiness: SubstitutabilityReadiness;
+  supplier_availability: SupplierAvailability;
+  competitor_activity: CompetitorActivity;
+  vcg_data_date: string;
+}
+
+function vcgSignalsFor(i: number, name: string): VcgSignals {
+  const h = [...name].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 9973, 7);
+  const vcg_data_date = VCG_DATES[h % VCG_DATES.length];
+
+  // Roughly eight of the 42 materials have not been assessed at all.
+  if (i % 5 === 3) {
+    return {
+      substitutability_readiness: "not_assessed",
+      supplier_availability: { value: null, capped: false, assessed: false },
+      competitor_activity: "not_assessed",
+      vcg_data_date,
+    };
+  }
+
+  const bucket = h % 10;
+  const readiness: SubstitutabilityReadiness =
+    bucket < 4 ? "established" : bucket < 8 ? "emerging" : "none_found";
+
+  // Established paths carry more detected suppliers; none found mostly carries 0.
+  const raw =
+    readiness === "established"
+      ? 4 + (h % 9)
+      : readiness === "emerging"
+        ? 1 + (h % 5)
+        : h % 7 === 0
+          ? 1
+          : 0;
+  const capped = raw > SUPPLIER_CEILING;
+  const supplier_availability: SupplierAvailability = {
+    value: capped ? SUPPLIER_CEILING + 1 : raw,
+    capped,
+    assessed: true,
+  };
+
+  const competitor_activity: CompetitorActivity = h % 3 === 0 ? "detected" : "none_detected";
+
+  return { substitutability_readiness: readiness, supplier_availability, competitor_activity, vcg_data_date };
+}
 
 export const materials: Material[] = rows.map((row, i) => {
   const annual_spend = row.vol !== null && row.price !== null ? round(row.vol * 1000 * row.price, 0) : null;
@@ -431,8 +442,12 @@ export const materials: Material[] = rows.map((row, i) => {
   put("ghg_contribution", ghg_contribution, prov("computed", "emission factor x annual volume", ERP_DATE));
   put("ghg_boundary", row.ghg !== null ? "Cradle-to-gate (A1-A3)" : null, ghgProv);
   put("ghg_data_basis", row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null, ghgProv);
-  put("supplier_count", row.sup, prov("ingested", "Procurement master data", "2026-02-02"));
-  put("supplier_countries", row.countries, prov("ingested", "Procurement master data", "2026-02-02"));
+  // VCG signals share one data date per material.
+  const vcg = vcgSignalsFor(i, row.name);
+  const vcgProv = prov("computed", "VCG data", vcg.vcg_data_date);
+  p.substitutability_readiness = vcgProv;
+  p.supplier_availability = vcgProv;
+  p.competitor_activity = vcgProv;
 
   // Positions and decisions.
   const decided = prov("entered", row.owner ?? "System import", statusDate);
@@ -475,8 +490,10 @@ export const materials: Material[] = rows.map((row, i) => {
     ghg_contribution,
     ghg_boundary: row.ghg !== null ? "Cradle-to-gate (A1-A3)" : null,
     ghg_data_basis: row.ghg !== null ? (supplierSpecific ? "Supplier-specific" : "Secondary database") : null,
-    supplier_count: row.sup,
-    supplier_countries: row.countries,
+    substitutability_readiness: vcg.substitutability_readiness,
+    supplier_availability: vcg.supplier_availability,
+    competitor_activity: vcg.competitor_activity,
+    vcg_data_date: vcg.vcg_data_date,
     journey_status: migrateJourneyStatus(row.status),
     blocker_category: isBlocked ? (row.status === "rejected" ? "Regulatory / compliance" : "Supply availability") : null,
     blocker_detail: isBlocked
@@ -522,8 +539,6 @@ const PROVENANCE_TRACKED: (keyof Material)[] = [
   "ghg_contribution",
   "ghg_boundary",
   "ghg_data_basis",
-  "supplier_count",
-  "supplier_countries",
   "owner",
 ];
 

@@ -1,3 +1,10 @@
+import {
+  CompetitorActivityMark,
+  SubstitutabilityChip,
+  SupplierAvailabilityValue,
+  VCG_RULE,
+  vcgStamp,
+} from "@/components/materialRegister/vcgSignals";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -50,6 +57,57 @@ const Section: React.FC<{
     {children}
   </section>
 );
+
+/**
+ * VCG signals card. Three computed flags and nothing behind them: no expand, no
+ * drill-down, no hover reveal. The absence is deliberate — pathway detail,
+ * supplier identity and competitor breakdown sit behind an intelligence order.
+ */
+const VcgSignalsCard: React.FC<{ material: Material }> = ({ material }) => {
+  const stamp = vcgStamp(material);
+  const rows: [string, React.ReactNode][] = [
+    ["Substitutability", <SubstitutabilityChip value={material.substitutability_readiness} />],
+    ["Suppliers", <SupplierAvailabilityValue value={material.supplier_availability} />],
+    ["Competitor activity", <CompetitorActivityMark value={material.competitor_activity} withLabel />],
+  ];
+
+  return (
+    <section
+      className={cn(
+        "space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm",
+        VCG_RULE,
+      )}
+    >
+      <div className="border-b border-border/70 pb-1.5">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-provenance-vcg">VCG signals</h2>
+        <p className="pt-1 text-xs leading-snug text-muted-foreground">
+          Computed by VCG from our data. Not measurements taken by your team, and not the full intelligence
+          set.
+        </p>
+      </div>
+
+      <div className="divide-y divide-border/50">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-start justify-between gap-4 py-2">
+            <div>
+              <div className="text-xs font-medium text-foreground">{label}</div>
+              <div className="pt-0.5 text-[10px] text-muted-foreground">{stamp}</div>
+            </div>
+            <div className="shrink-0 pt-0.5">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <p className="border-t border-border/50 pt-2.5 text-xs leading-snug text-muted-foreground">
+        Signals only. Pathway detail, supplier identity, and competitor breakdown sit behind an intelligence
+        order.
+      </p>
+      <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
+        Order intelligence
+      </Button>
+    </section>
+  );
+};
 
 const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
   <div
@@ -491,7 +549,7 @@ export const MaterialBrief: React.FC = () => {
 
   /** Records a numeric figure as entered, recomputing anything derived from it. */
   const saveFigure = (
-    field: "annual_volume" | "unit_price" | "ghg_emission_factor" | "supplier_count",
+    field: "annual_volume" | "unit_price" | "ghg_emission_factor",
     raw: string,
   ) => {
     const parsed = raw === "" ? null : Number(raw.replace(/[,\s]/g, ""));
@@ -1093,41 +1151,12 @@ export const MaterialBrief: React.FC = () => {
                 placeholder="e.g. Supplier-specific"
                 onSave={(raw) => saveText("ghg_data_basis", raw)}
               />
-
-              <GroupLabel>Supply</GroupLabel>
-              <EditableFigure
-                label="Suppliers"
-                field="supplier_count"
-                value={m.supplier_count}
-                provenance={m.provenance.supplier_count}
-                placeholder="count"
-                onSave={(raw) => saveFigure("supplier_count", raw)}
-              />
-              <EditableFigure
-                wide
-                label="Supplier countries"
-                field="supplier_countries"
-                value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
-                provenance={m.provenance.supplier_countries}
-                placeholder="DE, FI, CN"
-                onSave={(raw) => {
-                  const next = raw
-                    .split(",")
-                    .map((x) => x.trim().toUpperCase())
-                    .filter(Boolean);
-                  updateMaterial(m.material_id, { supplier_countries: next }, ["supplier_countries"], [
-                    {
-                      material_id: m.material_id,
-                      event_type: "field_correction",
-                      field: "supplier_countries",
-                      from_value: m.supplier_countries.join(", ") || null,
-                      to_value: next.join(", ") || null,
-                    },
-                  ]);
-                }}
-              />
             </div>
           </Section>
+
+          {/* VCG signals — ours, computed, deliberately slim. */}
+          <VcgSignalsCard material={m} />
+
 
           {/* What the replacement has to achieve. Nothing stated is not a zero target. */}
           <Section

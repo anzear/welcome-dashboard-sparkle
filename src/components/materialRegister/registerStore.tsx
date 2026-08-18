@@ -137,8 +137,15 @@ export interface Filters {
   priorityPeriods: string[];
   /** Blocker categories, matched with ANY. May include NO_BLOCKER. */
   blockers: string[];
-  /** Supplier countries, matched with ANY. */
-  countries: string[];
+  /** VCG substitutability readiness values, matched with ANY. */
+  vcgSubstitutability: string[];
+  /** VCG competitor activity values, matched with ANY. */
+  vcgCompetitor: string[];
+  /** Inclusive range over the VCG supplier count. Never matches not-assessed. */
+  vcgSuppliersMin: number | null;
+  vcgSuppliersMax: number | null;
+  /** Deliberately outside the range: not assessed is not a number. */
+  vcgSuppliersNotAssessed: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -155,7 +162,11 @@ export const EMPTY_FILTERS: Filters = {
   applications: [],
   priorityPeriods: [],
   blockers: [],
-  countries: [],
+  vcgSubstitutability: [],
+  vcgCompetitor: [],
+  vcgSuppliersMin: null,
+  vcgSuppliersMax: null,
+  vcgSuppliersNotAssessed: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -341,7 +352,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.tags.length > 0 ||
     filters.priorityPeriods.length > 0 ||
     filters.blockers.length > 0 ||
-    filters.countries.length > 0;
+    filters.vcgSubstitutability.length > 0 ||
+    filters.vcgCompetitor.length > 0 ||
+    filters.vcgSuppliersMin !== null ||
+    filters.vcgSuppliersMax !== null ||
+    filters.vcgSuppliersNotAssessed;
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -376,8 +391,27 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         if (!filters.priorityPeriods.includes(key)) return false;
       }
       if (filters.blockers.length && !filters.blockers.includes(m.blocker_category ?? NO_BLOCKER)) return false;
-      if (filters.countries.length && !(m.supplier_countries ?? []).some((c) => filters.countries.includes(c)))
+
+      // VCG signals. Not assessed is its own state and never falls inside the range.
+      if (
+        filters.vcgSubstitutability.length &&
+        !filters.vcgSubstitutability.includes(m.substitutability_readiness)
+      )
         return false;
+      if (filters.vcgCompetitor.length && !filters.vcgCompetitor.includes(m.competitor_activity)) return false;
+
+      const hasRange = filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null;
+      if (hasRange || filters.vcgSuppliersNotAssessed) {
+        const sa = m.supplier_availability;
+        const assessed = sa?.assessed && sa.value !== null;
+        const inRange =
+          hasRange && assessed
+            ? (filters.vcgSuppliersMin === null || sa.value! >= filters.vcgSuppliersMin) &&
+              (filters.vcgSuppliersMax === null || sa.value! <= filters.vcgSuppliersMax)
+            : false;
+        const notAssessedMatch = filters.vcgSuppliersNotAssessed && !assessed;
+        if (!inRange && !notAssessedMatch) return false;
+      }
       return true;
     });
   }, [data, filters]);

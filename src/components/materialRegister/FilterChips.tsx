@@ -1,6 +1,14 @@
 import React from "react";
 import { X } from "lucide-react";
-import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/types/materialPrioritisation";
+import {
+  COMPETITOR_ACTIVITY_LABEL,
+  JOURNEY_STATUS_LABEL,
+  SUBSTITUTABILITY_LABEL,
+  type CompetitorActivity,
+  type EntryType,
+  type JourneyStatus,
+  type SubstitutabilityReadiness,
+} from "@/types/materialPrioritisation";
 import {
   EMPTY_FILTERS,
   ENTRY_TYPE_LABEL,
@@ -19,6 +27,9 @@ const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "tags" && value === UNTAGGED) return "Untagged";
   if (kind === "priorityPeriods" && value === NO_PRIORITY) return "Not prioritised";
   if (kind === "blockers" && value === NO_BLOCKER) return "No blocker";
+  if (kind === "vcgSubstitutability")
+    return SUBSTITUTABILITY_LABEL[value as SubstitutabilityReadiness] ?? value;
+  if (kind === "vcgCompetitor") return COMPETITOR_ACTIVITY_LABEL[value as CompetitorActivity] ?? value;
   return value;
 };
 
@@ -39,7 +50,8 @@ const FilterChips: React.FC = () => {
       "priorityPeriods",
       
       "blockers",
-      "countries",
+      "vcgSubstitutability",
+      "vcgCompetitor",
     ] as const
   ).forEach((k) => {
     filters[k].forEach((v) => chips.push({ kind: k, value: v, label: labelFor(k, v) }));

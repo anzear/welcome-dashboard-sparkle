@@ -24,8 +24,6 @@ const FIELDS: [string, (m: Material) => boolean][] = [
   ["GHG factor", (m) => m.ghg_emission_factor !== null],
   ["GHG contribution", (m) => m.ghg_contribution !== null],
   ["GHG boundary", (m) => Boolean(m.ghg_boundary)],
-  ["Suppliers", (m) => m.supplier_count !== null],
-  ["Supplier countries", (m) => (m.supplier_countries ?? []).length > 0],
   ["Owner", (m) => Boolean(m.owner)],
   ["Requirements", (m) => Boolean(m.requirements)],
 ];

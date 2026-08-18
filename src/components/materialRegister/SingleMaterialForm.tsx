@@ -73,8 +73,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const [factor, setFactor] = useState<number | null>(null);
   const [ghg, setGhg] = useState<number | null>(null);
   const [ghgOverridden, setGhgOverridden] = useState(false);
-  const [supplierCount, setSupplierCount] = useState<number | null>(null);
-  const [countries, setCountries] = useState<string[]>([]);
   const [boundary, setBoundary] = useState<string | null>(null);
   const [dataBasis, setDataBasis] = useState<string | null>(null);
 
@@ -91,7 +89,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       applications: uniq(data.flatMap((m) => m.application_categories)),
       products: uniq(data.flatMap((m) => m.product_categories)),
       owners: uniq(data.map((m) => m.owner)),
-      countries: uniq(data.flatMap((m) => m.supplier_countries)),
       classes: SEEDED_CLASSES,
     };
   }, [data]);
@@ -128,8 +125,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     setFactor(null);
     setGhg(null);
     setGhgOverridden(false);
-    setSupplierCount(null);
-    setCountries([]);
     setBoundary(null);
     setDataBasis(null);
     setReq(emptyRequirements());
@@ -147,7 +142,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     markEntered("annual_volume", volume !== null);
     markEntered("unit_price", price !== null);
     markEntered("ghg_emission_factor", factor !== null);
-    markEntered("supplier_count", supplierCount !== null);
     markEntered("material_class", Boolean(materialClass));
     markEntered("owner", Boolean(owner));
     markEntered("journey_status", true);
@@ -178,8 +172,6 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       ghg_contribution: showPanelA ? derivedGhg : null,
       ghg_boundary: showPanelA ? toNullString(boundary) : null,
       ghg_data_basis: showPanelA ? toNullString(dataBasis) : null,
-      supplier_count: showPanelA ? supplierCount : null,
-      supplier_countries: showPanelA ? countries : [],
       requirements: requirementsOrNull({ ...req, notes: toNullString(req.notes) }),
       provenance,
     };
@@ -399,15 +391,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
                     setGhgOverridden(v !== null);
                   }}
                 />
-                <NumberField label="Supplier count" value={supplierCount} onChange={setSupplierCount} />
               </div>
-              <TagInput
-                label="Supplier countries"
-                values={countries}
-                onChange={setCountries}
-                suggestions={suggestions.countries}
-                placeholder="DE, BE, US…"
-              />
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label="GHG boundary">
                   <Input
