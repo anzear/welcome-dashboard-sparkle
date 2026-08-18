@@ -37,8 +37,37 @@ export function eventSentence(e: MaterialEvent): string {
       return e.from_value === null
         ? `${fieldLabel(e.field)} assessed at ${signedValue(e.to_value)}`
         : `${fieldLabel(e.field)} changed from ${signedValue(e.from_value)} to ${signedValue(e.to_value)}`;
+    // Gate events. History is the record of decisions; assessment entries, being
+    // opinions, keep their stamps in the Assessment card and never land here.
+    case "recommendation":
+      return e.from_value === null
+        ? `Recommendation written: ${statusLabel(e.to_value)}`
+        : `Recommendation changed from ${statusLabel(e.from_value)} to ${statusLabel(e.to_value)}`;
+    case "gate_outcome":
+      return e.from_value === null
+        ? `Gate set to ${statusLabel(e.to_value)}`
+        : `Gate changed from ${statusLabel(e.from_value)} to ${statusLabel(e.to_value)}`;
+    case "condition_change":
+      return e.to_value === null
+        ? `Condition removed: ${e.from_value ?? "—"}`
+        : e.from_value === null
+          ? `Condition added: ${e.to_value}`
+          : `Condition edited: ${e.to_value}`;
+    case "condition_met":
+      return e.to_value === null
+        ? `Condition marked not met: ${e.from_value ?? "—"}`
+        : `Condition met: ${e.to_value}`;
+    case "hold_change":
+      return e.field === "hold_review_date"
+        ? `Hold review date set to ${e.to_value ?? "none"}`
+        : `Hold trigger set: ${e.to_value ?? "none"}`;
+    case "no_go_reason":
+      return `No-go reason recorded`;
+    case "reopen":
+      return `Reopened — gate back to Under evaluation`;
     case "tags_change":
       return `Tags changed from ${e.from_value ?? "none"} to ${e.to_value ?? "none"}`;
+
     case "field_correction":
       if (e.field === "material_added") return `Material added to the register as ${e.to_value ?? "—"}`;
       if (e.field === "customer_material_ids")
