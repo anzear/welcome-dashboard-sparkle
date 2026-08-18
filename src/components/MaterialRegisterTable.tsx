@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
+import { isProductLineTag } from "@/components/materialRegister/productLines";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import {
