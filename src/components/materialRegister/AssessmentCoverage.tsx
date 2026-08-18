@@ -66,6 +66,71 @@ const AssessmentCoverage: React.FC = () => {
 
   const rowMaterials = useMemo(() => rows.map((r) => r.m), [rows]);
 
+  // ------------------------------------------------------- bulk entry (staged)
+  /** Value staged for one criterion. "clear" withdraws the current user's entry. */
+  type Staged = { value: number | "neutral" | "clear"; note: string };
+
+  const [selected, setSelected] = useState<string[]>([]);
+  const [staged, setStaged] = useState<Record<string, Staged>>({});
+  const [criterionIdx, setCriterionIdx] = useState(0);
+
+  const criterion = judgedCriteria[Math.min(criterionIdx, judgedCriteria.length - 1)];
+  const current = criterion ? staged[criterion.criterion_id] : undefined;
+  const selectedMaterials = useMemo(
+    () => selected.map((id) => data.find((m) => m.material_id === id)).filter(Boolean) as typeof data,
+    [selected, data],
+  );
+  const stagedCount = Object.keys(staged).length;
+  /** A 1–5 score is refused without a rationale, in bulk exactly as on the brief. */
+  const stagedIncomplete = Object.values(staged).some(
+    (s) => typeof s.value === "number" && s.note.trim() === "",
+  );
+
+  const toggleRow = (id: string) =>
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const allShownSelected = rows.length > 0 && rows.every((r) => selected.includes(r.m.material_id));
+
+  const clearSelection = () => {
+    setSelected([]);
+    setStaged({});
+  };
+
+  const setValue = (value: Staged["value"] | null) => {
+    if (!criterion) return;
+    setStaged((prev) => {
+      const next = { ...prev };
+      if (value === null) delete next[criterion.criterion_id];
+      else next[criterion.criterion_id] = { value, note: prev[criterion.criterion_id]?.note ?? "" };
+      return next;
+    });
+  };
+
+  const setNote = (note: string) => {
+    if (!criterion) return;
+    setStaged((prev) =>
+      prev[criterion.criterion_id]
+        ? { ...prev, [criterion.criterion_id]: { ...prev[criterion.criterion_id], note } }
+        : prev,
+    );
+  };
+
+  const applyStaged = () => {
+    if (stagedIncomplete || stagedCount === 0 || selected.length === 0) return;
+    for (const materialId of selected) {
+      for (const [criterionId, s] of Object.entries(staged)) {
+        if (s.value === "clear") clearAssessment(materialId, criterionId);
+        else if (s.value === "neutral") saveAssessment(materialId, criterionId, null, null);
+        else saveAssessment(materialId, criterionId, s.value, s.note);
+      }
+    }
+    clearSelection();
+  };
+
+  const VALUES: Staged["value"][] = [1, 2, 3, 4, 5];
+
+
+
   const SORTS: { id: SortId; label: string }[] = [
     { id: "register", label: "Register order" },
     { id: "coverage", label: "Least assessed" },
