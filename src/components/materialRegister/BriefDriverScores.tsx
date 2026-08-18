@@ -164,28 +164,24 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
         {questions.map((q) => {
           const rec = scoreFor(materialId, q.question_id);
           const v = rec?.score ?? null;
-          const expanded = openId === q.question_id;
           return (
             <div key={q.question_id} className="py-1.5">
               <div
-                className="grid w-full grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 rounded-sm px-1 py-0.5 text-left hover:bg-primary/10"
+                className="grid w-full grid-cols-[minmax(0,1fr)_128px_2.5rem] items-center gap-3 rounded-sm px-1 py-0.5 text-left transition-colors hover:bg-primary/[0.06]"
                 title={q.helper ?? undefined}
               >
-                <button
-                  type="button"
-                  onClick={() => setOpenId(expanded ? null : q.question_id)}
-                  className="text-left text-[13px] leading-snug text-muted-foreground"
-                >
-                  {q.label}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpenId(expanded ? null : q.question_id)}
-                  className="block"
-                  aria-label={`${q.label} track`}
-                >
-                  <ScoreTrack value={v} />
-                </button>
+                <span className="text-left text-[13px] leading-snug text-muted-foreground">{q.label}</span>
+                <ScoreTrack
+                  value={v}
+                  ariaLabel={q.label}
+                  preview={hoverId === q.question_id ? hoverValue : null}
+                  onHover={(hv) => {
+                    setHoverId(hv === null ? null : q.question_id);
+                    setHoverValue(hv);
+                  }}
+                  onPick={(next) => setScore(materialId, q.question_id, next, rec?.note ?? null)}
+                  onClear={() => clearScore(materialId, q.question_id)}
+                />
                 <ScoreCell
                   value={v}
                   ariaLabel={`${q.label} score`}
@@ -199,37 +195,6 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
                 />
               </div>
 
-
-
-
-
-              {expanded && (
-                <div className="px-1 pt-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <ScoreScale
-                      value={v}
-                      size="sm"
-                      ariaLabel={`${q.label} score`}
-                      onChange={(next) => {
-                        setScore(materialId, q.question_id, next, rec?.note ?? null);
-                        setOpenId(null);
-                      }}
-                    />
-                    {v !== null && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          clearScore(materialId, q.question_id);
-                          setOpenId(null);
-                        }}
-                        className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
 
               {rec?.note && <p className="px-1 pt-0.5 text-[10px] italic text-muted-foreground">{rec.note}</p>}
               {rec && v !== null && (
