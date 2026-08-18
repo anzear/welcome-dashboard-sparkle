@@ -995,7 +995,7 @@ export const MaterialBrief: React.FC = () => {
 
           <Section
             title="Assessment"
-            note="Judged by people, never combined into a score."
+            note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
           >
             <BriefAssessment material={m} />
           </Section>
