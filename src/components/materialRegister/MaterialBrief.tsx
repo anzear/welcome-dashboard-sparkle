@@ -356,7 +356,7 @@ const DerivedField: React.FC<{
   );
 };
 
-/** Editable list of tags (application / product categories). */
+/** Editable list of tags (application / application areas). */
 const TagsField: React.FC<{
   label: string;
   values: string[];
@@ -985,7 +985,7 @@ export const MaterialBrief: React.FC = () => {
                 }
               />
               <TagsField
-                label="Product categories"
+                label="Application areas"
                 values={m.application_areas}
                 onSave={(v) =>
                   updateMaterial(m.material_id, { application_areas: v }, ["application_areas"], [

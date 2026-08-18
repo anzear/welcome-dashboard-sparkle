@@ -144,7 +144,7 @@ export interface Filters {
   entryTypes: string[];
   /** Tag values, matched with ANY. May include UNTAGGED. */
   tags: string[];
-  /** Product categories, matched with ANY. */
+  /** Application areas, matched with ANY. */
   products: string[];
   /** Application categories, matched with ANY. */
   applications: string[];
@@ -758,7 +758,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         : payload.kind === "owner"
           ? "Owner"
           : payload.kind === "products"
-            ? "Product categories"
+            ? "Application areas"
             : payload.kind === "applications"
               ? "Application categories"
               : payload.kind === "priority_period"

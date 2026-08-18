@@ -69,7 +69,7 @@ interface Props {
 const UNASSIGNED = "__unassigned__";
 
 const MULTI: Record<string, { field: keyof Material; noun: string }> = {
-  products: { field: "application_areas", noun: "product category" },
+  products: { field: "application_areas", noun: "application area" },
   applications: { field: "application_categories", noun: "application category" },
 };
 
@@ -198,7 +198,7 @@ export const BulkActionDialog: React.FC<Props> = ({
       : kind === "owner"
         ? `Set owner for ${materials.length} materials`
         : kind === "products"
-          ? `${mode === "add" ? "Add" : "Remove"} product categories — ${materials.length} materials`
+          ? `${mode === "add" ? "Add" : "Remove"} application areas — ${materials.length} materials`
           : kind === "applications"
             ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
             : kind === "priority_period"
