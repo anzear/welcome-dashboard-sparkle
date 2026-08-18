@@ -100,7 +100,7 @@ const FilterSelects: React.FC<{
   const shown = (key: FilterKey) => !include || include.includes(key);
 
   const controls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
-    ["statuses", "Gate status", options.statuses, filters.statuses],
+    ["statuses", "Status", options.statuses, filters.statuses],
     ["owners", "Owner", options.owners, filters.owners],
     ["entryTypes", "Entry type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
