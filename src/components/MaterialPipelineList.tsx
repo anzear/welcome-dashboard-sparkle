@@ -512,8 +512,8 @@ export default function MaterialPipelineList() {
                 <th className={cn(headerCls, "text-right")}>GHG (tCO₂e/yr)</th>
                 <th className={cn(headerCls, "text-right")}>Suppliers</th>
                 <th className={cn(headerCls, "text-left")}>Status</th>
-                <th className={cn(headerCls, "text-left")}>Owner</th>
                 <th className={cn(headerCls, "text-left")}>Priority</th>
+                <th className={cn(headerCls, "text-left")}>Owner</th>
                 <th className={cn(headerCls, "text-left")}>Tags</th>
               </tr>
             </thead>
