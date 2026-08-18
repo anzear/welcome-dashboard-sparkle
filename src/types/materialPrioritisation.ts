@@ -330,6 +330,30 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   reopen: "Gate reopened",
 };
 
+/** A material with no gate act recorded yet. Absence, never a default outcome. */
+export const EMPTY_GATE = {
+  recommendation: null,
+  gate_decided_by: null,
+  gate_decided_date: null,
+  gate_conditions: [],
+  hold_trigger_event: null,
+  hold_review_date: null,
+  no_go_reason: null,
+  previous_no_go: null,
+  reopened: false,
+} satisfies Pick<
+  Material,
+  | "recommendation"
+  | "gate_decided_by"
+  | "gate_decided_date"
+  | "gate_conditions"
+  | "hold_trigger_event"
+  | "hold_review_date"
+  | "no_go_reason"
+  | "previous_no_go"
+  | "reopened"
+>;
+
 export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
   go: "Go",
   go_with_conditions: "Go with conditions",

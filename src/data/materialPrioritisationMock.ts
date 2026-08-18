@@ -1,4 +1,4 @@
-import { migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
+import { EMPTY_GATE, migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
 import type {
   CompetitorActivity,
   SubstitutabilityReadiness,
@@ -495,6 +495,8 @@ export const materials: Material[] = rows.map((row, i) => {
     competitor_activity: vcg.competitor_activity,
     vcg_data_date: vcg.vcg_data_date,
     journey_status: migrateJourneyStatus(row.status),
+    ...EMPTY_GATE,
+    gate_conditions: [],
     blocker_category: isBlocked ? (row.status === "rejected" ? "Regulatory / compliance" : "Supply availability") : null,
     blocker_detail: isBlocked
       ? row.status === "rejected"
