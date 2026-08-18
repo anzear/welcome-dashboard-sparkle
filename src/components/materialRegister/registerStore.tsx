@@ -1394,7 +1394,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     patchMaterial(materialId, (prev) => ({
       ...prev,
       journey_status: "under_evaluation",
-      reopened: true,
+      reopened: prev.journey_status === "no_go" ? true : prev.reopened,
       previous_no_go: prev.no_go_reason
         ? {
             reason: prev.no_go_reason,
