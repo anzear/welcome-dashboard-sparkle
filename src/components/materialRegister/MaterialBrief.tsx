@@ -63,13 +63,6 @@ const Section: React.FC<{
 );
 
 
-const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
-  <div
-    className={cn(
-      "sm:col-span-2",
-      first ? "" : "mt-2 border-t border-border/50 pt-4",
-    )}
-  >
     <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{children}</span>
   </div>
 );
@@ -160,103 +153,6 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
 };
 
 /** Read-only measured / computed figure. Provenance always visible. */
-const Figure: React.FC<{
-  label: string;
-  field?: string;
-  value: number | string | null;
-  decimals?: number;
-  provenance?: FieldProvenance;
-  computedInputs?: string;
-  wide?: boolean;
-}> = ({ label, field, value, decimals = 0, provenance, computedInputs, wide }) => {
-  const hasValue = value !== null && value !== undefined && value !== "";
-  return (
-    <DataRow
-      wide={wide}
-      label={label}
-      provenance={field ? provenanceStamp(field, provenance, hasValue, computedInputs) : provenanceLine(provenance, hasValue, computedInputs)}
-      value={
-        <ValueText
-          value={value}
-          decimals={decimals}
-          computed={(provenance?.origin ?? "ingested") === "computed"}
-        />
-      }
-    />
-  );
-};
-
-/** Editable figure. Whole row is the target; affordance appears on hover only. */
-const EditableFigure: React.FC<{
-  label: string;
-  field?: string;
-  value: number | string | null;
-  decimals?: number;
-  provenance?: FieldProvenance;
-  placeholder?: string;
-  wide?: boolean;
-  onSave: (raw: string) => void;
-}> = ({ label, field, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const hasValue = value !== null && value !== undefined && value !== "";
-
-  const begin = () => {
-    setDraft(value === null || value === undefined ? "" : String(value));
-    setEditing(true);
-  };
-
-  const commit = () => {
-    onSave(draft.trim());
-    setEditing(false);
-  };
-
-  if (editing) {
-    return (
-      <div className={cn("px-1 py-1", wide && "sm:col-span-2")}>
-        <div className="text-[13px] text-muted-foreground">{label}</div>
-        <div className="flex items-center gap-1 pt-1">
-          <Input
-            autoFocus
-            value={draft}
-            placeholder={placeholder}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") commit();
-              if (e.key === "Escape") setEditing(false);
-            }}
-            className="h-8 text-right font-mono text-xs tabular-nums"
-          />
-          <Button size="sm" className="h-7 text-[11px]" onClick={commit}>
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={() => setEditing(false)}>
-            Cancel
-          </Button>
-        </div>
-        <div className="pt-0.5 text-[11px] text-muted-foreground/50">
-          {field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <DataRow
-      wide={wide}
-      label={label}
-      provenance={field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
-      onClick={begin}
-      value={
-        <ValueText
-          value={value}
-          decimals={decimals}
-          entered={provenance?.origin === "entered"}
-        />
-      }
-    />
-  );
-};
 
 /** Classification field. Text value, same right-aligned mono column. */
 const DerivedField: React.FC<{
