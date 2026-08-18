@@ -31,6 +31,8 @@ import {
   type MaterialEvent,
   type MaterialEventType,
   type TeamId,
+  type DocumentFileType,
+  type SupportingDocument,
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
