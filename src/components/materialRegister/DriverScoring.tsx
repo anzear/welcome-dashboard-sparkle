@@ -16,7 +16,7 @@ const CELL_W = "w-[38px] min-w-[38px]";
 /** null sorts to its own block at the bottom, never as a zero. */
 type SortDir = "desc" | "asc";
 interface Sort {
-  /** A question id, or "scored" for the coverage column. */
+  /** A question id, or "last_changed" for the last-changed column. */
   key: string;
   dir: SortDir;
 }
@@ -47,11 +47,23 @@ const DriverScoring: React.FC = () => {
 
   const scoreOf = (m: Material, questionId: string) => scoreFor(m.material_id, questionId)?.score ?? null;
 
+  /** Most recent score timestamp across all drivers, or null when never scored. */
+  const lastChangedOf = (m: Material): string | null => {
+    let latest: string | null = null;
+    questions.forEach((q) => {
+      const rec = scoreFor(m.material_id, q.question_id);
+      if (rec?.scored_at && (latest === null || rec.scored_at > latest)) latest = rec.scored_at;
+    });
+    return latest;
+  };
+
   /** Sorted material list. Unscored rows split off into a trailing block. */
   const { scoredRows, unscoredRows } = useMemo(() => {
     if (!sort) return { scoredRows: rows, unscoredRows: [] as Material[] };
     const valueOf = (m: Material) =>
-      sort.key === "scored" ? countsFor(m.material_id).scored_count : scoreOf(m, sort.key);
+      sort.key === "last_changed"
+        ? (lastChangedOf(m) === null ? null : Date.parse(lastChangedOf(m) as string))
+        : scoreOf(m, sort.key);
     const present = rows.filter((m) => valueOf(m) !== null);
     const absent = rows.filter((m) => valueOf(m) === null);
     const sorted = [...present].sort((a, b) => {
@@ -100,11 +112,11 @@ const DriverScoring: React.FC = () => {
 
   const sortLabel = () => {
     if (!sort) return null;
-    const name = sort.key === "scored" ? "coverage" : questions.find((q) => q.question_id === sort.key)?.label;
+    const name = sort.key === "last_changed" ? "last changed" : questions.find((q) => q.question_id === sort.key)?.label;
     return `Sorted by ${name}, ${sort.dir === "desc" ? "highest" : "lowest"} first`;
   };
 
-  const sortedQuestionLabel = sort && sort.key !== "scored"
+  const sortedQuestionLabel = sort && sort.key !== "last_changed"
     ? (questions.find((q) => q.question_id === sort.key)?.label ?? null)
     : null;
 
@@ -283,15 +295,15 @@ const DriverScoring: React.FC = () => {
                 className={cn(
                   HEAD,
                   "sticky right-0 z-30 w-[132px] min-w-[132px] whitespace-nowrap border-b border-l border-border bg-card px-2 py-2 text-right",
-                  sort?.key === "scored" && "bg-primary/10",
+                  sort?.key === "last_changed" && "bg-primary/10",
                 )}
               >
                 <button
                   type="button"
-                  onClick={() => cycleSort("scored")}
-                  className={cn("hover:text-foreground", sort?.key === "scored" && "text-primary")}
+                  onClick={() => cycleSort("last_changed")}
+                  className={cn("hover:text-foreground", sort?.key === "last_changed" && "text-primary")}
                 >
-                  Scored{arrow("scored")}
+                  Last changed{arrow("last_changed")}
                 </button>
               </th>
             </tr>
@@ -299,7 +311,6 @@ const DriverScoring: React.FC = () => {
 
           <tbody>
             {displayRows.map((m, rowIndex) => {
-              const counts = countsFor(m.material_id);
               const isSelected = selected.has(m.material_id);
               const startsUnscoredBlock =
                 sort !== null && unscoredRows.length > 0 && rowIndex === scoredRows.length;
@@ -384,24 +395,19 @@ const DriverScoring: React.FC = () => {
                     <td
                       className={cn(
                         "sticky right-0 z-10 whitespace-nowrap border-b border-l border-border bg-card px-2 py-1 text-right font-mono text-[10px] tabular-nums text-muted-foreground group-hover:bg-muted/30",
-                        sort?.key === "scored" && "bg-primary/10",
+                        sort?.key === "last_changed" && "bg-primary/10",
                       )}
                     >
-                      {counts.scored_count === null ? (
-                        <span className="text-muted-foreground/60" title="No judgements recorded">
-                          —
-                        </span>
-                      ) : (
-                        <>
-                          {counts.scored_count}/{questions.length}
-                          <span
-                            className="pl-1 text-muted-foreground/70"
-                            title={`${counts.strong_drivers} strong drivers`}
-                          >
-                            · {counts.strong_drivers}↑
+                      {(() => {
+                        const last = lastChangedOf(m);
+                        return last === null ? (
+                          <span className="text-muted-foreground/60" title="No judgements recorded">
+                            —
                           </span>
-                        </>
-                      )}
+                        ) : (
+                          <span title={`Last score change ${last}`}>{last.slice(0, 10)}</span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 </React.Fragment>
