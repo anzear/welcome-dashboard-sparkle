@@ -496,6 +496,28 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     [assessments],
   );
 
+  /**
+   * Split flag: entries on one judged criterion spanning more than two points.
+   * Computed here from the entries so the filter needs no ordering with the
+   * per-criterion reader below.
+   */
+  const disagreeIds = useMemo(() => {
+    const byKey = new Map<string, number[]>();
+    Object.values(assessments).forEach((e) => {
+      if (!JUDGED_CRITERIA.some((c) => c.criterion_id === e.criterion_id)) return;
+      const key = `${e.material_id}::${e.criterion_id}`;
+      const list = byKey.get(key) ?? [];
+      list.push(e.score);
+      byKey.set(key, list);
+    });
+    const ids = new Set<string>();
+    byKey.forEach((scores, key) => {
+      if (scores.length < 2) return;
+      if (Math.max(...scores) - Math.min(...scores) > 2) ids.add(key.split("::")[0]);
+    });
+    return ids;
+  }, [assessments]);
+
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
     return scoped.filter((m) => {
