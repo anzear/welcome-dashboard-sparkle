@@ -38,10 +38,6 @@ import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-r
 const HEAD =
   "sticky top-0 z-10 bg-muted/30 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border/60 align-bottom";
 
-/** VCG signal columns read as ours, not as another column in the client's sheet. */
-const VCG_HEAD = "bg-provenance-vcg/[0.07] text-provenance-vcg";
-const VCG_GROUP = "mb-1 text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80";
-
 /** Pinned identity columns: they hold while the measures scroll. */
 const STICK = "sticky";
 
