@@ -173,13 +173,13 @@ const PortfolioOverview: React.FC<Props> = ({ onEnter }) => {
     <button
       type="button"
       onClick={() => openBrief(m.material_id)}
-      className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left hover:bg-muted/60"
+      className="block w-full rounded-md px-1.5 py-1 text-left hover:bg-muted/60"
     >
-      <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">{m.name}</span>
-      <span className="whitespace-nowrap font-mono text-[11px] tabular-nums text-muted-foreground">
-        {figure}
-      </span>
-      <StatusPill status={m.journey_status} />
+      <div className="flex items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[11px] text-foreground">{m.name}</span>
+        <StatusPill status={m.journey_status} />
+      </div>
+      <div className="mt-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">{figure}</div>
     </button>
   );
 
