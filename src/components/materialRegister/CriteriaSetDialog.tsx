@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { shortDate } from "@/components/materialRegister/primitives";
 import type { AssessmentCriterion } from "@/types/materialPrioritisation";
-import { AlertTriangle, Pencil, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
 
 const FIELD =
   "w-full rounded-md border border-input bg-background px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring";

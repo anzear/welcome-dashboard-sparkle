@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
-import { JUDGED_CRITERIA, TEAM_LABEL } from "@/config/assessmentCriteria";
+import { TEAM_LABEL } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
@@ -123,7 +123,7 @@ const AssessmentCoverage: React.FC = () => {
           <thead>
             <tr className="border-b border-border bg-muted/40 text-left">
               <th className="w-[210px] px-3 py-2 font-semibold text-muted-foreground">Material</th>
-              {JUDGED_CRITERIA.map((c) => (
+              {judgedCriteria.map((c) => (
                 <th key={c.criterion_id} className="px-3 py-2 font-semibold text-muted-foreground">
                   <div className="leading-tight">{c.label}</div>
                   <div className="font-mono text-[10px] font-normal tabular-nums opacity-70">
@@ -149,7 +149,7 @@ const AssessmentCoverage: React.FC = () => {
                     {m.name}
                   </button>
                 </td>
-                {JUDGED_CRITERIA.map((c) => {
+                {judgedCriteria.map((c) => {
                   const state = assessmentState(m.material_id, c.criterion_id);
                   const docs = documentCount(m.material_id, c.criterion_id);
                   return (
@@ -178,7 +178,7 @@ const AssessmentCoverage: React.FC = () => {
             ))}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={JUDGED_CRITERIA.length + 2} className="px-3 py-6 text-center text-muted-foreground">
+                <td colSpan={judgedCriteria.length + 2} className="px-3 py-6 text-center text-muted-foreground">
                   No materials match the current filters.
                 </td>
               </tr>
