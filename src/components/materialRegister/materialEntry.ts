@@ -1,3 +1,4 @@
+import { EMPTY_GATE } from "@/types/materialPrioritisation";
 import { cleanTags } from "@/components/materialRegister/tags";
 import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
 import type {
@@ -129,6 +130,8 @@ export const requirementsOrNull = (r: MaterialRequirements): MaterialRequirement
 /** A blank register row. Every figure starts null so nothing reads as measured. */
 export function blankMaterial(entry_type: EntryType = "drop_in"): Omit<Material, "material_id"> {
   return {
+    ...EMPTY_GATE,
+    gate_conditions: [],
     customer_material_ids: [],
     name: "",
     cas_number: null,

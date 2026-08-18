@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
+import { applyGateSeed } from "@/data/gateMock";
 import { seedAssessments } from "@/data/assessmentMock";
+import {
+  canSetGate,
+  hasOverdueCondition,
+  holdReviewOverdue,
+  statusForOutcome,
+  todayIso,
+} from "@/components/materialRegister/gate";
 import {
   CONTRIBUTORS,
   CRITERION_LABEL,
@@ -14,6 +22,8 @@ import {
   type AssessmentState,
   type Contributor,
   type FieldProvenance,
+  type GateCondition,
+  type GateOutcome,
   type JourneyStatus,
   type Material,
   type BatchOrigin,
@@ -148,6 +158,11 @@ export interface Filters {
   vcgSuppliersMax: number | null;
   /** Deliberately outside the range: not assessed is not a number. */
   vcgSuppliersNotAssessed: boolean;
+  /** Gate section. The five statuses are categories, never an ordered scale. */
+  gateOverdueCondition: boolean;
+  gateHoldReviewOverdue: boolean;
+  /** yes / no / any — a recommendation either exists or it does not. */
+  gateRecommendation: "yes" | "no" | "any";
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -169,6 +184,9 @@ export const EMPTY_FILTERS: Filters = {
   vcgSuppliersMin: null,
   vcgSuppliersMax: null,
   vcgSuppliersNotAssessed: false,
+  gateOverdueCondition: false,
+  gateHoldReviewOverdue: false,
+  gateRecommendation: "any",
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -276,6 +294,31 @@ interface Store {
     entryCount: number;
     lastAssessedAt: string | null;
   };
+  /**
+   * THE GATE. Two separate acts: a recommendation the owner writes, and an
+   * outcome the owner sets. Neither is derived from the assessment entries, and
+   * a gate never advances itself.
+   */
+  canSetGate: (m: Material) => boolean;
+  /** Writes or rewrites the recommendation. Blocked when the text is empty. */
+  saveRecommendation: (materialId: string, outcome: GateOutcome, text: string) => void;
+  /** Records the decision and whatever that outcome has to carry with it. */
+  setGateOutcome: (
+    materialId: string,
+    outcome: GateOutcome,
+    payload: {
+      conditions?: GateCondition[];
+      holdTrigger?: string | null;
+      holdReview?: string | null;
+      noGoReason?: string | null;
+    },
+  ) => void;
+  /** Anyone can tick a condition met. The person who ticked it is stamped. */
+  toggleCondition: (materialId: string, conditionId: string, met: boolean) => void;
+  /** Owner-only condition edits on a live gate. */
+  saveConditions: (materialId: string, conditions: GateCondition[]) => void;
+  /** Sends a no-go material back to under evaluation. The old reason survives. */
+  reopenGate: (materialId: string, note: string | null) => void;
   /** How many of the given rows carry at least one entry on that criterion. */
   criterionCoverage: (criterionId: string, rows: Material[]) => number;
   /** Period the priority set is being assembled for. Free text. */
@@ -312,12 +355,16 @@ export const useRegister = () => {
   return v;
 };
 
+/** The register as seeded, with gate positions and their events folded in. */
+const gateSeed = applyGateSeed(seedMaterialsWithHistory);
+export const seededMaterials = gateSeed.materials;
+
 export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.ReactNode }> = ({
-  rows = seedMaterialsWithHistory,
+  rows = seededMaterials,
   children,
 }) => {
   const [data, setData] = useState<Material[]>(rows);
-  const [events, setEvents] = useState<MaterialEvent[]>(seedEvents);
+  const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
@@ -357,7 +404,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.vcgCompetitor.length > 0 ||
     filters.vcgSuppliersMin !== null ||
     filters.vcgSuppliersMax !== null ||
-    filters.vcgSuppliersNotAssessed;
+    filters.vcgSuppliersNotAssessed ||
+    filters.gateOverdueCondition ||
+    filters.gateHoldReviewOverdue ||
+    filters.gateRecommendation !== "any";
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -368,6 +418,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
+      if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
+      if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
+      if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
+      if (filters.gateRecommendation === "no" && m.recommendation !== null) return false;
       if (filters.owners.length && !filters.owners.includes(m.owner ?? UNASSIGNED_OWNER)) return false;
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
       if (
@@ -889,17 +943,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         assessed_at: new Date().toISOString(),
       },
     }));
-    if (previous === score) return;
-    recordEvents([
-      {
-        material_id: materialId,
-        event_type: "score_change",
-        field: criterionId,
-        from_value: previous === null ? null : String(previous),
-        to_value: String(score),
-        changed_by: currentUser.name,
-      },
-    ]);
+    // Assessment entries carry their own stamps in the Assessment card. History
+    // is the record of decisions, not of opinions, so nothing is written here.
   };
 
   const clearAssessment = (materialId: string, criterionId: string) => {
@@ -911,13 +956,181 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       delete next[key];
       return next;
     });
+  };
+
+
+  // ------------------------------------------------------------------ the gate
+
+  const gateWritable = (m: Material) => canSetGate(m, currentUser.name);
+
+  const patchMaterial = (id: string, fn: (m: Material) => Material) =>
+    setData((prev) => prev.map((m) => (m.material_id === id ? fn(m) : m)));
+
+  const saveRecommendation = (materialId: string, outcome: GateOutcome, text: string) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m || !gateWritable(m) || text.trim() === "") return;
+    const rec = { outcome, text: text.trim(), author: currentUser.name, date: todayIso() };
+    patchMaterial(materialId, (prev) => ({ ...prev, recommendation: rec }));
     recordEvents([
       {
         material_id: materialId,
-        event_type: "score_change",
-        field: criterionId,
-        from_value: String(previous),
-        to_value: null,
+        event_type: "recommendation",
+        field: "recommendation",
+        from_value: m.recommendation?.outcome ?? null,
+        to_value: outcome,
+        reason: rec.text,
+        changed_by: currentUser.name,
+      },
+    ]);
+  };
+
+  const setGateOutcome: Store["setGateOutcome"] = (materialId, outcome, payload) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m || !gateWritable(m)) return;
+    const stamp = todayIso();
+    patchMaterial(materialId, (prev) => ({
+      ...prev,
+      journey_status: statusForOutcome(outcome),
+      gate_decided_by: currentUser.name,
+      gate_decided_date: stamp,
+      gate_conditions: outcome === "go_with_conditions" ? (payload.conditions ?? prev.gate_conditions) : prev.gate_conditions,
+      hold_trigger_event: outcome === "hold" ? (payload.holdTrigger ?? null) : prev.hold_trigger_event,
+      hold_review_date: outcome === "hold" ? (payload.holdReview ?? null) : prev.hold_review_date,
+      no_go_reason: outcome === "no_go" ? (payload.noGoReason ?? null) : prev.no_go_reason,
+      provenance: { ...prev.provenance, journey_status: enteredProvenance() },
+    }));
+
+    const written: EventInput[] = [
+      {
+        material_id: materialId,
+        event_type: "gate_outcome",
+        field: "journey_status",
+        from_value: m.journey_status,
+        to_value: outcome,
+        changed_by: currentUser.name,
+      },
+    ];
+    if (outcome === "go_with_conditions") {
+      (payload.conditions ?? []).forEach((c) => {
+        const existing = m.gate_conditions.find((x) => x.condition_id === c.condition_id);
+        if (existing && existing.text === c.text && existing.due_date === c.due_date && existing.owner === c.owner)
+          return;
+        written.push({
+          material_id: materialId,
+          event_type: "condition_change",
+          field: "gate_condition",
+          from_value: existing?.text ?? null,
+          to_value: c.text,
+          reason: `Due ${c.due_date} · ${c.owner}`,
+          changed_by: currentUser.name,
+        });
+      });
+      m.gate_conditions
+        .filter((c) => !(payload.conditions ?? []).some((n) => n.condition_id === c.condition_id))
+        .forEach((c) =>
+          written.push({
+            material_id: materialId,
+            event_type: "condition_change",
+            field: "gate_condition",
+            from_value: c.text,
+            to_value: null,
+            changed_by: currentUser.name,
+          }),
+        );
+    }
+    if (outcome === "hold") {
+      if ((payload.holdTrigger ?? null) !== m.hold_trigger_event)
+        written.push({
+          material_id: materialId,
+          event_type: "hold_change",
+          field: "hold_trigger_event",
+          from_value: m.hold_trigger_event,
+          to_value: payload.holdTrigger ?? null,
+          changed_by: currentUser.name,
+        });
+      if ((payload.holdReview ?? null) !== m.hold_review_date)
+        written.push({
+          material_id: materialId,
+          event_type: "hold_change",
+          field: "hold_review_date",
+          from_value: m.hold_review_date,
+          to_value: payload.holdReview ?? null,
+          changed_by: currentUser.name,
+        });
+    }
+    if (outcome === "no_go" && (payload.noGoReason ?? null) !== m.no_go_reason)
+      written.push({
+        material_id: materialId,
+        event_type: "no_go_reason",
+        field: "no_go_reason",
+        from_value: m.no_go_reason,
+        to_value: payload.noGoReason ?? null,
+        changed_by: currentUser.name,
+      });
+    recordEvents(written);
+  };
+
+  /** Ticking a condition is open to anyone — it reports a fact, not a decision. */
+  const toggleCondition = (materialId: string, conditionId: string, met: boolean) => {
+    const m = data.find((x) => x.material_id === materialId);
+    const condition = m?.gate_conditions.find((c) => c.condition_id === conditionId);
+    if (!m || !condition) return;
+    const stamp = todayIso();
+    patchMaterial(materialId, (prev) => ({
+      ...prev,
+      gate_conditions: prev.gate_conditions.map((c) =>
+        c.condition_id === conditionId
+          ? { ...c, met, met_date: met ? stamp : null, met_by: met ? currentUser.name : null }
+          : c,
+      ),
+    }));
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "condition_met",
+        field: "gate_condition",
+        from_value: met ? null : condition.text,
+        to_value: met ? condition.text : null,
+        changed_by: currentUser.name,
+      },
+    ]);
+  };
+
+  const saveConditions = (materialId: string, conditions: GateCondition[]) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m || !gateWritable(m)) return;
+    setGateOutcome(materialId, "go_with_conditions", { conditions });
+  };
+
+  /** Reopening clears the live reason but keeps the argument on the record. */
+  const reopenGate = (materialId: string, note: string | null) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m || !gateWritable(m) || m.journey_status !== "no_go") return;
+    const stamp = todayIso();
+    patchMaterial(materialId, (prev) => ({
+      ...prev,
+      journey_status: "under_evaluation",
+      reopened: true,
+      previous_no_go: prev.no_go_reason
+        ? {
+            reason: prev.no_go_reason,
+            author: prev.gate_decided_by ?? prev.owner ?? "Unknown",
+            date: prev.gate_decided_date ?? stamp,
+          }
+        : prev.previous_no_go,
+      no_go_reason: null,
+      gate_decided_by: currentUser.name,
+      gate_decided_date: stamp,
+      provenance: { ...prev.provenance, journey_status: enteredProvenance() },
+    }));
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "reopen",
+        field: "reopen",
+        from_value: "no_go",
+        to_value: "under_evaluation",
+        reason: note?.trim() ? note.trim() : null,
         changed_by: currentUser.name,
       },
     ]);
@@ -968,6 +1181,12 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     myEntry,
     saveAssessment,
     clearAssessment,
+    canSetGate: gateWritable,
+    saveRecommendation,
+    setGateOutcome,
+    toggleCondition,
+    saveConditions,
+    reopenGate,
     assessmentState,
     assessmentSummary,
     criterionCoverage,

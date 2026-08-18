@@ -24,6 +24,8 @@ import { nf, provenanceLine, provenanceStamp, StatusPill } from "@/components/ma
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
+import BriefGate from "@/components/materialRegister/BriefGate";
+import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import BriefStepCards from "@/components/materialRegister/BriefStepCards";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 
@@ -774,34 +776,20 @@ export const MaterialBrief: React.FC = () => {
       <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
 
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
+          {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
           <BarField label="Gate status" className="w-[180px]">
-            <Select
-              value={draftStatus ?? m.journey_status}
-              onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
-            >
-              <SelectTrigger className="h-8 bg-background text-xs">
-                <SelectValue asChild>
-                  <span>
-                    <StatusPill
-                      status={draftStatus ?? m.journey_status}
-                      entered={m.provenance.journey_status?.origin === "entered"}
-                    />
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_ORDER.map((s) => (
-                  <SelectItem key={s} value={s} className="text-xs">
-                    {JOURNEY_STATUS_LABEL[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {draftStatus === null && m.blocker_category && (
-              <div className="text-[10px] text-muted-foreground">
-                Blocker: <span className="text-amber-700">{m.blocker_category}</span>
-              </div>
-            )}
+            <div className="flex h-8 flex-wrap items-center gap-1.5">
+              <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
+              {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
+                <span
+                  className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
+                  title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
+                >
+                  {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-muted-foreground">Set in the Gate card</div>
           </BarField>
 
           <BarField label="Owner" className="w-[180px]">
@@ -900,49 +888,6 @@ export const MaterialBrief: React.FC = () => {
           )}
         </div>
 
-        {draftStatus !== null && (
-          <div className="mt-2.5 space-y-2 border-t border-border/60 pt-2.5">
-            <Input
-              value={statusReason}
-              onChange={(e) => setStatusReason(e.target.value)}
-              placeholder="Reason for change (optional)"
-              className="h-7 bg-background text-[11px]"
-            />
-
-            {draftNeedsBlocker && (
-              <div className="grid gap-2 rounded-sm border border-amber-500/30 bg-amber-500/5 p-2 sm:grid-cols-3">
-                <Select value={draftBlockerCategory} onValueChange={setDraftBlockerCategory}>
-                  <SelectTrigger className="h-8 bg-background text-xs">
-                    <SelectValue placeholder="Blocker category (required)" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BLOCKER_CATEGORIES.map((b) => (
-                      <SelectItem key={b} value={b} className="text-xs">
-                        {b}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  value={draftBlockerDetail}
-                  onChange={(e) => setDraftBlockerDetail(e.target.value)}
-                  placeholder="Blocker detail (optional)"
-                  className="h-7 bg-background text-[11px]"
-                />
-                <Input
-                  value={draftBlockerCondition}
-                  onChange={(e) => setDraftBlockerCondition(e.target.value)}
-                  placeholder="What would have to change (optional)"
-                  className="h-7 bg-background text-[11px]"
-                />
-              </div>
-            )}
-
-            {draftNeedsBlocker && !draftBlockerCategory && (
-              <span className="text-[10px] text-amber-700">A blocker category is required for this status.</span>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Body — 55 / 45. Neither column scrolls. */}
@@ -1169,6 +1114,14 @@ export const MaterialBrief: React.FC = () => {
 
         {/* Right column */}
         <div className="space-y-4 self-start">
+          {/* The gate sits above the assessment: a decision, not a measurement. */}
+          <Section
+            title="Gate"
+            note="Two acts, kept apart. The owner recommends and reasons; the owner decides. Neither is calculated from the assessment."
+          >
+            <BriefGate material={m} />
+          </Section>
+
           <Section
             title="Assessment"
             note="Five criteria. Two are read from data we already hold; three are judged by people, one entry each. They are never combined into a single score."
