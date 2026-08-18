@@ -51,7 +51,6 @@ const DriverScoring: React.FC = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [cursor, setCursor] = useState<Cursor | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const negativeNext = useRef(false);
   const gridRef = useRef<HTMLTableSectionElement>(null);
 
   const scoreOf = (m: Material, questionId: string) => scoreFor(m.material_id, questionId)?.score ?? null;
@@ -134,15 +133,9 @@ const DriverScoring: React.FC = () => {
 
   const onCellKeyDown = (e: React.KeyboardEvent, m: Material, questionId: string) => {
     const key = e.key;
-    if (/^[0-5]$/.test(key)) {
+    if (/^[1-5]$/.test(key)) {
       e.preventDefault();
-      const mag = Number(key);
-      setScore(m.material_id, questionId, negativeNext.current ? -mag : mag, scoreFor(m.material_id, questionId)?.note ?? null);
-      negativeNext.current = false;
-      return;
-    }
-    if (key === "-") {
-      negativeNext.current = true;
+      setScore(m.material_id, questionId, Number(key), scoreFor(m.material_id, questionId)?.note ?? null);
       return;
     }
     if (key === "Backspace" || key === "Delete") {
@@ -232,8 +225,8 @@ const DriverScoring: React.FC = () => {
             </>
           ) : (
             <span>
-              Click a driver heading to rank by that judgement; click a cell, then 0–5 to score, minus first for a
-              constraint, Backspace clears, arrows move.
+              Click a driver heading to rank by that judgement; click a cell, then 1–5 to score, Backspace clears,
+              arrows move.
             </span>
           )}
         </div>
@@ -428,7 +421,6 @@ const DriverScoring: React.FC = () => {
                             onFocus={() => setCursor({ row: rowIndex, col: colIndex })}
                             onClick={() => {
                               setCursor({ row: rowIndex, col: colIndex });
-                              negativeNext.current = false;
                             }}
                             onKeyDown={(e) => onCellKeyDown(e, m, q.question_id)}
                             title={
@@ -465,9 +457,9 @@ const DriverScoring: React.FC = () => {
                           {counts.scored_count}/{questions.length}
                           <span
                             className="pl-1 text-muted-foreground/70"
-                            title={`${counts.strong_drivers} strong drivers, ${counts.strong_constraints} strong constraints`}
+                            title={`${counts.strong_drivers} strong drivers`}
                           >
-                            · {counts.strong_drivers}↑ {counts.strong_constraints}↓
+                            · {counts.strong_drivers}↑
                           </span>
                         </>
                       )}
@@ -482,22 +474,16 @@ const DriverScoring: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(-4))}>
-            -4
+          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(1))}>
+            1
           </span>{" "}
-          constraint
+          weak driver
         </span>
         <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(0))}>
-            0
+          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(5))}>
+            5
           </span>{" "}
-          recorded neutral
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={cn("inline-flex h-4 w-6 items-center justify-center rounded-[3px] font-mono", scoreTone(4))}>
-            +4
-          </span>{" "}
-          driver
+          strong driver
         </span>
         <span className="flex items-center gap-1">
           <span className={cn("inline-block h-4 w-6 rounded-[3px]", scoreTone(null))} /> not scored — not zero

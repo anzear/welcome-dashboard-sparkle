@@ -181,7 +181,7 @@ const QuestionSetDialog: React.FC<{ open: boolean; onOpenChange: (v: boolean) =>
                       <Input
                         autoFocus
                         value={draft}
-                        placeholder="What does +5 mean? What does -5 mean?"
+                        placeholder="What does 5 mean? What does 1 mean?"
                         onChange={(e) => setDraft(e.target.value)}
                         onBlur={commitEdit}
                         onKeyDown={(e) => {
@@ -196,7 +196,7 @@ const QuestionSetDialog: React.FC<{ open: boolean; onOpenChange: (v: boolean) =>
                         onClick={() => beginEdit(q, "helper")}
                         className="block text-left text-[10px] text-muted-foreground"
                       >
-                        {q.helper ?? "What does +5 mean? What does -5 mean?"}
+                        {q.helper ?? "What does 5 mean? What does 1 mean?"}
                       </button>
                     )}
                   </div>
@@ -261,7 +261,7 @@ const QuestionSetDialog: React.FC<{ open: boolean; onOpenChange: (v: boolean) =>
               <Input
                 value={newHelper}
                 onChange={(e) => setNewHelper(e.target.value)}
-                placeholder="What does +5 mean? What does -5 mean? (optional)"
+                placeholder="What does 5 mean? What does 1 mean? (optional)"
                 className="h-7 text-[11px]"
               />
               <Button size="sm" variant="secondary" disabled={!newLabel.trim()} onClick={handleAdd}>
@@ -307,10 +307,10 @@ const QuestionSetDialog: React.FC<{ open: boolean; onOpenChange: (v: boolean) =>
               <span className="block">
                 This question is scored on {confirm?.coverage} of {total} materials. Those scores are kept and
                 can be restored, but the question stops appearing on material pages, in the scoring matrix,
-                and in strong driver and constraint counts.
+                and in strong driver counts.
               </span>
               <span className="block">
-                This will change strong driver and constraint counts, and positions on the prioritisation
+                This will change strong driver counts, and positions on the prioritisation
                 grid.
               </span>
             </AlertDialogDescription>
