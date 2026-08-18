@@ -54,6 +54,7 @@ const CriterionRail: React.FC<{
   draft,
   onPick,
   onEditMine,
+  picking = false,
 }) => {
   const ends = railEnds(criterionId);
   const empty = scored.length === 0;
