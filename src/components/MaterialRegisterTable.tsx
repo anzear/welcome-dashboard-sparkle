@@ -202,9 +202,9 @@ export const MaterialRegisterTable: React.FC = () => {
         value: v,
         label: ENTRY_TYPE_LABEL[v] ?? v,
       })),
-      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+      products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
         value: v,
-        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+        label: `${v} (${data.filter((m) => (m.application_areas ?? []).includes(v)).length})`,
       })),
       applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
         value: v,
@@ -858,7 +858,7 @@ export const MaterialRegisterTable: React.FC = () => {
         materials={selectedMaterials}
         hiddenCount={hiddenSelectedCount}
         ownerOptions={ownerNames}
-        productSuggestions={[...new Set(data.flatMap((m) => m.product_categories ?? []))].sort()}
+        productSuggestions={[...new Set(data.flatMap((m) => m.application_areas ?? []))].sort()}
         applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
         periodSuggestions={[
           ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),

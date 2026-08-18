@@ -64,9 +64,9 @@ const FilterSelects: React.FC<{
       })),
       classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
 
-      products: uniq(data.flatMap((m) => m.product_categories ?? [])).map((v) => ({
+      products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
         value: v,
-        label: `${v} (${data.filter((m) => (m.product_categories ?? []).includes(v)).length})`,
+        label: `${v} (${data.filter((m) => (m.application_areas ?? []).includes(v)).length})`,
       })),
       applications: uniq(data.flatMap((m) => m.application_categories ?? [])).map((v) => ({
         value: v,

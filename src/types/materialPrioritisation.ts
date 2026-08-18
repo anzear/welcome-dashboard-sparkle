@@ -171,7 +171,7 @@ export interface Material {
   /** Free-text customer tags. Never null — empty array when none. */
   tags: string[];
   application_categories: string[];
-  product_categories: string[];
+  application_areas: string[];
   entry_type: EntryType;
   annual_volume: number | null;
   unit_price: number | null;
@@ -264,7 +264,7 @@ export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
   entry_type: "company_entered",
   tags: "company_entered",
   application_categories: "company_entered",
-  product_categories: "company_entered",
+  application_areas: "company_entered",
   journey_status: "team_judgement",
   driver_score: "team_judgement",
 };

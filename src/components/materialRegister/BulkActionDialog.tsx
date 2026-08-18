@@ -69,7 +69,7 @@ interface Props {
 const UNASSIGNED = "__unassigned__";
 
 const MULTI: Record<string, { field: keyof Material; noun: string }> = {
-  products: { field: "product_categories", noun: "product category" },
+  products: { field: "application_areas", noun: "product category" },
   applications: { field: "application_categories", noun: "application category" },
 };
 

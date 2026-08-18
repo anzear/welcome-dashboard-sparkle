@@ -986,14 +986,14 @@ export const MaterialBrief: React.FC = () => {
               />
               <TagsField
                 label="Product categories"
-                values={m.product_categories}
+                values={m.application_areas}
                 onSave={(v) =>
-                  updateMaterial(m.material_id, { product_categories: v }, ["product_categories"], [
+                  updateMaterial(m.material_id, { application_areas: v }, ["application_areas"], [
                     {
                       material_id: m.material_id,
                       event_type: "field_correction",
-                      field: "product_categories",
-                      from_value: m.product_categories.join(", ") || null,
+                      field: "application_areas",
+                      from_value: m.application_areas.join(", ") || null,
                       to_value: v.join(", ") || null,
                     },
                   ])

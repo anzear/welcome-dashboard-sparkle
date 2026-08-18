@@ -457,7 +457,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
       if (
         filters.products.length &&
-        !(m.product_categories ?? []).some((c) => filters.products.includes(c))
+        !(m.application_areas ?? []).some((c) => filters.products.includes(c))
       )
         return false;
       if (
@@ -674,8 +674,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           next.owner = payload.value;
           next.provenance.owner = enteredProvenance();
         } else if (payload.kind === "products") {
-          next.product_categories = nextList(m.product_categories ?? []);
-          next.provenance.product_categories = enteredProvenance();
+          next.application_areas = nextList(m.application_areas ?? []);
+          next.provenance.application_areas = enteredProvenance();
         } else if (payload.kind === "applications") {
           next.application_categories = nextList(m.application_categories ?? []);
           next.provenance.application_categories = enteredProvenance();
@@ -739,8 +739,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
-        const field = payload.kind === "products" ? "product_categories" : "application_categories";
-        const existing = (payload.kind === "products" ? m.product_categories : m.application_categories) ?? [];
+        const field = payload.kind === "products" ? "application_areas" : "application_categories";
+        const existing = (payload.kind === "products" ? m.application_areas : m.application_categories) ?? [];
         return {
           material_id: m.material_id,
           event_type: "field_correction",
