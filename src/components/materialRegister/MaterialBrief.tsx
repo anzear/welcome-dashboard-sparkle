@@ -29,7 +29,11 @@ import BriefGate from "@/components/materialRegister/BriefGate";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
-import { isProductLineTag } from "@/components/materialRegister/productLines";
+import {
+  isProductLineTag,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 import {
   CURRENT_USER,
