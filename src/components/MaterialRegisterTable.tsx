@@ -21,7 +21,7 @@ import {
   holdReviewOverdue,
   overdueConditions,
 } from "@/components/materialRegister/gate";
-import { ComingSoonCell, VCG_RULE } from "@/components/materialRegister/vcgSignals";
+
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
@@ -37,10 +37,6 @@ import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-r
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/30 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border/60 align-bottom";
-
-/** VCG signal columns read as ours, not as another column in the client's sheet. */
-const VCG_HEAD = "bg-provenance-vcg/[0.07] text-provenance-vcg";
-const VCG_GROUP = "mb-1 text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80";
 
 /** Pinned identity columns: they hold while the measures scroll. */
 const STICK = "sticky";
@@ -63,10 +59,7 @@ type OptionalColumn =
   | "priority"
   | "owner"
   | "intelligence"
-  | "lastChange"
-  | "vcgSubstitutability"
-  | "vcgSuppliers"
-  | "vcgCompetitor";
+  | "lastChange";
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
@@ -83,9 +76,6 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
-  ["vcgSubstitutability", "Substitutability (VCG)", "Whether a commercial substitution path exists today — coming soon"],
-  ["vcgSuppliers", "Suppliers (VCG)", "Suppliers VCG detects for an alternative — coming soon"],
-  ["vcgCompetitor", "Competitor activity (VCG)", "Whether competitor movement is detectable — coming soon"],
 ];
 
 /** Share of the expected record that is actually filled in. Never a score. */
@@ -551,41 +541,6 @@ export const MaterialRegisterTable: React.FC = () => {
               {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
               {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
-              {/* VCG signals — ours, set apart from the company columns to their left. */}
-              {cols.vcgSubstitutability && (
-                <th className={cn(HEAD, VCG_HEAD, VCG_RULE, "px-3 py-2.5 text-left")}>
-                  <div className={VCG_GROUP}>VCG signals · coming soon</div>
-                  Substitutability
-                </th>
-              )}
-              {cols.vcgSuppliers && (
-                <th
-                  className={cn(
-                    HEAD,
-                    VCG_HEAD,
-                    !cols.vcgSubstitutability && VCG_RULE,
-                    "px-3 py-2.5 text-right",
-                  )}
-                >
-                  <div className={VCG_GROUP}>{cols.vcgSubstitutability ? "\u00a0" : "VCG signals · coming soon"}</div>
-                  Suppliers
-                </th>
-              )}
-              {cols.vcgCompetitor && (
-                <th
-                  className={cn(
-                    HEAD,
-                    VCG_HEAD,
-                    !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
-                    "px-3 pr-6 py-2.5 text-left",
-                  )}
-                >
-                  <div className={VCG_GROUP}>
-                    {cols.vcgSubstitutability || cols.vcgSuppliers ? "\u00a0" : "VCG signals · coming soon"}
-                  </div>
-                  Competitor activity
-                </th>
-              )}
 
             </tr>
           </thead>
@@ -820,32 +775,6 @@ export const MaterialRegisterTable: React.FC = () => {
                       </td>
                     )}
 
-                    {/* VCG signals are not live yet — the column says so, it never shows a value. */}
-                    {cols.vcgSubstitutability && (
-                      <td className={cn("px-3 py-2 align-middle", VCG_RULE, "bg-provenance-vcg/[0.04]")}>
-                        <ComingSoonCell />
-                      </td>
-                    )}
-                    {cols.vcgSuppliers && (
-                      <td
-                        className={cn(
-                          "px-3 py-2 text-right align-middle bg-provenance-vcg/[0.04]",
-                          !cols.vcgSubstitutability && VCG_RULE,
-                        )}
-                      >
-                        <ComingSoonCell />
-                      </td>
-                    )}
-                    {cols.vcgCompetitor && (
-                      <td
-                        className={cn(
-                          "px-3 pr-6 py-2 align-middle bg-provenance-vcg/[0.04]",
-                          !cols.vcgSubstitutability && !cols.vcgSuppliers && VCG_RULE,
-                        )}
-                      >
-                        <ComingSoonCell />
-                      </td>
-                    )}
                   </tr>
                 </React.Fragment>
               );
