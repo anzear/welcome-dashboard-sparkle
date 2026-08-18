@@ -11,7 +11,14 @@ export interface UnplottedEntry {
   gaps: AxisVar[];
   /** Value on the axis it does have, used to put highest exposure first. */
   sortValue: number | null;
+  /** Why a judged criterion cannot place it, keyed by axis id. */
+  reasons?: Record<string, "no_entries" | "all_neutral">;
 }
+
+const REASON_TEXT: Record<"no_entries" | "all_neutral", string> = {
+  no_entries: "Nobody has scored it",
+  all_neutral: "Every entry is Neutral",
+};
 
 const FIRST_PAGE = 12;
 
@@ -67,7 +74,8 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
   onSaved,
 }) => {
   const [saved, setSaved] = useState(false);
-  const { m, gaps } = entry;
+  const { openBrief } = useRegister();
+  const { m, gaps, reasons } = entry;
 
   const confirm = () => {
     setSaved(true);
@@ -88,19 +96,33 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
       </div>
 
       <div className="flex flex-col gap-1.5">
-        {gaps.map((axis) => (
-          <div key={axis.id} className="flex items-center justify-end gap-3">
-            <label className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              {axis.label}
-              {axis.kind === "measured" ? ` (${axis.unit})` : ""}
-            </label>
-            {axis.field ? (
-              <FigureInput m={m} axis={axis} onCommitted={confirm} />
-            ) : (
-              <span className="font-mono text-[11px] text-muted-foreground">—</span>
-            )}
-          </div>
-        ))}
+        {gaps.map((axis) => {
+          const reason = reasons?.[axis.id];
+          return (
+            <div key={axis.id} className="flex items-center justify-end gap-3">
+              <label className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {axis.label}
+                {axis.kind === "measured" ? ` (${axis.unit})` : ""}
+              </label>
+              {reason ? (
+                <span className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                  {REASON_TEXT[reason]}
+                  <button
+                    type="button"
+                    onClick={() => openBrief(m.material_id)}
+                    className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+                  >
+                    Open brief
+                  </button>
+                </span>
+              ) : axis.field ? (
+                <FigureInput m={m} axis={axis} onCommitted={confirm} />
+              ) : (
+                <span className="font-mono text-[11px] text-muted-foreground">—</span>
+              )}
+            </div>
+          );
+        })}
       </div>
     </li>
   );
@@ -122,13 +144,22 @@ const UnplottedList: React.FC<{
   const summary = useMemo(() => {
     const perAxis = new Map<string, number>();
     let both = 0;
+    let noEntries = 0;
+    let allNeutral = 0;
     entries.forEach((e) => {
-      e.gaps.forEach((a) => perAxis.set(a.noun, (perAxis.get(a.noun) ?? 0) + 1));
+      e.gaps.forEach((a) => {
+        const reason = e.reasons?.[a.id];
+        if (reason === "no_entries") noEntries += 1;
+        else if (reason === "all_neutral") allNeutral += 1;
+        else perAxis.set(a.noun, (perAxis.get(a.noun) ?? 0) + 1);
+      });
       if (e.gaps.length > 1) both += 1;
     });
     const parts = [...perAxis.entries()]
       .sort((a, b) => b[1] - a[1])
       .map(([noun, n]) => `${n} missing ${noun}`);
+    if (noEntries > 0) parts.push(`${noEntries} not scored on a judged criterion`);
+    if (allNeutral > 0) parts.push(`${allNeutral} Neutral on every entry`);
     if (both > 0) parts.push(`${both} missing both`);
     return parts.join(", ");
   }, [entries]);
@@ -151,7 +182,7 @@ const UnplottedList: React.FC<{
           <span className="font-mono tabular-nums">{entries.length}</span> materials not plotted
         </h2>
         <p className="text-[10px] text-muted-foreground/70">
-          Add what you have. Nothing here is an error.
+          Add what you have. A judged criterion is scored in the brief, with a named contributor and a rationale.
         </p>
       </header>
       <p className="mt-1 text-[11px] text-muted-foreground">
