@@ -120,6 +120,48 @@ export const formatSupplierAvailability = (s: SupplierAvailability | undefined):
   return s.capped ? `${SUPPLIER_CEILING + 1}+` : String(s.value);
 };
 
+/**
+ * THE GATE — two separate acts, kept apart on purpose.
+ *
+ * A recommendation is what the owner thinks should happen, weighed by a person
+ * against the assessment entries. It is never derived, suggested or prefilled
+ * from the scores: one weak criterion has to be able to override four strong
+ * ones, and an average would hide exactly that override.
+ *
+ * The outcome is the decision. It can overturn the recommendation, and when it
+ * does both stay visible.
+ */
+export type GateOutcome = "go" | "go_with_conditions" | "hold" | "no_go";
+
+export const GATE_OUTCOMES: GateOutcome[] = ["go", "go_with_conditions", "hold", "no_go"];
+
+export interface GateRecommendation {
+  outcome: GateOutcome;
+  /** Mandatory. No minimum length, but an empty text blocks the save. */
+  text: string;
+  author: string;
+  date: string;
+}
+
+/** One condition attached to a go_with_conditions outcome. */
+export interface GateCondition {
+  condition_id: string;
+  text: string;
+  owner: string;
+  due_date: string;
+  met: boolean;
+  /** Set when ticked. Anyone may tick; the person who did is stamped. */
+  met_date: string | null;
+  met_by: string | null;
+}
+
+/** The no-go reason a reopen leaves behind. Never deleted. */
+export interface PreviousNoGo {
+  reason: string;
+  author: string;
+  date: string;
+}
+
 export interface Material {
   material_id: string;
   customer_material_ids: string[];
@@ -145,6 +187,21 @@ export interface Material {
   /** One VCG data date per material, shared by all three signals. */
   vcg_data_date: string | null;
   journey_status: JourneyStatus;
+  /** Step 1 of the gate. null when nobody has written one yet. */
+  recommendation: GateRecommendation | null;
+  /** Step 2: who set the current gate status, and when. */
+  gate_decided_by: string | null;
+  gate_decided_date: string | null;
+  /** Only meaningful on go_with_conditions, but kept rather than wiped. */
+  gate_conditions: GateCondition[];
+  /** Both mandatory on a hold. The event is the reason, the date stops drift. */
+  hold_trigger_event: string | null;
+  /** Separate from priority_period, and never merged with it. */
+  hold_review_date: string | null;
+  no_go_reason: string | null;
+  /** Survives a reopen so a closed argument is not re-litigated. */
+  previous_no_go: PreviousNoGo | null;
+  reopened: boolean;
   /** null when no requirement has been stated at all. */
   requirements: MaterialRequirements | null;
   blocker_category: string | null;
@@ -222,7 +279,14 @@ export type MaterialEventType =
   | "blocker_set"
   | "field_correction"
   | "score_change"
-  | "tags_change";
+  | "tags_change"
+  | "recommendation"
+  | "gate_outcome"
+  | "condition_change"
+  | "condition_met"
+  | "hold_change"
+  | "no_go_reason"
+  | "reopen";
 
 export type BatchOrigin = "baselining" | "real_transition";
 
@@ -258,6 +322,19 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   tags: "Tags",
   customer_material_ids: "Customer material IDs",
   material_added: "Material added",
+  recommendation: "Recommendation",
+  gate_condition: "Condition",
+  hold_trigger_event: "Hold trigger",
+  hold_review_date: "Hold review date",
+  no_go_reason: "No-go reason",
+  reopen: "Gate reopened",
+};
+
+export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
+  go: "Go",
+  go_with_conditions: "Go with conditions",
+  hold: "Hold",
+  no_go: "No-go",
 };
 
 /** Teams that contribute judgements. */
