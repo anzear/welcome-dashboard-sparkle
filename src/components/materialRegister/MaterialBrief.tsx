@@ -810,8 +810,21 @@ export const MaterialBrief: React.FC = () => {
           </BarField>
 
 
+          {draftStatus === null && (
+            <div className="ml-auto" title="Calculated by the platform from the figures. Four separate positions, never combined into one score.">
+              <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">Position</div>
+              <PositionBlock
+                materialId={m.material_id}
+                gapMeasure={row?.gapMeasure ?? null}
+                gapSize={row?.gapSize ?? 0}
+                variant="inline"
+              />
+            </div>
+          )}
+
           {draftStatus !== null && (
             <div className="ml-auto flex items-center gap-2">
+
               <span className="text-[10px] text-muted-foreground">
                 {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
               </span>
