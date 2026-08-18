@@ -65,12 +65,6 @@ const seed: Array<Pick<DriverQuestion, "question_id" | "label" | "short" | "help
     helper: "5 = renewable feedstock plentiful and proven · 1 = no credible feedstock at scale",
   },
   {
-    question_id: "supply_security",
-    label: "Supply security",
-    short: "SEC",
-    helper: "5 = change reduces exposure and single-sourcing · 1 = change adds fragility",
-  },
-  {
     question_id: "cost",
     label: "Cost",
     short: "CST",
