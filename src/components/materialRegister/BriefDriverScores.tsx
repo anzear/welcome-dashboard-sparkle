@@ -164,9 +164,8 @@ const BriefDriverScores: React.FC<{ materialId: string }> = ({ materialId }) => 
               </div>
 
 
-              {v === null && !expanded && (
-                <p className="px-1 pt-0.5 text-[10px] text-muted-foreground/70">Not scored</p>
-              )}
+
+
 
               {expanded && (
                 <div className="px-1 pt-1.5">
