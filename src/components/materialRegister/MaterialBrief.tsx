@@ -947,9 +947,9 @@ export const MaterialBrief: React.FC = () => {
 
       </div>
 
-      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments. */}
-      <div className="mt-4 grid items-start gap-4 lg:grid-cols-3">
-        <div className="space-y-4 self-start lg:col-span-2">
+      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments, matched heights. */}
+      <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
             title="Gate"
@@ -967,9 +967,14 @@ export const MaterialBrief: React.FC = () => {
 
         </div>
 
-        <div className="space-y-4 self-start">
-          <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
-            <div className="space-y-3">
+        <div className="flex min-h-0 flex-col">
+          <Section
+            title="Comments"
+            note="Published to the team. Everyone with access to this material can see them."
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+
               {(comments[m.material_id] ?? []).length === 0 ? (
                 <p className="text-[11px] text-muted-foreground">No comments yet.</p>
               ) : (
