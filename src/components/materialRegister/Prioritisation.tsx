@@ -16,6 +16,7 @@ import {
   AXIS_PRESETS,
   DEFAULT_PRESET,
   SIZE_MIN,
+  SIZE_VARS,
   AXIS_VARS,
   findAxisVar,
   quadrantReadings,
@@ -76,7 +77,7 @@ const AxisSelect: React.FC<{
   </label>
 );
 
-const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScoring }) => {
+const Prioritisation: React.FC = () => {
   const {
     setMeasureId,
     filters,
@@ -101,7 +102,6 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
   const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
   const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
-  const [mode, setMode] = useState<"chart" | "list">("chart");
   const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
 
   const xv = findAxisVar(axisVars, xId);
@@ -280,8 +280,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         />
         <FilterSelects variant="popover" />
 
-        {mode === "chart" && (
-          <>
+        <>
             <div className="flex flex-wrap items-center gap-1">
               {AXIS_PRESETS.map((p) => (
                 <button
@@ -353,26 +352,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
                 </div>
               </PopoverContent>
             </Popover>
-          </>
-        )}
-
-
-        <div className="ml-auto flex items-center gap-1 rounded-lg bg-muted p-1">
-          {(["chart", "list"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={mode === v}
-              onClick={() => setMode(v)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-[11px] font-medium capitalize transition-colors",
-                mode === v ? "bg-foreground text-background shadow-sm" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {v}
-            </button>
-          ))}
-        </div>
+        </>
       </div>
 
 
@@ -381,15 +361,11 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         {activePreset && (
           <span className="hidden sm:inline">{activePreset.reading}</span>
         )}
-        {mode === "chart" && activePreset && (
-          <span className="hidden sm:inline text-border"> · </span>
-        )}
-        {mode === "chart" && (
-          <span className="hidden sm:inline">
+        {activePreset && <span className="hidden sm:inline text-border"> · </span>}
+        <span className="hidden sm:inline">
             <span className="text-foreground">{xv.label}</span> against{" "}
             <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
-          </span>
-        )}
+        </span>
         <span className="text-border"> · </span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{prioritySetCount}</span> in priority set
@@ -456,8 +432,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
         </div>
       )}
 
-      {mode === "chart" && (
-        <>
+      <>
           {/* Plot + legend side by side */}
           <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_200px]">
             <div className="relative rounded-xl border border-border/70 bg-card p-1 shadow-sm">
@@ -790,8 +765,7 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             )}
           </div>
 
-        </>
-      )}
+      </>
 
       <PriorityDialog
         open={dialog !== null}
