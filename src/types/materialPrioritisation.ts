@@ -36,15 +36,25 @@ export interface MaterialRequirements {
   notes: string | null;
 }
 
-export type JourneyStatus =
-  | "not_started"
-  | "under_evaluation"
-  | "in_testing"
-  | "qualified"
-  | "sourcing"
-  | "in_use"
-  | "parked"
-  | "rejected";
+/** Gate status — the decision position, not a workflow stage. */
+export type JourneyStatus = "under_evaluation" | "go" | "go_with_conditions" | "hold" | "no_go";
+
+/** Legacy status values seen in stored/mock data. */
+export const migrateJourneyStatus = (v: unknown): JourneyStatus => {
+  switch (v) {
+    case "go":
+      return "go";
+    case "go_with_conditions":
+      return "go_with_conditions";
+    case "hold":
+    case "parked":
+      return "hold";
+    case "no_go":
+      return "no_go";
+    default:
+      return "under_evaluation";
+  }
+};
 
 /**
  * "unknown" is for a field that genuinely holds a value whose origin was never
