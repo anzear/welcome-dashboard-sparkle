@@ -8,10 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRegister, UNASSIGNED_OWNER } from "@/components/materialRegister/registerStore";
 import type { Material } from "@/types/materialPrioritisation";
 
-/** The two intents the customer chooses between, mapped onto entry_type. */
+/** Entry type — the three values the customer chooses between. */
 const INTENTS = [
-  { value: "drop_in_substitute", label: "Substitute Source" },
-  { value: "new_application", label: "Introduce new material" },
+  { value: "drop_in", label: "Drop-in" },
+  { value: "substitution", label: "Substitution" },
+  { value: "new_material", label: "New material" },
 ] as const;
 
 const Req = () => <span className="text-destructive"> *</span>;
@@ -48,7 +49,7 @@ const MaterialDetailsDialog: React.FC<{
 
   const [name, setName] = useState(material.name);
   const [intent, setIntent] = useState<string>(
-    material.entry_type === "new_application" ? "new_application" : "drop_in_substitute",
+    material.entry_type,
   );
   const [materialClass, setMaterialClass] = useState<string>(material.material_class ?? "");
   const [apps, setApps] = useState<string[]>(material.application_categories);
