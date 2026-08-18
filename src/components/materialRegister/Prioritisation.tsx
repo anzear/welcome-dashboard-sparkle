@@ -773,7 +773,39 @@ const Prioritisation: React.FC<{ onOpenScoring?: () => void }> = ({ onOpenScorin
             </div>
           </div>
 
-          <UnplottedList entries={entries} totalMaterials={rows.length} onSaved={markPlotted} />
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1 rounded-lg bg-muted p-1">
+              {([
+                { id: "plotted" as const, label: `Plotted (${plotted.length})` },
+                { id: "unplotted" as const, label: `Not plotted (${entries.length})` },
+              ]).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setListSide(t.id)}
+                  className={`rounded-md px-3 py-1 text-[11px] font-medium transition-colors ${
+                    listSide === t.id
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
+            {listSide === "plotted" ? (
+              <PlottedList
+                entries={plotted.map((p) => ({ m: p.m, x: p.x, y: p.y }))}
+                xv={xv}
+                yv={yv}
+                onOpen={(m) => openBrief(m.material_id)}
+              />
+            ) : (
+              <UnplottedList entries={entries} totalMaterials={rows.length} onSaved={markPlotted} />
+            )}
+          </div>
+
         </>
       )}
 
