@@ -20,7 +20,12 @@ import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
-import { isProductLineTag, PRODUCT_LINES } from "@/components/materialRegister/productLines";
+import {
+  isProductLineTag,
+  PRODUCT_LINES,
+  registerProductLine,
+  useProductLines,
+} from "@/components/materialRegister/productLines";
 
 export type BulkKind =
   | "status"
@@ -128,6 +133,8 @@ export const BulkActionDialog: React.FC<Props> = ({
   const [values, setValues] = useState<string[]>([]);
   const [mode, setMode] = useState<BulkMode>("add");
   const [draft, setDraft] = useState("");
+  const [asLine, setAsLine] = useState(false);
+  const productLines = useProductLines();
   const [blockerCategory, setBlockerCategory] = useState<string>("");
   const [blockerDetail, setBlockerDetail] = useState<string>("");
   const [showList, setShowList] = useState(false);
