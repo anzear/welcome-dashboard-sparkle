@@ -1048,7 +1048,8 @@ export const MaterialBrief: React.FC = () => {
                     setComments((prev) => ({
                       ...prev,
                       [m.material_id]: [
-                        ...(prev[m.material_id] ?? []),
+                        ...(prev[m.material_id] ?? seedComments(m.material_id)),
+
                         { id: `${Date.now()}`, author: "You", at: new Date().toISOString(), body },
                       ],
                     }));
