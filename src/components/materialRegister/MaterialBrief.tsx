@@ -369,16 +369,19 @@ const TagsField: React.FC<{
 };
 
 /** Compact labelled control for the decision bar. */
-const BarField: React.FC<{ label: string; children: React.ReactNode; className?: string }> = ({
+const BarField: React.FC<{ label: string; children: React.ReactNode; className?: string; hint?: string }> = ({
   label,
   children,
   className,
+  hint,
 }) => (
-  <div className={cn("min-w-0 space-y-1", className)}>
-    <div className="text-[11px] text-muted-foreground">{label}</div>
-    {children}
+  <div className={cn("min-w-0", className)}>
+    <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</div>
+    <div className="flex h-8 items-center">{children}</div>
+    <div className="mt-1 h-[13px] text-[10px] leading-[13px] text-muted-foreground">{hint}</div>
   </div>
 );
+
 
 export const MaterialBrief: React.FC = () => {
   const {
