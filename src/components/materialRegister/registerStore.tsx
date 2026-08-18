@@ -309,8 +309,16 @@ interface Store {
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
   myEntry: (materialId: string, criterionId: string) => AssessmentEntry | null;
-  /** Records or replaces the current user's entry on one criterion. */
-  saveAssessment: (materialId: string, criterionId: string, score: number, note: string | null) => void;
+  /**
+   * Records or replaces the current user's entry on one criterion. score null =
+   * Neutral. A 1–5 score without a rationale is refused; returns false.
+   */
+  saveAssessment: (
+    materialId: string,
+    criterionId: string,
+    score: number | null,
+    note: string | null,
+  ) => boolean;
   /** Withdraws the current user's entry. Absence, never a zero. */
   clearAssessment: (materialId: string, criterionId: string) => void;
   /** Spread and flag for one criterion. Counts only — entries are never averaged. */
@@ -322,6 +330,8 @@ interface Store {
     contributors: string[];
     teams: TeamId[];
     splits: number;
+    /** Neutral entries recorded. Never part of criteriaAssessed. */
+    neutralEntries: number;
     entryCount: number;
     lastAssessedAt: string | null;
   };
