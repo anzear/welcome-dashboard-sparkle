@@ -581,8 +581,8 @@ export const MaterialRegisterTable: React.FC = () => {
                   colSpan={colCount + extraCols}
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
-                  No material can be both without a figure and divergent — a material with no {measure.noun}{" "}
-                  position to diverge from. Turn off one filter.
+                  No material can be both without a figure and divergent — a material with no{" "}
+                  {measure.noun} figure has no position to diverge from. Turn off one filter.
                 </td>
               </tr>
             )}
