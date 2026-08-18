@@ -37,6 +37,7 @@ const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-for
 
 type OptionalColumn =
   | "rank"
+  | "completeness"
   | "materialType"
   | "materialCategory"
   | "volume"
@@ -53,6 +54,7 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
+  ["completeness", "Data filled", "Share of expected fields recorded"],
   ["materialType", "Material type", "How the material enters the portfolio"],
   ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
@@ -66,6 +68,36 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
+
+/** Share of the expected record that is actually filled in. Never a score. */
+const CompletenessCell: React.FC<{ m: Material }> = ({ m }) => {
+  const c = completenessOf(m);
+  const pct = Math.round(c.ratio * 100);
+  return (
+    <div
+      className="flex items-center justify-end gap-2"
+      title={
+        c.missing.length === 0
+          ? "All expected fields recorded"
+          : `${c.filled} of ${c.total} fields recorded. Missing: ${c.missing.join(", ")}`
+      }
+    >
+      <div className="h-1 w-10 overflow-hidden rounded-full bg-muted">
+        <div
+          className={cn(
+            "h-full rounded-full",
+            pct >= 70 ? "bg-foreground/70" : pct >= 40 ? "bg-foreground/40" : "bg-foreground/20",
+          )}
+          style={{ width: `${Math.max(pct, 2)}%` }}
+        />
+      </div>
+      <span className="w-8 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+        {pct}%
+      </span>
+    </div>
+  );
+};
+
 
 
 /** Application categories as plain text, overflow folded into a count. */
