@@ -1,3 +1,10 @@
+import {
+  CompetitorActivityMark,
+  SubstitutabilityChip,
+  SupplierAvailabilityValue,
+  VCG_RULE,
+  vcgStamp,
+} from "@/components/materialRegister/vcgSignals";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
@@ -50,6 +57,57 @@ const Section: React.FC<{
     {children}
   </section>
 );
+
+/**
+ * VCG signals card. Three computed flags and nothing behind them: no expand, no
+ * drill-down, no hover reveal. The absence is deliberate — pathway detail,
+ * supplier identity and competitor breakdown sit behind an intelligence order.
+ */
+const VcgSignalsCard: React.FC<{ material: Material }> = ({ material }) => {
+  const stamp = vcgStamp(material);
+  const rows: [string, React.ReactNode][] = [
+    ["Substitutability", <SubstitutabilityChip value={material.substitutability_readiness} />],
+    ["Suppliers", <SupplierAvailabilityValue value={material.supplier_availability} />],
+    ["Competitor activity", <CompetitorActivityMark value={material.competitor_activity} withLabel />],
+  ];
+
+  return (
+    <section
+      className={cn(
+        "space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm",
+        VCG_RULE,
+      )}
+    >
+      <div className="border-b border-border/70 pb-1.5">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-provenance-vcg">VCG signals</h2>
+        <p className="pt-1 text-xs leading-snug text-muted-foreground">
+          Computed by VCG from our data. Not measurements taken by your team, and not the full intelligence
+          set.
+        </p>
+      </div>
+
+      <div className="divide-y divide-border/50">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-start justify-between gap-4 py-2">
+            <div>
+              <div className="text-xs font-medium text-foreground">{label}</div>
+              <div className="pt-0.5 text-[10px] text-muted-foreground">{stamp}</div>
+            </div>
+            <div className="shrink-0 pt-0.5">{value}</div>
+          </div>
+        ))}
+      </div>
+
+      <p className="border-t border-border/50 pt-2.5 text-xs leading-snug text-muted-foreground">
+        Signals only. Pathway detail, supplier identity, and competitor breakdown sit behind an intelligence
+        order.
+      </p>
+      <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
+        Order intelligence
+      </Button>
+    </section>
+  );
+};
 
 const GroupLabel: React.FC<{ children: React.ReactNode; first?: boolean }> = ({ children, first }) => (
   <div
