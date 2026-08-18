@@ -1107,7 +1107,6 @@ export const MaterialBrief: React.FC = () => {
                 wide
                 label="Supplier countries"
                 field="supplier_countries"
-                field="supplier_countries"
                 value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
                 provenance={m.provenance.supplier_countries}
                 placeholder="DE, FI, CN"
