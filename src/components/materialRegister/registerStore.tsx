@@ -137,8 +137,15 @@ export interface Filters {
   priorityPeriods: string[];
   /** Blocker categories, matched with ANY. May include NO_BLOCKER. */
   blockers: string[];
-  /** Supplier countries, matched with ANY. */
-  countries: string[];
+  /** VCG substitutability readiness values, matched with ANY. */
+  vcgSubstitutability: string[];
+  /** VCG competitor activity values, matched with ANY. */
+  vcgCompetitor: string[];
+  /** Inclusive range over the VCG supplier count. Never matches not-assessed. */
+  vcgSuppliersMin: number | null;
+  vcgSuppliersMax: number | null;
+  /** Deliberately outside the range: not assessed is not a number. */
+  vcgSuppliersNotAssessed: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -155,7 +162,11 @@ export const EMPTY_FILTERS: Filters = {
   applications: [],
   priorityPeriods: [],
   blockers: [],
-  countries: [],
+  vcgSubstitutability: [],
+  vcgCompetitor: [],
+  vcgSuppliersMin: null,
+  vcgSuppliersMax: null,
+  vcgSuppliersNotAssessed: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -341,7 +352,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.tags.length > 0 ||
     filters.priorityPeriods.length > 0 ||
     filters.blockers.length > 0 ||
-    filters.countries.length > 0;
+    filters.vcgSubstitutability.length > 0 ||
+    filters.vcgCompetitor.length > 0 ||
+    filters.vcgSuppliersMin !== null ||
+    filters.vcgSuppliersMax !== null ||
+    filters.vcgSuppliersNotAssessed;
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
