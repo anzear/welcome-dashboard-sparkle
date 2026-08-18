@@ -1,19 +1,11 @@
-import type { DriverCounts, Material } from "@/types/materialPrioritisation";
+import type { Material } from "@/types/materialPrioritisation";
 import { nf } from "@/components/materialRegister/primitives";
 import type { MeasureId } from "@/components/materialRegister/registerStore";
-import type { DriverQuestion } from "@/config/driverQuestions";
 
-/** Lens ids are fixed; a driver axis is "q:<question_id>". */
+/** Axis ids are the fixed lens ids. Judgements are never used as an axis. */
 export type AxisVarId = string;
-export const DRIVER_AXIS_PREFIX = "q:";
-export const driverAxisId = (questionId: string) => `${DRIVER_AXIS_PREFIX}${questionId}`;
 
-export type SizeVarId = "drivers";
-
-/** Read access to the team's judgements, for axes that read a single question. */
-export interface AxisCtx {
-  score: (questionId: string) => number | null;
-}
+export type SizeVarId = "contributors";
 
 export interface AxisVar {
   id: AxisVarId;
@@ -22,19 +14,16 @@ export interface AxisVar {
   /** Lower-case noun used in corner readings and sentences. */
   noun: string;
   unit: string;
-  /** Measured figure or a judgement. Never mixed into one number. */
-  kind: "measured" | "judgement";
-  /** Which selector section the variable belongs to. */
-  group: "lens" | "driver";
+  /** Every axis is a measured figure. Assessments are shown, never plotted. */
+  kind: "measured";
+  group: "lens";
   /** Present only for variables the register already ranks. */
   measureId?: MeasureId;
   /** Fixed axis domain. Absent for open-ended measured figures. */
   domain?: { min: number; max: number };
-  /** Set when the axis reads one driver question. */
-  questionId?: string;
   /** Numeric field behind a measured lens, so a gap can be filled inline. */
   field?: keyof Material;
-  value: (m: Material, counts: DriverCounts, ctx: AxisCtx) => number | null;
+  value: (m: Material) => number | null;
   fmt: (v: number) => string;
 }
 
@@ -52,7 +41,7 @@ export const LENS_VARS: AxisVar[] = [
     group: "lens",
     measureId: "spend",
     field: "annual_spend",
-    value: (m) => m.annual_spend,
+    value: (m: Material) => m.annual_spend,
     fmt: (v) => `${eur(v)}/yr`,
   },
   {
@@ -64,7 +53,7 @@ export const LENS_VARS: AxisVar[] = [
     group: "lens",
     measureId: "emissions",
     field: "ghg_contribution",
-    value: (m) => m.ghg_contribution,
+    value: (m: Material) => m.ghg_contribution,
     fmt: (v) => `${nf(0).format(v)} tCO2e/yr`,
   },
   {
@@ -76,7 +65,7 @@ export const LENS_VARS: AxisVar[] = [
     group: "lens",
     measureId: "volume",
     field: "annual_volume",
-    value: (m) => m.annual_volume,
+    value: (m: Material) => m.annual_volume,
     fmt: (v) => `${nf(0).format(v)} t/yr`,
   },
   {
@@ -87,7 +76,7 @@ export const LENS_VARS: AxisVar[] = [
     kind: "measured",
     group: "lens",
     field: "unit_price",
-    value: (m) => m.unit_price,
+    value: (m: Material) => m.unit_price,
     fmt: (v) => `EUR ${nf(2).format(v)}/kg`,
   },
   {
@@ -98,7 +87,7 @@ export const LENS_VARS: AxisVar[] = [
     kind: "measured",
     group: "lens",
     field: "ghg_emission_factor",
-    value: (m) => m.ghg_emission_factor,
+    value: (m: Material) => m.ghg_emission_factor,
     fmt: (v) => `${nf(2).format(v)} kgCO2e/kg`,
   },
   {
@@ -109,7 +98,7 @@ export const LENS_VARS: AxisVar[] = [
     kind: "measured",
     group: "lens",
     measureId: "applications",
-    value: (m) => listLen(m.application_categories),
+    value: (m: Material) => listLen(m.application_categories),
     fmt: (v) => `${nf(0).format(v)} applications`,
   },
   {
@@ -119,46 +108,18 @@ export const LENS_VARS: AxisVar[] = [
     unit: "count",
     kind: "measured",
     group: "lens",
-    value: (m) => listLen(m.product_categories),
+    value: (m: Material) => listLen(m.product_categories),
     fmt: (v) => `${nf(0).format(v)} products`,
   },
 ];
 
-/** Counts of judgements. Counts only — never a blended index. */
-export const COUNT_VARS: AxisVar[] = [
-  {
-    id: "drivers",
-    label: "Strong drivers",
-    noun: "strong drivers",
-    unit: "count",
-    kind: "judgement",
-    group: "driver",
-    domain: { min: 0, max: 12 },
-    value: (_m, c) => (c.scored_count === null ? null : (c.strong_drivers as number)),
-    fmt: (v) => `${v} strong drivers`,
-  },
+/** Bubble size encodes how many people have recorded an assessment. */
+export const SIZE_VARS: { id: SizeVarId; label: string; noun: string }[] = [
+  { id: "contributors", label: "Assessments recorded", noun: "assessments recorded" },
 ];
 
-/** One driver question as an axis: its recorded score, 1 to 5. Unscored is no position. */
-export const driverAxis = (q: DriverQuestion): AxisVar => ({
-  id: driverAxisId(q.question_id),
-  label: q.label,
-  noun: q.label.toLowerCase(),
-  unit: "1..5",
-  kind: "judgement",
-  group: "driver",
-  domain: { min: 1, max: 5 },
-  questionId: q.question_id,
-  value: (_m, _c, ctx) => ctx.score(q.question_id),
-  fmt: (v) => `${q.label} ${v}`,
-});
-
-/** Full selector list: lenses first, then every driver question, then the counts. */
-export const buildAxisVars = (questions: DriverQuestion[]): AxisVar[] => [
-  ...LENS_VARS,
-  ...questions.map(driverAxis),
-  ...COUNT_VARS,
-];
+/** Full selector list. Lenses only — a judgement is never an axis. */
+export const AXIS_VARS: AxisVar[] = LENS_VARS;
 
 export const findAxisVar = (vars: AxisVar[], id: AxisVarId): AxisVar =>
   vars.find((v) => v.id === id) ?? vars[0];
@@ -180,41 +141,44 @@ export const AXIS_PRESETS: AxisPreset[] = [
     reading: "spend against emissions impact",
     x: "spend",
     y: "emissions",
-    size: "drivers",
+    size: "contributors",
   },
   {
-    id: "spend-cost",
-    label: "Spend × Cost",
-    reading: "exposure against the cost barrier",
+    id: "spend-volume",
+    label: "Spend × Volume",
+    reading: "spend against the volume behind it",
     x: "spend",
-    y: driverAxisId("cost"),
-    size: "drivers",
+    y: "volume",
+    size: "contributors",
   },
   {
-    id: "emissions-regulatory",
-    label: "Emissions × Regulatory",
-    reading: "impact against regulatory push",
+    id: "emissions-factor",
+    label: "Emissions × GHG factor",
+    reading: "total impact against carbon intensity",
     x: "emissions",
-    y: driverAxisId("regulatory_position"),
-    size: "drivers",
+    y: "ghg_factor",
+    size: "contributors",
   },
   {
-    id: "spend-readiness",
-    label: "Spend × Internal readiness",
-    reading: "exposure against capacity to act",
+    id: "spend-applications",
+    label: "Spend × Applications",
+    reading: "spend against how widely it is used",
     x: "spend",
-    y: driverAxisId("internal_readiness"),
-    size: "drivers",
+    y: "applications",
+    size: "contributors",
   },
 ];
 
 export const DEFAULT_PRESET = AXIS_PRESETS[0];
 
-/** Bubble radius from a 0..12 count, with a floor so a zero-count material stays visible. */
+/** Bubble radius from a count of recorded assessments. Zero keeps a visible floor. */
 export const SIZE_MIN = 3.4;
 export const SIZE_MAX = 11;
+export const SIZE_CEILING = 6;
 export const sizeRadius = (count: number | null) =>
-  count === null ? SIZE_MIN : SIZE_MIN + (Math.min(Math.max(count, 0), 12) / 12) * (SIZE_MAX - SIZE_MIN);
+  count === null || count <= 0
+    ? SIZE_MIN
+    : SIZE_MIN + (Math.min(count, SIZE_CEILING) / SIZE_CEILING) * (SIZE_MAX - SIZE_MIN);
 
 /** Two- or three-word corner readings. Orientation, not a verdict. */
 export const quadrantReadings = (x: AxisVar, y: AxisVar) => ({
