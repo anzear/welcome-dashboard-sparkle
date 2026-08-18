@@ -17,7 +17,7 @@ const Inner: React.FC = () => {
   const target = useMemo(() => {
     if (!ordered.length) return null;
     const hit = ordered.find(
-      (r) => r.m.material_name.toLowerCase() === name.toLowerCase(),
+      (r) => r.m.name.toLowerCase() === name.toLowerCase(),
     );
     return hit ?? ordered[0];
   }, [ordered, name]);
