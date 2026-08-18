@@ -164,16 +164,22 @@ export const BulkActionDialog: React.FC<Props> = ({
   const addMatches = useMemo(() => {
     if (!isMulti) return [];
     const q = draft.trim().toLowerCase();
-    // Product lines are a fixed set, so offer them all before anything is typed.
-    if (!q) return kind === "product_lines" ? suggestions.filter((t) => !hasTag(values, t)) : [];
-    return suggestions.filter((t) => t.toLowerCase().includes(q) && !hasTag(values, t)).slice(0, 6);
-  }, [draft, suggestions, values, isMulti, kind]);
+    const pool =
+      kind === "tags" ? [...new Set([...productLines, ...suggestions])] : suggestions;
+    const available = pool.filter((t) => !hasTag(values, t));
+    // Product lines and the tag vocabulary are offered before anything is typed.
+    if (!q) return kind === "product_lines" || kind === "tags" ? available.slice(0, 12) : [];
+    return available.filter((t) => t.toLowerCase().includes(q)).slice(0, 8);
+  }, [draft, suggestions, values, isMulti, kind, productLines]);
 
-  const addValue = (raw: string) => {
+  const addValue = (raw: string, markLine?: boolean) => {
     const t = normalizeTag(raw);
     setDraft("");
-    if (!t || hasTag(values, t)) return;
-    setValues((prev) => [...prev, t]);
+    if (!t) return;
+    const stored =
+      kind === "tags" && (markLine ?? asLine) ? (registerProductLine(t) ?? t) : t;
+    if (hasTag(values, stored)) return;
+    setValues((prev) => [...prev, stored]);
   };
 
   /** Per-value consequence sentence: who gains it, who already has it. */
