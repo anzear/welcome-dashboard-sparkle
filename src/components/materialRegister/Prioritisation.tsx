@@ -379,7 +379,7 @@ const Prioritisation: React.FC = () => {
               <span className="font-mono tabular-nums">{data.length}</span>
             </>
           )}{" "}
-          materials
+          {scope ? `${scopeLabel} materials` : "materials"}
         </span>
       </div>
 

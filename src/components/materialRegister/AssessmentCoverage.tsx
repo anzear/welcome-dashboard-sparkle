@@ -105,7 +105,7 @@ const AssessmentCoverage: React.FC = () => {
             <span className="font-mono tabular-nums">{data.length}</span>
           </>
         )}{" "}
-        materials
+        {scope ? `${scopeLabel} materials` : "materials"}
       </div>
 
       <FilterChips />
