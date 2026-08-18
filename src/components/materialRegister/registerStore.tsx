@@ -166,6 +166,8 @@ export interface Filters {
   gateHoldReviewOverdue: boolean;
   /** yes / no / any — a recommendation either exists or it does not. */
   gateRecommendation: "yes" | "no" | "any";
+  /** Evidence. Presence of supporting documents only — volume is never filtered. */
+  hasDocuments: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
