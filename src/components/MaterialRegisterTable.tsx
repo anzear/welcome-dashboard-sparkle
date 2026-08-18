@@ -260,8 +260,6 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
       case "materialType":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
-      case "materialCategory":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>;
       case "volume":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
