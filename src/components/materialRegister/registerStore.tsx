@@ -1028,22 +1028,33 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     assessments[assessmentKey(materialId, criterionId, currentUserId)] ?? null;
 
   /**
-   * Spread across the recorded entries. No entry is not a score, and the entries
-   * are never averaged — the flag reports how far apart people sit, nothing more.
+   * Spread across the recorded 1–5 scores. No entry is not a score, and Neutral
+   * is not a score either — neither enters the spread. The entries are never
+   * averaged; the flag reports how far apart people sit, nothing more.
    */
   const assessmentState = (materialId: string, criterionId: string): AssessmentState => {
     const entries = entriesFor(materialId, criterionId);
-    if (entries.length === 0) {
-      return { flag: "not_assessed", entries, low: null, high: null, spread: null, teams: [] };
+    const values = entries.map((e) => e.score).filter((s): s is number => s !== null);
+    const neutralCount = entries.length - values.length;
+    const teams = Array.from(new Set(entries.map((e) => e.team)));
+    if (values.length === 0) {
+      return {
+        flag: entries.length === 0 ? "not_assessed" : "neutral_only",
+        entries,
+        low: null,
+        high: null,
+        spread: null,
+        scoredCount: 0,
+        neutralCount,
+        teams,
+      };
     }
-    const values = entries.map((e) => e.score);
     const low = Math.min(...values);
     const high = Math.max(...values);
     const spread = high - low;
-    const teams = Array.from(new Set(entries.map((e) => e.team)));
     const flag =
-      entries.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
-    return { flag, entries, low, high, spread, teams };
+      values.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
+    return { flag, entries, low, high, spread, scoredCount: values.length, neutralCount, teams };
   };
 
   const assessmentSummary = (materialId: string) => {
