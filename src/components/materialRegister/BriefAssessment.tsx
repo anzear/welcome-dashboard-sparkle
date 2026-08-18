@@ -216,13 +216,26 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <div className="group/figs flex flex-wrap items-baseline gap-x-2 gap-y-1">
-      <span className="text-[10px] text-muted-foreground/70">Spend</span>
-      <Num value={m.annual_spend} suffix="EUR/yr" />
-      <span className="text-[10px] text-muted-foreground/70">Volume</span>
-      <Num value={m.annual_volume} suffix="t/yr" />
-      <span className="text-[10px] text-muted-foreground/70">GHG</span>
-      <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
+    <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+      {([
+        ["Spend", m.annual_spend, "EUR/yr"],
+        ["Volume", m.annual_volume, "t/yr"],
+        ["GHG", m.ghg_contribution, "tCO2e/yr"],
+      ] as const).map(([label, value, suffix]) => (
+        <div key={label} className="flex items-baseline gap-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+            {label}
+          </span>
+          {value === null ? (
+            <Missing />
+          ) : (
+            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
+              {nf(0).format(value)}{" "}
+              <span className="text-[10px] font-normal text-muted-foreground">{suffix}</span>
+            </span>
+          )}
+        </div>
+      ))}
       <button
         type="button"
         onClick={() => setEditing(true)}
