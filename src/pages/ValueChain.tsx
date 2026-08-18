@@ -236,8 +236,8 @@ const MaterialProfileHero: React.FC<{
         />
       </div>
 
-      {/* ── Band 2 — Material Brief / Priorities entry tiles ─────────── */}
-      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-border/60">
+      {/* ── Band 2 — Material Brief entry tile ─────────── */}
+      <div className="grid grid-cols-1">
         <button
           type="button"
           onClick={() => navHero(`/landscape/${category}/${topic}/material-brief-simple`)}
@@ -249,18 +249,8 @@ const MaterialProfileHero: React.FC<{
           </span>
           <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
         </button>
-        <button
-          type="button"
-          onClick={() => navHero(`/landscape/${category}/${topic}/validation-space`)}
-          className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
-        >
-          <span className="flex items-center gap-2">
-            <Target className="w-3.5 h-3.5 text-foreground" />
-            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Validation Space</span>
-          </span>
-          <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
-        </button>
       </div>
+
     </div>
   );
 };
