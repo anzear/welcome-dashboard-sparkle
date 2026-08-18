@@ -10,12 +10,14 @@ import {
   statusForOutcome,
   todayIso,
 } from "@/components/materialRegister/gate";
+import { seedComments } from "@/components/materialRegister/briefComments";
 import {
   CONTRIBUTORS,
   CRITERIA,
   CRITERION_LABEL,
   DEFAULT_CONTRIBUTOR,
   assessmentKey,
+  contributorById,
 } from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
@@ -398,6 +400,12 @@ interface Store {
   saveConditions: (materialId: string, conditions: GateCondition[]) => void;
   /** Sends a no-go material back to under evaluation. The old reason survives. */
   reopenGate: (materialId: string, note: string | null) => void;
+  /**
+   * People who have put at least one thing on the record for this material:
+   * an assessment entry, a supporting document, a comment, or the gate decision.
+   * A count of participation only — never a score.
+   */
+  contributorsFor: (m: Material) => string[];
   /** How many of the given rows carry at least one entry on that criterion. */
   criterionCoverage: (criterionId: string, rows: Material[]) => number;
   /**
@@ -1140,6 +1148,23 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     };
   };
 
+  /**
+   * Distinct people with at least one input on the material brief. Assessment
+   * entries, supporting documents, comments and the gate decision all count.
+   */
+  const contributorsFor = (m: Material): string[] => {
+    const names = new Set<string>();
+    Object.values(assessments)
+      .filter((e) => e.material_id === m.material_id)
+      .forEach((e) => names.add(contributorById(e.user_id)?.name ?? e.user_id));
+    documents
+      .filter((d) => d.material_id === m.material_id)
+      .forEach((d) => names.add(d.uploaded_by));
+    seedComments(m.material_id).forEach((c) => names.add(c.author));
+    if (m.gate_decided_by) names.add(m.gate_decided_by);
+    return Array.from(names);
+  };
+
   const criterionCoverage = (criterionId: string, rowsIn: Material[]) =>
     rowsIn.filter((m) =>
       Object.values(assessments).some(
@@ -1599,6 +1624,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     reopenGate,
     assessmentState,
     assessmentSummary,
+    contributorsFor,
     criterionCoverage,
     documents,
     documentsFor,
