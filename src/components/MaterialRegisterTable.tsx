@@ -59,10 +59,7 @@ type OptionalColumn =
   | "priority"
   | "owner"
   | "intelligence"
-  | "lastChange"
-  | "vcgSubstitutability"
-  | "vcgSuppliers"
-  | "vcgCompetitor";
+  | "lastChange";
 
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
