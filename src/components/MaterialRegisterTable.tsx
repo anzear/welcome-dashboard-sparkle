@@ -21,7 +21,7 @@ import {
   holdReviewOverdue,
   overdueConditions,
 } from "@/components/materialRegister/gate";
-import { ComingSoonCell, VCG_RULE } from "@/components/materialRegister/vcgSignals";
+
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
