@@ -40,6 +40,7 @@ import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/
 import { applyProductLines } from "@/data/productLinesMock";
 import {
   inScope,
+  isProductLineTag,
   productLineCounts,
   scopeLabel as labelForScope,
   type Scope,
@@ -721,6 +722,16 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         } else if (payload.kind === "applications") {
           next.application_categories = nextList(m.application_categories ?? []);
           next.provenance.application_categories = enteredProvenance();
+        } else if (payload.kind === "product_lines" || payload.kind === "tags") {
+          // Tags are one array with two types; each action touches only its own partition.
+          const isLine = payload.kind === "product_lines";
+          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
+          const others = (m.tags ?? []).filter((t) => isProductLineTag(t) !== isLine);
+          next.tags = [...others, ...nextList(mine)];
+          next.provenance.tags = enteredProvenance();
+        } else if (payload.kind === "entry_type") {
+          next.entry_type = payload.value as Material["entry_type"];
+          next.provenance.entry_type = enteredProvenance();
         } else if (payload.kind === "priority_period") {
           next.priority_period = payload.value && payload.value.trim() ? payload.value.trim() : null;
           next.provenance.priority_period = enteredProvenance();
@@ -771,6 +782,28 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             batch_id: batchId,
           } as EventInput;
         }
+        if (payload.kind === "entry_type") {
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "entry_type",
+            from_value: m.entry_type,
+            to_value: payload.value,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        if (payload.kind === "product_lines" || payload.kind === "tags") {
+          const isLine = payload.kind === "product_lines";
+          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "tags",
+            from_value: formatTags(mine) || null,
+            to_value: formatTags(nextList(mine)) || null,
+            batch_id: batchId,
+          } as EventInput;
+        }
         if (payload.kind === "intelligence") {
           return {
             material_id: m.material_id,
@@ -805,7 +838,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
               ? "Application categories"
               : payload.kind === "priority_period"
                 ? "Priority period"
-                : "Intelligence";
+                : payload.kind === "entry_type"
+                  ? "Entry type"
+                  : payload.kind === "product_lines"
+                    ? "Product lines"
+                    : payload.kind === "tags"
+                      ? "Tags"
+                      : "Intelligence";
     setToast({ message: `${noun} updated for ${ids.size} materials.`, snapshot, batchId });
   };
 
