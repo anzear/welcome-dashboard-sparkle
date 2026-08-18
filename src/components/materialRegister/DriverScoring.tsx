@@ -116,58 +116,8 @@ const DriverScoring: React.FC = () => {
     ? (questions.find((q) => q.question_id === sort.key)?.label ?? null)
     : null;
 
-  /* ------------------------------- cell entry ------------------------------ */
+  const arrowIcons = null;
 
-  const focusCell = (row: number, col: number) => {
-    const el = gridRef.current?.querySelector<HTMLElement>(`[data-cell="${row}-${col}"]`);
-    el?.focus();
-  };
-
-  const move = (dr: number, dc: number) => {
-    if (!cursor) return;
-    const row = Math.max(0, Math.min(displayRows.length - 1, cursor.row + dr));
-    const col = Math.max(0, Math.min(questions.length - 1, cursor.col + dc));
-    setCursor({ row, col });
-    focusCell(row, col);
-  };
-
-  const onCellKeyDown = (e: React.KeyboardEvent, m: Material, questionId: string) => {
-    const key = e.key;
-    if (/^[1-5]$/.test(key)) {
-      e.preventDefault();
-      setScore(m.material_id, questionId, Number(key), scoreFor(m.material_id, questionId)?.note ?? null);
-      return;
-    }
-    if (key === "Backspace" || key === "Delete") {
-      e.preventDefault();
-      clearScore(m.material_id, questionId);
-      return;
-    }
-    if (key === "ArrowDown" || key === "Enter") {
-      e.preventDefault();
-      move(1, 0);
-      return;
-    }
-    if (key === "ArrowUp") {
-      e.preventDefault();
-      move(-1, 0);
-      return;
-    }
-    if (key === "ArrowRight" || (key === "Tab" && !e.shiftKey)) {
-      e.preventDefault();
-      move(0, 1);
-      return;
-    }
-    if (key === "ArrowLeft" || (key === "Tab" && e.shiftKey)) {
-      e.preventDefault();
-      move(0, -1);
-    }
-  };
-
-  useEffect(() => {
-    // A shrinking list must not leave the cursor pointing past the end.
-    if (cursor && cursor.row > displayRows.length - 1) setCursor(null);
-  }, [displayRows.length, cursor]);
 
   const arrow = (key: string) =>
     sort?.key !== key ? null : sort.dir === "desc" ? (
