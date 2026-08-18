@@ -28,6 +28,8 @@ const AssessmentCoverage: React.FC = () => {
     criterionCoverage,
     documentCount,
     currentUser,
+    scope,
+    scopeLabel,
   } = useRegister();
 
   const [sort, setSort] = useState<SortId>("register");
