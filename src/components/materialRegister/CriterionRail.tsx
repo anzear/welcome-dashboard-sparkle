@@ -71,7 +71,7 @@ const CriterionRail: React.FC<{
       <div className="flex items-center gap-3">
         <span className="w-2 shrink-0 font-mono text-[10px] text-muted-foreground/70">1</span>
 
-        <div className="relative h-5 flex-1">
+        <div className="relative mx-2.5 h-5 flex-1">
           {/* track */}
           <div
             className={cn(
@@ -162,7 +162,7 @@ const CriterionRail: React.FC<{
       {/* initials under their dot */}
       <div className="mt-0.5 flex items-start gap-3">
         <span className="w-2 shrink-0" aria-hidden />
-        <div className="relative h-3 flex-1">
+        <div className="relative mx-2.5 h-3 flex-1">
           {[...byScore.entries()].map(([score, list]) => (
             <span
               key={`ini-${score}`}
@@ -178,7 +178,7 @@ const CriterionRail: React.FC<{
 
       <div className="mt-0.5 flex items-baseline gap-3">
         <span className="w-2 shrink-0" aria-hidden />
-        <div className="flex flex-1 justify-between text-[9px] text-muted-foreground/60">
+        <div className="mx-2.5 flex flex-1 justify-between text-[9px] text-muted-foreground/60">
           <span>{ends.low}</span>
           <span>{ends.high}</span>
         </div>
