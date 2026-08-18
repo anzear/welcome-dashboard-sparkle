@@ -814,12 +814,12 @@ const Prioritisation: React.FC = () => {
                   <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
                   <p className="mt-1 tabular-nums text-foreground">
                     {hover.dot.xSpan
-                      ? `${hover.dot.xSpan.low}-${hover.dot.xSpan.high}`
+                      ? `${hover.dot.xSpan.low}–${hover.dot.xSpan.high}`
                       : xv.fmt(hover.dot.x)}
                   </p>
                   <p className="tabular-nums text-foreground">
                     {hover.dot.ySpan
-                      ? `${hover.dot.ySpan.low}-${hover.dot.ySpan.high}`
+                      ? `${hover.dot.ySpan.low}–${hover.dot.ySpan.high}`
                       : yv.fmt(hover.dot.y)}
                   </p>
                   {judgementLines(hover.dot.m).map(({ axis, rows: lines }) => (

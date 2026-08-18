@@ -268,21 +268,21 @@ export const MaterialRegisterTable: React.FC = () => {
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
             Volume
-            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>t/yr</div>
           </th>
         );
       case "spend":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
             Spend
-            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>EUR</div>
           </th>
         );
       case "emissions":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
             GHG contribution
-            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>tCO2e/yr</div>
           </th>
         );
       case "applications":

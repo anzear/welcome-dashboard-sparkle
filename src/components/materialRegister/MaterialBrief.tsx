@@ -618,8 +618,10 @@ export const MaterialBrief: React.FC = () => {
             </h1>
 
             {!stuck && (
-              <div className="tabular-nums text-[11px] leading-tight text-muted-foreground">
-                {m.material_class ?? "Unclassified"} · CAS {m.cas_number ?? "—"} · {m.material_id}
+              <div className="text-[11px] leading-tight text-muted-foreground">
+                {m.material_class ?? "Unclassified"} · CAS{" "}
+                <span className="font-mono">{m.cas_number ?? "—"}</span> ·{" "}
+                <span className="font-mono">{m.material_id}</span>
               </div>
             )}
 

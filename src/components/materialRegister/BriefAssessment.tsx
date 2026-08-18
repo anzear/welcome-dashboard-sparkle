@@ -30,8 +30,8 @@ const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }>
   value === null ? (
     <Missing />
   ) : (
-    <span className="tabular-nums text-[10px] text-foreground">
-      {nf(decimals).format(value)} <span className="text-muted-foreground">{suffix}</span>
+    <span className="tabular-nums text-[10px] font-semibold text-foreground">
+      {nf(decimals).format(value)} {suffix}
     </span>
   );
 
@@ -230,8 +230,7 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
             <Missing />
           ) : (
             <span className="text-sm font-semibold tabular-nums text-foreground">
-              {nf(0).format(value)}{" "}
-              <span className="text-[10px] font-normal text-muted-foreground">{suffix}</span>
+              {nf(0).format(value)} {suffix}
             </span>
           )}
         </div>
