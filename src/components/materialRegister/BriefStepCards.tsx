@@ -3,9 +3,9 @@ import { cn } from "@/lib/utils";
 import { Paperclip } from "lucide-react";
 import type { Material } from "@/types/materialPrioritisation";
 import MaterialRequirementsDialog, {
-  EVIDENCE_SLOTS,
   emptyEvidence,
   evidenceFilledCount,
+  evidenceRequestedCount,
   type EvidenceState,
 } from "@/components/materialRegister/MaterialRequirementsDialog";
 
@@ -19,15 +19,16 @@ const STATE_LABEL: Record<StepState, string> = {
 
 /**
  * Requirements and documents. A quiet single row while empty — an empty state
- * never outranks populated content. Opens the full drop zone on click.
+ * never outranks populated content. Opens the full document list on click.
  */
 const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = ({ material }) => {
   const [reqOpen, setReqOpen] = useState(false);
   const [evidence, setEvidence] = useState<EvidenceState>(emptyEvidence());
 
-  const filled = evidenceFilledCount(evidence);
+  const attached = evidenceFilledCount(evidence);
+  const requested = evidenceRequestedCount(evidence);
   const state: StepState =
-    filled === EVIDENCE_SLOTS.length ? "completed" : filled > 0 ? "in_progress" : "not_started";
+    attached > 0 && requested === 0 ? "completed" : attached > 0 || requested > 0 ? "in_progress" : "not_started";
 
   return (
     <>
@@ -45,15 +46,19 @@ const BriefStepCards: React.FC<{ material: Material; scoredCount?: number }> = (
         <span className={cn("text-muted-foreground", state === "completed" && "text-foreground")}>
           · {STATE_LABEL[state]}
         </span>
-        {filled > 0 && (
+        {attached > 0 && (
           <span className="font-mono tabular-nums text-muted-foreground">
-            {filled} of {EVIDENCE_SLOTS.length}
+            {attached} document{attached === 1 ? "" : "s"}
           </span>
+        )}
+        {requested > 0 && (
+          <span className="font-mono tabular-nums text-amber-600">{requested} requested</span>
         )}
         <span className="ml-auto text-muted-foreground underline decoration-dotted underline-offset-2 group-hover:text-foreground">
           Upload
         </span>
       </div>
+
 
       {reqOpen && (
         <MaterialRequirementsDialog
