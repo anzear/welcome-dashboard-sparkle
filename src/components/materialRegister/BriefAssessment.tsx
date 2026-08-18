@@ -380,11 +380,19 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
             setEditing(true);
             setBlocked(false);
           }}
+          picking={editing}
         />
       </div>
 
-      {state.entries.length === 0 && !editing && (
-        <p className="mt-1.5 text-[10px] text-muted-foreground/60">Nobody has judged this yet.</p>
+      {!editing && (
+        <div className="mt-1.5 flex flex-wrap items-baseline gap-2">
+          <button type="button" onClick={() => setEditing(true)} className={LINK}>
+            {mine ? "Change your score" : "Add your assessment"}
+          </button>
+          {state.entries.length === 0 && (
+            <span className="text-[10px] text-muted-foreground/60">Nobody has judged this yet.</span>
+          )}
+        </div>
       )}
 
       {editing && (
