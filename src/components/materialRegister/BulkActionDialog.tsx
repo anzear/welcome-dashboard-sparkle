@@ -337,8 +337,16 @@ export const BulkActionDialog: React.FC<Props> = ({
                       {values.map((t) => (
                         <span
                           key={t}
-                          className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]",
+                            kind === "tags" && isProductLineTag(t)
+                              ? "border border-primary/40 bg-primary/10 font-medium"
+                              : "bg-muted",
+                          )}
                         >
+                          {kind === "tags" && isProductLineTag(t) && (
+                            <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
+                          )}
                           {t}
                           <button
                             type="button"
@@ -366,18 +374,41 @@ export const BulkActionDialog: React.FC<Props> = ({
                         className="min-w-[10rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
                       />
                     </div>
+                    {kind === "tags" && (
+                      <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <Checkbox
+                          checked={asLine}
+                          onCheckedChange={(v) => setAsLine(v === true)}
+                          className="h-3 w-3"
+                        />
+                        This tag is a product line
+                      </label>
+                    )}
                     {addMatches.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {addMatches.map((t) => (
-                          <button
-                            key={t}
-                            type="button"
-                            onClick={() => addValue(t)}
-                            className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
-                          >
-                            {t}
-                          </button>
-                        ))}
+                      <div className="space-y-1">
+                        <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
+                          {draft.trim() ? "Matches" : `Existing ${cfgNoun}s`}
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {addMatches.map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              onClick={() => addValue(t, isProductLineTag(t))}
+                              className={cn(
+                                "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
+                                kind === "tags" && isProductLineTag(t)
+                                  ? "border-primary/40 text-primary"
+                                  : "border-border",
+                              )}
+                            >
+                              {kind === "tags" && isProductLineTag(t) && (
+                                <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
+                              )}
+                              {t}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
