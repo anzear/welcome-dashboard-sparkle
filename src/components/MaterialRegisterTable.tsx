@@ -414,11 +414,13 @@ export const MaterialRegisterTable: React.FC = () => {
           <span className="ml-auto flex items-center gap-1.5">
             {(
               [
-                ["status", "Set gate status"],
                 ["owner", "Set owner"],
+                ["priority_period", "Set priority period"],
+                ["product_lines", "Product lines"],
+                ["tags", "Tags"],
+                ["entry_type", "Set entry type"],
                 ["products", "Set application area"],
                 ["applications", "Set application"],
-                ["priority_period", "Set priority period"],
                 ["intelligence", "Order intelligence"],
               ] as [BulkKind, string][]
 
@@ -443,8 +445,14 @@ export const MaterialRegisterTable: React.FC = () => {
               Clear selection
             </button>
           </span>
+          {/* Judgement stays per material: never settable across a selection. */}
+          <p className="w-full text-[10px] text-muted-foreground">
+            Bulk edits cover factual attributes only. Gate outcome, recommendation and assessment scores are
+            set one material at a time.
+          </p>
         </div>
       )}
+
 
       {toast && (
         <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
