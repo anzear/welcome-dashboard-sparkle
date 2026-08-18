@@ -240,30 +240,20 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   );
 };
 
-/** VCG signals are not live: one quiet tag, nothing else. */
+/** VCG signals are not live: plain low-contrast text, no chip. */
 const VcgStrip: React.FC = () => (
-  <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 pl-2", VCG_RULE)}>
-    <span className="text-[10px] text-muted-foreground">Substitutability</span>
+  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+    <span className="text-[10px] text-muted-foreground/70">Substitutability</span>
     <Missing />
-    <span className="text-[10px] text-border" aria-hidden>
-      ·
-    </span>
-    <span className="text-[10px] text-muted-foreground">Suppliers</span>
+    <span className="text-[10px] text-muted-foreground/70">Suppliers</span>
     <Missing />
-    <span className="text-[10px] text-border" aria-hidden>
-      ·
-    </span>
-    <span className="text-[10px] text-muted-foreground">Competitors</span>
+    <span className="text-[10px] text-muted-foreground/70">Competitors</span>
     <Missing />
-    <span
-      title="VCG signals are not live yet"
-      className="ml-1 inline-flex items-center rounded-sm border border-provenance-vcg/30 bg-provenance-vcg/[0.07] px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-widest text-provenance-vcg/80"
-    >
-      Not yet assessed
-    </span>
-    <span className="ml-auto text-[9px] uppercase tracking-widest text-provenance-vcg/80">VCG data</span>
+    <span className="text-[10px] text-muted-foreground/50">Not yet assessed</span>
+    <span className="ml-auto text-[9px] uppercase tracking-widest text-provenance-vcg/70">VCG data</span>
   </div>
 );
+
 
 /** Small split dot. A marker beside the range, never the word "split". */
 const SplitDot: React.FC = () => (
