@@ -121,15 +121,52 @@ export interface Material {
 
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
-  not_started: "Not started",
   under_evaluation: "Under evaluation",
-  in_testing: "In testing",
-  qualified: "Qualified",
-  sourcing: "Sourcing",
-  in_use: "In use",
-  parked: "Parked",
-  rejected: "Rejected",
+  go: "Go",
+  go_with_conditions: "Go with conditions",
+  hold: "Hold",
+  no_go: "No-go",
 };
+
+/**
+ * Three provenance classes. Every displayed value belongs to exactly one, and a
+ * field never changes class. Missing values keep their class and render as an
+ * em dash — missing is never zero.
+ */
+export type ProvenanceClass = "company_entered" | "vcg_computed" | "team_judgement";
+
+export const PROVENANCE_CLASS_LABEL: Record<ProvenanceClass, string> = {
+  company_entered: "Company data",
+  vcg_computed: "VCG data",
+  team_judgement: "Team judgement",
+};
+
+/** Fixed field -> class assignment. Anything unlisted is company_entered. */
+export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
+  name: "company_entered",
+  cas_number: "company_entered",
+  customer_material_ids: "company_entered",
+  material_class: "vcg_computed",
+  annual_volume: "company_entered",
+  unit_price: "company_entered",
+  annual_spend: "vcg_computed",
+  ghg_emission_factor: "company_entered",
+  ghg_boundary: "company_entered",
+  ghg_data_basis: "company_entered",
+  ghg_contribution: "vcg_computed",
+  supplier_count: "company_entered",
+  supplier_countries: "company_entered",
+  owner: "company_entered",
+  entry_type: "company_entered",
+  tags: "company_entered",
+  application_categories: "company_entered",
+  product_categories: "company_entered",
+  journey_status: "team_judgement",
+  driver_score: "team_judgement",
+};
+
+export const provenanceClassOf = (field: string): ProvenanceClass =>
+  FIELD_PROVENANCE_CLASS[field] ?? "company_entered";
 
 export type MaterialEventType =
   | "status_change"
