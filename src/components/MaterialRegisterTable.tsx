@@ -71,7 +71,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["applications", "Applications", "Application categories the material serves"],
-  ["status", "Gate status", "The gate decision recorded by the team"],
+  ["status", "Status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
@@ -290,7 +290,7 @@ export const MaterialRegisterTable: React.FC = () => {
           <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
         );
       case "status":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>;
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>;
       case "priority":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>;
       case "intelligence":

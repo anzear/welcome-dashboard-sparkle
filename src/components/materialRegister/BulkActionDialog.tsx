@@ -307,7 +307,7 @@ export const BulkActionDialog: React.FC<Props> = ({
             <div className="space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {kind === "status"
-                  ? "New gate status"
+                  ? "New status"
                   : kind === "owner"
                     ? "New owner"
                     : kind === "priority_period"

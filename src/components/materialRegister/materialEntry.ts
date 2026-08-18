@@ -239,7 +239,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
     example2: "",
   },
   { field: "ghg_data_basis", label: "GHG data basis", kind: "text", example1: "Supplier-specific", example2: "" },
-  { field: "journey_status", label: "Gate status", kind: "status", example1: "under_evaluation", example2: "" },
+  { field: "journey_status", label: "Status", kind: "status", example1: "under_evaluation", example2: "" },
   { field: "owner", label: "Owner", kind: "text", example1: "L. Haugen", example2: "" },
   { field: "target_volume", label: "Target volume (t/yr)", kind: "number", example1: "1000", example2: "" },
   { field: "price_ceiling", label: "Price ceiling (EUR/kg)", kind: "number", example1: "1.80", example2: "" },
