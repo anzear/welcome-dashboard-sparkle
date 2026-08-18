@@ -15,18 +15,17 @@ import PlottedList from "@/components/materialRegister/PlottedList";
 import {
   AXIS_PRESETS,
   DEFAULT_PRESET,
-  SIZE_MIN,
-  SIZE_VARS,
+  DOT_R,
   AXIS_VARS,
   findAxisVar,
+  judgementAxisVars,
   quadrantReadings,
   scaleFor,
-  sizeRadius,
   type AxisVar,
   type AxisVarId,
-  type SizeVarId,
 } from "@/components/materialRegister/gridAxes";
 import { nf } from "@/components/materialRegister/primitives";
+import { TEAM_LABEL } from "@/config/assessmentCriteria";
 
 const W = 600;
 const H = 300;
@@ -41,41 +40,67 @@ const jitter = (id: string) => {
   return { dx: ((h % 13) - 6) * 0.55, dy: (((h >> 2) % 13) - 6) * 0.55 };
 };
 
-interface Dot {
+/** Lowest and highest score recorded on a judged criterion. Never averaged. */
+interface Span {
+  low: number;
+  high: number;
+}
+
+interface PlacedPoint {
   m: Material;
   x: number;
   y: number;
-  cx: number;
-  cy: number;
-  r: number;
-  /** People who have recorded an assessment. Drives the bubble size. */
-  sizeCount: number;
+  /** Present only when contributors gave different scores on that axis. */
+  xSpan: Span | null;
+  ySpan: Span | null;
+  contributorCount: number;
   assessed: boolean;
 }
 
-/** Axis picker. Lenses only — a team judgement is never plotted on an axis. */
+interface Dot extends PlacedPoint {
+  cx: number;
+  cy: number;
+  r: number;
+}
+
+/** Axis picker. Measured lenses, plus the judged criteria as 1-5 axes. */
 const AxisSelect: React.FC<{
   label: string;
   value: string;
   vars: AxisVar[];
   onChange: (id: string) => void;
-}> = ({ label, value, vars, onChange }) => (
-  <label className="flex items-center gap-1.5">
-    <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="h-7 max-w-56 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-      aria-label={label}
-    >
-      {vars.map((v) => (
-        <option key={v.id} value={v.id}>
-          {v.label} ({v.unit})
-        </option>
-      ))}
-    </select>
-  </label>
-);
+}> = ({ label, value, vars, onChange }) => {
+  const lenses = vars.filter((v) => v.group === "lens");
+  const judgements = vars.filter((v) => v.group === "judgement");
+  return (
+    <label className="flex items-center gap-1.5">
+      <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 max-w-56 rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
+        aria-label={label}
+      >
+        <optgroup label="Company figures">
+          {lenses.map((v) => (
+            <option key={v.id} value={v.id}>
+              {v.label} ({v.unit})
+            </option>
+          ))}
+        </optgroup>
+        {judgements.length > 0 && (
+          <optgroup label="Team judgement">
+            {judgements.map((v) => (
+              <option key={v.id} value={v.id}>
+                {v.label} (1-5)
+              </option>
+            ))}
+          </optgroup>
+        )}
+      </select>
+    </label>
+  );
+};
 
 const Prioritisation: React.FC = () => {
   const {
@@ -97,18 +122,35 @@ const Prioritisation: React.FC = () => {
     undo,
     scope,
     scopeLabel,
+    criteria,
+    entriesFor,
   } = useRegister();
 
-  const axisVars = AXIS_VARS;
+  const judgedCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement"),
+    [criteria],
+  );
+
+  /** Only 1-5 entries count. Neutral records an absence of view, never a position. */
+  const scoresFor = React.useCallback(
+    (materialId: string, criterionId: string) =>
+      entriesFor(materialId, criterionId)
+        .map((e) => e.score)
+        .filter((v): v is number => v !== null),
+    [entriesFor],
+  );
+
+  const axisVars = useMemo(
+    () => [...AXIS_VARS, ...judgementAxisVars(judgedCriteria, scoresFor)],
+    [judgedCriteria, scoresFor],
+  );
 
   const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
-  const [sizeId, setSizeId] = useState<SizeVarId>(DEFAULT_PRESET.size);
   const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
 
   const xv = findAxisVar(axisVars, xId);
   const yv = findAxisVar(axisVars, yId);
-  const sizeVar = SIZE_VARS.find((v) => v.id === sizeId) ?? SIZE_VARS[0];
 
   /** The register's ranking measure follows the X axis so the readings stay coherent. */
   const pickX = (id: AxisVarId) => {
@@ -121,7 +163,6 @@ const Prioritisation: React.FC = () => {
     const p = AXIS_PRESETS.find((x) => x.id === presetId)!;
     pickX(p.x);
     setYId(p.y);
-    setSizeId(p.size);
   };
 
   const activePreset = AXIS_PRESETS.find((p) => p.x === xId && p.y === yId) ?? null;
@@ -149,10 +190,21 @@ const Prioritisation: React.FC = () => {
     [ordered, prioritySetOnly, inPrioritySet],
   );
 
+  /** Why a judged criterion cannot place a material. Neutral is not a position. */
+  const judgementGap = (m: Material, v: AxisVar): "no_entries" | "all_neutral" => {
+    const all = entriesFor(m.material_id, v.criterionId!);
+    return all.length === 0 ? "no_entries" : "all_neutral";
+  };
+
   const classified = useMemo(() => {
-    const plotted: { m: Material; x: number; y: number; sizeCount: number; assessed: boolean }[] = [];
+    const plotted: PlacedPoint[] = [];
     /** One entry per material, listing every axis it lacks a value for. */
     const entries: UnplottedEntry[] = [];
+
+    const spanOf = (m: Material, v: AxisVar): Span | null => {
+      const r = v.range?.(m);
+      return r && r.high > r.low ? r : null;
+    };
 
     rows.forEach(({ m }) => {
       const summary = assessmentSummary(m.material_id);
@@ -160,16 +212,25 @@ const Prioritisation: React.FC = () => {
       const y = yv.value(m);
       if (x === null || y === null) {
         const gaps: AxisVar[] = [];
-        if (x === null) gaps.push(xv);
-        if (y === null) gaps.push(yv);
-        entries.push({ m, gaps, sortValue: x === null ? y : x });
+        const reasons: Record<string, "no_entries" | "all_neutral"> = {};
+        if (x === null) {
+          gaps.push(xv);
+          if (xv.kind === "judgement") reasons[xv.id] = judgementGap(m, xv);
+        }
+        if (y === null) {
+          gaps.push(yv);
+          if (yv.kind === "judgement") reasons[yv.id] = judgementGap(m, yv);
+        }
+        entries.push({ m, gaps, sortValue: x === null ? y : x, reasons });
         return;
       }
       plotted.push({
         m,
         x,
         y,
-        sizeCount: summary.contributors.length,
+        xSpan: spanOf(m, xv),
+        ySpan: spanOf(m, yv),
+        contributorCount: summary.contributors.length,
         assessed: summary.entryCount > 0,
       });
     });
@@ -183,14 +244,15 @@ const Prioritisation: React.FC = () => {
     });
 
     return { plotted, entries, unplottedTotal: entries.length };
-  }, [rows, xv, yv, assessmentSummary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, xv, yv, assessmentSummary, entriesFor]);
 
   const { plotted, entries, unplottedTotal } = classified;
 
 
   /** Fixed domains for judgement axes; round derived scales for measured ones. */
-  const xScale = scaleFor(xv, plotted.map((p) => p.x));
-  const yScale = scaleFor(yv, plotted.map((p) => p.y));
+  const xScale = scaleFor(xv, plotted.map((p) => (p.xSpan ? p.xSpan.high : p.x)));
+  const yScale = scaleFor(yv, plotted.map((p) => (p.ySpan ? p.ySpan.high : p.y)));
 
   const sx = (v: number) => PAD.l + ((v - xScale.min) / (xScale.max - xScale.min)) * PW;
   const sy = (v: number) => PAD.t + PH - ((v - yScale.min) / (yScale.max - yScale.min)) * PH;
@@ -202,9 +264,9 @@ const Prioritisation: React.FC = () => {
     const j = jitter(p.m.material_id);
     return {
       ...p,
-      cx: sx(p.x) + j.dx,
-      cy: sy(p.y) + j.dy,
-      r: p.assessed ? sizeRadius(p.sizeCount) : SIZE_MIN,
+      cx: p.xSpan ? sx((p.xSpan.low + p.xSpan.high) / 2) : sx(p.x) + j.dx,
+      cy: p.ySpan ? sy((p.ySpan.low + p.ySpan.high) / 2) : sy(p.y) + j.dy,
+      r: DOT_R,
     };
   });
 
@@ -268,7 +330,17 @@ const Prioritisation: React.FC = () => {
   const labelTick = (v: number, scale: typeof xScale, judgement: boolean) =>
     !judgement || v === 0 || v === scale.min || v === scale.max || v % 2 === 0;
 
-  const axisTitle = (v: AxisVar) => `${v.label} (${v.unit})`;
+  const axisTitle = (v: AxisVar) =>
+    v.kind === "judgement" ? `${v.label} (1-5)` : `${v.label} (${v.unit})`;
+
+  const judgementAxes = [xv, yv].filter((v) => v.kind === "judgement");
+
+  /** Entries behind a judged position, listed in the hover panel. Never summarised. */
+  const judgementLines = (m: Material) =>
+    judgementAxes.map((v) => ({
+      axis: v,
+      rows: entriesFor(m.material_id, v.criterionId!),
+    }));
 
   return (
     <div className="w-full space-y-2">
@@ -323,23 +395,6 @@ const Prioritisation: React.FC = () => {
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Axes</div>
                   <AxisSelect label="X" value={xId} vars={axisVars} onChange={(id) => pickX(id)} />
                   <AxisSelect label="Y" value={yId} vars={axisVars} onChange={(id) => setYId(id)} />
-                  <label className="flex items-center gap-1.5">
-                    <span className="w-3 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                      ●
-                    </span>
-                    <select
-                      value={sizeId}
-                      onChange={(e) => setSizeId(e.target.value as SizeVarId)}
-                      className="h-7 w-full rounded-sm border border-border bg-background px-1.5 text-[11px] text-foreground"
-                      aria-label="Size"
-                    >
-                      {SIZE_VARS.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.label} (count)
-                        </option>
-                      ))}
-                    </select>
-                  </label>
                 </div>
 
                 <div className="mt-2 space-y-1.5 border-t border-border pt-2">
@@ -366,7 +421,7 @@ const Prioritisation: React.FC = () => {
         {activePreset && <span className="hidden sm:inline text-border"> · </span>}
         <span className="hidden sm:inline">
             <span className="text-foreground">{xv.label}</span> against{" "}
-            <span className="text-foreground">{yv.label}</span>, sized by {sizeVar.label.toLowerCase()}
+            <span className="text-foreground">{yv.label}</span>
         </span>
         <span className="text-border"> · </span>
         <span>
@@ -640,20 +695,93 @@ const Prioritisation: React.FC = () => {
                           strokeWidth={1.2}
                         />
                       )}
-                      <circle
-                        cx={d.cx}
-                        cy={d.cy}
-                        r={d.r}
-                        className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
-                        fill={d.assessed ? "currentColor" : "none"}
-                        fillOpacity={d.assessed ? 0.75 : 0}
-                        stroke={isPicked ? "hsl(var(--primary))" : d.assessed ? "hsl(var(--background))" : "currentColor"}
-                        strokeWidth={isPicked ? 2 : d.assessed ? 0.8 : 1.3}
-                        strokeDasharray={d.assessed ? undefined : "2 1.6"}
-                        onMouseEnter={enter}
-                        onMouseLeave={() => setHover(null)}
-                        onClick={click}
-                      />
+                      {d.xSpan && d.ySpan ? (
+                        /* Both criteria diverge — a light rectangle over both ranges */
+                        <rect
+                          x={Math.min(sx(d.xSpan.low), sx(d.xSpan.high))}
+                          y={Math.min(sy(d.ySpan.low), sy(d.ySpan.high))}
+                          width={Math.abs(sx(d.xSpan.high) - sx(d.xSpan.low))}
+                          height={Math.abs(sy(d.ySpan.high) - sy(d.ySpan.low))}
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          fill="currentColor"
+                          fillOpacity={0.14}
+                          stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                          strokeOpacity={isPicked ? 1 : 0.6}
+                          strokeWidth={isPicked ? 2 : 1}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        />
+                      ) : d.xSpan || d.ySpan ? (
+                        /* One criterion diverges — a capped segment across its range */
+                        <g
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        >
+                          {d.xSpan ? (
+                            <>
+                              <line
+                                x1={sx(d.xSpan.low)}
+                                y1={d.cy}
+                                x2={sx(d.xSpan.high)}
+                                y2={d.cy}
+                                stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                strokeWidth={isPicked ? 2.4 : 1.6}
+                              />
+                              {[d.xSpan.low, d.xSpan.high].map((v) => (
+                                <line
+                                  key={v}
+                                  x1={sx(v)}
+                                  y1={d.cy - 3.4}
+                                  x2={sx(v)}
+                                  y2={d.cy + 3.4}
+                                  stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                  strokeWidth={isPicked ? 2.4 : 1.6}
+                                />
+                              ))}
+                            </>
+                          ) : (
+                            <>
+                              <line
+                                x1={d.cx}
+                                y1={sy(d.ySpan!.low)}
+                                x2={d.cx}
+                                y2={sy(d.ySpan!.high)}
+                                stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                strokeWidth={isPicked ? 2.4 : 1.6}
+                              />
+                              {[d.ySpan!.low, d.ySpan!.high].map((v) => (
+                                <line
+                                  key={v}
+                                  x1={d.cx - 3.4}
+                                  y1={sy(v)}
+                                  x2={d.cx + 3.4}
+                                  y2={sy(v)}
+                                  stroke={isPicked ? "hsl(var(--primary))" : "currentColor"}
+                                  strokeWidth={isPicked ? 2.4 : 1.6}
+                                />
+                              ))}
+                            </>
+                          )}
+                        </g>
+                      ) : (
+                        <circle
+                          cx={d.cx}
+                          cy={d.cy}
+                          r={d.r}
+                          className={cn(STATUS_DOT[d.m.journey_status], "cursor-pointer")}
+                          fill={d.assessed ? "currentColor" : "none"}
+                          fillOpacity={d.assessed ? 0.75 : 0}
+                          stroke={isPicked ? "hsl(var(--primary))" : d.assessed ? "hsl(var(--background))" : "currentColor"}
+                          strokeWidth={isPicked ? 2 : d.assessed ? 0.8 : 1.3}
+                          strokeDasharray={d.assessed ? undefined : "2 1.6"}
+                          onMouseEnter={enter}
+                          onMouseLeave={() => setHover(null)}
+                          onClick={click}
+                        />
+                      )}
                     </g>
                   );
                 })}
@@ -684,12 +812,36 @@ const Prioritisation: React.FC = () => {
                 >
                   <p className="text-[11px] font-medium text-foreground">{hover.dot.m.name}</p>
                   <p className="text-muted-foreground">{hover.dot.m.material_class ?? "Unclassified"}</p>
-                  <p className="mt-1 font-mono tabular-nums text-foreground">{xv.fmt(hover.dot.x)}</p>
-                  <p className="font-mono tabular-nums text-foreground">{yv.fmt(hover.dot.y)}</p>
+                  <p className="mt-1 font-mono tabular-nums text-foreground">
+                    {hover.dot.xSpan
+                      ? `${hover.dot.xSpan.low}-${hover.dot.xSpan.high}`
+                      : xv.fmt(hover.dot.x)}
+                  </p>
+                  <p className="font-mono tabular-nums text-foreground">
+                    {hover.dot.ySpan
+                      ? `${hover.dot.ySpan.low}-${hover.dot.ySpan.high}`
+                      : yv.fmt(hover.dot.y)}
+                  </p>
+                  {judgementLines(hover.dot.m).map(({ axis, rows: lines }) => (
+                    <div key={axis.id} className="mt-1.5 border-t border-border/60 pt-1.5">
+                      <p className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        {axis.label}
+                      </p>
+                      {lines.map((e) => (
+                        <p key={e.user_id} className="text-muted-foreground">
+                          <span className="text-foreground">{TEAM_LABEL[e.team] ?? e.team}</span>{" "}
+                          <span className="font-mono tabular-nums text-foreground">
+                            {e.score === null ? "Neutral" : e.score}
+                          </span>
+                          {e.note ? ` · ${e.note}` : ""}
+                        </p>
+                      ))}
+                    </div>
+                  ))}
                   {rankSentence(hover.dot.m) && <p className="mt-1 text-foreground">{rankSentence(hover.dot.m)}</p>}
                   <p className="mt-1 text-muted-foreground">
                     {hover.dot.assessed
-                      ? `${hover.dot.sizeCount} ${hover.dot.sizeCount === 1 ? "person has" : "people have"} assessed it`
+                      ? `${hover.dot.contributorCount} ${hover.dot.contributorCount === 1 ? "person has" : "people have"} assessed it`
                       : "Nobody has assessed it yet"}
                   </p>
                   <p className="text-muted-foreground">{JOURNEY_STATUS_LABEL[hover.dot.m.journey_status]}</p>
@@ -704,16 +856,19 @@ const Prioritisation: React.FC = () => {
                 <div className="text-[10px] font-medium text-foreground">Status colour</div>
                 <StatusLegend statuses={statusesPresent} />
               </div>
-              <div className="space-y-2">
-                <div className="text-[10px] font-medium text-foreground">Bubble size</div>
-                <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
-                    <circle cx="5" cy="6" r="3.4" fill="currentColor" fillOpacity={0.75} />
-                    <circle cx="18" cy="6" r="5.5" fill="currentColor" fillOpacity={0.75} />
-                  </svg>
-                  {sizeVar.noun}
-                </span>
-              </div>
+              {judgementAxes.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-[10px] font-medium text-foreground">Range</div>
+                  <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <svg width="26" height="12" viewBox="0 0 26 12" className="text-muted-foreground/70">
+                      <line x1="4" y1="6" x2="22" y2="6" stroke="currentColor" strokeWidth="1.6" />
+                      <line x1="4" y1="2.6" x2="4" y2="9.4" stroke="currentColor" strokeWidth="1.6" />
+                      <line x1="22" y1="2.6" x2="22" y2="9.4" stroke="currentColor" strokeWidth="1.6" />
+                    </svg>
+                    Segment — teams gave different scores, the line spans their range
+                  </span>
+                </div>
+              )}
               <div className="space-y-2">
                 <div className="text-[10px] font-medium text-foreground">Not assessed</div>
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
