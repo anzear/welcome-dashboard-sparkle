@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
+import { NEUTRAL_LABEL, TEAM_LABEL, contributorById } from "@/config/assessmentCriteria";
 import { today, useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, provenanceLine, shortDate } from "@/components/materialRegister/primitives";
 import { ComingSoonTag, VCG_RULE } from "@/components/materialRegister/vcgSignals";
-import { ContributorMark, FlagChip, ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
+import { ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
-import { SlidersHorizontal, Pencil } from "lucide-react";
-import type { AssessmentCriterion, Material } from "@/types/materialPrioritisation";
+import { Info, SlidersHorizontal, Pencil } from "lucide-react";
+import type { AssessmentEntry, AssessmentCriterion, Material } from "@/types/materialPrioritisation";
+
+/** One link treatment for the whole component. */
+const LINK =
+  "text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground";
 
 type FigureField = "annual_volume" | "unit_price" | "ghg_emission_factor";
 
@@ -18,12 +22,24 @@ const FIG_LABELS: Record<FigureField, { label: string; suffix: string; decimals:
   ghg_emission_factor: { label: "Emission factor", suffix: "kg CO2e/kg", decimals: 2 },
 };
 
+const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }> = ({
+  value,
+  suffix,
+  decimals = 0,
+}) =>
+  value === null ? (
+    <Missing />
+  ) : (
+    <span className="font-mono tabular-nums text-[10px] text-foreground">
+      {nf(decimals).format(value)} <span className="text-muted-foreground">{suffix}</span>
+    </span>
+  );
+
 /**
- * Editable figures evidence. Spend and GHG contribution are computed from the
- * three entered values and never edited directly. Every change is logged as a
- * field correction; derived fields carry a computed provenance stamp.
+ * Company figures. Resting state is a single context line; editing expands in
+ * place. Spend and GHG contribution are computed and never edited directly.
  */
-const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
+const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   const { updateMaterial } = useRegister();
   const [editing, setEditing] = useState(false);
   const [vol, setVol] = useState(m.annual_volume?.toString() ?? "");
@@ -76,10 +92,7 @@ const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
         to_value: next === null ? null : String(next),
       });
     };
-    const pushText = (
-      field: "ghg_boundary" | "ghg_data_basis",
-      next: string | null,
-    ) => {
+    const pushText = (field: "ghg_boundary" | "ghg_data_basis", next: string | null) => {
       if (m[field] === next) return;
       patch[field] = next as never;
       events.push({
@@ -102,24 +115,19 @@ const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
       return;
     }
 
-    // Recompute derived figures from the resolved set.
     const useVol = v ?? m.annual_volume;
     const usePrice = p ?? m.unit_price;
     const useFactor = f ?? m.ghg_emission_factor;
-    if (useVol !== null && usePrice !== null) {
-      patch.annual_spend = Math.round(useVol * 1000 * usePrice);
-      provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
-    } else {
-      patch.annual_spend = null;
-      provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
-    }
-    if (useVol !== null && useFactor !== null) {
-      patch.ghg_contribution = Math.round(useVol * useFactor);
-      provenance.ghg_contribution = { origin: "computed", source: "emission factor x volume", date: today() };
-    } else {
-      patch.ghg_contribution = null;
-      provenance.ghg_contribution = { origin: "computed", source: "emission factor x volume", date: today() };
-    }
+    patch.annual_spend =
+      useVol !== null && usePrice !== null ? Math.round(useVol * 1000 * usePrice) : null;
+    provenance.annual_spend = { origin: "computed", source: "volume x unit price", date: today() };
+    patch.ghg_contribution =
+      useVol !== null && useFactor !== null ? Math.round(useVol * useFactor) : null;
+    provenance.ghg_contribution = {
+      origin: "computed",
+      source: "emission factor x volume",
+      date: today(),
+    };
     patch.provenance = provenance;
 
     updateMaterial(
@@ -162,7 +170,7 @@ const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
 
   if (editing) {
     return (
-      <div className="space-y-2.5">
+      <div className="space-y-2.5 pb-1">
         <div className="grid grid-cols-1 gap-x-4 gap-y-2.5 sm:grid-cols-3">
           <Field field="annual_volume" />
           <Field field="unit_price" />
@@ -196,11 +204,7 @@ const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
           >
             Save figures
           </button>
-          <button
-            type="button"
-            onClick={reset}
-            className="text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
-          >
+          <button type="button" onClick={reset} className={LINK}>
             Cancel
           </button>
           <span className="ml-auto text-[10px] text-muted-foreground/70">
@@ -212,80 +216,115 @@ const FiguresEvidence: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <div className="space-y-1.5">
-      <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-        <span className="text-[10px] text-muted-foreground">Spend</span>
-        <Num value={m.annual_spend} suffix="EUR/yr" />
-        <span className="text-[10px] text-muted-foreground">Volume</span>
-        <Num value={m.annual_volume} suffix="t/yr" />
-        <span className="text-[10px] text-muted-foreground">GHG</span>
-        <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
-        <button
-          type="button"
-          onClick={() => setEditing(true)}
-          className="ml-auto inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
-        >
-          <Pencil className="h-3 w-3" />
-          Edit figures
-        </button>
-      </div>
-      <p className="text-[10px] leading-snug text-muted-foreground">
-        Measured and computed. Partial data is normal — a missing figure reads as no figure, never as zero. Spend
-        and GHG contribution recompute from the entered values.
-      </p>
+    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <span className="text-[10px] text-muted-foreground">Spend</span>
+      <Num value={m.annual_spend} suffix="EUR/yr" />
+      <span className="text-[10px] text-border" aria-hidden>
+        ·
+      </span>
+      <span className="text-[10px] text-muted-foreground">Volume</span>
+      <Num value={m.annual_volume} suffix="t/yr" />
+      <span className="text-[10px] text-border" aria-hidden>
+        ·
+      </span>
+      <span className="text-[10px] text-muted-foreground">GHG</span>
+      <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
+      <button type="button" onClick={() => setEditing(true)} className={cn(LINK, "inline-flex items-center gap-1")}>
+        <Pencil className="h-3 w-3" />
+        Edit
+      </button>
+      <span className="ml-auto text-[9px] uppercase tracking-widest text-muted-foreground/70">
+        Company data
+      </span>
     </div>
   );
 };
 
-const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }> = ({
-  value,
-  suffix,
-  decimals = 0,
-}) =>
-  value === null ? (
+/** VCG signals are not live: one quiet tag, nothing else. */
+const VcgStrip: React.FC = () => (
+  <div className={cn("flex flex-wrap items-center gap-x-2 gap-y-1 pl-2", VCG_RULE)}>
+    <span className="text-[10px] text-muted-foreground">Substitutability</span>
     <Missing />
-  ) : (
-    <span className="font-mono tabular-nums text-[11px] text-foreground">
-      {nf(decimals).format(value)} <span className="text-muted-foreground">{suffix}</span>
+    <span className="text-[10px] text-border" aria-hidden>
+      ·
     </span>
-  );
-
-/** Evidence rows are read off data already held. Nobody scores them. */
-const EvidenceRow: React.FC<{ criterion: AssessmentCriterion; m: Material }> = ({ criterion, m }) => (
-  <div
-    className={cn(
-      "space-y-1.5 rounded-md border border-border/70 bg-muted/30 p-2.5",
-      criterion.source === "vcg" && VCG_RULE,
-    )}
-  >
-    <div className="flex items-baseline justify-between gap-2">
-      <span className="text-[11px] font-medium text-foreground">{criterion.label}</span>
-      <span className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
-        {criterion.source === "vcg" ? "VCG data" : "Company data"}
-        {criterion.source === "vcg" && <ComingSoonTag />}
-      </span>
-    </div>
-
-    {criterion.source === "figures" ? (
-      <FiguresEvidence m={m} />
-    ) : (
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] text-muted-foreground">
-        <span>Substitutability</span>
-        <span aria-hidden>·</span>
-        <span>Suppliers</span>
-        <span aria-hidden>·</span>
-        <span>Competitors</span>
-      </div>
-    )}
-    <p className="text-[10px] leading-snug text-muted-foreground">
-      {criterion.source === "vcg"
-        ? "These signals are not live yet. Nothing here is scored or read into the assessment until VCG runs the check."
-        : criterion.helper}
-    </p>
+    <span className="text-[10px] text-muted-foreground">Suppliers</span>
+    <Missing />
+    <span className="text-[10px] text-border" aria-hidden>
+      ·
+    </span>
+    <span className="text-[10px] text-muted-foreground">Competitors</span>
+    <Missing />
+    <ComingSoonTag className="ml-1" title="Not yet assessed by VCG" />
+    <span className="ml-auto text-[9px] uppercase tracking-widest text-provenance-vcg/80">VCG data</span>
   </div>
 );
 
-/** One judged criterion: everyone's entries, plus the current user's own rail. */
+/** Small split dot. A marker beside the range, never the word "split". */
+const SplitDot: React.FC = () => (
+  <span
+    title="Teams disagree"
+    aria-label="Teams disagree"
+    className="inline-block h-1.5 w-1.5 rounded-full bg-amber-500"
+  />
+);
+
+/** One recorded entry: person, team, score, reason. Never initials and a number. */
+const EntryLine: React.FC<{ entry: AssessmentEntry; isMine: boolean; onEdit?: () => void }> = ({
+  entry,
+  isMine,
+  onEdit,
+}) => {
+  const [open, setOpen] = useState(false);
+  const name = contributorById(entry.user_id)?.name ?? entry.user_id;
+  return (
+    <div className="flex items-start gap-2 py-[3px] text-[11px]">
+      <span
+        className={cn("shrink-0 whitespace-nowrap", isMine ? "font-medium text-foreground" : "text-foreground")}
+        title={isMine ? "Your entry" : undefined}
+      >
+        {name}
+      </span>
+      <span className="shrink-0 whitespace-nowrap text-[10px] text-muted-foreground">
+        {TEAM_LABEL[entry.team]}
+      </span>
+      {entry.score === null ? (
+        <span className="shrink-0 text-[10px] font-normal text-muted-foreground/80">{NEUTRAL_LABEL}</span>
+      ) : (
+        <span className="shrink-0 font-mono tabular-nums font-medium text-provenance-judgement">
+          {entry.score}
+        </span>
+      )}
+      {entry.note ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className={cn(
+            "min-w-0 flex-1 text-left text-[11px] text-muted-foreground hover:text-foreground",
+            !open && "truncate",
+          )}
+          title={open ? undefined : entry.note}
+        >
+          {entry.note}
+          {open && (
+            <span className="ml-2 font-mono text-[10px] text-muted-foreground/70">
+              {shortDate(entry.assessed_at)}
+            </span>
+          )}
+        </button>
+      ) : (
+        <span className="min-w-0 flex-1" title={shortDate(entry.assessed_at)} />
+      )}
+      {isMine && onEdit && (
+        <button type="button" onClick={onEdit} className={cn(LINK, "shrink-0")}>
+          Edit
+        </button>
+      )}
+    </div>
+  );
+};
+
+/** One judged criterion: a row, not a box. Everyone's entries, then your own act. */
 const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: string }> = ({
   criterion,
   materialId,
@@ -294,21 +333,24 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
   const state = assessmentState(materialId, criterion.criterion_id);
   const mine = myEntry(materialId, criterion.criterion_id);
 
-  /** Draft, because a 1–5 score cannot be committed until a rationale exists. */
   const savedValue: number | "neutral" | null = mine ? (mine.score === null ? "neutral" : mine.score) : null;
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<number | "neutral" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const value = draft ?? savedValue;
   const noteValue = note ?? mine?.note ?? "";
   const needsReason = value !== null && value !== "neutral" && noteValue.trim() === "";
-  const dirty = value !== savedValue || (mine ? (mine.note ?? "") !== noteValue.trim() : noteValue.trim() !== "");
+  const dirty =
+    value !== savedValue || (mine ? (mine.note ?? "") !== noteValue.trim() : noteValue.trim() !== "");
 
-  const reset = () => {
+  const stop = () => {
     setDraft(null);
     setNote(null);
     setBlocked(false);
+    setEditing(false);
   };
 
   const commit = () => {
@@ -323,62 +365,125 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
       setBlocked(true);
       return;
     }
-    reset();
+    stop();
   };
 
+  // Every figure below is derived. Nothing here is a fixed sentence about a state.
+  const others = state.entries.filter((e) => e.user_id !== currentUser.user_id);
+  const ordered = mine ? [mine, ...others] : others;
+  const shown = showAll ? ordered : ordered.slice(0, 3);
+  const hidden = ordered.length - shown.length;
+
+  const range =
+    state.scoredCount === 0
+      ? null
+      : state.low === state.high
+        ? String(state.low)
+        : `${state.low}–${state.high}`;
+
   return (
-    <div className="space-y-2 rounded-md border border-border/70 border-l-2 border-l-provenance-judgement/70 bg-card p-2.5">
+    <div className="border-l-2 border-provenance-judgement/70 pl-2.5">
       <div className="flex items-baseline justify-between gap-2">
-        <span className="text-[11px] font-medium text-foreground">{criterion.label}</span>
-        <FlagChip state={state} />
+        <span className="flex items-center gap-1 text-[11px] font-medium text-foreground">
+          {criterion.label}
+          {criterion.helper && (
+            <button
+              type="button"
+              tabIndex={0}
+              title={criterion.helper}
+              aria-label={`About ${criterion.label}`}
+              className="text-muted-foreground/60 hover:text-foreground"
+            >
+              <Info className="h-3 w-3" />
+            </button>
+          )}
+        </span>
+        <span className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          {ordered.length === 0 ? (
+            <Missing />
+          ) : (
+            <>
+              <span>
+                <span className="font-mono tabular-nums text-foreground">{ordered.length}</span>{" "}
+                {ordered.length === 1 ? "entry" : "entries"}
+              </span>
+              {range && (
+                <>
+                  <span className="text-border" aria-hidden>
+                    ·
+                  </span>
+                  <span className="font-mono tabular-nums text-foreground">{range}</span>
+                </>
+              )}
+              {state.flag === "split" && <SplitDot />}
+            </>
+          )}
+        </span>
       </div>
 
-      <p className="text-[10px] leading-snug text-muted-foreground">{criterion.helper}</p>
-      {criterion.anchors && (
-        <p className="text-[10px] leading-snug text-muted-foreground/80">{criterion.anchors}</p>
+      {ordered.length > 0 && (
+        <div className="mt-1 divide-y divide-border/40">
+          {shown.map((e) => (
+            <EntryLine
+              key={e.user_id}
+              entry={e}
+              isMine={e.user_id === currentUser.user_id}
+              onEdit={
+                e.user_id === currentUser.user_id
+                  ? () => {
+                      setEditing(true);
+                      setBlocked(false);
+                    }
+                  : undefined
+              }
+            />
+          ))}
+        </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {state.entries.length === 0 ? (
-          <span className="text-[10px] text-muted-foreground">No entries yet.</span>
-        ) : (
-          state.entries.map((e) => (
-            <ContributorMark key={e.user_id} entry={e} name={contributorById(e.user_id)?.name ?? e.user_id} />
-          ))
-        )}
-      </div>
+      {hidden > 0 && (
+        <button type="button" onClick={() => setShowAll(true)} className={cn(LINK, "mt-1")}>
+          {hidden} more
+        </button>
+      )}
+      {showAll && ordered.length > 3 && (
+        <button type="button" onClick={() => setShowAll(false)} className={cn(LINK, "mt-1")}>
+          Show fewer
+        </button>
+      )}
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-2">
-        <span className="text-[10px] text-muted-foreground">
-          {mine ? "Your entry" : "Add your entry"}
-          <span className="ml-1 text-muted-foreground/70">
-            ({currentUser.name}, {TEAM_LABEL[currentUser.team]})
-          </span>
-        </span>
-        <ScoreRail
-          size="sm"
-          value={value}
-          ariaLabel={`${criterion.label} score`}
-          onPick={(v) => {
-            setDraft(v);
-            setBlocked(false);
-          }}
-          onNeutral={() => {
-            setDraft("neutral");
-            setBlocked(false);
-          }}
-          onClear={() => {
-            if (mine) clearAssessment(materialId, criterion.criterion_id);
-            reset();
-          }}
-        />
-        {mine && !dirty && (
-          <span className="font-mono text-[10px] text-muted-foreground">{shortDate(mine.assessed_at)}</span>
-        )}
-      </div>
+      {!editing && !mine && (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-1.5 inline-flex h-6 items-center rounded-md border border-border bg-background px-2 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          Add your assessment
+        </button>
+      )}
 
-      {value !== null && (
-        <div className="space-y-1">
+      {editing && (
+        <div className="mt-2 space-y-1.5">
+          <ScoreRail
+            size="sm"
+            value={value}
+            ariaLabel={`${criterion.label} score`}
+            onPick={(v) => {
+              setDraft(v);
+              setBlocked(false);
+            }}
+            onNeutral={() => {
+              setDraft("neutral");
+              setBlocked(false);
+            }}
+            onClear={() => {
+              if (mine) clearAssessment(materialId, criterion.criterion_id);
+              stop();
+            }}
+          />
+          {criterion.anchors && (
+            <p className="text-[10px] leading-snug text-muted-foreground/80">{criterion.anchors}</p>
+          )}
           <input
             value={noteValue}
             onChange={(e) => {
@@ -396,33 +501,30 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
             )}
           />
           <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={commit}
-              disabled={!dirty || needsReason}
-              className="inline-flex h-6 items-center rounded-md border border-border bg-foreground px-2.5 text-[10px] font-medium text-background transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {mine ? "Save change" : "Save entry"}
-            </button>
-            {dirty && (
+            {value !== null && !needsReason && dirty && (
               <button
                 type="button"
-                onClick={reset}
-                className="text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
+                onClick={commit}
+                className="inline-flex h-6 items-center rounded-md border border-border bg-foreground px-2.5 text-[10px] font-medium text-background"
               >
-                Discard
+                Save
               </button>
             )}
-            {needsReason && (
-              <span className="text-[10px] text-amber-700 dark:text-amber-400">
-                A rationale is required for a 1–5 score. Optional on Neutral.
+            <button type="button" onClick={stop} className={LINK}>
+              Cancel
+            </button>
+            {needsReason && value !== null && (
+              <span className="text-[10px] text-muted-foreground">
+                A rationale is required for a 1–5 score.
               </span>
             )}
+            <span className="ml-auto text-[10px] text-muted-foreground/70">
+              {currentUser.name} · {TEAM_LABEL[currentUser.team]}
+            </span>
           </div>
         </div>
       )}
 
-      {/* Evidence sits beside the rationale it supports, not in a separate card. */}
       <CriterionDocuments
         materialId={materialId}
         criterionId={criterion.criterion_id}
@@ -433,65 +535,56 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
 };
 
 /**
- * The assessment card: two evidence criteria read from data we hold, three judged
- * by people. Five separate readings — they are never combined into one score.
+ * The assessment card. Two reference rows read from data we hold sit as a quiet
+ * context strip; the judged criteria are rows with one border level. Nothing is
+ * combined into a score.
  */
 const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
   const { assessmentSummary, criteria, canEditCriteria } = useRegister();
   const summary = assessmentSummary(material.material_id);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
 
+  const judged = criteria.filter((c) => c.kind === "judgement");
+
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
         <span>
           <span className="font-mono tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
-          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> judged criteria have scores
+          <span className="font-mono tabular-nums">{summary.criteriaTotal}</span> scored
         </span>
-        <span className="text-border">·</span>
+        <span className="text-border" aria-hidden>
+          ·
+        </span>
         <span>
           <span className="font-mono tabular-nums text-foreground">{summary.contributors.length}</span>{" "}
           {summary.contributors.length === 1 ? "person" : "people"}
-          {summary.teams.length > 0 && ` across ${summary.teams.map((t) => TEAM_LABEL[t]).join(", ")}`}
         </span>
-        {summary.neutralEntries > 0 && (
-          <>
-            <span className="text-border">·</span>
-            <span>
-              <span className="font-mono tabular-nums">{summary.neutralEntries}</span> neutral (not counted as
-              scores)
-            </span>
-          </>
-        )}
-        {summary.splits > 0 && (
-          <>
-            <span className="text-border">·</span>
-            <span className="text-amber-700 dark:text-amber-400">
-              <span className="font-mono tabular-nums">{summary.splits}</span> split
-            </span>
-          </>
-        )}
-        <span className="ml-auto flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setCriteriaOpen(true)}
-            className="inline-flex items-center gap-1 text-[10px] text-muted-foreground underline decoration-dotted hover:text-foreground"
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            {canEditCriteria ? "Edit criteria" : "View criteria"}
-          </button>
-        </span>
+        <button
+          type="button"
+          onClick={() => setCriteriaOpen(true)}
+          className={cn(LINK, "inline-flex items-center gap-1")}
+        >
+          <SlidersHorizontal className="h-3 w-3" />
+          {canEditCriteria ? "Edit criteria" : "View criteria"}
+        </button>
+      </div>
+
+      {/* Context, not work: smaller type, no borders, no cards. */}
+      <div className="space-y-1">
+        <FiguresStrip m={material} />
+        <VcgStrip />
+      </div>
+
+      <div className="divide-y divide-border/60">
+        {judged.map((c) => (
+          <div key={c.criterion_id} className="py-2.5 first:pt-1">
+            <JudgementRow criterion={c} materialId={material.material_id} />
+          </div>
+        ))}
       </div>
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
-
-      {criteria.map((c) =>
-        c.kind === "evidence" ? (
-          <EvidenceRow key={c.criterion_id} criterion={c} m={material} />
-        ) : (
-          <JudgementRow key={c.criterion_id} criterion={c} materialId={material.material_id} />
-        ),
-      )}
     </div>
   );
 };
