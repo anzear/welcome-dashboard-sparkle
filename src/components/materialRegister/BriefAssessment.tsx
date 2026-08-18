@@ -549,17 +549,18 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
         </button>
       </div>
 
-      {/* Context, not work: smaller type, no borders, no cards. */}
-      <div className="space-y-0.5">
-        <FiguresStrip m={material} />
-        <VcgStrip />
-      </div>
+      {/* Company figures: the real business data, up top. */}
+      <FiguresStrip m={material} />
 
       <div className="space-y-6 pt-1">
         {judged.map((c) => (
           <JudgementRow key={c.criterion_id} criterion={c} materialId={material.material_id} />
         ))}
       </div>
+
+      {/* VCG-derived signals sit at the foot: not live yet, clearly marked. */}
+      <VcgStrip />
+
 
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
