@@ -6,6 +6,7 @@ import { Missing, nf, provenanceLine, shortDate } from "@/components/materialReg
 import CriterionRail from "@/components/materialRegister/CriterionRail";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
+import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
 import { Info, SlidersHorizontal, Pencil } from "lucide-react";
 import type { AssessmentEntry, AssessmentCriterion, Material } from "@/types/materialPrioritisation";
 
