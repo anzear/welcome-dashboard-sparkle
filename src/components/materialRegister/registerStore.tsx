@@ -1063,9 +1063,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const mine = Object.values(assessments).filter((e) => e.material_id === materialId);
     const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
     const teams = Array.from(new Set(mine.map((e) => e.team)));
+    /** Only a 1–5 score counts as assessed. Neutral is a recorded absence of view. */
     const criteriaAssessed = JUDGED_CRITERIA.filter((c) =>
-      mine.some((e) => e.criterion_id === c.criterion_id),
+      mine.some((e) => e.criterion_id === c.criterion_id && e.score !== null),
     ).length;
+    const neutralEntries = mine.filter((e) => e.score === null).length;
     const splits = JUDGED_CRITERIA.filter(
       (c) => assessmentState(materialId, c.criterion_id).flag === "split",
     ).length;
@@ -1079,6 +1081,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       contributors,
       teams,
       splits,
+      neutralEntries,
       entryCount: mine.length,
       lastAssessedAt,
     };
@@ -1087,7 +1090,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const criterionCoverage = (criterionId: string, rowsIn: Material[]) =>
     rowsIn.filter((m) =>
       Object.values(assessments).some(
-        (e) => e.material_id === m.material_id && e.criterion_id === criterionId,
+        (e) => e.material_id === m.material_id && e.criterion_id === criterionId && e.score !== null,
       ),
     ).length;
 
