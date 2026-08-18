@@ -938,6 +938,57 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       ),
     ).length;
 
+  /* ----------------------------------------------------- supporting documents
+   * Evidence sits on a criterion, never on a person's entry and never on the
+   * material as a whole. Nothing here counts toward a score or coverage.
+   * -------------------------------------------------------------------------- */
+
+  const documentsFor = (materialId: string, criterionId: string) =>
+    documents
+      .filter((d) => d.material_id === materialId && d.criterion_id === criterionId)
+      .sort((a, b) => b.uploaded_date.localeCompare(a.uploaded_date));
+
+  const documentCount = (materialId: string, criterionId: string) =>
+    documents.filter((d) => d.material_id === materialId && d.criterion_id === criterionId).length;
+
+  const hasAnyDocuments = (materialId: string) =>
+    documents.some((d) => d.material_id === materialId);
+
+  /** Anyone can attach — holding the evidence does not require holding a view. */
+  const addDocument = (
+    materialId: string,
+    criterionId: string,
+    file: { filename: string; file_type: DocumentFileType; size: string },
+    note: string | null,
+  ) => {
+    setDocuments((prev) => [
+      ...prev,
+      {
+        document_id: `doc-${Date.now()}-${prev.length + 1}`,
+        material_id: materialId,
+        criterion_id: criterionId,
+        filename: file.filename,
+        file_type: file.file_type,
+        size: file.size,
+        note,
+        uploaded_by: currentUser.name,
+        uploaded_date: todayIso(),
+      },
+    ]);
+  };
+
+  /** The uploader may remove their own; the material owner may remove any. */
+  const canDeleteDocument = (doc: SupportingDocument) => {
+    const m = data.find((x) => x.material_id === doc.material_id);
+    return doc.uploaded_by === currentUser.name || (m?.owner ?? null) === currentUser.name;
+  };
+
+  /** Immediate and final. No soft delete, no recovery. */
+  const deleteDocument = (documentId: string) =>
+    setDocuments((prev) => prev.filter((d) => d.document_id !== documentId));
+
+
+
   const saveAssessment = (
     materialId: string,
     criterionId: string,
