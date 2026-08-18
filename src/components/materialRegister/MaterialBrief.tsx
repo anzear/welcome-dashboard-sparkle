@@ -789,8 +789,13 @@ export const MaterialBrief: React.FC = () => {
 
           {/* Bottom-right: action buttons under pagination */}
           <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
-            <Button variant="outline" size="sm" className="h-7 text-xs">
-              Export brief
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setExportOpen(true)}
+            >
+              Export decision
             </Button>
             <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
               Order intelligence
