@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { EMPTY_FILTERS, type Filters } from "@/components/materialRegister/registerStore";
+import { type Filters } from "@/components/materialRegister/registerStore";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import { JUDGED_CRITERIA } from "@/config/assessmentCriteria";
 import {
-  datePassed,
   hasOverdueCondition,
   holdReviewOverdue,
   overdueConditions,
@@ -24,7 +23,7 @@ export type OverviewTab = "register" | "grid" | "assessment";
 
 interface Props {
   /** Drilling in sets the scope and opens a tab. The overview itself is global. */
-  onEnter: (tab: OverviewTab, opts?: { scope?: Scope; filters?: Partial<Filters>; extras?: () => void }) => void;
+  onEnter: (tab: OverviewTab, opts?: { scope?: Scope; filters?: Partial<Filters> }) => void;
 }
 
 const eur = (v: number) => {
@@ -301,7 +300,7 @@ const PortfolioOverview: React.FC<Props> = ({ onEnter }) => {
             empty="Every material with spend has been assessed."
             count={unassessedSpend.length}
             seeAll={() =>
-              onEnter("register", { filters: { notAssessed: true }, extras: undefined })
+              onEnter("register", { filters: { notAssessed: true } })
             }
           >
             {unassessedSpend.slice(0, 3).map((m) => (
@@ -412,5 +411,3 @@ const PortfolioOverview: React.FC<Props> = ({ onEnter }) => {
 };
 
 export default PortfolioOverview;
-export { EMPTY_FILTERS };
-export const datePassedRef = datePassed;
