@@ -48,14 +48,13 @@ const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-for
 
 type OptionalColumn =
   | "rank"
+  | "status"
   | "completeness"
   | "materialType"
-  | "materialCategory"
   | "volume"
   | "spend"
   | "emissions"
   | "applications"
-  | "status"
   | "priority"
   | "owner"
   | "intelligence"
@@ -64,14 +63,13 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
+  ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data filled", "Share of expected fields recorded"],
   ["materialType", "Entry type", "How the material enters the portfolio"],
-  ["materialCategory", "Material category", "Class the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["applications", "Applications", "Application categories the material serves"],
-  ["status", "Status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
@@ -262,8 +260,6 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
       case "materialType":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
-      case "materialCategory":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>;
       case "volume":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
@@ -316,16 +312,6 @@ export const MaterialRegisterTable: React.FC = () => {
         return (
           <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
             {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
-          </td>
-        );
-      case "materialCategory":
-        return (
-          <td className="px-3 py-2 align-middle text-[12px]">
-            {m.material_class ? (
-              <span className="text-muted-foreground">{m.material_class}</span>
-            ) : (
-              <Missing />
-            )}
           </td>
         );
       case "volume":
