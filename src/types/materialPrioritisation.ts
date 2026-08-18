@@ -426,3 +426,26 @@ export interface AssessmentState {
   teams: TeamId[];
 }
 
+
+/** Icon-driving file kinds. Mock only — nothing is stored or downloadable. */
+export type DocumentFileType = "pdf" | "docx" | "xlsx" | "pptx" | "msg" | "png";
+
+/**
+ * Evidence a person put forward behind a judged criterion. Criterion-level and
+ * shared: everyone on the material sees every document, whoever uploaded it.
+ * Documents are team_judgement — never counted toward a score or coverage.
+ */
+export interface SupportingDocument {
+  document_id: string;
+  material_id: string;
+  /** One of the three judged criteria. The reference rows take no documents. */
+  criterion_id: string;
+  filename: string;
+  file_type: DocumentFileType;
+  /** Mock size string, e.g. "1.4 MB". */
+  size: string;
+  /** One line on what the document shows. Optional. */
+  note: string | null;
+  uploaded_by: string;
+  uploaded_date: string;
+}

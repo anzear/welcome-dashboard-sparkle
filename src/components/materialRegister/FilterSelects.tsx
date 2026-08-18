@@ -121,13 +121,30 @@ const FilterSelects: React.FC<{
   const suppliersShown = !include || include.includes("vcgSubstitutability");
   const suppliersActive =
     filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null || filters.vcgSuppliersNotAssessed;
+  const evidenceSection = (
+    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Evidence</div>
+      {/* Presence only. Document volume is not a virtue and is never filtered on. */}
+      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
+        <input
+          type="checkbox"
+          checked={filters.hasDocuments}
+          onChange={(e) => setFilters((f) => ({ ...f, hasDocuments: e.target.checked }))}
+          className="h-3 w-3"
+        />
+        Has supporting documents
+      </label>
+    </div>
+  );
+
   const gateActive =
     filters.gateOverdueCondition || filters.gateHoldReviewOverdue || filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
     activeVcg.reduce((n, [, , , sel]) => n + sel.length, 0) +
     (suppliersShown && suppliersActive ? 1 : 0) +
-    (gateActive ? 1 : 0);
+    (gateActive ? 1 : 0) +
+    (filters.hasDocuments ? 1 : 0);
 
   const suppliersRange = (
     <div className="space-y-1.5 pt-0.5">
@@ -283,6 +300,7 @@ const FilterSelects: React.FC<{
             ))}
           </div>
           {gateSection}
+          {evidenceSection}
           {vcgSection}
           {activeCount > 0 && (
             <button
@@ -297,6 +315,7 @@ const FilterSelects: React.FC<{
                   next.gateOverdueCondition = false;
                   next.gateHoldReviewOverdue = false;
                   next.gateRecommendation = "any";
+                  next.hasDocuments = false;
                   return next;
                 })
               }

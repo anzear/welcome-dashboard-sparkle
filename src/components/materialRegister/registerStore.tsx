@@ -2,6 +2,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import { seedEvents, seedMaterialsWithHistory } from "@/data/materialEventsMock";
 import { applyGateSeed } from "@/data/gateMock";
 import { seedAssessments } from "@/data/assessmentMock";
+import { seedDocuments } from "@/data/documentsMock";
 import {
   canSetGate,
   hasOverdueCondition,
@@ -30,6 +31,8 @@ import {
   type MaterialEvent,
   type MaterialEventType,
   type TeamId,
+  type DocumentFileType,
+  type SupportingDocument,
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
@@ -163,6 +166,8 @@ export interface Filters {
   gateHoldReviewOverdue: boolean;
   /** yes / no / any — a recommendation either exists or it does not. */
   gateRecommendation: "yes" | "no" | "any";
+  /** Evidence. Presence of supporting documents only — volume is never filtered. */
+  hasDocuments: boolean;
 }
 
 export const NO_PRIORITY = "__no_priority__";
@@ -187,6 +192,7 @@ export const EMPTY_FILTERS: Filters = {
   gateOverdueCondition: false,
   gateHoldReviewOverdue: false,
   gateRecommendation: "any",
+  hasDocuments: false,
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -321,6 +327,22 @@ interface Store {
   reopenGate: (materialId: string, note: string | null) => void;
   /** How many of the given rows carry at least one entry on that criterion. */
   criterionCoverage: (criterionId: string, rows: Material[]) => number;
+  /**
+   * Supporting documents. Criterion-level evidence, shared with everyone on the
+   * material. Mock records: no storage, no preview, no download.
+   */
+  documents: SupportingDocument[];
+  documentsFor: (materialId: string, criterionId: string) => SupportingDocument[];
+  documentCount: (materialId: string, criterionId: string) => number;
+  hasAnyDocuments: (materialId: string) => boolean;
+  addDocument: (
+    materialId: string,
+    criterionId: string,
+    file: { filename: string; file_type: DocumentFileType; size: string },
+    note: string | null,
+  ) => void;
+  canDeleteDocument: (doc: SupportingDocument) => boolean;
+  deleteDocument: (documentId: string) => void;
   /** Period the priority set is being assembled for. Free text. */
   priorityPeriod: string;
   setPriorityPeriod: (v: string) => void;
@@ -366,6 +388,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [data, setData] = useState<Material[]>(rows);
   const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
+  /** Criterion-level evidence. Shared across the team, mock records only. */
+  const [documents, setDocuments] = useState<SupportingDocument[]>(seedDocuments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
@@ -407,7 +431,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.vcgSuppliersNotAssessed ||
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
-    filters.gateRecommendation !== "any";
+    filters.gateRecommendation !== "any" ||
+    filters.hasDocuments;
+
+  const documentedIds = useMemo(
+    () => new Set(documents.map((d) => d.material_id)),
+    [documents],
+  );
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
@@ -418,6 +448,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
+      if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
       if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
       if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
@@ -923,6 +954,57 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       ),
     ).length;
 
+  /* ----------------------------------------------------- supporting documents
+   * Evidence sits on a criterion, never on a person's entry and never on the
+   * material as a whole. Nothing here counts toward a score or coverage.
+   * -------------------------------------------------------------------------- */
+
+  const documentsFor = (materialId: string, criterionId: string) =>
+    documents
+      .filter((d) => d.material_id === materialId && d.criterion_id === criterionId)
+      .sort((a, b) => b.uploaded_date.localeCompare(a.uploaded_date));
+
+  const documentCount = (materialId: string, criterionId: string) =>
+    documents.filter((d) => d.material_id === materialId && d.criterion_id === criterionId).length;
+
+  const hasAnyDocuments = (materialId: string) =>
+    documents.some((d) => d.material_id === materialId);
+
+  /** Anyone can attach — holding the evidence does not require holding a view. */
+  const addDocument = (
+    materialId: string,
+    criterionId: string,
+    file: { filename: string; file_type: DocumentFileType; size: string },
+    note: string | null,
+  ) => {
+    setDocuments((prev) => [
+      ...prev,
+      {
+        document_id: `doc-${Date.now()}-${prev.length + 1}`,
+        material_id: materialId,
+        criterion_id: criterionId,
+        filename: file.filename,
+        file_type: file.file_type,
+        size: file.size,
+        note,
+        uploaded_by: currentUser.name,
+        uploaded_date: todayIso(),
+      },
+    ]);
+  };
+
+  /** The uploader may remove their own; the material owner may remove any. */
+  const canDeleteDocument = (doc: SupportingDocument) => {
+    const m = data.find((x) => x.material_id === doc.material_id);
+    return doc.uploaded_by === currentUser.name || (m?.owner ?? null) === currentUser.name;
+  };
+
+  /** Immediate and final. No soft delete, no recovery. */
+  const deleteDocument = (documentId: string) =>
+    setDocuments((prev) => prev.filter((d) => d.document_id !== documentId));
+
+
+
   const saveAssessment = (
     materialId: string,
     criterionId: string,
@@ -1190,6 +1272,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     assessmentState,
     assessmentSummary,
     criterionCoverage,
+    documents,
+    documentsFor,
+    documentCount,
+    hasAnyDocuments,
+    addDocument,
+    canDeleteDocument,
+    deleteDocument,
 
     priorityPeriod,
     setPriorityPeriod,

@@ -10,6 +10,7 @@ import {
   VCG_RULE,
 } from "@/components/materialRegister/vcgSignals";
 import { ContributorMark, FlagChip, ScoreRail } from "@/components/materialRegister/assessmentPrimitives";
+import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import type { AssessmentCriterion, Material } from "@/types/materialPrioritisation";
 
 const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }> = ({
@@ -124,6 +125,13 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
           className="w-full rounded-md border border-input bg-background px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
         />
       )}
+
+      {/* Evidence sits beside the rationale it supports, not in a separate card. */}
+      <CriterionDocuments
+        materialId={materialId}
+        criterionId={criterion.criterion_id}
+        criterionLabel={criterion.label}
+      />
     </div>
   );
 };

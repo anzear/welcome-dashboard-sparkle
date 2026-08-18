@@ -26,7 +26,6 @@ import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefGate from "@/components/materialRegister/BriefGate";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
-import BriefStepCards from "@/components/materialRegister/BriefStepCards";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 
 import {
@@ -1101,15 +1100,6 @@ export const MaterialBrief: React.FC = () => {
 
           {/* VCG signals — ours, computed, deliberately slim. */}
           <VcgSignalsCard material={m} />
-
-
-          {/* What the replacement has to achieve. Nothing stated is not a zero target. */}
-          <Section
-            title="Material requirements"
-            note="What the replacement has to achieve. A requirement nobody stated stays empty."
-          >
-            <BriefStepCards material={m} />
-          </Section>
         </div>
 
         {/* Right column */}
