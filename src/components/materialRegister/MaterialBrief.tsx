@@ -131,6 +131,20 @@ const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
+/** Header classification group: a quiet label with its values beside it. */
+const HeadGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <span className="flex flex-wrap items-center gap-1.5">
+    <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">{label}</span>
+    {children}
+  </span>
+);
+
+const NoneYet: React.FC = () => (
+  <span className="font-mono text-[10px] text-muted-foreground/50" title="Nothing recorded">
+    —
+  </span>
+);
+
 /** One data row: label + provenance on the left, value right-aligned in a fixed column. */
 const DataRow: React.FC<{
   label: React.ReactNode;
