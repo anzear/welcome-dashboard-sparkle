@@ -882,6 +882,16 @@ export const MaterialRegisterTable: React.FC = () => {
 
       <AddMaterialDialog open={addOpen} onOpenChange={setAddOpen} />
 
+      {/* Batch export follows the scope: selection is drawn from scoped rows only. */}
+      <ExportDecisionDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        materials={selectedMaterials}
+        onExported={(count) =>
+          setExportNote(`Decision exported · ${count} material${count === 1 ? "" : "s"}`)
+        }
+      />
+
 
       <BulkActionDialog
         kind={bulkKind}
