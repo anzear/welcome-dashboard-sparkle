@@ -71,7 +71,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["applications", "Applications", "Application categories the material serves"],
-  ["status", "Gate status", "The gate decision recorded by the team"],
+  ["status", "Status", "The gate decision recorded by the team"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
