@@ -256,7 +256,7 @@ const DriverScoring: React.FC = () => {
               <th
                 className={cn(
                   HEAD,
-                  "sticky left-8 z-30 min-w-[280px] border-b border-r border-border bg-card px-3 py-2 text-left",
+                  "sticky left-8 z-30 min-w-[200px] border-b border-r border-border bg-card px-3 py-2 text-left",
                 )}
               >
                 Material
