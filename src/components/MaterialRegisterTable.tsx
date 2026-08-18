@@ -57,6 +57,7 @@ type OptionalColumn =
   | "applications"
   | "priority"
   | "owner"
+  | "contributors"
   | "intelligence"
   | "lastChange";
 
@@ -72,6 +73,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["applications", "Applications", "Application categories the material serves"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
+  ["contributors", "Contributors", "People with at least one input on the brief"],
   ["intelligence", "Intelligence", "Whether a search has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
@@ -160,6 +162,7 @@ export const MaterialRegisterTable: React.FC = () => {
     highlightIds,
     scope,
     scopeLabel,
+    contributorsFor,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
@@ -293,6 +296,8 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>;
       case "owner":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>;
+      case "contributors":
+        return <th className={cn(HEAD, "w-24 px-3 py-2.5 text-right")}>Contributors</th>;
       case "lastChange":
         return <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>;
       default:
@@ -413,6 +418,23 @@ export const MaterialRegisterTable: React.FC = () => {
             )}
           </td>
         );
+      case "contributors": {
+        const people = contributorsFor(m);
+        return (
+          <td className="px-3 py-2 text-right align-middle">
+            {people.length === 0 ? (
+              <Missing />
+            ) : (
+              <span
+                className="text-[11px] font-semibold tabular-nums text-foreground"
+                title={`Input on the brief from: ${people.join(", ")}`}
+              >
+                {people.length}
+              </span>
+            )}
+          </td>
+        );
+      }
       case "lastChange":
         return (
           <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
