@@ -11,7 +11,7 @@ import { signed } from "@/components/materialRegister/scorePrimitives";
 import type { Material } from "@/types/materialPrioritisation";
 
 const HEAD = "text-[9px] font-semibold uppercase tracking-widest text-muted-foreground";
-const CELL_W = "w-[38px] min-w-[38px]";
+const CELL_W = "w-[52px] min-w-[52px]";
 
 /** null sorts to its own block at the bottom, never as a zero. */
 type SortDir = "desc" | "asc";
