@@ -20,7 +20,6 @@ const TENDENCY: Record<string, number> = {
   market_pull: 5,
   environmental_impact: 5,
   feedstock_availability: 3,
-  supply_security: 2,
   cost: 2,
   product_performance: 2,
   process_impact: 2,
@@ -61,9 +60,6 @@ function buildSeed(): DriverScore[] {
       [order[i], order[j]] = [order[j], order[i]];
     }
     const chosen = new Set(order.slice(0, coverage));
-    // Supply security is asked early in practice, so any material with judgements
-    // carries one. Keeps the emissions x supply risk view populated.
-    chosen.add("supply_security");
     const scorer = SCORERS[mi % SCORERS.length];
     const monthsBack = Math.floor(rand() * 8);
     const scoredAt = new Date(Date.UTC(2026, 7 - monthsBack, 2 + Math.floor(rand() * 26), 9, 30))
@@ -75,9 +71,6 @@ function buildSeed(): DriverScore[] {
       values[q.question_id] = clamp(TENDENCY[q.question_id] + (rand() * 4 - 2));
     });
 
-    // Spread the supply security judgement evenly across the full 1..5 range,
-    // stepped by a co-prime index so it does not track the emissions ordering.
-    values.supply_security = clamp(1 + ((mi * 7) % 5) + (rand() * 0.8 - 0.4));
 
     // Realistic tensions: forced by regulation but not ready; wanted but costly.
     if (values.regulatory_position !== undefined && values.regulatory_position >= 3 && values.internal_readiness !== undefined) {
