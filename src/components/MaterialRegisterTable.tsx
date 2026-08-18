@@ -33,7 +33,7 @@ import {
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
-import { Plus, SlidersHorizontal, X, ChevronDown, AlertTriangle } from "lucide-react";
+import { Plus, SlidersHorizontal, X, ChevronDown, ChevronUp, GripVertical, AlertTriangle } from "lucide-react";
 
 const HEAD =
   "sticky top-0 z-10 bg-muted/30 backdrop-blur-sm supports-[backdrop-filter]:bg-muted/40 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground border-b border-border/60 align-bottom";
@@ -175,6 +175,30 @@ export const MaterialRegisterTable: React.FC = () => {
         boolean
       >,
   );
+  /** Rank is pinned, so only the scrolling columns can be reordered. */
+  const [colOrder, setColOrder] = useState<OptionalColumn[]>(() =>
+    OPTIONAL_COLUMNS.map(([k]) => k).filter((k) => k !== "rank"),
+  );
+  const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
+
+  const moveCol = (key: OptionalColumn, dir: -1 | 1) =>
+    setColOrder((prev) => {
+      const i = prev.indexOf(key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
+  const dropCol = (target: OptionalColumn) =>
+    setColOrder((prev) => {
+      if (!dragKey || dragKey === target) return prev;
+      const next = prev.filter((k) => k !== dragKey);
+      next.splice(next.indexOf(target), 0, dragKey);
+      return next;
+    });
+
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
@@ -227,6 +251,207 @@ export const MaterialRegisterTable: React.FC = () => {
 
   /** Pinned offset shifts when the rank column is switched off. */
   const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+
+  /** Column order is user-controlled; rank and Material stay pinned at the front. */
+  const orderedCols = colOrder.filter((k) => cols[k]);
+
+
+  const headCell = (key: OptionalColumn) => {
+    switch (key) {
+      case "completeness":
+        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
+      case "materialType":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
+      case "materialCategory":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>;
+      case "volume":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
+            Volume
+            <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
+          </th>
+        );
+      case "spend":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
+            Spend
+            <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
+          </th>
+        );
+      case "emissions":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
+            GHG contribution
+            <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
+          </th>
+        );
+      case "applications":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
+        );
+      case "status":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>;
+      case "priority":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>;
+      case "intelligence":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>;
+      case "owner":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>;
+      case "lastChange":
+        return <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>;
+      default:
+        return null;
+    }
+  };
+
+  const bodyCell = (key: OptionalColumn, m: Material) => {
+    switch (key) {
+      case "completeness":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <CompletenessCell m={m} />
+          </td>
+        );
+      case "materialType":
+        return (
+          <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
+            {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+          </td>
+        );
+      case "materialCategory":
+        return (
+          <td className="px-3 py-2 align-middle text-[12px]">
+            {m.material_class ? (
+              <span className="text-muted-foreground">{m.material_class}</span>
+            ) : (
+              <Missing />
+            )}
+          </td>
+        );
+      case "volume":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
+            <NumCell
+              value={m.annual_volume}
+              provenance={m.provenance.annual_volume}
+              emphasis={activeCol("volume")}
+            />
+          </td>
+        );
+      case "spend":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
+            <NumCell
+              value={m.annual_spend}
+              provenance={m.provenance.annual_spend}
+              emphasis={activeCol("spend")}
+            />
+          </td>
+        );
+      case "emissions":
+        return (
+          <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
+            <NumCell
+              value={m.ghg_contribution}
+              provenance={m.provenance.ghg_contribution}
+              emphasis={activeCol("emissions")}
+            />
+          </td>
+        );
+      case "applications":
+        return (
+          <td className={cn("px-3 py-2 align-middle", colTint("applications"))}>
+            <ApplicationsCell values={m.application_categories} />
+          </td>
+        );
+      case "status":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <div className="flex items-center gap-1.5">
+              <StatusPill
+                status={m.journey_status}
+                entered={m.provenance.journey_status?.origin === "entered"}
+              />
+              {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
+                <span
+                  title={
+                    hasOverdueCondition(m)
+                      ? `${overdueConditions(m).length} condition(s) overdue`
+                      : "Hold review overdue"
+                  }
+                >
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+                </span>
+              )}
+              {m.reopened && (
+                <span
+                  title="Went no-go and was reopened"
+                  className="rounded-sm border border-border bg-muted px-1 text-[9px] uppercase tracking-wide text-muted-foreground"
+                >
+                  Reopened
+                </span>
+              )}
+            </div>
+          </td>
+        );
+      case "priority":
+        return (
+          <td className="px-3 py-2 align-middle">
+            {m.priority_period ? (
+              <span className="text-[12px] text-foreground">{m.priority_period}</span>
+            ) : (
+              <Missing />
+            )}
+          </td>
+        );
+      case "intelligence":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <span className="text-[12px] text-muted-foreground">
+              {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
+            </span>
+          </td>
+        );
+      case "owner":
+        return (
+          <td className="px-3 py-2 align-middle">
+            {m.owner ? (
+              <span>
+                {m.provenance.owner?.origin === "entered" && (
+                  <span className="mr-0.5 text-muted-foreground/70">^</span>
+                )}
+                {m.owner}
+              </span>
+            ) : (
+              <span className="text-muted-foreground/60">Unassigned</span>
+            )}
+          </td>
+        );
+      case "lastChange":
+        return (
+          <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
+            {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
+              <>
+                <div className="leading-[1.15] text-foreground/80" title={m.last_status_change_date}>
+                  {relativeAge(m.last_status_change_date)}
+                </div>
+                <div className="text-[10px] leading-[1.15] text-muted-foreground">
+                  {m.last_status_user ?? "—"}
+                </div>
+              </>
+            ) : (
+              <span className="text-muted-foreground/60" title="Only a baselining event on record">
+                Never changed
+              </span>
+            )}
+          </td>
+        );
+      default:
+        return null;
+    }
+  };
+
+
 
 
 
@@ -291,26 +516,83 @@ export const MaterialRegisterTable: React.FC = () => {
               <ChevronDown className="h-3 w-3 opacity-60" />
             </button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="max-h-[70vh] w-60 overflow-y-auto p-2">
+          <PopoverContent align="start" className="max-h-[70vh] w-72 overflow-y-auto p-2">
             <div className="pb-1 text-[10px] uppercase tracking-widest text-muted-foreground">
               Optional columns
             </div>
-            {OPTIONAL_COLUMNS.map(([key, label, hint]) => (
-              <label
-                key={key}
-                className="flex cursor-pointer items-start gap-2 rounded-sm px-1 py-1 hover:bg-muted/60"
-              >
-                <Checkbox
-                  checked={cols[key]}
-                  onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
-                  className="mt-0.5 h-3.5 w-3.5"
-                />
-                <span className="min-w-0">
-                  <span className="block text-[11px] text-foreground">{label}</span>
-                  <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
-                </span>
-              </label>
-            ))}
+            <p className="pb-1.5 text-[10px] leading-tight text-muted-foreground/80">
+              Drag a row, or use the arrows, to change the column order. Rank stays pinned.
+            </p>
+            {(() => {
+              const rank = OPTIONAL_COLUMNS.find(([k]) => k === "rank")!;
+              const rest = colOrder
+                .map((k) => OPTIONAL_COLUMNS.find(([kk]) => kk === k)!)
+                .filter(Boolean);
+              const rows: [OptionalColumn, string, string, boolean][] = [
+                [rank[0], rank[1], rank[2], false],
+                ...rest.map(([k, l, h]) => [k, l, h, true] as [OptionalColumn, string, string, boolean]),
+              ];
+              return rows.map(([key, label, hint, movable], idx) => (
+                <div
+                  key={key}
+                  draggable={movable}
+                  onDragStart={() => movable && setDragKey(key)}
+                  onDragOver={(e) => {
+                    if (movable && dragKey) e.preventDefault();
+                  }}
+                  onDrop={() => {
+                    if (movable) dropCol(key);
+                    setDragKey(null);
+                  }}
+                  onDragEnd={() => setDragKey(null)}
+                  className={cn(
+                    "flex items-start gap-1.5 rounded-sm px-1 py-1 hover:bg-muted/60",
+                    dragKey === key && "opacity-50",
+                  )}
+                >
+                  {movable ? (
+                    <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 cursor-grab text-muted-foreground/50" />
+                  ) : (
+                    <span className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                  )}
+                  <Checkbox
+                    checked={cols[key]}
+                    onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
+                    className="mt-0.5 h-3.5 w-3.5"
+                  />
+                  <label
+                    className="min-w-0 flex-1 cursor-pointer"
+                    onClick={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                  >
+                    <span className="block text-[11px] text-foreground">{label}</span>
+                    <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>
+                  </label>
+                  {movable && (
+                    <span className="flex shrink-0 items-center gap-0.5">
+                      <button
+                        type="button"
+                        aria-label={`Move ${label} left`}
+                        disabled={idx <= 1}
+                        onClick={() => moveCol(key, -1)}
+                        className="rounded p-0.5 text-muted-foreground/70 hover:bg-muted hover:text-foreground disabled:opacity-25"
+                      >
+                        <ChevronUp className="h-3 w-3" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${label} right`}
+                        disabled={idx === rows.length - 1}
+                        onClick={() => moveCol(key, 1)}
+                        className="rounded p-0.5 text-muted-foreground/70 hover:bg-muted hover:text-foreground disabled:opacity-25"
+                      >
+                        <ChevronDown className="h-3 w-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              ));
+            })()}
+
           </PopoverContent>
         </Popover>
 
@@ -504,42 +786,10 @@ export const MaterialRegisterTable: React.FC = () => {
                 Material
               </th>
 
-              {cols.completeness && (
-                <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>
-                  Data filled
-                </th>
-              )}
+              {orderedCols.map((key) => (
+                <React.Fragment key={key}>{headCell(key)}</React.Fragment>
+              ))}
 
-              {cols.materialType && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>}
-              {cols.materialCategory && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Material category</th>
-              )}
-              {cols.volume && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
-                  Volume
-                  <div className={cn(UNIT, activeCol("volume") && "text-primary/60")}>(t/yr)</div>
-                </th>
-              )}
-              {cols.spend && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("spend"))}>
-                  Spend
-                  <div className={cn(UNIT, activeCol("spend") && "text-primary/60")}>(EUR)</div>
-                </th>
-              )}
-              {cols.emissions && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("emissions"))}>
-                  GHG contribution
-                  <div className={cn(UNIT, activeCol("emissions") && "text-primary/60")}>(tCO2e/yr)</div>
-                </th>
-              )}
-              {cols.applications && (
-                <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
-              )}
-              {cols.status && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Gate status</th>}
-              {cols.priority && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>}
-              {cols.intelligence && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>}
-              {cols.owner && <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>}
-              {cols.lastChange && <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>}
 
 
             </tr>
@@ -639,141 +889,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       </div>
                     </td>
 
-                    {cols.completeness && (
-                      <td className="px-3 py-2 align-middle">
-                        <CompletenessCell m={m} />
-                      </td>
-                    )}
+                    {orderedCols.map((key) => (
+                      <React.Fragment key={key}>{bodyCell(key, m)}</React.Fragment>
+                    ))}
 
-                    {cols.materialType && (
-                      <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
-                        {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
-                      </td>
-                    )}
-                    {cols.materialCategory && (
-                      <td className="px-3 py-2 align-middle text-[12px]">
-                        {m.material_class ? (
-                          <span className="text-muted-foreground">{m.material_class}</span>
-                        ) : (
-                          <Missing />
-                        )}
-                      </td>
-                    )}
-                    {cols.volume && (
-                      <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
-                        <NumCell
-                          value={m.annual_volume}
-                          provenance={m.provenance.annual_volume}
-                          emphasis={activeCol("volume")}
-                        />
-                      </td>
-                    )}
-                    {cols.spend && (
-                      <td className={cn("px-3 py-2 text-right align-middle", colTint("spend"))}>
-                        <NumCell
-                          value={m.annual_spend}
-                          provenance={m.provenance.annual_spend}
-                          emphasis={activeCol("spend")}
-                        />
-                      </td>
-                    )}
-                    {cols.emissions && (
-                      <td className={cn("px-3 py-2 text-right align-middle", colTint("emissions"))}>
-                        <NumCell
-                          value={m.ghg_contribution}
-                          provenance={m.provenance.ghg_contribution}
-                          emphasis={activeCol("emissions")}
-                        />
-                      </td>
-                    )}
-                    {cols.applications && (
-                      <td className={cn("px-3 py-2 align-middle", colTint("applications"))}>
-                        <ApplicationsCell values={m.application_categories} />
-                      </td>
-                    )}
-                    {cols.status && (
-                      <td className="px-3 py-2 align-middle">
-                        <div className="flex items-center gap-1.5">
-                          <StatusPill
-                            status={m.journey_status}
-                            entered={m.provenance.journey_status?.origin === "entered"}
-                          />
-                          {/* Overdue is a visual flag only — no reminders, no email. */}
-                          {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
-                            <span
-                              title={
-                                hasOverdueCondition(m)
-                                  ? `${overdueConditions(m).length} condition(s) overdue`
-                                  : "Hold review overdue"
-                              }
-                            >
-                              <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
-                            </span>
-                          )}
-                          {m.reopened && (
-                            <span
-                              title="Went no-go and was reopened"
-                              className="rounded-sm border border-border bg-muted px-1 text-[9px] uppercase tracking-wide text-muted-foreground"
-                            >
-                              Reopened
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                    )}
-                    {cols.priority && (
-                      <td className="px-3 py-2 align-middle">
-                        {m.priority_period ? (
-                          <span className="text-[12px] text-foreground">{m.priority_period}</span>
-                        ) : (
-                          <Missing />
-                        )}
-                      </td>
-
-                    )}
-
-                    {cols.intelligence && (
-                      <td className="px-3 py-2 align-middle">
-                        <span className="text-[12px] text-muted-foreground">
-                          {INTELLIGENCE_STATUS_LABEL[m.intelligence_status]}
-                        </span>
-                      </td>
-                    )}
-                    {cols.owner && (
-                      <td className="px-3 py-2 align-middle">
-                        {m.owner ? (
-                          <span>
-                            {m.provenance.owner?.origin === "entered" && (
-                              <span className="mr-0.5 text-muted-foreground/70">^</span>
-                            )}
-                            {m.owner}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground/60">Unassigned</span>
-                        )}
-                      </td>
-                    )}
-                    {cols.lastChange && (
-                      <td className="whitespace-nowrap px-3 pr-8 py-2 align-middle">
-                        {m.last_change_batch_origin === "real_transition" && m.last_status_change_date ? (
-                          <>
-                            <div
-                              className="leading-[1.15] text-foreground/80"
-                              title={m.last_status_change_date}
-                            >
-                              {relativeAge(m.last_status_change_date)}
-                            </div>
-                            <div className="text-[10px] leading-[1.15] text-muted-foreground">
-                              {m.last_status_user ?? "—"}
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground/60" title="Only a baselining event on record">
-                            Never changed
-                          </span>
-                        )}
-                      </td>
-                    )}
 
                   </tr>
                 </React.Fragment>
