@@ -64,7 +64,7 @@ const HeaderBreadcrumb = () => {
       <div className="flex items-center gap-2 text-xs text-muted-foreground ml-3">
         <button onClick={() => navigate('/')} className="hover:text-foreground transition-colors">Dashboard</button>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-foreground font-medium">Material Prioritisation</span>
+        <span className="text-foreground font-medium">Material Portfolio</span>
       </div>
     );
   }

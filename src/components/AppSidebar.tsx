@@ -35,7 +35,7 @@ import { Separator } from "@/components/ui/separator";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home, disabled: false },
-  { title: "Material Prioritisation", url: "/material-pipeline", icon: Layers, disabled: false },
+  { title: "Material Portfolio", url: "/material-pipeline", icon: Layers, disabled: false },
   { title: "Super Admin", url: "/super-admin", icon: ClipboardList, disabled: false },
 ];
 
