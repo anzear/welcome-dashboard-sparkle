@@ -175,6 +175,30 @@ export const MaterialRegisterTable: React.FC = () => {
         boolean
       >,
   );
+  /** Rank is pinned, so only the scrolling columns can be reordered. */
+  const [colOrder, setColOrder] = useState<OptionalColumn[]>(() =>
+    OPTIONAL_COLUMNS.map(([k]) => k).filter((k) => k !== "rank"),
+  );
+  const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
+
+  const moveCol = (key: OptionalColumn, dir: -1 | 1) =>
+    setColOrder((prev) => {
+      const i = prev.indexOf(key);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      [next[i], next[j]] = [next[j], next[i]];
+      return next;
+    });
+
+  const dropCol = (target: OptionalColumn) =>
+    setColOrder((prev) => {
+      if (!dragKey || dragKey === target) return prev;
+      const next = prev.filter((k) => k !== dragKey);
+      next.splice(next.indexOf(target), 0, dragKey);
+      return next;
+    });
+
 
   const options = useMemo(() => {
     const uniq = (vals: (string | null)[]) =>
