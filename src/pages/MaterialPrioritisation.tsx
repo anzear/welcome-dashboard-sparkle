@@ -54,7 +54,7 @@ const Inner: React.FC = () => {
 
         <header className="space-y-1">
           <h1 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Material Prioritisation
+            Material Portfolio
           </h1>
           <p className="text-xs text-muted-foreground">Your material portfolio, ranked and tracked.</p>
         </header>
