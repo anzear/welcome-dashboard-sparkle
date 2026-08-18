@@ -1099,8 +1099,6 @@ export const MaterialBrief: React.FC = () => {
           {/* VCG signals — ours, computed, deliberately slim. */}
           <VcgSignalsCard material={m} />
 
-            </div>
-          </Section>
 
           {/* What the replacement has to achieve. Nothing stated is not a zero target. */}
           <Section
