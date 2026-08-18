@@ -62,7 +62,39 @@ const Section: React.FC<{
   </section>
 );
 
+/** Deterministic mock thread so every material opens with a used comments card. */
+const MOCK_COMMENTS: { author: string; days: number; body: string }[][] = [
+  [
+    { author: "Sofia Rautio (R&D)", days: 9, body: "Bench trials on the renewable grade held viscosity within spec. Two formulations still need a stability run before we commit." },
+    { author: "Marta Kowalczyk (Regulatory)", days: 5, body: "No barrier on the EU side, but the supplier's certification is due for renewal in Q1. Worth confirming before the gate." },
+    { author: "Ingrid Haugen (Sustainability)", days: 2, body: "Cradle-to-gate figures came back better than the incumbent. I've attached the supplier statement to Future readiness." },
+  ],
+  [
+    { author: "Daniel Brandt (Procurement)", days: 12, body: "Only one qualified source at volume today. Price is workable, but we'd be single-sourced through next season." },
+    { author: "Lotte Vermeer (Marketing)", days: 6, body: "Claim potential is real for the premium line — the tension is whether we can support it across all pack sizes." },
+    { author: "Sofia Rautio (R&D)", days: 1, body: "Sensory panel flagged a slight odour shift. Fixable with the masking route, adds a step to the process." },
+  ],
+  [
+    { author: "Ade Oyelaran (Procurement)", days: 15, body: "Two suppliers responded to the RFI. Lead times are long, so any switch needs a full season of notice." },
+    { author: "Ingrid Haugen (Sustainability)", days: 7, body: "This one carries most of the category's footprint. Staying put is the expensive option here." },
+    { author: "Marta Kowalczyk (Regulatory)", days: 3, body: "Watch the labelling implications — the classification differs from the incumbent in two markets." },
+  ],
+];
+
+const seedComments = (materialId: string) => {
+  let h = 0;
+  for (let i = 0; i < materialId.length; i++) h = (h * 31 + materialId.charCodeAt(i)) % 9973;
+  const set = MOCK_COMMENTS[h % MOCK_COMMENTS.length];
+  return set.map((c, i) => ({
+    id: `${materialId}-seed-${i}`,
+    author: c.author,
+    at: new Date(Date.now() - c.days * 86400000).toISOString(),
+    body: c.body,
+  }));
+};
+
 const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+
   <span className="inline-flex items-center rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground">
     {children}
   </span>
@@ -377,6 +409,9 @@ export const MaterialBrief: React.FC = () => {
   const [comments, setComments] = useState<
     Record<string, { id: string; author: string; at: string; body: string }[]>
   >({});
+  /** Mock thread: three seeded comments per material, so the card reads as used. */
+  const seeded = comments[material?.material_id ?? ""] ?? (material ? seedComments(material.material_id) : []);
+
   const [draft, setDraft] = useState<Record<string, string>>({});
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
@@ -947,9 +982,9 @@ export const MaterialBrief: React.FC = () => {
 
       </div>
 
-      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments. */}
-      <div className="mt-4 grid items-start gap-4 lg:grid-cols-3">
-        <div className="space-y-4 self-start lg:col-span-2">
+      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments, matched heights. */}
+      <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
             title="Gate"
@@ -967,14 +1002,20 @@ export const MaterialBrief: React.FC = () => {
 
         </div>
 
-        <div className="space-y-4 self-start">
-          <Section title="Comments" note="Published to the team. Everyone with access to this material can see them.">
-            <div className="space-y-3">
-              {(comments[m.material_id] ?? []).length === 0 ? (
-                <p className="text-[11px] text-muted-foreground">No comments yet.</p>
+        <div className="flex min-h-0 flex-col">
+          <Section
+            title="Comments"
+            note="Published to the team. Everyone with access to this material can see them."
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+
+              {seeded.length === 0 ? (
+                <p className="flex-1 text-[11px] text-muted-foreground">No comments yet.</p>
               ) : (
-                <ul className="space-y-3">
-                  {(comments[m.material_id] ?? []).map((c) => (
+                <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                  {seeded.map((c) => (
+
                     <li key={c.id} className="border-l-2 border-border/70 pl-3">
                       <div className="flex items-baseline gap-2">
                         <span className="text-[11px] font-medium text-foreground">{c.author}</span>
@@ -987,6 +1028,7 @@ export const MaterialBrief: React.FC = () => {
                   ))}
                 </ul>
               )}
+
 
               <textarea
                 value={draft[m.material_id] ?? ""}
@@ -1006,7 +1048,8 @@ export const MaterialBrief: React.FC = () => {
                     setComments((prev) => ({
                       ...prev,
                       [m.material_id]: [
-                        ...(prev[m.material_id] ?? []),
+                        ...(prev[m.material_id] ?? seedComments(m.material_id)),
+
                         { id: `${Date.now()}`, author: "You", at: new Date().toISOString(), body },
                       ],
                     }));
