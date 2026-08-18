@@ -397,10 +397,16 @@ const DriverScoring: React.FC = () => {
                         isSelected && "bg-primary/5",
                       )}
                     >
-                      <span className="block max-w-[260px] truncate leading-tight" title={m.name}>
+                      <button
+                        type="button"
+                        onClick={() => openBrief(m.material_id)}
+                        className="block max-w-[260px] truncate text-left leading-tight hover:text-primary"
+                        title={`${m.name} — open profile to score`}
+                      >
                         {m.name}
-                      </span>
+                      </button>
                     </td>
+
 
                     {questions.map((q) => {
                       const rec = scoreFor(m.material_id, q.question_id);
