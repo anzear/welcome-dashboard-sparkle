@@ -225,8 +225,12 @@ export const MaterialRegisterTable: React.FC = () => {
   const colCount = 2;
   const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
 
+  /** Pinned offset shifts when the rank column is switched off. */
+  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+
   /** Column order is user-controlled; rank and Material stay pinned at the front. */
   const orderedCols = colOrder.filter((k) => cols[k]);
+
 
   const headCell = (key: OptionalColumn) => {
     switch (key) {
