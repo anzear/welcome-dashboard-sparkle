@@ -215,29 +215,31 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-      <span className="text-[10px] text-muted-foreground">Spend</span>
+    <div className="group/figs flex flex-wrap items-baseline gap-x-2 gap-y-1">
+      <span className="text-[10px] text-muted-foreground/70">Spend</span>
       <Num value={m.annual_spend} suffix="EUR/yr" />
-      <span className="text-[10px] text-border" aria-hidden>
-        ·
-      </span>
-      <span className="text-[10px] text-muted-foreground">Volume</span>
+      <span className="text-[10px] text-muted-foreground/70">Volume</span>
       <Num value={m.annual_volume} suffix="t/yr" />
-      <span className="text-[10px] text-border" aria-hidden>
-        ·
-      </span>
-      <span className="text-[10px] text-muted-foreground">GHG</span>
+      <span className="text-[10px] text-muted-foreground/70">GHG</span>
       <Num value={m.ghg_contribution} suffix="tCO2e/yr" />
-      <button type="button" onClick={() => setEditing(true)} className={cn(LINK, "inline-flex items-center gap-1")}>
+      <button
+        type="button"
+        onClick={() => setEditing(true)}
+        className={cn(
+          LINK,
+          "inline-flex items-center gap-1 opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100",
+        )}
+      >
         <Pencil className="h-3 w-3" />
         Edit
       </button>
-      <span className="ml-auto text-[9px] uppercase tracking-widest text-muted-foreground/70">
+      <span className="ml-auto text-[9px] uppercase tracking-widest text-muted-foreground/60">
         Company data
       </span>
     </div>
   );
 };
+
 
 /** VCG signals are not live: plain low-contrast text, no chip. */
 const VcgStrip: React.FC = () => (
