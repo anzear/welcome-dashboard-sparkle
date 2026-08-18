@@ -35,14 +35,11 @@ export const BLOCKER_CATEGORIES = [
 ];
 
 const STATUS_ORDER: JourneyStatus[] = [
-  "not_started",
   "under_evaluation",
-  "in_testing",
-  "qualified",
-  "sourcing",
-  "in_use",
-  "parked",
-  "rejected",
+  "go",
+  "go_with_conditions",
+  "hold",
+  "no_go",
 ];
 
 export interface BulkPayload {
@@ -185,7 +182,7 @@ export const BulkActionDialog: React.FC<Props> = ({
     return { none, already: materials.length - none };
   }, [kind, materials]);
 
-  const requiresBlocker = kind === "status" && (value === "parked" || value === "rejected");
+  const requiresBlocker = kind === "status" && (value === "hold" || value === "no_go");
   const canApply =
     kind === "intelligence"
       ? materials.length > 0
@@ -267,7 +264,7 @@ export const BulkActionDialog: React.FC<Props> = ({
             <div className="space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
                 {kind === "status"
-                  ? "New status"
+                  ? "New gate status"
                   : kind === "owner"
                     ? "New owner"
                     : kind === "priority_period"

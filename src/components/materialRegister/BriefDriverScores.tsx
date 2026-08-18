@@ -30,7 +30,7 @@ const ScoreTrack: React.FC<{
         <div
           className={cn(
             "pointer-events-none absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full transition-all duration-150",
-            preview !== null && preview !== value ? "bg-teal-500/50" : "bg-teal-600/80",
+            preview !== null && preview !== value ? "bg-provenance-judgement/50" : "bg-provenance-judgement/85",
           )}
           style={{ width: `${pct(shown)}%` }}
         />
@@ -57,9 +57,9 @@ const ScoreTrack: React.FC<{
               className={cn(
                 "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-all duration-150",
                 isHead
-                  ? "h-2.5 w-2.5 bg-teal-600 ring-2 ring-teal-600/20"
+                  ? "h-2.5 w-2.5 bg-provenance-judgement ring-2 ring-provenance-judgement/20"
                   : active
-                    ? "h-1.5 w-1.5 bg-teal-600/70"
+                    ? "h-1.5 w-1.5 bg-provenance-judgement/70"
                     : "h-1.5 w-1.5 border border-muted-foreground/30 bg-background",
               )}
             />
@@ -117,7 +117,7 @@ const ScoreCell: React.FC<{
       }}
       className={cn(
         "w-full rounded-sm border border-transparent bg-transparent px-0.5 py-0 text-right font-mono text-[15px] font-medium tabular-nums outline-none hover:border-border focus:border-primary/40 focus:bg-background",
-        value === null ? "text-muted-foreground/50 placeholder:text-muted-foreground/50" : "text-teal-800",
+        value === null ? "text-muted-foreground/50 placeholder:text-muted-foreground/50" : "text-provenance-judgement",
       )}
     />
   );

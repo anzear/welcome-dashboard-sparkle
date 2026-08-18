@@ -389,7 +389,7 @@ const DriverScoring: React.FC = () => {
                               "mx-auto block h-4 w-[26px] rounded-[3px]",
                               v === null
                                 ? "border border-dotted border-muted-foreground/40"
-                                : "bg-teal-600/70",
+                                : "bg-provenance-judgement/75",
                             )}
                           />
                         </td>
@@ -424,7 +424,7 @@ const DriverScoring: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
         <span className="flex items-center gap-1">
-          <span className="inline-block h-4 w-6 rounded-[3px] bg-teal-600/70" /> scored
+          <span className="inline-block h-4 w-6 rounded-[3px] bg-provenance-judgement/75" /> scored
         </span>
         <span className="flex items-center gap-1">
           <span className="inline-block h-4 w-6 rounded-[3px] border border-dotted border-muted-foreground/40" /> not

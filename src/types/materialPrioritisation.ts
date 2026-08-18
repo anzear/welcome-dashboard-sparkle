@@ -1,4 +1,27 @@
-export type EntryType = "drop_in_substitute" | "new_substitute" | "new_application";
+export type EntryType = "drop_in" | "substitution" | "new_material";
+
+export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
+  drop_in: "Drop-in",
+  substitution: "Substitution",
+  new_material: "New material",
+};
+
+/** Legacy entry-type values seen in stored/mock data. */
+export const migrateEntryType = (v: unknown): EntryType => {
+  switch (v) {
+    case "drop_in":
+    case "drop_in_substitute":
+      return "drop_in";
+    case "substitution":
+    case "new_substitute":
+      return "substitution";
+    case "new_material":
+    case "new_application":
+      return "new_material";
+    default:
+      return "drop_in";
+  }
+};
 
 /**
  * What the replacement has to achieve. Every field optional — a requirement the
@@ -13,15 +36,25 @@ export interface MaterialRequirements {
   notes: string | null;
 }
 
-export type JourneyStatus =
-  | "not_started"
-  | "under_evaluation"
-  | "in_testing"
-  | "qualified"
-  | "sourcing"
-  | "in_use"
-  | "parked"
-  | "rejected";
+/** Gate status — the decision position, not a workflow stage. */
+export type JourneyStatus = "under_evaluation" | "go" | "go_with_conditions" | "hold" | "no_go";
+
+/** Legacy status values seen in stored/mock data. */
+export const migrateJourneyStatus = (v: unknown): JourneyStatus => {
+  switch (v) {
+    case "go":
+      return "go";
+    case "go_with_conditions":
+      return "go_with_conditions";
+    case "hold":
+    case "parked":
+      return "hold";
+    case "no_go":
+      return "no_go";
+    default:
+      return "under_evaluation";
+  }
+};
 
 /**
  * "unknown" is for a field that genuinely holds a value whose origin was never
@@ -88,15 +121,52 @@ export interface Material {
 
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
-  not_started: "Not started",
   under_evaluation: "Under evaluation",
-  in_testing: "In testing",
-  qualified: "Qualified",
-  sourcing: "Sourcing",
-  in_use: "In use",
-  parked: "Parked",
-  rejected: "Rejected",
+  go: "Go",
+  go_with_conditions: "Go with conditions",
+  hold: "Hold",
+  no_go: "No-go",
 };
+
+/**
+ * Three provenance classes. Every displayed value belongs to exactly one, and a
+ * field never changes class. Missing values keep their class and render as an
+ * em dash — missing is never zero.
+ */
+export type ProvenanceClass = "company_entered" | "vcg_computed" | "team_judgement";
+
+export const PROVENANCE_CLASS_LABEL: Record<ProvenanceClass, string> = {
+  company_entered: "Company data",
+  vcg_computed: "VCG data",
+  team_judgement: "Team judgement",
+};
+
+/** Fixed field -> class assignment. Anything unlisted is company_entered. */
+export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
+  name: "company_entered",
+  cas_number: "company_entered",
+  customer_material_ids: "company_entered",
+  material_class: "vcg_computed",
+  annual_volume: "company_entered",
+  unit_price: "company_entered",
+  annual_spend: "vcg_computed",
+  ghg_emission_factor: "company_entered",
+  ghg_boundary: "company_entered",
+  ghg_data_basis: "company_entered",
+  ghg_contribution: "vcg_computed",
+  supplier_count: "company_entered",
+  supplier_countries: "company_entered",
+  owner: "company_entered",
+  entry_type: "company_entered",
+  tags: "company_entered",
+  application_categories: "company_entered",
+  product_categories: "company_entered",
+  journey_status: "team_judgement",
+  driver_score: "team_judgement",
+};
+
+export const provenanceClassOf = (field: string): ProvenanceClass =>
+  FIELD_PROVENANCE_CLASS[field] ?? "company_entered";
 
 export type MaterialEventType =
   | "status_change"
@@ -131,7 +201,8 @@ export interface MaterialEvent {
 }
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
-  journey_status: "Status",
+  journey_status: "Gate status",
+  entry_type: "Entry type",
   owner: "Owner",
   priority_period: "Priority period",
   blocker_category: "Blocker",

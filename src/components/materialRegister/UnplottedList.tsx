@@ -85,7 +85,7 @@ const GapRow: React.FC<{ entry: UnplottedEntry; onSaved: (id: string) => void }>
         </p>
         <p className="truncate text-[10px] text-muted-foreground">
           {m.material_class ?? "Unclassified"}
-          {saved && <span className="ml-2 text-teal-700">Saved</span>}
+          {saved && <span className="ml-2 text-foreground">Saved</span>}
         </p>
       </div>
 

@@ -38,14 +38,11 @@ import {
 import { X } from "lucide-react";
 
 const STATUS_ORDER: JourneyStatus[] = [
-  "not_started",
   "under_evaluation",
-  "in_testing",
-  "qualified",
-  "sourcing",
-  "in_use",
-  "parked",
-  "rejected",
+  "go",
+  "go_with_conditions",
+  "hold",
+  "no_go",
 ];
 
 interface Props {
@@ -55,7 +52,7 @@ interface Props {
 export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const { data, addMaterials } = useRegister();
 
-  const [entryType, setEntryType] = useState<EntryType>("drop_in_substitute");
+  const [entryType, setEntryType] = useState<EntryType>("drop_in");
   const [name, setName] = useState("");
   const [cas, setCas] = useState("");
   const [lookup, setLookup] = useState<OntologyResult | null>(null);
@@ -66,7 +63,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const [applications, setApplications] = useState<string[]>([]);
   const [products, setProducts] = useState<string[]>([]);
   const [owner, setOwner] = useState<string | null>(null);
-  const [status, setStatus] = useState<JourneyStatus>("not_started");
+  const [status, setStatus] = useState<JourneyStatus>("under_evaluation");
 
   // Panel A — the material being replaced
   const [volume, setVolume] = useState<number | null>(null);

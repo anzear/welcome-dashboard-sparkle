@@ -46,7 +46,7 @@ function mulberry32(seed: number) {
   };
 }
 
-const EARLY_STATUSES: JourneyStatus[] = ["not_started", "under_evaluation", "in_testing"];
+const EARLY_STATUSES: JourneyStatus[] = ["under_evaluation", "hold"];
 
 const REASONS = [
   "Screening call with the incumbent supplier closed out.",
@@ -159,7 +159,7 @@ function buildEvents(materials: Material[]): MaterialEvent[] {
           });
           currentStatus = m.journey_status;
         }
-        if (m.journey_status === "parked" || m.journey_status === "rejected") {
+        if (m.journey_status === "hold" || m.journey_status === "no_go") {
           const b = BLOCKERS[i % BLOCKERS.length];
           events.push({
             event_id: id(),

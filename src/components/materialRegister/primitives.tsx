@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { JOURNEY_STATUS_LABEL, type FieldProvenance, type JourneyStatus } from "@/types/materialPrioritisation";
+import { JOURNEY_STATUS_LABEL, provenanceClassOf, type FieldProvenance, type JourneyStatus } from "@/types/materialPrioritisation";
 
 export const nf = (decimals = 0) =>
   new Intl.NumberFormat("en-GB", {
@@ -61,14 +61,11 @@ export const NumCell: React.FC<NumProps> = ({ value, decimals = 0, provenance, e
  * outline for parked, lowest contrast for rejected.
  */
 export const STATUS_STYLES: Record<JourneyStatus, string> = {
-  not_started: "border-transparent text-muted-foreground/70",
   under_evaluation: "border-slate-200 text-slate-500",
-  in_testing: "border-slate-300 text-slate-600",
-  qualified: "border-slate-400 text-slate-700",
-  sourcing: "border-slate-500 text-slate-800",
-  in_use: "border-transparent bg-slate-800 text-slate-50",
-  parked: "border-amber-400/70 text-amber-700",
-  rejected: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
+  go: "border-transparent bg-slate-800 text-slate-50",
+  go_with_conditions: "border-slate-500 text-slate-800",
+  hold: "border-amber-400/70 text-amber-700",
+  no_go: "border-dashed border-muted-foreground/30 text-muted-foreground/60",
 };
 
 export const StatusPill: React.FC<{ status: JourneyStatus; entered?: boolean }> = ({ status, entered }) => (
@@ -112,6 +109,33 @@ export const provenanceLine = (
   if (p.origin === "entered")
     return `Entered by ${p.source ?? "unknown"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
   return `Source: ${p.source ?? "unknown"}${p.date ? ` · ${fmtDate(p.date)}` : ""}`;
+};
+
+/**
+ * Class-aware stamp for the Material brief. The class is fixed per field, so a
+ * missing value still reports its class — it reads "no value recorded", never 0.
+ *   company_entered  "ERP extract 2026-Q1 · 18 Jan 2026"
+ *   vcg_computed     "VCG data · 12 Feb 2026"
+ *   team_judgement   "K. Brandt · 27 Jan 2026"
+ */
+export const provenanceStamp = (
+  field: string,
+  provenance: FieldProvenance | undefined,
+  hasValue: boolean,
+  computedInputs?: string,
+): string => {
+  const cls = provenanceClassOf(field);
+  const date = provenance?.date ? ` · ${fmtDate(provenance.date)}` : "";
+  if (cls === "vcg_computed") {
+    if (!hasValue) return computedInputs ? `VCG computed from ${computedInputs} — no value recorded` : "VCG data — no value recorded";
+    return computedInputs ? `VCG computed: ${computedInputs}${date}` : `VCG data${date}`;
+  }
+  if (cls === "team_judgement") {
+    if (!hasValue) return "No judgement recorded";
+    return `${provenance?.source ?? "Unattributed"}${date}`;
+  }
+  if (!hasValue) return "No value recorded";
+  return `${provenance?.source ?? "Source unknown"}${date}`;
 };
 
 /** Relative readout for a planned date. Undated is a state, never "today". */

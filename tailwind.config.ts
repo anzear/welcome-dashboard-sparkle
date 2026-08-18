@@ -41,6 +41,11 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				provenance: {
+					company: 'hsl(var(--provenance-company))',
+					vcg: 'hsl(var(--provenance-vcg))',
+					judgement: 'hsl(var(--provenance-judgement))'
+				},
 				muted: {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'

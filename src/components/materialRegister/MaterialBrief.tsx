@@ -13,7 +13,7 @@ import {
   type Material,
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
-import { nf, provenanceLine, StatusPill } from "@/components/materialRegister/primitives";
+import { nf, provenanceLine, provenanceStamp, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefDriverScores from "@/components/materialRegister/BriefDriverScores";
@@ -136,18 +136,19 @@ const ValueText: React.FC<{ value: number | string | null; decimals?: number; co
 /** Read-only measured / computed figure. Provenance always visible. */
 const Figure: React.FC<{
   label: string;
+  field?: string;
   value: number | string | null;
   decimals?: number;
   provenance?: FieldProvenance;
   computedInputs?: string;
   wide?: boolean;
-}> = ({ label, value, decimals = 0, provenance, computedInputs, wide }) => {
+}> = ({ label, field, value, decimals = 0, provenance, computedInputs, wide }) => {
   const hasValue = value !== null && value !== undefined && value !== "";
   return (
     <DataRow
       wide={wide}
       label={label}
-      provenance={provenanceLine(provenance, hasValue, computedInputs)}
+      provenance={field ? provenanceStamp(field, provenance, hasValue, computedInputs) : provenanceLine(provenance, hasValue, computedInputs)}
       value={
         <ValueText
           value={value}
@@ -162,13 +163,14 @@ const Figure: React.FC<{
 /** Editable figure. Whole row is the target; affordance appears on hover only. */
 const EditableFigure: React.FC<{
   label: string;
+  field?: string;
   value: number | string | null;
   decimals?: number;
   provenance?: FieldProvenance;
   placeholder?: string;
   wide?: boolean;
   onSave: (raw: string) => void;
-}> = ({ label, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
+}> = ({ label, field, value, decimals = 0, provenance, placeholder, wide, onSave }) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const hasValue = value !== null && value !== undefined && value !== "";
@@ -206,7 +208,9 @@ const EditableFigure: React.FC<{
             Cancel
           </Button>
         </div>
-        <div className="pt-0.5 text-[11px] text-muted-foreground/50">{provenanceLine(provenance, hasValue)}</div>
+        <div className="pt-0.5 text-[11px] text-muted-foreground/50">
+          {field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
+        </div>
       </div>
     );
   }
@@ -215,7 +219,7 @@ const EditableFigure: React.FC<{
     <DataRow
       wide={wide}
       label={label}
-      provenance={provenanceLine(provenance, hasValue)}
+      provenance={field ? provenanceStamp(field, provenance, hasValue) : provenanceLine(provenance, hasValue)}
       onClick={begin}
       value={
         <ValueText
@@ -538,7 +542,7 @@ export const MaterialBrief: React.FC = () => {
     ]);
   };
 
-  const draftNeedsBlocker = draftStatus === "parked" || draftStatus === "rejected";
+  const draftNeedsBlocker = draftStatus === "hold" || draftStatus === "no_go";
   const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
 
   const beginStatusChange = (next: JourneyStatus) => {
@@ -548,7 +552,7 @@ export const MaterialBrief: React.FC = () => {
     }
     setDraftStatus(next);
     setStatusReason("");
-    setDraftBlockerCategory(next === "parked" || next === "rejected" ? (m.blocker_category ?? "") : "");
+    setDraftBlockerCategory(next === "hold" || next === "no_go" ? (m.blocker_category ?? "") : "");
     setDraftBlockerDetail(m.blocker_detail ?? "");
     setDraftBlockerCondition(m.blocker_condition ?? "");
   };
@@ -712,7 +716,7 @@ export const MaterialBrief: React.FC = () => {
       <div className="mt-4 rounded-xl border border-border/70 bg-card px-4 py-3 shadow-sm">
 
         <div className="flex flex-wrap items-end gap-x-6 gap-y-3">
-          <BarField label="Status" className="w-[180px]">
+          <BarField label="Gate status" className="w-[180px]">
             <Select
               value={draftStatus ?? m.journey_status}
               onValueChange={(v) => beginStatusChange(v as JourneyStatus)}
@@ -1033,6 +1037,7 @@ export const MaterialBrief: React.FC = () => {
               <GroupLabel first>Volume and cost</GroupLabel>
               <EditableFigure
                 label="Annual volume (t/yr)"
+                field="annual_volume"
                 value={m.annual_volume}
                 provenance={m.provenance.annual_volume}
                 placeholder="t/yr"
@@ -1040,6 +1045,7 @@ export const MaterialBrief: React.FC = () => {
               />
               <EditableFigure
                 label="Unit price (EUR/kg)"
+                field="unit_price"
                 value={m.unit_price}
                 decimals={2}
                 provenance={m.provenance.unit_price}
@@ -1048,6 +1054,7 @@ export const MaterialBrief: React.FC = () => {
               />
               <Figure
                 label="Annual spend (EUR)"
+                field="annual_spend"
                 value={m.annual_spend}
                 provenance={m.provenance.annual_spend}
                 computedInputs="volume x price"
@@ -1056,6 +1063,7 @@ export const MaterialBrief: React.FC = () => {
               <GroupLabel>Emissions</GroupLabel>
               <EditableFigure
                 label="GHG emission factor (kgCO2e/kg)"
+                field="ghg_emission_factor"
                 value={m.ghg_emission_factor}
                 decimals={2}
                 provenance={m.provenance.ghg_emission_factor}
@@ -1064,12 +1072,14 @@ export const MaterialBrief: React.FC = () => {
               />
               <Figure
                 label="GHG contribution (tCO2e/yr)"
+                field="ghg_contribution"
                 value={m.ghg_contribution}
                 provenance={m.provenance.ghg_contribution}
                 computedInputs="volume x emission factor"
               />
               <EditableFigure
                 label="GHG boundary"
+                field="ghg_boundary"
                 value={m.ghg_boundary}
                 provenance={m.provenance.ghg_boundary}
                 placeholder="e.g. Cradle-to-gate (A1-A3)"
@@ -1077,6 +1087,7 @@ export const MaterialBrief: React.FC = () => {
               />
               <EditableFigure
                 label="GHG data basis"
+                field="ghg_data_basis"
                 value={m.ghg_data_basis}
                 provenance={m.provenance.ghg_data_basis}
                 placeholder="e.g. Supplier-specific"
@@ -1086,6 +1097,7 @@ export const MaterialBrief: React.FC = () => {
               <GroupLabel>Supply</GroupLabel>
               <EditableFigure
                 label="Suppliers"
+                field="supplier_count"
                 value={m.supplier_count}
                 provenance={m.provenance.supplier_count}
                 placeholder="count"
@@ -1094,6 +1106,7 @@ export const MaterialBrief: React.FC = () => {
               <EditableFigure
                 wide
                 label="Supplier countries"
+                field="supplier_countries"
                 value={m.supplier_countries.length > 0 ? m.supplier_countries.join(", ") : null}
                 provenance={m.provenance.supplier_countries}
                 placeholder="DE, FI, CN"
