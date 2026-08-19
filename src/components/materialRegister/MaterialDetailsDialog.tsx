@@ -157,10 +157,10 @@ const MaterialDetailsDialog: React.FC<{
             </div>
 
             <div>
-              <FieldLabel required>Application areas</FieldLabel>
+              <FieldLabel required>Product categories</FieldLabel>
               <Select value="" onValueChange={addApp}>
                 <SelectTrigger className="h-9 text-[13px]">
-                  <SelectValue placeholder="Select an application area" />
+                  <SelectValue placeholder="Select a product category" />
                 </SelectTrigger>
                 <SelectContent className="portfolio-type z-50 bg-popover">
                   {applicationOptions.map((a) => (

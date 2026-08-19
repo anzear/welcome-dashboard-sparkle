@@ -662,14 +662,14 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                     <NoneYet />
                   )}
                 </HeadGroup>
-                <HeadGroup label="Categories">
+                <HeadGroup label="Product categories">
                   {m.application_categories.length > 0 ? (
                     m.application_categories.map((t) => <Chip key={t}>{t}</Chip>)
                   ) : (
                     <NoneYet />
                   )}
                 </HeadGroup>
-                <HeadGroup label="Areas">
+                <HeadGroup label="Application areas">
                   {m.application_areas.length > 0 ? (
                     m.application_areas.map((t) => <Chip key={t}>{t}</Chip>)
                   ) : (
