@@ -201,10 +201,10 @@ export const CSV_COLUMNS: CsvColumn[] = [
   },
   {
     field: "application_categories",
-    label: "Application categories",
+    label: "Product categories",
     kind: "list",
-    example1: "Cleaning formulations;Personal care",
-    example2: "Personal care",
+    example1: "Laundry detergents;Surface cleaners",
+    example2: "Hair care",
   },
   {
     field: "application_areas",

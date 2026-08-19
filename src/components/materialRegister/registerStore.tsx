@@ -171,7 +171,7 @@ export interface Filters {
   tags: string[];
   /** Application areas, matched with ANY. */
   products: string[];
-  /** Application categories, matched with ANY. */
+  /** Product categories, matched with ANY. */
   applications: string[];
   /** Priority periods, matched with ANY. May include NO_PRIORITY. */
   priorityPeriods: string[];
@@ -941,7 +941,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           : payload.kind === "products"
             ? "Application areas"
             : payload.kind === "applications"
-              ? "Application categories"
+              ? "Product categories"
               : payload.kind === "priority_period"
                 ? "Priority period"
                 : payload.kind === "entry_type"

@@ -90,7 +90,7 @@ const UNASSIGNED = "__unassigned__";
 
 const MULTI: Record<string, { field: keyof Material; noun: string }> = {
   products: { field: "application_areas", noun: "application area" },
-  applications: { field: "application_categories", noun: "application category" },
+  applications: { field: "application_categories", noun: "product category" },
   product_lines: { field: "tags", noun: "product line" },
   tags: { field: "tags", noun: "tag" },
 };
@@ -247,7 +247,7 @@ export const BulkActionDialog: React.FC<Props> = ({
         : kind === "products"
           ? `${mode === "add" ? "Add" : "Remove"} application areas — ${materials.length} materials`
           : kind === "applications"
-            ? `${mode === "add" ? "Add" : "Remove"} application categories — ${materials.length} materials`
+            ? `${mode === "add" ? "Add" : "Remove"} product categories — ${materials.length} materials`
             : kind === "product_lines"
               ? `${mode === "add" ? "Add" : "Remove"} product lines — ${materials.length} materials`
               : kind === "tags"

@@ -340,7 +340,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
           </div>
 
           <TagInput
-            label="Application categories"
+            label="Product categories"
             values={applications}
             onChange={setApplications}
             suggestions={suggestions.applications}

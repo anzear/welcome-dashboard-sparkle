@@ -12,7 +12,7 @@ import type {
 
 /**
  * One customer: a personal care and home care formulator. Every material's
- * applications (what it does in the formulation) and products (their SKU lines)
+ * application categories (the product categories it is used in) and application areas (their SKU lines)
  * are plausible together — no industrial coatings, no shampoo in a PVC compound.
  *
  * The deliberate data spread is kept: missing figures, rank divergence, family
@@ -20,17 +20,25 @@ import type {
  * materials with NO applications recorded — which is missing, not zero.
  */
 
-/** Function in the formulation. */
-type Application =
-  | "Emulsification"
-  | "Preservation"
-  | "Chelation"
-  | "Opacification"
-  | "Surfactancy"
-  | "Viscosity control"
-  | "Fragrance carrier";
+/**
+ * Product category the material ends up in. Never a function or a performance
+ * claim — a category is where the material is used, not what it does there.
+ */
+type ApplicationCategory =
+  | "Laundry detergents"
+  | "Dishwashing"
+  | "Surface cleaners"
+  | "Hair care"
+  | "Skin & body care"
+  | "Hand hygiene";
 
-/** Their SKU lines. */
+/**
+ * Legacy formulation-function marker kept only to say whether the customer file
+ * recorded a category at all. An empty list stays missing, never zero.
+ */
+type Application = string;
+
+/** Their SKU lines (application areas). */
 type Product =
   | "Shampoo base"
   | "Body wash"
@@ -38,6 +46,23 @@ type Product =
   | "Surface cleaner"
   | "Hand soap"
   | "Conditioner";
+
+/** Each SKU line rolls up to exactly one product category. */
+const PRODUCT_CATEGORY: Record<Product, ApplicationCategory> = {
+  "Shampoo base": "Hair care",
+  Conditioner: "Hair care",
+  "Body wash": "Skin & body care",
+  "Hand soap": "Hand hygiene",
+  "Liquid detergent": "Laundry detergents",
+  "Surface cleaner": "Surface cleaners",
+};
+
+/**
+ * Product categories a material serves. Rows whose source file recorded no
+ * application at all keep an empty list — missing, not zero.
+ */
+const categoriesFor = (row: { apps: Application[]; prods: Product[] }): ApplicationCategory[] =>
+  row.apps.length === 0 ? [] : Array.from(new Set(row.prods.map((pr) => PRODUCT_CATEGORY[pr])));
 
 interface Row {
   name: string;
@@ -423,7 +448,7 @@ export const materials: Material[] = rows.map((row, i) => {
   put("material_class", row.cls, loaded);
   put("tags", [row.tag], loaded);
   put("customer_material_ids", ["x"], loaded);
-  put("application_categories", row.apps, loaded);
+  put("application_categories", categoriesFor(row), loaded);
   put("application_areas", row.prods, loaded);
   p.entry_type = loaded;
 
@@ -471,7 +496,7 @@ export const materials: Material[] = rows.map((row, i) => {
     cas_number: row.cas,
     material_class: row.cls,
     tags: [row.tag],
-    application_categories: row.apps,
+    application_categories: categoriesFor(row),
     application_areas: row.prods,
     entry_type: i % 9 === 4 ? "substitution" : "drop_in",
     requirements: (() => {

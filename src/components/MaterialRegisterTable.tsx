@@ -70,7 +70,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
-  ["applications", "Applications", "Application categories the material serves"],
+  ["applications", "Product categories", "Product categories the material is used in"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["contributors", "Contributors", "People with at least one input on the brief"],
@@ -110,7 +110,7 @@ const CompletenessCell: React.FC<{ m: Material }> = ({ m }) => {
 
 
 
-/** Application categories as plain text, overflow folded into a count. */
+/** Product categories as plain text, overflow folded into a count. */
 const ApplicationsCell: React.FC<{ values: string[] | null }> = ({ values }) => {
   const list = values ?? [];
   if (list.length === 0) return <Missing />;
@@ -286,7 +286,7 @@ export const MaterialRegisterTable: React.FC = () => {
         );
       case "applications":
         return (
-          <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Applications</th>
+          <th className={cn(HEAD, "px-3 py-2.5 text-left", emphHead("applications"))}>Product categories</th>
         );
       case "status":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Status</th>;
