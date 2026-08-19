@@ -174,7 +174,7 @@ const MaterialDetailsDialog: React.FC<{
                 <Input
                   value={custom}
                   onChange={(e) => setCustom(e.target.value)}
-                  placeholder="Add custom application area"
+                  placeholder="Add custom product category"
                   className="h-9 text-[13px]"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
