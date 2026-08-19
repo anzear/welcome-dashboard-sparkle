@@ -105,7 +105,7 @@ const FilterSelects: React.FC<{
     ["entryTypes", "Entry type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
     ["products", "Application area", options.products, filters.products],
-    ["applications", "Application", options.applications, filters.applications],
+    ["applications", "Product category", options.applications, filters.applications],
     ["tags", "Tags", options.tags, filters.tags],
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
   ];

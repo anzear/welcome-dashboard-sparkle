@@ -94,14 +94,14 @@ export const LENS_VARS: AxisVar[] = [
   },
   {
     id: "applications",
-    label: "Applications",
-    noun: "applications",
+    label: "Product categories",
+    noun: "product categories",
     unit: "count",
     kind: "measured",
     group: "lens",
     measureId: "applications",
     value: (m: Material) => listLen(m.application_categories),
-    fmt: (v) => `${nf(0).format(v)} applications`,
+    fmt: (v) => `${nf(0).format(v)} product categories`,
   },
   {
     id: "products",

@@ -805,7 +805,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                 }}
               />
               <TagsField
-                label="Application categories"
+                label="Product categories"
                 values={m.application_categories}
                 onSave={(v) =>
                   updateMaterial(m.material_id, { application_categories: v }, ["application_categories"], [

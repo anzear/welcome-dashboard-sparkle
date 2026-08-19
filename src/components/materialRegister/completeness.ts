@@ -16,7 +16,7 @@ const FIELDS: [string, (m: Material) => boolean][] = [
   ["Their IDs", (m) => (m.customer_material_ids ?? []).length > 0],
   ["Material category", (m) => Boolean(m.material_class)],
   ["Tags", (m) => (m.tags ?? []).length > 0],
-  ["Applications", (m) => (m.application_categories ?? []).length > 0],
+  ["Product categories", (m) => (m.application_categories ?? []).length > 0],
   ["Application areas", (m) => (m.application_areas ?? []).length > 0],
   ["Volume", (m) => m.annual_volume !== null],
   ["Unit price", (m) => m.unit_price !== null],
