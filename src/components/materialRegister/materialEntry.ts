@@ -487,7 +487,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   if (toNullString(v.journey_status)) provenance.journey_status = ingested;
   if (toNullString(v.owner)) provenance.owner = ingested;
   if (toNullString(v.material_class)) provenance.material_class = ingested;
-  provenance.entry_type = ingested;
+  provenance.entry_type = provenanceOf("entered", filename);
 
   const requirements = requirementsOrNull({
     target_volume: num("target_volume"),
