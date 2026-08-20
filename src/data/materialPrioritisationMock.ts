@@ -450,7 +450,8 @@ export const materials: Material[] = rows.map((row, i) => {
   put("customer_material_ids", ["x"], loaded);
   put("application_categories", categoriesFor(row), loaded);
   put("application_areas", row.prods, loaded);
-  p.entry_type = loaded;
+  // Type is a company-entered choice, never ingested or computed.
+  p.entry_type = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
 
   // Measured figures.
   put("annual_volume", row.vol, erp);
