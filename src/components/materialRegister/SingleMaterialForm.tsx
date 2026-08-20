@@ -195,13 +195,13 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
 
       {/* Step 1 */}
       <section className="space-y-2">
-        <h3 className={LABEL}>1 — What kind of entry</h3>
+        <h3 className={LABEL}>1 — Type (optional)</h3>
         <div className="grid gap-2 md:grid-cols-3">
           {ENTRY_TYPES.map((t) => (
             <button
               key={t.id}
               type="button"
-              onClick={() => setEntryType(t.id)}
+              onClick={() => setEntryType(entryType === t.id ? null : t.id)}
               aria-pressed={entryType === t.id}
               className={cn(
                 "rounded-md border p-2 text-left transition-colors",
@@ -215,6 +215,11 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             </button>
           ))}
         </div>
+        {entryType === null && (
+          <p className="text-[10px] text-muted-foreground">
+            Not set — leave it empty if the type is not decided yet.
+          </p>
+        )}
       </section>
 
       {/* Step 2 */}
