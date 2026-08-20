@@ -3,7 +3,11 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
+  MATERIAL_ROLE_LABEL,
+  MATERIAL_ROLE_SHORT,
+  MATERIAL_ROLES,
   type JourneyStatus,
+  type MaterialRole,
   type Material,
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
@@ -797,7 +801,8 @@ export const MaterialRegisterTable: React.FC = () => {
                 ["priority_period", "Set priority period"],
                 ["product_lines", "Product lines"],
                 ["tags", "Tags"],
-                ["entry_type", "Set type"],
+                ["role", "Set role"],
+                ["entry_type", "Set replacement type"],
                 ["products", "Set applications"],
                 ["applications", "Set application"],
                 ["intelligence", "Request coverage"],
