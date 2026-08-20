@@ -256,7 +256,7 @@ export const BulkActionDialog: React.FC<Props> = ({
               ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
               : kind === "entry_type"
                 ? `Set entry type for ${materials.length} materials`
-                : `Order intelligence for ${materials.length} materials`;
+                : `Request coverage for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
     if (!kind || isMulti || !value) return null;
@@ -582,11 +582,11 @@ export const BulkActionDialog: React.FC<Props> = ({
                       <ul className="space-y-0.5 text-[11px] text-muted-foreground">
                         <li>
                           <span className="tabular-nums">{intelligenceEffect.none}</span> will be marked
-                          requested.
+                          coverage requested.
                         </li>
                         <li>
                           <span className="tabular-nums">{intelligenceEffect.already}</span> already have
-                          an order — no change.
+                          coverage requested — no change.
                         </li>
                       </ul>
                     </div>
