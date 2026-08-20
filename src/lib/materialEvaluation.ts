@@ -44,7 +44,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   risk: "Risk of Inaction",
   feasibility: "Feasibility",
   crossteam: "Cross-team Input",
-  order: "Order",
+  order: "Coverage request",
 };
 
 export const FIELD_TO_SECTION: Record<string, SectionKey> = {
