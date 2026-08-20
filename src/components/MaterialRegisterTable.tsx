@@ -25,6 +25,7 @@ import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
   ENTRY_TYPE_LABEL,
+  NO_ENTRY_TYPE,
   MEASURES,
   UNASSIGNED_OWNER,
   useRegister,
@@ -66,7 +67,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data filled", "Share of expected fields recorded"],
-  ["materialType", "Entry type", "How the material enters the portfolio"],
+  ["materialType", "Type", "How the material enters the portfolio"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
@@ -217,10 +218,10 @@ export const MaterialRegisterTable: React.FC = () => {
         ...uniq(data.map((m) => m.owner)).map((v) => ({ value: v, label: v })),
         { value: UNASSIGNED_OWNER, label: "Unassigned" },
       ],
-      entryTypes: uniq(data.map((m) => m.entry_type)).map((v) => ({
-        value: v,
-        label: ENTRY_TYPE_LABEL[v] ?? v,
-      })),
+      entryTypes: [
+        ...ENTRY_TYPES.map((e) => ({ value: e.id as string, label: e.label })),
+        { value: NO_ENTRY_TYPE, label: "Not set" },
+      ],
       products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
         value: v,
         label: `${v} (${data.filter((m) => (m.application_areas ?? []).includes(v)).length})`,
@@ -265,7 +266,7 @@ export const MaterialRegisterTable: React.FC = () => {
       case "completeness":
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
       case "materialType":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Type</th>;
       case "productLine":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-left")}>
@@ -337,7 +338,11 @@ export const MaterialRegisterTable: React.FC = () => {
       case "materialType":
         return (
           <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
-            {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+            {m.entry_type ? (
+              ENTRY_TYPE_LABEL[m.entry_type]
+            ) : (
+              <span className="text-muted-foreground/60">&mdash;</span>
+            )}
           </td>
         );
       case "volume":
@@ -750,7 +755,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 ["priority_period", "Set priority period"],
                 ["product_lines", "Product lines"],
                 ["tags", "Tags"],
-                ["entry_type", "Set entry type"],
+                ["entry_type", "Set type"],
                 ["products", "Set applications"],
                 ["applications", "Set application"],
                 ["intelligence", "Request coverage"],

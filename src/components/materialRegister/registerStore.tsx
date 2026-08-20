@@ -113,6 +113,8 @@ export const MEASURES: Measure[] = [
 export const DIVERGENCE_THRESHOLD_RATIO = 0.5;
 
 export const UNASSIGNED_OWNER = "__unassigned__";
+/** Filter sentinel for materials with no Type set. */
+export const NO_ENTRY_TYPE = "__no_entry_type__";
 
 export const ENTRY_TYPE_LABEL: Record<string, string> = Object.fromEntries(
   ENTRY_TYPES.map((e) => [e.id, e.label]),
@@ -610,7 +612,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
       if (filters.gateRecommendation === "no" && m.recommendation !== null) return false;
       if (filters.owners.length && !filters.owners.includes(m.owner ?? UNASSIGNED_OWNER)) return false;
-      if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type)) return false;
+      if (filters.entryTypes.length && !filters.entryTypes.includes(m.entry_type ?? NO_ENTRY_TYPE))
+        return false;
       if (
         filters.products.length &&
         !(m.application_areas ?? []).some((c) => filters.products.includes(c))
@@ -849,7 +852,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           next.tags = nextList(m.tags ?? []);
           next.provenance.tags = enteredProvenance();
         } else if (payload.kind === "entry_type") {
-          next.entry_type = payload.value as Material["entry_type"];
+          next.entry_type = (payload.value ? payload.value : null) as Material["entry_type"];
           next.provenance.entry_type = enteredProvenance();
         } else if (payload.kind === "priority_period") {
           next.priority_period = payload.value && payload.value.trim() ? payload.value.trim() : null;
@@ -906,8 +909,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             material_id: m.material_id,
             event_type: "field_correction",
             field: "entry_type",
-            from_value: m.entry_type,
-            to_value: payload.value,
+            from_value: m.entry_type ? ENTRY_TYPE_LABEL[m.entry_type] : null,
+            to_value: payload.value ? (ENTRY_TYPE_LABEL[payload.value] ?? payload.value) : null,
             batch_id: batchId,
           } as EventInput;
         }
@@ -958,7 +961,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
               : payload.kind === "priority_period"
                 ? "Priority period"
                 : payload.kind === "entry_type"
-                  ? "Entry type"
+                  ? "Type"
                   : payload.kind === "product_lines"
                     ? "Product line"
                     : payload.kind === "tags"
