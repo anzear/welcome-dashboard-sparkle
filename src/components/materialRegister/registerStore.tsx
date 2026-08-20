@@ -168,10 +168,39 @@ export interface RankedRow {
 }
 
 
+/**
+ * ROLE PRESET — the register's base scope. One horizontal segmented control,
+ * five mutually exclusive segments. Every material falls in at least one of
+ * them, so nothing can be hidden from all scopes: candidates with no
+ * replacement type still appear under "Replacement candidates".
+ */
+export type RolePresetId =
+  | "all"
+  | "existing"
+  | "candidates"
+  | "candidates_new"
+  | "candidates_substitution";
+
+export const ROLE_PRESETS: { id: RolePresetId; label: string; match: (m: Material) => boolean }[] = [
+  { id: "all", label: "All", match: () => true },
+  { id: "existing", label: "Existing materials", match: (m) => m.role === "existing" },
+  { id: "candidates", label: "Replacement candidates", match: (m) => m.role === "new" },
+  {
+    id: "candidates_new",
+    label: "Candidates — new material",
+    match: (m) => m.role === "new" && m.entry_type === "new_material",
+  },
+  {
+    id: "candidates_substitution",
+    label: "Candidates — source substitution",
+    match: (m) => m.role === "new" && m.entry_type === "substitution",
+  },
+];
+
+const presetMatch = (id: RolePresetId) => ROLE_PRESETS.find((p) => p.id === id)!.match;
+
 export interface Filters {
   search: string;
-  /** Role. Empty array is All — never a default of one role. */
-  roles: MaterialRole[];
   classes: string[];
   statuses: string[];
   owners: string[];
@@ -219,7 +248,6 @@ export const NO_BLOCKER = "__no_blocker__";
 
 export const EMPTY_FILTERS: Filters = {
   search: "",
-  roles: [],
   classes: [],
   statuses: [],
   owners: [],
@@ -283,6 +311,9 @@ interface Store {
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
   measure: Measure | null;
+  rolePreset: RolePresetId;
+  setRolePreset: React.Dispatch<React.SetStateAction<RolePresetId>>;
+  rolePresetCounts: Record<RolePresetId, number>;
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   filtersActive: boolean;
@@ -543,6 +574,15 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   /** Everything downstream reads this list. `allMaterials` stays whole for briefs. */
   const scoped = useMemo(() => data.filter((m) => inScope(m, scope)), [data, scope]);
+
+  /** Segment counts inside the current product-line scope, ignoring other filters. */
+  const rolePresetCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        ROLE_PRESETS.map((p) => [p.id, scoped.filter(p.match).length]),
+      ) as Record<RolePresetId, number>,
+    [scoped],
+  );
   const scopeCounts = useMemo(() => productLineCounts(data), [data]);
   const [events, setEvents] = useState<MaterialEvent[]>([...seedEvents, ...gateSeed.events]);
   const [assessments, setAssessments] = useState<Record<string, AssessmentEntry>>(seedAssessments);
@@ -558,6 +598,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  /** Base scope of the register. Never persisted: every session opens on All. */
+  const [rolePreset, setRolePreset] = useState<RolePresetId>("all");
   const [onlyNoFigure, setOnlyNoFigure] = useState(false);
   const [onlyDivergent, setOnlyDivergent] = useState(false);
   const [onlySelected, setOnlySelected] = useState(false);
@@ -578,7 +620,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   const filtersActive =
     filters.search.trim() !== "" ||
-    filters.roles.length > 0 ||
     filters.classes.length > 0 ||
     filters.statuses.length > 0 ||
     filters.owners.length > 0 ||
@@ -639,12 +680,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   const filtered = useMemo(() => {
     const q = filters.search.trim().toLowerCase();
+    const inPreset = presetMatch(rolePreset);
     return scoped.filter((m) => {
+      if (!inPreset(m)) return false;
       if (q) {
         const hay = [m.name, m.cas_number ?? "", ...(m.customer_material_ids ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
-      if (filters.roles.length && !filters.roles.includes(m.role)) return false;
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
@@ -710,7 +752,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [scoped, filters, documentedIds, assessedIds, disagreeIds]);
+  }, [scoped, rolePreset, filters, documentedIds, assessedIds, disagreeIds]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
@@ -1709,6 +1751,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     measureId,
     setMeasureId,
     measure,
+    rolePreset,
+    setRolePreset,
+    rolePresetCounts,
     filters,
     setFilters,
     filtersActive,

@@ -29,7 +29,9 @@ import {
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   DIVERGENCE_THRESHOLD_RATIO,
+  EMPTY_FILTERS,
   ENTRY_TYPE_LABEL,
+  ROLE_PRESETS,
   NO_ENTRY_TYPE,
   MEASURES,
   UNASSIGNED_OWNER,
@@ -174,6 +176,9 @@ export const MaterialRegisterTable: React.FC = () => {
     scope,
     scopeLabel,
     contributorsFor,
+    rolePreset,
+    setRolePreset,
+    rolePresetCounts,
   } = useRegister();
 
   const [bulkKind, setBulkKind] = useState<BulkKind | null>(null);
@@ -597,6 +602,34 @@ export const MaterialRegisterTable: React.FC = () => {
 
   return (
     <div className="w-full">
+      {/* Preset scope — the register's base scope. One line, scrolls rather than wraps. */}
+      <div className="-mx-0.5 mb-2 overflow-x-auto pb-0.5">
+        <div className="inline-flex w-max items-center gap-0.5 whitespace-nowrap rounded-lg bg-muted p-0.5">
+          {ROLE_PRESETS.map((p) => {
+            const active = rolePreset === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setRolePreset(p.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {p.label}
+                <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-60")}>
+                  {rolePresetCounts[p.id]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Toolbar — one quiet row: search is the only bordered element */}
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2 pb-2">
         <Input
@@ -926,6 +959,19 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
                   <div>No materials match the current filters.</div>
+                  {(filtersActive || rolePreset !== "all") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters(EMPTY_FILTERS);
+                        setRolePreset("all");
+                      }}
+                      className="mt-1 block w-full text-[11px] text-foreground underline decoration-dotted underline-offset-2"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setAddOpen(true)}
