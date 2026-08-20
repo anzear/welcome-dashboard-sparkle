@@ -112,7 +112,11 @@ const TEMPLATES: Template[] = [
   },
 ];
 
-const CRIT = JUDGED_CRITERIA.map((c) => c.criterion_id);
+/** Documents seed only where assessments exist — the two new criteria stay empty. */
+const CARRIED = ["risk_of_inaction", "strategic_importance", "market_pull"];
+const CRIT = JUDGED_CRITERIA.filter((c) => CARRIED.includes(c.criterion_id)).map(
+  (c) => c.criterion_id,
+);
 
 const hasEntries = (materialId: string, criterionId: string) =>
   Object.values(seedAssessments).some(

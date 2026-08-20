@@ -13,7 +13,7 @@ const MOCK_COMMENTS: { author: string; days: number; body: string }[][] = [
   [
     { author: "Sofia Rautio (R&D)", days: 9, body: "Bench trials on the renewable grade held viscosity within spec. Two formulations still need a stability run before we commit." },
     { author: "Marta Kowalczyk (Regulatory)", days: 5, body: "No barrier on the EU side, but the supplier's certification is due for renewal in Q1. Worth confirming before the gate." },
-    { author: "Ingrid Haugen (Sustainability)", days: 2, body: "Cradle-to-gate figures came back better than the incumbent. I've attached the supplier statement to Future readiness." },
+    { author: "Ingrid Haugen (Sustainability)", days: 2, body: "Cradle-to-gate figures came back better than the incumbent. I've attached the supplier statement to Strategic importance." },
   ],
   [
     { author: "Daniel Brandt (Procurement)", days: 12, body: "Only one qualified source at volume today. Price is workable, but we'd be single-sourced through next season." },
