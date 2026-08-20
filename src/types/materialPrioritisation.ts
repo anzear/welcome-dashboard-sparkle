@@ -1,25 +1,23 @@
-export type EntryType = "drop_in" | "substitution" | "new_material";
+export type EntryType = "new_material" | "substitution";
 
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
-  drop_in: "Drop-in",
-  substitution: "Substitution",
   new_material: "New material",
+  substitution: "Source substitution",
 };
 
-/** Legacy entry-type values seen in stored/mock data. */
-export const migrateEntryType = (v: unknown): EntryType => {
+/**
+ * Legacy entry-type values seen in stored/mock data. Only "drop-in" maps onto
+ * a new option; anything else is left empty rather than inferred.
+ */
+export const migrateEntryType = (v: unknown): EntryType | null => {
   switch (v) {
     case "drop_in":
     case "drop_in_substitute":
-      return "drop_in";
-    case "substitution":
-    case "new_substitute":
       return "substitution";
     case "new_material":
-    case "new_application":
       return "new_material";
     default:
-      return "drop_in";
+      return null;
   }
 };
 
@@ -178,7 +176,7 @@ export interface Material {
 
   application_categories: string[];
   application_areas: string[];
-  entry_type: EntryType;
+  entry_type: EntryType | null;
   annual_volume: number | null;
   unit_price: number | null;
   annual_spend: number | null;
@@ -322,7 +320,7 @@ export interface MaterialEvent {
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
   journey_status: "Status",
-  entry_type: "Entry type",
+  entry_type: "Type",
   owner: "Owner",
   priority_period: "Priority period",
   blocker_category: "Blocker",
