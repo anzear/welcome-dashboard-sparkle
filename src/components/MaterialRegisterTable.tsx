@@ -67,7 +67,7 @@ type OptionalColumn =
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
-  ["completeness", "Data filled", "Share of expected fields recorded"],
+  ["completeness", "Data status", "Share of expected fields recorded"],
   ["materialType", "Type", "How the material enters the portfolio"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
