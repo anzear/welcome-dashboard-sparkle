@@ -652,15 +652,27 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                     <NoneYet />
                   )}
                 </HeadGroup>
-                <HeadGroup label="Type">
-                  <span className="text-[11px] text-foreground">
-                    {m.entry_type ? (
-                      ENTRY_TYPE_LABEL[m.entry_type]
-                    ) : (
-                      <span className="text-muted-foreground/70">Not set</span>
+                <HeadGroup label="Role">
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
+                      m.role === "new" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
                     )}
+                  >
+                    {MATERIAL_ROLE_LABEL[m.role]}
                   </span>
                 </HeadGroup>
+                {m.role === "new" && (
+                  <HeadGroup label="Replacement type">
+                    <span className="text-[11px] text-foreground">
+                      {m.entry_type ? (
+                        ENTRY_TYPE_LABEL[m.entry_type]
+                      ) : (
+                        <span className="text-muted-foreground/70">Not set</span>
+                      )}
+                    </span>
+                  </HeadGroup>
+                )}
               </div>
             )}
           </div>
@@ -830,7 +842,42 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                 }
               />
               <div className="px-1 py-1 sm:col-span-2">
-                <div className="text-[13px] text-muted-foreground">Type</div>
+                <div className="text-[13px] text-muted-foreground">Role</div>
+                <Select
+                  value={m.role}
+                  onValueChange={(v) => {
+                    const next = v as MaterialRole;
+                    if (next === m.role) return;
+                    updateMaterial(m.material_id, { role: next }, ["role"], [
+                      {
+                        material_id: m.material_id,
+                        event_type: "field_correction",
+                        field: "role",
+                        from_value: MATERIAL_ROLE_LABEL[m.role],
+                        to_value: MATERIAL_ROLE_LABEL[next],
+                      },
+                    ]);
+                  }}
+                >
+                  <SelectTrigger className="mt-1 h-8 max-w-[240px] text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="portfolio-type">
+                    {MATERIAL_ROLES.map((r) => (
+                      <SelectItem key={r} value={r} className="text-xs">
+                        {MATERIAL_ROLE_LABEL[r]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Existing links are kept when the role changes — remove them yourself if they no
+                  longer make sense.
+                </p>
+              </div>
+              {m.role === "new" && (
+              <div className="px-1 py-1 sm:col-span-2">
+                <div className="text-[13px] text-muted-foreground">Replacement type</div>
                 <Select
                   value={m.entry_type ?? NOT_SET_TYPE}
                   onValueChange={(v) => {
@@ -862,6 +909,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   </SelectContent>
                 </Select>
               </div>
+              )}
             </div>
           </div>
         </DialogContent>
