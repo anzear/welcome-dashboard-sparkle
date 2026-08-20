@@ -27,7 +27,6 @@ import { NO_PRODUCT_LINE } from "@/components/materialRegister/registerStore";
 const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
   if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
-  if (kind === "roles") return MATERIAL_ROLE_LABEL[value as MaterialRole] ?? value;
   if (kind === "entryTypes")
     return value === NO_ENTRY_TYPE ? "Not set" : (ENTRY_TYPE_LABEL[value as EntryType] ?? value);
   if (kind === "tags" && value === UNTAGGED) return "Untagged";
@@ -50,7 +49,6 @@ const FilterChips: React.FC = () => {
       "classes",
       "statuses",
       "owners",
-      "roles",
       "entryTypes",
       "products",
       "applications",
