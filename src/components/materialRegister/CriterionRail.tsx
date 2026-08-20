@@ -6,9 +6,11 @@ import type { AssessmentEntry } from "@/types/materialPrioritisation";
 
 /** Short ends of the 1-5 scale. Replaces the permanent anchor paragraph. */
 export const RAIL_ENDS: Record<string, { low: string; high: string }> = {
-  market_claim_value: { low: "No story", high: "Campaign claim" },
-  future_readiness: { low: "Delays it", high: "Gets ahead" },
-  risk_of_standing_still: { low: "Incumbent fine", high: "Staying is risky" },
+  risk_of_inaction: { low: "Incumbent fine", high: "Pressure is real" },
+  strategic_importance: { low: "Peripheral", high: "Central to strategy" },
+  market_pull: { low: "No demand signal", high: "Customers asking" },
+  economic_case: { low: "Worse economics", high: "Economics improve" },
+  supply_security: { low: "No improvement", high: "Materially more secure" },
 };
 
 const FALLBACK_ENDS = { low: "Weak case", high: "Strong case" };

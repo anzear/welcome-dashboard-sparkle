@@ -11,9 +11,9 @@ function rng(seed: number) {
   };
 }
 
-const MARKET = "market_claim_value";
-const FUTURE = "future_readiness";
-const RISK = "risk_of_standing_still";
+const MARKET = "market_pull";
+const FUTURE = "strategic_importance";
+const RISK = "risk_of_inaction";
 
 /** Where each criterion tends to sit before material-specific variation. */
 const TENDENCY: Record<string, number> = {
@@ -64,6 +64,14 @@ const RATIONALES: Record<string, { low: string[]; high: string[] }> = {
   },
 };
 
+/**
+ * Only the three carried-over criteria are seeded. Economic case and Supply
+ * security are new: they start with no entries anywhere.
+ */
+const CARRIED_CRITERIA = JUDGED_CRITERIA.filter((c) =>
+  [MARKET, FUTURE, RISK].includes(c.criterion_id),
+);
+
 const clamp = (v: number) => Math.min(5, Math.max(1, Math.round(v)));
 
 const pick = <T,>(list: T[], r: () => number) => list[Math.floor(r() * list.length)]!;
@@ -110,7 +118,7 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
     /** Roughly a quarter of the register has no assessment at all. */
     if (r() < 0.24) return;
 
-    JUDGED_CRITERIA.forEach((c, ci) => {
+    CARRIED_CRITERIA.forEach((c, ci) => {
       /** Not every criterion gets looked at on every material. */
       if (r() < 0.22) return;
 
@@ -145,7 +153,7 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
 
   /* ------------------------------------------------------- deliberate patterns
    * Two materials read as clearly aligned, two as clearly split (one of them on
-   * Risk of standing still), and one criterion is Neutral from everyone.
+   * Risk of inaction), and one criterion is Neutral from everyone.
    * -------------------------------------------------------------------------- */
 
   const ids = seedMaterialsWithHistory.map((m) => m.material_id);
