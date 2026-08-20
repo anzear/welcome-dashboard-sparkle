@@ -192,7 +192,7 @@ export const ROLE_PRESETS: { id: RolePresetId; label: string; match: (m: Materia
   },
   {
     id: "candidates_substitution",
-    label: "Candidates — source substitution",
+    label: "Candidates — substitution",
     match: (m) => m.role === "new" && m.entry_type === "substitution",
   },
 ];
