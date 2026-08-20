@@ -926,6 +926,19 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
                   <div>No materials match the current filters.</div>
+                  {(filtersActive || rolePreset !== "all") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters(EMPTY_FILTERS);
+                        setRolePreset("all");
+                      }}
+                      className="mt-1 block w-full text-[11px] text-foreground underline decoration-dotted underline-offset-2"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => setAddOpen(true)}
