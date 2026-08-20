@@ -13,6 +13,8 @@ import {
 import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/types/materialPrioritisation";
 import { CURRENT_USER, useRegister } from "@/components/materialRegister/registerStore";
 import { cleanTags, tagVocabulary } from "@/components/materialRegister/tags";
+import { cleanProductLines } from "@/components/materialRegister/productLines";
+import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 import {
   AutocompleteField,
   Field,
@@ -60,6 +62,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const [materialClass, setMaterialClass] = useState<string | null>(null);
   const [customerIds, setCustomerIds] = useState<string[]>([""]);
   const [tags, setTags] = useState<string[]>([]);
+  const [productLines, setProductLines] = useState<string[]>([]);
   const [applications, setApplications] = useState<string[]>([]);
   const [products, setProducts] = useState<string[]>([]);
   const [owner, setOwner] = useState<string | null>(null);
@@ -116,6 +119,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     setMaterialClass(null);
     setCustomerIds([""]);
     setTags([]);
+    setProductLines([]);
     setApplications([]);
     setProducts([]);
     setVolume(null);
@@ -143,6 +147,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
     markEntered("unit_price", price !== null);
     markEntered("ghg_emission_factor", factor !== null);
     markEntered("material_class", Boolean(materialClass));
+    markEntered("product_lines", productLines.length > 0);
     markEntered("owner", Boolean(owner));
     markEntered("journey_status", true);
     if (derivedSpend !== null)
@@ -161,6 +166,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       material_class: toNullString(materialClass),
       customer_material_ids: customerIds.map((v) => v.trim()).filter(Boolean),
       tags: cleanTags(tags),
+      product_lines: cleanProductLines(productLines),
       application_categories: applications,
       application_areas: products,
       owner: toNullString(owner),
@@ -277,9 +283,22 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             onChange={(v) => setTags(cleanTags(v))}
             suggestions={suggestions.tags}
             placeholder="e.g. Solvents"
-            typedTags
-            hint="Free text, your own labels. Tick the box to record a tag as a product line."
+            hint="Free text, your own labels."
           />
+
+          <div className="space-y-1">
+            <span className={LABEL}>Product line</span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <ProductLineChips
+                values={productLines}
+                onRemove={(v) => setProductLines(productLines.filter((x) => x !== v))}
+              />
+              <ProductLinePicker values={productLines} onChange={setProductLines} />
+            </div>
+            <span className="block text-[10px] leading-tight text-muted-foreground">
+              Chosen from the workspace list, separate from tags.
+            </span>
+          </div>
 
           <div className="space-y-1">
             <span className={LABEL}>Customer material IDs</span>

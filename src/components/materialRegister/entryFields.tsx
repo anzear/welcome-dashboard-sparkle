@@ -155,37 +155,18 @@ export const TagInput: React.FC<TagInputProps> = ({
           className="min-w-[7rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
         />
       </div>
-      {typedTags && (
-        <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <Checkbox checked={asLine} onCheckedChange={(v) => setAsLine(v === true)} className="h-3 w-3" />
-          This tag is a product line
-        </label>
-      )}
       {matches.length > 0 && (
-        <div className="space-y-1">
-          {typedTags && (
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
-              {q ? "Matches" : "Existing tags"}
-            </div>
-          )}
-          <div className="flex flex-wrap gap-1">
-            {matches.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => add(s, isProductLineTag(s))}
-                className={cn(
-                  "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
-                  typedTags && isProductLineTag(s) ? "border-primary/40 text-primary" : "border-border",
-                )}
-              >
-                {typedTags && isProductLineTag(s) && (
-                  <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
-                )}
-                {s}
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-wrap gap-1">
+          {matches.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => add(s)}
+              className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
+            >
+              {s}
+            </button>
+          ))}
         </div>
       )}
       {hint && <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>}
