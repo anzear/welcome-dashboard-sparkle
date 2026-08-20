@@ -701,7 +701,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               className="h-7 text-xs"
               onClick={() => setExportOpen(true)}
             >
-              Export decision
+              Export material profile
             </Button>
             <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
               Request coverage
@@ -872,7 +872,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
         open={exportOpen}
         onOpenChange={setExportOpen}
         materials={m ? [m] : []}
-        onExported={() => setExportNote("Decision exported · 1 material")}
+        onExported={() => setExportNote("Material profile exported · 1 material")}
       />
 
 
