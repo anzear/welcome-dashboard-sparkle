@@ -67,7 +67,7 @@ type OptionalColumn =
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
-  ["completeness", "Data filled", "Share of expected fields recorded"],
+  ["completeness", "Data status", "Share of expected fields recorded"],
   ["materialType", "Type", "How the material enters the portfolio"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
@@ -265,7 +265,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const headCell = (key: OptionalColumn) => {
     switch (key) {
       case "completeness":
-        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
+        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
       case "materialType":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Type</th>;
       case "productLine":
