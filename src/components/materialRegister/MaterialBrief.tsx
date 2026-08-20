@@ -310,16 +310,6 @@ const TagsField: React.FC<{
           </Button>
         </div>
       )}
-      {open && typedTags && (
-        <label className="flex items-center gap-1.5 pt-1.5 text-[10px] text-muted-foreground">
-          <Checkbox
-            checked={asLine}
-            onCheckedChange={(v) => setAsLine(v === true)}
-            className="h-3 w-3"
-          />
-          This tag is a product line
-        </label>
-      )}
       {open && matches.length > 0 && (
         <div className="pt-1.5">
           <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
