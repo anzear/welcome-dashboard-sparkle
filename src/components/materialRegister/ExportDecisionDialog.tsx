@@ -13,6 +13,9 @@ import {
   GATE_OUTCOMES,
   GATE_OUTCOME_LABEL,
   type GateOutcome,
+  MATERIAL_ROLES,
+  MATERIAL_ROLE_LABEL,
+  LINK_SECTION_LABEL,
   type Material,
 } from "@/types/materialPrioritisation";
 
@@ -24,6 +27,8 @@ import {
 
 const INCLUDED = [
   "Material name and CAS",
+  "Role — existing material or new material",
+  "Linked materials — a plain list of names, no scores",
   "Product line tags",
   "Gate outcome",
   "Conditions — text, owner, due date, met status (Go with conditions)",
@@ -82,8 +87,13 @@ export const ExportDecisionDialog: React.FC<{
   materials: Material[];
   onExported: (count: number) => void;
 }> = ({ open, onOpenChange, materials, onExported }) => {
-  const { recordEvents } = useRegister();
+  const { recordEvents, linkedMaterials } = useRegister();
   const batch = materials.length > 1;
+
+  const roleCounts = MATERIAL_ROLES.map((r) => ({
+    role: r,
+    count: materials.filter((m) => m.role === r).length,
+  })).filter((r) => r.count > 0);
 
   const breakdown = GATE_OUTCOMES.map((o) => ({
     outcome: o,
@@ -142,6 +152,43 @@ export const ExportDecisionDialog: React.FC<{
                   <span className="text-amber-700">under evaluation, no decision recorded</span>
                 </li>
               )}
+            </ul>
+          </div>
+        )}
+
+        {!batch && (
+          <div className="rounded-md border border-border bg-muted/40 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              Role
+            </div>
+            <p className="text-xs text-foreground">{MATERIAL_ROLE_LABEL[materials[0].role]}</p>
+            <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              {LINK_SECTION_LABEL[materials[0].role]}
+            </div>
+            {linkedMaterials(materials[0].material_id).length === 0 ? (
+              <p className="text-xs text-muted-foreground">None linked</p>
+            ) : (
+              <ul className="text-xs text-foreground">
+                {linkedMaterials(materials[0].material_id).map((l) => (
+                  <li key={l.material_id}>{l.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {batch && roleCounts.length > 0 && (
+          <div className="rounded-md border border-border bg-muted/40 px-3 py-2">
+            <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+              By role
+            </div>
+            <ul className="mt-1 space-y-0.5 text-xs">
+              {roleCounts.map((r) => (
+                <li key={r.role} className="flex items-baseline gap-2">
+                  <span className="w-6 text-right tabular-nums text-foreground">{r.count}</span>
+                  <span className="text-foreground">{MATERIAL_ROLE_LABEL[r.role]}</span>
+                </li>
+              ))}
             </ul>
           </div>
         )}
