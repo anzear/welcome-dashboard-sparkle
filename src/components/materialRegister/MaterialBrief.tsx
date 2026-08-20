@@ -31,6 +31,10 @@ import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDi
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+
+/** Select needs a non-empty value for the explicit "no type" choice. */
+const NOT_SET_TYPE = "__not_set__";
 
 import {
   CURRENT_USER,
