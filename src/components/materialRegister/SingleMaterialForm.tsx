@@ -54,7 +54,7 @@ interface Props {
 export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const { data, addMaterials } = useRegister();
 
-  const [entryType, setEntryType] = useState<EntryType>("drop_in");
+  const [entryType, setEntryType] = useState<EntryType | null>(null);
   const [name, setName] = useState("");
   const [cas, setCas] = useState("");
   const [lookup, setLookup] = useState<OntologyResult | null>(null);

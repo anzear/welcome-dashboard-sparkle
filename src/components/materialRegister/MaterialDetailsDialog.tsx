@@ -8,11 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useRegister, UNASSIGNED_OWNER } from "@/components/materialRegister/registerStore";
 import type { Material } from "@/types/materialPrioritisation";
 
-/** Entry type — the three values the customer chooses between. */
+/** Type — the two values the customer chooses between, plus no answer. */
 const INTENTS = [
-  { value: "drop_in", label: "Drop-in" },
-  { value: "substitution", label: "Substitution" },
   { value: "new_material", label: "New material" },
+  { value: "substitution", label: "Source substitution" },
 ] as const;
 
 const Req = () => <span className="text-destructive"> *</span>;
@@ -48,9 +47,7 @@ const MaterialDetailsDialog: React.FC<{
   );
 
   const [name, setName] = useState(material.name);
-  const [intent, setIntent] = useState<string>(
-    material.entry_type,
-  );
+  const [intent, setIntent] = useState<string>(material.entry_type ?? "");
   const [materialClass, setMaterialClass] = useState<string>(material.material_class ?? "");
   const [apps, setApps] = useState<string[]>(material.application_categories);
   const [custom, setCustom] = useState("");
@@ -71,7 +68,7 @@ const MaterialDetailsDialog: React.FC<{
       material.material_id,
       {
         name: name.trim() || material.name,
-        entry_type: intent as Material["entry_type"],
+        entry_type: (intent || null) as Material["entry_type"],
         material_class: materialClass || null,
         application_categories: apps,
         owner: nextOwner,

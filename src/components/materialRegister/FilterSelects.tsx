@@ -8,14 +8,14 @@ import {
   JOURNEY_STATUS_LABEL,
   SUBSTITUTABILITY_LABEL,
   type CompetitorActivity,
-  type EntryType,
   type JourneyStatus,
   type SubstitutabilityReadiness,
 } from "@/types/materialPrioritisation";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
-  ENTRY_TYPE_LABEL,
+  NO_ENTRY_TYPE,
   NO_PRIORITY,
   NO_PRODUCT_LINE,
   UNASSIGNED_OWNER,
@@ -63,10 +63,16 @@ const FilterSelects: React.FC<{
         ...uniq(data.map((m) => m.owner)).map((v) => ({ value: v, label: v })),
         { value: UNASSIGNED_OWNER, label: "Unassigned" },
       ],
-      entryTypes: uniq(data.map((m) => m.entry_type)).map((v) => ({
-        value: v,
-        label: ENTRY_TYPE_LABEL[v as EntryType] ?? v,
-      })),
+      entryTypes: [
+        ...ENTRY_TYPES.map((e) => ({
+          value: e.id as string,
+          label: `${e.label} (${data.filter((m) => m.entry_type === e.id).length})`,
+        })),
+        {
+          value: NO_ENTRY_TYPE,
+          label: `Not set (${data.filter((m) => m.entry_type === null).length})`,
+        },
+      ],
       classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
 
       products: uniq(data.flatMap((m) => m.application_areas ?? [])).map((v) => ({
@@ -118,7 +124,7 @@ const FilterSelects: React.FC<{
   const controls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
     ["statuses", "Status", options.statuses, filters.statuses],
     ["owners", "Owner", options.owners, filters.owners],
-    ["entryTypes", "Entry type", options.entryTypes, filters.entryTypes],
+    ["entryTypes", "Type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
     ["products", "Applications", options.products, filters.products],
     ["applications", "Product category", options.applications, filters.applications],

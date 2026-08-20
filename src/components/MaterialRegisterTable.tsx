@@ -7,6 +7,7 @@ import {
   type Material,
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
