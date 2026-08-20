@@ -8,20 +8,20 @@ export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
 /**
  * ROLE — what the material is in the portfolio. Two values only, required on
  * every record. An existing material is one the company already buys and may
- * want to replace; a new material is a candidate that could replace one.
+ * want to replace; a replacement candidate is a material that could replace one.
  * Company-entered data: never derived, never inferred from other fields.
  */
 export type MaterialRole = "existing" | "new";
 
 export const MATERIAL_ROLE_LABEL: Record<MaterialRole, string> = {
   existing: "Existing material",
-  new: "New material",
+  new: "Replacement candidate",
 };
 
 /** Short form for dense table cells. */
 export const MATERIAL_ROLE_SHORT: Record<MaterialRole, string> = {
   existing: "Existing",
-  new: "New",
+  new: "Candidate",
 };
 
 export const MATERIAL_ROLES: MaterialRole[] = ["existing", "new"];
