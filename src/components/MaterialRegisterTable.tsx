@@ -265,7 +265,7 @@ export const MaterialRegisterTable: React.FC = () => {
   const headCell = (key: OptionalColumn) => {
     switch (key) {
       case "completeness":
-        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
+        return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
       case "materialType":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Type</th>;
       case "productLine":
