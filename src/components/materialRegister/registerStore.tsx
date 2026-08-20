@@ -501,7 +501,13 @@ interface Store {
 
 }
 
-const Ctx = createContext<Store | null>(null);
+/**
+ * Kept on globalThis so a hot-module reload reuses the same context object.
+ * Without this, a refresh of this module creates a fresh context while the
+ * mounted provider still holds the old one, and consumers read null.
+ */
+const g = globalThis as unknown as { __registerCtx?: React.Context<Store | null> };
+const Ctx = (g.__registerCtx ??= createContext<Store | null>(null));
 
 export const useRegister = () => {
   const v = useContext(Ctx);
