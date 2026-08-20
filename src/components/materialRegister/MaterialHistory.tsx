@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { cn } from "@/lib/utils";
 import {
   EVENT_FIELD_LABEL,
@@ -109,50 +109,23 @@ const Label: React.FC<{ children: React.ReactNode; tone?: "muted" | "bulk" }> = 
 
 export const MaterialHistory: React.FC<{ materialId: string }> = ({ materialId }) => {
   const { eventsFor } = useRegister();
-  const [showBaselining, setShowBaselining] = useState(false);
 
   const all = useMemo(() => eventsFor(materialId), [eventsFor, materialId]);
-  const baseliningCount = all.filter((e) => e.batch_origin === "baselining").length;
-  const shown = showBaselining ? all : all.filter((e) => e.batch_origin !== "baselining");
 
   const groups = useMemo(() => {
     const out: { key: string; events: MaterialEvent[] }[] = [];
-    shown.forEach((e) => {
+    all.forEach((e) => {
       const k = dayKey(e.changed_at);
       const last = out[out.length - 1];
       if (last && last.key === k) last.events.push(e);
       else out.push({ key: k, events: [e] });
     });
     return out;
-  }, [shown]);
+  }, [all]);
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-2 pb-2">
-        <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={showBaselining}
-            onChange={(e) => setShowBaselining(e.target.checked)}
-            className="h-3 w-3 accent-[hsl(var(--primary))]"
-          />
-          Show baselining events
-        </label>
-        {!showBaselining && baseliningCount > 0 && (
-          <span className="text-[10px] text-muted-foreground">
-            <span className="tabular-nums">{baseliningCount}</span> baselining event
-            {baseliningCount === 1 ? "" : "s"} hidden
-          </span>
-        )}
-      </div>
-
       {all.length === 0 && <p className="text-[11px] text-muted-foreground">No recorded changes yet.</p>}
-
-      {all.length > 0 && shown.length === 0 && (
-        <p className="text-[11px] text-muted-foreground">
-          Nothing but the baselined starting position. No decisions recorded since the file was loaded.
-        </p>
-      )}
 
       <div className="space-y-3">
         {groups.map((g) => (
