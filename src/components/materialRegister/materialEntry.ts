@@ -1,3 +1,4 @@
+import { cleanProductLines } from "@/components/materialRegister/productLines";
 import { EMPTY_GATE } from "@/types/materialPrioritisation";
 import { cleanTags } from "@/components/materialRegister/tags";
 import { materials as seedMaterials } from "@/data/materialPrioritisationMock";
@@ -137,6 +138,7 @@ export function blankMaterial(entry_type: EntryType = "drop_in"): Omit<Material,
     cas_number: null,
     material_class: null,
     tags: [],
+    product_lines: [],
     application_categories: [],
     application_areas: [],
     entry_type,
@@ -500,6 +502,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
     material_class: toNullString(v.material_class),
     customer_material_ids: splitList(v.customer_material_ids),
     tags: cleanTags(splitList(v.tags)),
+    product_lines: cleanProductLines(splitList(v.product_lines)),
     application_categories: splitList(v.application_categories),
     application_areas: splitList(v.application_areas),
     entry_type,

@@ -496,6 +496,7 @@ export const materials: Material[] = rows.map((row, i) => {
     cas_number: row.cas,
     material_class: row.cls,
     tags: [row.tag],
+    product_lines: [],
     application_categories: categoriesFor(row),
     application_areas: row.prods,
     entry_type: i % 9 === 4 ? "substitution" : "drop_in",
