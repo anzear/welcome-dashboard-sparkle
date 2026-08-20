@@ -1,16 +1,14 @@
-// Product lines are tags, not a field. A material sits in as many product lines as
-// it is actually used in. The only thing that separates a product line tag from a
-// general tag is its type — the storage is the same Tags array.
+// Product line is a first-class field on a material, not a tag. Values come from
+// a controlled workspace list: a material may sit in several product lines, but
+// the vocabulary is governed centrally rather than typed freely per material.
 
 import { useEffect, useState } from "react";
 import type { Material } from "@/types/materialPrioritisation";
 import { normalizeTag, tagKey } from "@/components/materialRegister/tags";
 
-export type TagType = "product_line" | "general";
-
 /**
- * The commercial brand lines in play. Company-entered vocabulary, so the list is
- * open: marking a new tag as a product line adds it here for the whole session.
+ * The controlled list, held at workspace level. Seeded with the brand lines the
+ * register was loaded with; a user can add to it deliberately from a picker.
  */
 export const PRODUCT_LINES: string[] = ["Persil", "Pril", "Perwoll", "Somat", "Bref"];
 
@@ -18,7 +16,7 @@ const PRODUCT_LINE_KEYS = new Set(PRODUCT_LINES.map((p) => tagKey(p)));
 
 const listeners = new Set<() => void>();
 
-/** Records a tag as a product line. Returns the canonical spelling stored. */
+/** Adds a value to the controlled list. Returns the canonical spelling stored. */
 export function registerProductLine(raw: string): string | null {
   const t = normalizeTag(raw);
   if (!t) return null;
@@ -30,7 +28,7 @@ export function registerProductLine(raw: string): string | null {
   return t;
 }
 
-/** Re-renders a component when the product line vocabulary grows. */
+/** Re-renders a component when the controlled list grows. */
 export function useProductLines(): string[] {
   const [, bump] = useState(0);
   useEffect(() => {
@@ -43,27 +41,53 @@ export function useProductLines(): string[] {
   return PRODUCT_LINES;
 }
 
-export const tagTypeOf = (tag: string): TagType =>
-  PRODUCT_LINE_KEYS.has(tagKey(tag)) ? "product_line" : "general";
+/** True when a value is part of the controlled product line list. */
+export const isProductLineValue = (value: string) => PRODUCT_LINE_KEYS.has(tagKey(value));
 
-export const isProductLineTag = (tag: string) => tagTypeOf(tag) === "product_line";
+/** Canonical spelling for a product line, so counts never split on case. */
+export const canonicalProductLine = (value: string) =>
+  PRODUCT_LINES.find((p) => tagKey(p) === tagKey(value)) ?? value;
 
-/** Canonical spelling for a product line tag, so counts never split on case. */
-export const canonicalProductLine = (tag: string) =>
-  PRODUCT_LINES.find((p) => tagKey(p) === tagKey(tag)) ?? tag;
+/** Cleans an assignment: canonical spellings, de-duplicated, order kept. */
+export const cleanProductLines = (raw: (string | null | undefined)[]): string[] => {
+  const out: string[] = [];
+  raw.forEach((r) => {
+    const t = normalizeTag(r);
+    if (!t) return;
+    const c = canonicalProductLine(t);
+    if (!out.some((x) => tagKey(x) === tagKey(c))) out.push(c);
+  });
+  return out;
+};
 
-export const productLinesOf = (m: Pick<Material, "tags">) =>
-  (m.tags ?? []).filter(isProductLineTag).map(canonicalProductLine);
+/** The material's own field. No product line assigned is an empty list, never a placeholder. */
+export const productLinesOf = (m: Pick<Material, "product_lines">) =>
+  (m.product_lines ?? []).map(canonicalProductLine);
 
-export const generalTagsOf = (m: Pick<Material, "tags">) =>
-  (m.tags ?? []).filter((t) => !isProductLineTag(t));
+/**
+ * Migration: any product line value still sitting in Tags moves into the field
+ * and is dropped from Tags, so the same fact never appears in two places.
+ */
+export function migrateProductLinesFromTags<T extends Pick<Material, "tags" | "product_lines">>(
+  rows: T[],
+): T[] {
+  return rows.map((m) => {
+    const fromTags = (m.tags ?? []).filter(isProductLineValue);
+    if (fromTags.length === 0) return m;
+    return {
+      ...m,
+      product_lines: cleanProductLines([...(m.product_lines ?? []), ...fromTags]),
+      tags: (m.tags ?? []).filter((t) => !isProductLineValue(t)),
+    };
+  });
+}
 
-/** Scope value for materials carrying no product line tag at all. */
+/** Scope value for materials carrying no product line at all. */
 export const SCOPE_UNTAGGED = "__untagged_line__";
 
 export type Scope = string | null;
 
-export const inScope = (m: Pick<Material, "tags">, scope: Scope) => {
+export const inScope = (m: Pick<Material, "product_lines">, scope: Scope) => {
   if (scope === null) return true;
   const lines = productLinesOf(m);
   if (scope === SCOPE_UNTAGGED) return lines.length === 0;
@@ -74,7 +98,7 @@ export const scopeLabel = (scope: Scope) =>
   scope === null ? "All materials" : scope === SCOPE_UNTAGGED ? "Untagged" : canonicalProductLine(scope);
 
 /** Counts per product line plus the untagged bucket. Derived, never stored. */
-export function productLineCounts(rows: Pick<Material, "tags">[]) {
+export function productLineCounts(rows: Pick<Material, "product_lines">[]) {
   const lines = PRODUCT_LINES.map((line) => ({
     value: line as string,
     label: line as string,
