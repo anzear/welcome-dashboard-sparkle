@@ -11,7 +11,14 @@ import type {
  * run in the same direction — a high score supports switching. They are never
  * blended, totalled, averaged or weighted into a single number.
  */
-export const STANDARD_JUDGED: AssessmentCriterion[] = [
+const anchorsOf = (low?: string, high?: string) =>
+  low && high ? `5 = ${high} · 1 = ${low}` : undefined;
+
+/** Keeps the printable anchor line in step with the low/high labels. */
+const withAnchors = (list: AssessmentCriterion[]): AssessmentCriterion[] =>
+  list.map((c) => ({ ...c, anchors: anchorsOf(c.anchor_low, c.anchor_high) }));
+
+export const STANDARD_JUDGED: AssessmentCriterion[] = withAnchors([
   {
     criterion_id: "regulatory_pressure",
     label: "Regulatory pressure",
@@ -75,7 +82,7 @@ export const STANDARD_JUDGED: AssessmentCriterion[] = [
     anchor_low: "Performance gap",
     anchor_high: "Meets or beats incumbent",
   },
-];
+]);
 
 /** The two evidence rows. Read from data the platform already holds. */
 export const EVIDENCE_CRITERIA: AssessmentCriterion[] = [
@@ -100,7 +107,7 @@ export const EVIDENCE_CRITERIA: AssessmentCriterion[] = [
  * set, and its recorded scores, rationales and contributors must stay readable.
  * It is therefore carried as a hidden criterion: out of use, nothing deleted.
  */
-export const RETIRED_JUDGED: AssessmentCriterion[] = [
+export const RETIRED_JUDGED: AssessmentCriterion[] = withAnchors([
   {
     criterion_id: "strategic_importance",
     label: "Strategic importance",
@@ -111,13 +118,12 @@ export const RETIRED_JUDGED: AssessmentCriterion[] = [
     anchor_high: "Central to strategy",
     hidden: true,
   },
-];
+]);
 
 export const STANDARD_JUDGED_IDS = STANDARD_JUDGED.map((c) => c.criterion_id);
 
 /** Anchors as one printable line. Derived, never stored separately by a user. */
-export const anchorLine = (c: AssessmentCriterion) =>
-  c.anchor_low && c.anchor_high ? `5 = ${c.anchor_high} · 1 = ${c.anchor_low}` : undefined;
+export const anchorLine = (c: AssessmentCriterion) => anchorsOf(c.anchor_low, c.anchor_high);
 
 /** How many custom criteria a workspace may hold. */
 export const MAX_CUSTOM_CRITERIA = 2;
