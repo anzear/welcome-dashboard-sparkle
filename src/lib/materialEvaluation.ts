@@ -321,7 +321,7 @@ function truncate(s: string, n = 32) {
 export function diffSummary(prev: SectionSnapshot, next: SectionSnapshot, key: SectionKey): string {
   if (key === "order") {
     if (!prev.status && next.status === "Ordered") {
-      return `Ordered intelligence${next.order?.reason ? ` — “${truncate(next.order.reason, 60)}”` : ""}`;
+      return `Coverage requested${next.order?.reason ? ` — “${truncate(next.order.reason, 60)}”` : ""}`;
     }
     return "";
   }

@@ -555,7 +555,7 @@ export default function MaterialPipeline() {
                               <>
                                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                                 <span className="text-[10px] uppercase tracking-widest font-semibold text-emerald-700">
-                                  Intelligence ordered
+                                  Coverage requested
                                 </span>
                               </>
                             ) : (

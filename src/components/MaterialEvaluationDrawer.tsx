@@ -505,7 +505,7 @@ export default function MaterialEvaluationDrawer({
                 </span>
                 {isOrdered && (
                   <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 inline-flex items-center gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> Ordered
+                    <CheckCircle2 className="w-3 h-3" /> Coverage requested
                   </span>
                 )}
               </div>
@@ -593,7 +593,7 @@ export default function MaterialEvaluationDrawer({
                   className="h-9 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   <ShoppingBag className="w-3.5 h-3.5" />
-                  Order full intelligence
+                  Request coverage
                 </Button>
               ) : (
                 <div className="rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2.5 py-1.5 text-[10px] text-emerald-700 inline-flex items-center gap-1.5">
@@ -698,7 +698,7 @@ export default function MaterialEvaluationDrawer({
 
           {isOrdered && ev.order && (
             <div className="mt-3 rounded-md bg-emerald-500/5 border border-emerald-500/20 px-3 py-2 text-[11px] text-emerald-800">
-              <span className="font-semibold">Intelligence ordered</span> by {ev.order.by} · {formatRelative(ev.order.at)}
+              <span className="font-semibold">Coverage requested</span> by {ev.order.by} · {formatRelative(ev.order.at)}
               {ev.order.reason && <span className="text-emerald-700/80"> — “{ev.order.reason}”</span>}
             </div>
           )}
@@ -1068,17 +1068,17 @@ export default function MaterialEvaluationDrawer({
             {/* Block F — Order / Decision (history only, always visible) */}
             <SectionFrame
               sectionKey="order"
-              title={<><ShoppingBag className="w-3 h-3" /> Order Decision</>}
+              title={<><ShoppingBag className="w-3 h-3" /> Coverage request</>}
               ev={ev}
               onRestore={handleRestore}
             >
               {!isOrdered ? (
                 <p className="text-[11px] text-muted-foreground italic">
-                  Not ordered yet. When ready, click <span className="font-semibold text-foreground">Order full intelligence</span> in the header to convert this discovery into a purchased topic.
+                  Coverage not requested yet. When ready, click <span className="font-semibold text-foreground">Request coverage</span> in the header to open this discovery for full coverage.
                 </p>
               ) : (
                 <div className="text-[11px] text-foreground space-y-1">
-                  <div>Status: <span className="font-semibold text-emerald-700">Ordered</span></div>
+                  <div>Status: <span className="font-semibold text-emerald-700">Coverage requested</span></div>
                   <div className="text-muted-foreground">
                     by {ev.order?.by} · {ev.order && new Date(ev.order.at).toLocaleString()}
                   </div>
@@ -1097,10 +1097,10 @@ export default function MaterialEvaluationDrawer({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="inline-flex items-center gap-2">
-              <ShoppingBag className="w-4 h-4 text-emerald-600" /> Order full intelligence
+              <ShoppingBag className="w-4 h-4 text-emerald-600" /> Request coverage
             </DialogTitle>
             <DialogDescription>
-              Convert this discovery into a purchased topic. The evaluation will be locked as read-only and the topic will be opened for full research.
+              Request full coverage for this discovery. The evaluation will be locked as read-only and the topic will be opened for full research.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -1127,11 +1127,11 @@ export default function MaterialEvaluationDrawer({
               </div>
               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                 <Avatar name={currentUser.name} size={4} />
-                Ordering as <span className="font-semibold text-foreground">{currentUser.name}</span>
+                Requesting as <span className="font-semibold text-foreground">{currentUser.name}</span>
               </div>
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] text-muted-foreground">Reason for ordering (optional)</label>
+              <label className="text-[11px] text-muted-foreground">Reason for the request (optional)</label>
               <Textarea
                 value={orderReason}
                 onChange={(e) => setOrderReason(e.target.value)}
@@ -1143,7 +1143,7 @@ export default function MaterialEvaluationDrawer({
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setOrderOpen(false)}>Cancel</Button>
             <Button size="sm" onClick={confirmOrder} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-              Confirm order
+              Request coverage
             </Button>
           </DialogFooter>
         </DialogContent>

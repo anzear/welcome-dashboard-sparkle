@@ -66,8 +66,8 @@ export type ProvenanceOrigin = "ingested" | "computed" | "entered" | "unknown";
 export type IntelligenceStatus = "not_ordered" | "requested" | "in_progress" | "delivered";
 
 export const INTELLIGENCE_STATUS_LABEL: Record<IntelligenceStatus, string> = {
-  not_ordered: "Not ordered",
-  requested: "Requested",
+  not_ordered: "Not requested",
+  requested: "Coverage requested",
   in_progress: "In progress",
   delivered: "Delivered",
 };
@@ -81,7 +81,7 @@ export interface FieldProvenance {
 /**
  * VCG signals — three slim computed signals per material. They report whether
  * something exists, never what it is: no pathway names, no supplier identities,
- * no competitor names. The detail sits behind an intelligence order.
+ * no competitor names. The detail sits behind a coverage request.
  */
 export type SubstitutabilityReadiness = "established" | "emerging" | "none_found" | "not_assessed";
 

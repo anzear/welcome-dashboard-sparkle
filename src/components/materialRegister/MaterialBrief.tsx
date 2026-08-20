@@ -704,7 +704,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               Export decision
             </Button>
             <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
-              Order intelligence
+              Request coverage
             </Button>
           </div>
         </div>

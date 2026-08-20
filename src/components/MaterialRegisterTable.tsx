@@ -74,7 +74,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["contributors", "Contributors", "People with at least one input on the brief"],
-  ["intelligence", "Intelligence", "Whether a search has been requested"],
+  ["intelligence", "Coverage", "Whether coverage has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
 
@@ -293,7 +293,7 @@ export const MaterialRegisterTable: React.FC = () => {
       case "priority":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Priority</th>;
       case "intelligence":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Intelligence</th>;
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Coverage</th>;
       case "owner":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Owner</th>;
       case "contributors":
@@ -700,7 +700,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 ["entry_type", "Set entry type"],
                 ["products", "Set application area"],
                 ["applications", "Set application"],
-                ["intelligence", "Order intelligence"],
+                ["intelligence", "Request coverage"],
               ] as [BulkKind, string][]
 
             ).map(([k, label]) => (
