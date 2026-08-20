@@ -720,7 +720,7 @@ export const MaterialRegisterTable: React.FC = () => {
               onClick={() => setExportOpen(true)}
               className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
             >
-              Export decisions
+              Export material profiles
             </button>
             <button
               type="button"
@@ -940,7 +940,7 @@ export const MaterialRegisterTable: React.FC = () => {
         onOpenChange={setExportOpen}
         materials={selectedMaterials}
         onExported={(count) =>
-          setExportNote(`Decision exported · ${count} material${count === 1 ? "" : "s"}`)
+          setExportNote(`Material profile${count === 1 ? "" : "s"} exported · ${count} material${count === 1 ? "" : "s"}`)
         }
       />
 

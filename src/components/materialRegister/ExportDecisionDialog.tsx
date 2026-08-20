@@ -17,7 +17,7 @@ import {
 } from "@/types/materialPrioritisation";
 
 /**
- * The decision document export. A record of what was decided — never a working
+ * The material profile export. A record of what was decided — never a working
  * copy. No render, no preview, no download, no format options: the action
  * confirms and completes.
  */
@@ -115,8 +115,8 @@ export const ExportDecisionDialog: React.FC<{
         <DialogHeader>
           <DialogTitle className="text-sm">
             {batch
-              ? `Export decisions — ${materials.length} materials`
-              : `Export decision — ${materials[0].name}`}
+              ? `Export material profiles — ${materials.length} materials`
+              : `Export material profile — ${materials[0].name}`}
           </DialogTitle>
           <DialogDescription className="text-xs">
             Gate outcome, conditions, rationale, and who decided. Assessment scores, supporting documents,
