@@ -751,7 +751,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 ["product_lines", "Product lines"],
                 ["tags", "Tags"],
                 ["entry_type", "Set entry type"],
-                ["products", "Set application area"],
+                ["products", "Set applications"],
                 ["applications", "Set application"],
                 ["intelligence", "Request coverage"],
               ] as [BulkKind, string][]

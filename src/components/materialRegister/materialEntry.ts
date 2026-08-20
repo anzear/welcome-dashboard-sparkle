@@ -218,7 +218,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
   },
   {
     field: "application_areas",
-    label: "Application areas",
+    label: "Applications",
     kind: "list",
     example1: "Hard surface cleaner",
     example2: "Skin care",

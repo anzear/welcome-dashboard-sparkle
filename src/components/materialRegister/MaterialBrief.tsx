@@ -216,7 +216,7 @@ const DerivedField: React.FC<{
   );
 };
 
-/** Editable list of tags (application / application areas). */
+/** Editable list of tags (product categories / applications). */
 const TagsField: React.FC<{
   label: string;
   values: string[];
@@ -641,7 +641,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                     <NoneYet />
                   )}
                 </HeadGroup>
-                <HeadGroup label="Application areas">
+                <HeadGroup label="Applications">
                   {m.application_areas.length > 0 ? (
                     m.application_areas.map((t) => <Chip key={t}>{t}</Chip>)
                   ) : (
@@ -807,7 +807,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                 }
               />
               <TagsField
-                label="Application areas"
+                label="Applications"
                 values={m.application_areas}
                 onSave={(v) =>
                   updateMaterial(m.material_id, { application_areas: v }, ["application_areas"], [
