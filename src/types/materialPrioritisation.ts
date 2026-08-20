@@ -450,6 +450,17 @@ export interface AssessmentCriterion {
   helper: string;
   /** What the ends of the 1–5 scale mean. Judged criteria only. */
   anchors?: string;
+  /** What the low (1) end of the scale means. Judged criteria only. */
+  anchor_low?: string;
+  /** What the high (5) end of the scale means. Judged criteria only. */
+  anchor_high?: string;
+  /** True for a workspace-added criterion. Standard criteria are never custom. */
+  custom?: boolean;
+  /**
+   * Hidden criteria are out of use: gone from entry, columns, ranking, filters
+   * and counts. Their recorded entries are never deleted and stay readable.
+   */
+  hidden?: boolean;
 }
 
 /**
