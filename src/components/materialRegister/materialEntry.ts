@@ -202,6 +202,14 @@ export const CSV_COLUMNS: CsvColumn[] = [
     example2: "Humectants",
   },
   {
+    field: "product_lines",
+    label: "Product line",
+    kind: "list",
+    example1: "Persil;Pril",
+    example2: "Somat",
+  },
+
+  {
     field: "application_categories",
     label: "Product categories",
     kind: "list",
