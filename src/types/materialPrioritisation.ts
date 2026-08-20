@@ -170,6 +170,12 @@ export interface Material {
   material_class: string | null;
   /** Free-text customer tags. Never null — empty array when none. */
   tags: string[];
+  /**
+   * Product lines the material belongs to. Its own field, separate from Tags,
+   * drawn from the controlled workspace list. Empty array = none assigned.
+   */
+  product_lines: string[];
+
   application_categories: string[];
   application_areas: string[];
   entry_type: EntryType;
