@@ -120,7 +120,7 @@ const FilterSelects: React.FC<{
     ["owners", "Owner", options.owners, filters.owners],
     ["entryTypes", "Entry type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
-    ["products", "Application area", options.products, filters.products],
+    ["products", "Applications", options.products, filters.products],
     ["applications", "Product category", options.applications, filters.applications],
     ["productLines", "Product line", options.productLines, filters.productLines],
     ["tags", "Tags", options.tags, filters.tags],

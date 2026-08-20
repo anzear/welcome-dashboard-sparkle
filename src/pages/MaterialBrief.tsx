@@ -328,7 +328,7 @@ const MaterialBrief: React.FC = () => {
     const m: string[] = [];
     if (!p.materialName) m.push('Material name');
     if (!p.intent) m.push('Material intent');
-    if (!p.applicationArea) m.push('Application area');
+    if (!p.applicationArea) m.push('Applications');
     if (!p.requiredFunction) m.push('Required function');
     if (!p.currentStatus) m.push('Current status');
     if (!p.primaryDriver) m.push('Primary driver');
@@ -852,7 +852,7 @@ const MaterialBrief: React.FC = () => {
                         </div>
                       </div>
                       <div>
-                        <FieldLabel required owner="Product / R&D">Application area</FieldLabel>
+                        <FieldLabel required owner="Product / R&D">Applications</FieldLabel>
                         <Input value={p.applicationArea} onChange={e => setPField('applicationArea', e.target.value)}
                           placeholder="e.g. laundry detergent, adhesive formulation, packaging film, surface treatment" />
                       </div>

@@ -172,7 +172,7 @@ export interface Filters {
   tags: string[];
   /** Product lines, matched with ANY. Controlled values only; may include NO_PRODUCT_LINE. */
   productLines: string[];
-  /** Application areas, matched with ANY. */
+  /** Applications, matched with ANY. */
   products: string[];
   /** Product categories, matched with ANY. */
   applications: string[];
@@ -952,7 +952,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         : payload.kind === "owner"
           ? "Owner"
           : payload.kind === "products"
-            ? "Application areas"
+            ? "Applications"
             : payload.kind === "applications"
               ? "Product categories"
               : payload.kind === "priority_period"
