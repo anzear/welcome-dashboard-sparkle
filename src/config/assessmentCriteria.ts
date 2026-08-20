@@ -21,29 +21,44 @@ export const CRITERIA: AssessmentCriterion[] = [
     helper: "Read from the VCG signals: substitutability, suppliers, competitor activity.",
   },
   {
-    criterion_id: "market_claim_value",
-    label: "Market & claim value",
+    criterion_id: "risk_of_inaction",
+    label: "Risk of inaction",
     kind: "judgement",
     helper:
-      "What changing this material unlocks in front of customers. New claims, differentiation, a story sales and marketing do not have today.",
-    anchors:
-      "5 = unlocks a claim we could build a campaign on · 1 = no story here, consumers do not read this ingredient.",
+      "Extent to which regulatory pressure, competitor activity, changing customer expectations, reputational exposure, or sustainability commitments create a need to replace the incumbent material.",
+    anchors: "5 = pressure is real · 1 = incumbent fine.",
   },
   {
-    criterion_id: "future_readiness",
-    label: "Future readiness",
+    criterion_id: "strategic_importance",
+    label: "Strategic importance",
     kind: "judgement",
     helper:
-      "Whether changing this material gets us ahead of where regulation, feedstock cost and our own CO2 commitments are heading — or only delays the same conversation.",
-    anchors: "5 = ahead of the rules and the cost curve for the long term · 1 = buys three years, then we do this again.",
+      "Extent to which the new material supports long-term business priorities, including innovation, product strategy, regulatory readiness, and CO₂ roadmaps.",
+    anchors: "5 = central to strategy · 1 = peripheral.",
   },
   {
-    criterion_id: "risk_of_standing_still",
-    label: "Risk of standing still",
+    criterion_id: "market_pull",
+    label: "Market pull",
     kind: "judgement",
     helper:
-      "What staying on the incumbent material exposes us to. Supply concentration, regulatory exposure today, reputational exposure. This scores the risk of NOT changing, not the risk of changing.",
-    anchors: "5 = staying put is the risky option · 1 = incumbent is stable, nothing pushing us off it.",
+      "Extent to which customer demand, new market opportunities, differentiation potential, or stronger product claims support implementation.",
+    anchors: "5 = customers asking · 1 = no demand signal.",
+  },
+  {
+    criterion_id: "economic_case",
+    label: "Economic case",
+    kind: "judgement",
+    helper:
+      "Extent to which the new material offers attractive costs, margins, investment returns, or improved long-term cost competitiveness.",
+    anchors: "5 = economics improve · 1 = worse economics.",
+  },
+  {
+    criterion_id: "supply_security",
+    label: "Supply security",
+    kind: "judgement",
+    helper:
+      "Extent to which the new material improves availability, supplier diversification, price stability, and supply-chain resilience.",
+    anchors: "5 = materially more secure · 1 = no improvement.",
   },
 ];
 
