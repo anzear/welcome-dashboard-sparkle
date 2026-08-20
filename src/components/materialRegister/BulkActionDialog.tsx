@@ -91,18 +91,15 @@ const UNASSIGNED = "__unassigned__";
 const MULTI: Record<string, { field: keyof Material; noun: string }> = {
   products: { field: "application_areas", noun: "application area" },
   applications: { field: "application_categories", noun: "product category" },
-  product_lines: { field: "tags", noun: "product line" },
+  product_lines: { field: "product_lines", noun: "product line" },
   tags: { field: "tags", noun: "tag" },
 };
 
-/** Tags carry a type, so the two tag actions never see each other's vocabulary. */
+/** Each action reads only its own field — product line and tags are separate. */
 const valuesOf = (m: Material, kind: BulkKind): string[] => {
   const cfg = MULTI[kind];
   if (!cfg) return [];
-  const list = ((m[cfg.field] as string[] | null) ?? []) as string[];
-  if (kind === "product_lines") return list.filter(isProductLineTag);
-  if (kind === "tags") return list.filter((t) => !isProductLineTag(t));
-  return list;
+  return ((m[cfg.field] as string[] | null) ?? []) as string[];
 };
 
 /** Vocabulary present on the selection, with counts — the only removable set. */
@@ -174,22 +171,18 @@ export const BulkActionDialog: React.FC<Props> = ({
   const addMatches = useMemo(() => {
     if (!isMulti) return [];
     const q = draft.trim().toLowerCase();
-    const pool =
-      kind === "tags" ? [...new Set([...productLines, ...suggestions])] : suggestions;
-    const available = pool.filter((t) => !hasTag(values, t));
-    // Product lines and the tag vocabulary are offered before anything is typed.
-    if (!q) return kind === "product_lines" || kind === "tags" ? available.slice(0, 12) : [];
+    const available = suggestions.filter((t) => !hasTag(values, t));
+    // The tag vocabulary is offered before anything is typed.
+    if (!q) return kind === "tags" ? available.slice(0, 12) : [];
     return available.filter((t) => t.toLowerCase().includes(q)).slice(0, 8);
   }, [draft, suggestions, values, isMulti, kind, productLines]);
 
-  const addValue = (raw: string, markLine?: boolean) => {
+  const addValue = (raw: string) => {
     const t = normalizeTag(raw);
     setDraft("");
     if (!t) return;
-    const stored =
-      kind === "tags" && (markLine ?? asLine) ? (registerProductLine(t) ?? t) : t;
-    if (hasTag(values, stored)) return;
-    setValues((prev) => [...prev, stored]);
+    if (hasTag(values, t)) return;
+    setValues((prev) => [...prev, t]);
   };
 
   /** Per-value consequence sentence: who gains it, who already has it. */
@@ -334,22 +327,28 @@ export const BulkActionDialog: React.FC<Props> = ({
               </div>
 
               {isMulti ? (
-                mode === "add" ? (
+                mode === "add" && kind === "product_lines" ? (
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-1.5 py-1.5">
+                      <ProductLineChips
+                        values={values}
+                        onRemove={(v) => setValues(values.filter((x) => x !== v))}
+                        emptyLabel="No product line chosen"
+                      />
+                      <ProductLinePicker values={values} onChange={setValues} />
+                    </div>
+                    <p className="text-[10px] leading-tight text-muted-foreground">
+                      Chosen from the workspace list. New values are added from inside the picker.
+                    </p>
+                  </div>
+                ) : mode === "add" ? (
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-1 rounded-md border border-input bg-background px-1.5 py-1">
                       {values.map((t) => (
                         <span
                           key={t}
-                          className={cn(
-                            "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px]",
-                            kind === "tags" && isProductLineTag(t)
-                              ? "border border-primary/40 bg-primary/10 font-medium"
-                              : "bg-muted",
-                          )}
+                          className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-[10px]"
                         >
-                          {kind === "tags" && isProductLineTag(t) && (
-                            <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
-                          )}
                           {t}
                           <button
                             type="button"
@@ -377,16 +376,6 @@ export const BulkActionDialog: React.FC<Props> = ({
                         className="min-w-[10rem] flex-1 bg-transparent px-1 py-0.5 text-[11px] outline-none placeholder:text-muted-foreground/60"
                       />
                     </div>
-                    {kind === "tags" && (
-                      <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <Checkbox
-                          checked={asLine}
-                          onCheckedChange={(v) => setAsLine(v === true)}
-                          className="h-3 w-3"
-                        />
-                        This tag is a product line
-                      </label>
-                    )}
                     {addMatches.length > 0 && (
                       <div className="space-y-1">
                         <div className="text-[9px] uppercase tracking-widest text-muted-foreground/70">
@@ -397,17 +386,9 @@ export const BulkActionDialog: React.FC<Props> = ({
                             <button
                               key={t}
                               type="button"
-                              onClick={() => addValue(t, isProductLineTag(t))}
-                              className={cn(
-                                "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
-                                kind === "tags" && isProductLineTag(t)
-                                  ? "border-primary/40 text-primary"
-                                  : "border-border",
-                              )}
+                              onClick={() => addValue(t)}
+                              className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
                             >
-                              {kind === "tags" && isProductLineTag(t) && (
-                                <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
-                              )}
                               {t}
                             </button>
                           ))}
