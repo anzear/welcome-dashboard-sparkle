@@ -3,12 +3,10 @@ import { X } from "lucide-react";
 import {
   COMPETITOR_ACTIVITY_LABEL,
   JOURNEY_STATUS_LABEL,
-  MATERIAL_ROLE_LABEL,
   SUBSTITUTABILITY_LABEL,
   type CompetitorActivity,
   type EntryType,
   type JourneyStatus,
-  type MaterialRole,
   type SubstitutabilityReadiness,
 } from "@/types/materialPrioritisation";
 import {

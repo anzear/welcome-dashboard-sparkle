@@ -6,8 +6,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   COMPETITOR_ACTIVITY_LABEL,
   JOURNEY_STATUS_LABEL,
-  MATERIAL_ROLE_LABEL,
-  MATERIAL_ROLES,
   SUBSTITUTABILITY_LABEL,
   type CompetitorActivity,
   type JourneyStatus,
