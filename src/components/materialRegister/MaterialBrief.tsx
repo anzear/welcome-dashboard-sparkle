@@ -376,6 +376,20 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
 
   const tagSuggestions = useMemo(() => tagVocabulary(allMaterials).map((t) => t.tag), [allMaterials]);
 
+  const saveProductLines = (next: string[]) => {
+    if (!openId) return;
+    const before = allMaterials.find((x) => x.material_id === openId)?.product_lines ?? [];
+    updateMaterial(openId, { product_lines: next }, ["product_lines"], [
+      {
+        material_id: openId,
+        event_type: "field_correction",
+        field: "product_lines",
+        from_value: before.join(", ") || null,
+        to_value: next.join(", ") || null,
+      },
+    ]);
+  };
+
   const index = visible.findIndex((r) => r.m.material_id === openId);
   const row = index >= 0 ? visible[index] : null;
   // Scope narrows the list, never the material: the brief reads the whole register.
