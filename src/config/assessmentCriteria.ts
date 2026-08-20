@@ -5,13 +5,80 @@ import type {
   TeamId,
 } from "@/types/materialPrioritisation";
 
-
 /**
- * Five assessment criteria per material. Two are read from evidence the platform
- * already holds — nobody scores them. Three are judged by people, one entry per
- * person. The five are never blended into a single number.
+ * SEVEN STANDARD CRITERIA. Fixed in every workspace: they cannot be renamed,
+ * reworded, reordered, rescaled or deleted. They can only be hidden. All seven
+ * run in the same direction — a high score supports switching. They are never
+ * blended, totalled, averaged or weighted into a single number.
  */
-export const CRITERIA: AssessmentCriterion[] = [
+export const STANDARD_JUDGED: AssessmentCriterion[] = [
+  {
+    criterion_id: "regulatory_pressure",
+    label: "Regulatory pressure",
+    kind: "judgement",
+    helper:
+      "Extent to which restrictions in force or clearly coming affect the incumbent material, and whether switching gets ahead of them or only delays the problem.",
+    anchor_low: "No restriction in sight",
+    anchor_high: "Restriction confirmed",
+  },
+  {
+    criterion_id: "market_pull",
+    label: "Market pull",
+    kind: "judgement",
+    helper:
+      "Extent to which customer demand, tenders, brand commitments, changing expectations or reputational exposure support implementation.",
+    anchor_low: "No demand signal",
+    anchor_high: "Customers asking",
+  },
+  {
+    criterion_id: "competitive_advantage",
+    label: "Competitive advantage",
+    kind: "judgement",
+    helper:
+      "Extent to which the switch differentiates against competitors through claims rivals cannot make, first-mover position or defensibility, and whether competitors have already moved.",
+    anchor_low: "No edge",
+    anchor_high: "Clear differentiation",
+  },
+  {
+    criterion_id: "economic_case",
+    label: "Economic case",
+    kind: "judgement",
+    helper:
+      "Extent to which the material offers attractive costs, margins, investment returns, or improved long-term cost competitiveness.",
+    anchor_low: "Worse economics",
+    anchor_high: "Economics improve",
+  },
+  {
+    criterion_id: "supply_security",
+    label: "Supply security",
+    kind: "judgement",
+    helper:
+      "Extent to which the material improves availability, supplier diversification, price stability, and supply-chain resilience.",
+    anchor_low: "No improvement",
+    anchor_high: "Materially more secure",
+  },
+  {
+    criterion_id: "sustainability_impact",
+    label: "Sustainability impact",
+    kind: "judgement",
+    helper:
+      "Extent to which the switch delivers a real reduction in greenhouse gas emissions, product carbon footprint or other environmental burden, large enough to claim. This is the reduction the switch delivers, not the incumbent material's current footprint.",
+    anchor_low: "Marginal reduction",
+    anchor_high: "Substantial reduction",
+  },
+  {
+    criterion_id: "product_performance",
+    label: "Product performance",
+    kind: "judgement",
+    helper:
+      "Extent to which the material meets the technical and sensory performance the finished product requires, without reformulation compromise.",
+    anchor_low: "Performance gap",
+    anchor_high: "Meets or beats incumbent",
+  },
+];
+
+/** The two evidence rows. Read from data the platform already holds. */
+export const EVIDENCE_CRITERIA: AssessmentCriterion[] = [
   {
     criterion_id: "business_exposure",
     label: "Business exposure",
@@ -26,97 +93,60 @@ export const CRITERIA: AssessmentCriterion[] = [
     source: "vcg",
     helper: "Read from the VCG signals: substitutability, suppliers, competitor activity.",
   },
-  {
-    criterion_id: "risk_of_inaction",
-    label: "Risk of inaction",
-    kind: "judgement",
-    helper:
-      "Extent to which regulatory pressure, competitor activity, changing customer expectations, reputational exposure, or sustainability commitments create a need to replace the incumbent material.",
-    anchors: "5 = pressure is real · 1 = incumbent fine.",
-  },
+];
+
+/**
+ * RETIRED CRITERION. "Strategic importance" has no replacement in the standard
+ * set, and its recorded scores, rationales and contributors must stay readable.
+ * It is therefore carried as a hidden criterion: out of use, nothing deleted.
+ */
+export const RETIRED_JUDGED: AssessmentCriterion[] = [
   {
     criterion_id: "strategic_importance",
     label: "Strategic importance",
     kind: "judgement",
     helper:
-      "Extent to which the new material supports long-term business priorities, including innovation, product strategy, regulatory readiness, and CO₂ roadmaps.",
-    anchors: "5 = central to strategy · 1 = peripheral.",
-  },
-  {
-    criterion_id: "market_pull",
-    label: "Market pull",
-    kind: "judgement",
-    helper:
-      "Extent to which customer demand, new market opportunities, differentiation potential, or stronger product claims support implementation.",
-    anchors: "5 = customers asking · 1 = no demand signal.",
-  },
-  {
-    criterion_id: "economic_case",
-    label: "Economic case",
-    kind: "judgement",
-    helper:
-      "Extent to which the new material offers attractive costs, margins, investment returns, or improved long-term cost competitiveness.",
-    anchors: "5 = economics improve · 1 = worse economics.",
-  },
-  {
-    criterion_id: "supply_security",
-    label: "Supply security",
-    kind: "judgement",
-    helper:
-      "Extent to which the new material improves availability, supplier diversification, price stability, and supply-chain resilience.",
-    anchors: "5 = materially more secure · 1 = no improvement.",
+      "Retired criterion. Kept hidden so the judgements already recorded against it stay readable.",
+    anchor_low: "Peripheral",
+    anchor_high: "Central to strategy",
+    hidden: true,
   },
 ];
 
-export const JUDGED_CRITERIA = CRITERIA.filter((c) => c.kind === "judgement");
+export const STANDARD_JUDGED_IDS = STANDARD_JUDGED.map((c) => c.criterion_id);
+
+/** Anchors as one printable line. Derived, never stored separately by a user. */
+export const anchorLine = (c: AssessmentCriterion) =>
+  c.anchor_low && c.anchor_high ? `5 = ${c.anchor_high} · 1 = ${c.anchor_low}` : undefined;
+
+/** How many custom criteria a workspace may hold. */
+export const MAX_CUSTOM_CRITERIA = 2;
+
+/** The seeded set: evidence rows, the seven standard criteria, then the retired one. */
+export const CRITERIA: AssessmentCriterion[] = [
+  ...EVIDENCE_CRITERIA,
+  ...STANDARD_JUDGED,
+  ...RETIRED_JUDGED,
+];
+
+/** Every judged criterion, hidden ones included. */
+export const ALL_JUDGED_CRITERIA = CRITERIA.filter((c) => c.kind === "judgement");
+
+/** Active judged criteria: the ones in use. Hidden criteria are excluded. */
+export const JUDGED_CRITERIA = ALL_JUDGED_CRITERIA.filter((c) => !c.hidden);
 
 /**
- * ROLE WORDING. The criteria, the 1–5 scale, the rationale rule and the
- * documents are identical for both roles — only the question being asked
- * changes. On a new material the question is why to implement it (the wording
- * above); on an existing material it is why to replace it.
+ * ROLE WORDING. The criteria read the same for both roles: every one of the
+ * seven is phrased around the switch itself, so nothing needs rewording for an
+ * existing material versus a replacement candidate.
  */
-export const EXISTING_ROLE_WORDING: Record<string, { helper: string; anchors: string }> = {
-  risk_of_inaction: {
-    helper:
-      "Extent to which regulatory pressure, competitor activity, changing customer expectations, reputational exposure, or sustainability commitments create a need to move away from this material.",
-    anchors: "5 = pressure is real · 1 = no pressure to move.",
-  },
-  strategic_importance: {
-    helper:
-      "Extent to which replacing this material matters to long-term business priorities, including product strategy, regulatory readiness, and CO₂ roadmaps.",
-    anchors: "5 = replacing it is central to strategy · 1 = peripheral.",
-  },
-  market_pull: {
-    helper:
-      "Extent to which customer demand, differentiation potential, or product claims push for this material to be replaced.",
-    anchors: "5 = customers pushing for a change · 1 = no demand signal.",
-  },
-  economic_case: {
-    helper:
-      "Extent to which this material's cost position, margin contribution, or long-term cost competitiveness is deteriorating.",
-    anchors: "5 = economics deteriorating fast · 1 = economics hold up.",
-  },
-  supply_security: {
-    helper:
-      "Extent to which availability, price volatility, supplier concentration, or supply-chain fragility make this material risky to keep.",
-    anchors: "5 = supply is fragile · 1 = supply is secure.",
-  },
-};
-
-/** The criterion as it should read for that role. Evidence rows are unchanged. */
 export const criterionForRole = (
   criterion: AssessmentCriterion,
-  role: MaterialRole,
-): AssessmentCriterion => {
-  if (role !== "existing" || criterion.kind !== "judgement") return criterion;
-  const override = EXISTING_ROLE_WORDING[criterion.criterion_id];
-  return override ? { ...criterion, ...override } : criterion;
-};
+  _role: MaterialRole,
+): AssessmentCriterion => criterion;
 
 export const criterionById = (id: string): AssessmentCriterion | undefined =>
   CRITERIA.find((c) => c.criterion_id === id);
-
 
 export const CRITERION_LABEL: Record<string, string> = Object.fromEntries(
   CRITERIA.map((c) => [c.criterion_id, c.label]),
@@ -145,7 +175,6 @@ export const TEAM_LABEL: Record<TeamId, string> = {
   regulatory: "Regulatory",
 };
 
-/** Demo account members. The switcher changes who an entry is recorded as. */
 /**
  * The six demo users. Their names are the same vocabulary the Owner field uses,
  * so "Viewing as" can be compared against a material's owner for gate rights.
