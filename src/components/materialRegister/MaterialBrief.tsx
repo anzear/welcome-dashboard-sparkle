@@ -30,11 +30,7 @@ import BriefGate from "@/components/materialRegister/BriefGate";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
-import {
-  isProductLineTag,
-  registerProductLine,
-  useProductLines,
-} from "@/components/materialRegister/productLines";
+import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 
 import {
   CURRENT_USER,
@@ -228,22 +224,17 @@ const TagsField: React.FC<{
   suggestions?: string[];
   /** Only the tag vocabulary spans both halves; category groups sit two per row. */
   wideField?: boolean;
-  /** Tags carry a type: product line tags render as brand lines, never as general tags. */
-  typedTags?: boolean;
-}> = ({ label, values, onSave, suggestions = [], wideField, typedTags }) => {
+}> = ({ label, values, onSave, suggestions = [], wideField }) => {
 
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
-  const [asLine, setAsLine] = useState(false);
-  const lines = useProductLines();
-  const add = (raw?: string, markLine?: boolean) => {
+  const add = (raw?: string) => {
     const v = normalizeTag(raw ?? draft);
     if (!v) {
       setDraft("");
       return;
     }
-    const asProductLine = markLine ?? asLine;
-    const stored = typedTags && asProductLine ? (registerProductLine(v) ?? v) : v;
+    const stored = v;
     if (hasTag(values, stored)) {
       setDraft("");
       return;
@@ -252,8 +243,7 @@ const TagsField: React.FC<{
     setDraft("");
   };
   const q = draft.trim().toLowerCase();
-  const pool = typedTags ? [...new Set([...lines, ...suggestions])] : suggestions;
-  const available = pool.filter((s) => !hasTag(values, s));
+  const available = suggestions.filter((s) => !hasTag(values, s));
   const matches = q
     ? available.filter((s) => s.toLowerCase().includes(q)).slice(0, 8)
     : available.slice(0, 12);
@@ -273,25 +263,11 @@ const TagsField: React.FC<{
       </div>
       <div className="flex flex-wrap items-center gap-1 pt-1">
         {values.length > 0 ? (
-          [...values]
-            .sort((a, b) =>
-              typedTags
-                ? Number(isProductLineTag(b)) - Number(isProductLineTag(a))
-                : 0,
-            )
-            .map((c) => (
+          [...values].map((c) => (
             <span
               key={c}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[10px]",
-                typedTags && isProductLineTag(c)
-                  ? "border-primary/40 bg-primary/10 font-medium text-foreground"
-                  : "border-border/70 bg-muted/50",
-              )}
+              className="inline-flex items-center gap-1 rounded-sm border border-border/70 bg-muted/50 px-1.5 py-0.5 text-[10px]"
             >
-              {typedTags && isProductLineTag(c) && (
-                <span className="text-[9px] uppercase tracking-wider text-primary">line</span>
-              )}
               {c}
               {open && (
                 <button
@@ -354,15 +330,9 @@ const TagsField: React.FC<{
               <button
                 key={s}
                 type="button"
-                onClick={() => add(s, isProductLineTag(s))}
-                className={cn(
-                  "rounded-sm border border-dashed px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground",
-                  typedTags && isProductLineTag(s) ? "border-primary/40 text-primary" : "border-border",
-                )}
+                onClick={() => add(s)}
+                className="rounded-sm border border-dashed border-border px-1.5 py-0.5 text-[10px] text-muted-foreground hover:text-foreground"
               >
-                {typedTags && isProductLineTag(s) && (
-                  <span className="mr-1 text-[9px] uppercase tracking-wider">line</span>
-                )}
                 {s}
               </button>
             ))}
@@ -646,18 +616,16 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
             {/* Classification, read here and corrected in the dialog. */}
             {!stuck && (
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-2">
+                <HeadGroup label="Product line">
+                  {m.product_lines.length > 0 ? (
+                    m.product_lines.map((t) => <Chip key={t}>{t}</Chip>)
+                  ) : (
+                    <NoneYet />
+                  )}
+                </HeadGroup>
                 <HeadGroup label="Tags">
                   {m.tags.length > 0 ? (
-                    m.tags.map((t) => (
-                      <Chip key={t}>
-                        {isProductLineTag(t) && (
-                          <span className="mr-1 text-[8px] uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
-                            Line
-                          </span>
-                        )}
-                        {t}
-                      </Chip>
-                    ))
+                    m.tags.map((t) => <Chip key={t}>{t}</Chip>)
                   ) : (
                     <NoneYet />
                   )}
@@ -784,9 +752,24 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   ])
                 }
               />
+              {/* Product line is its own controlled field, separate from tags. */}
+              <div className="md:col-span-2 space-y-1">
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  Product line
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <ProductLineChips
+                    values={m.product_lines}
+                    onRemove={(v) =>
+                      saveProductLines(m.product_lines.filter((x) => x !== v))
+                    }
+                    emptyLabel="No product line assigned"
+                  />
+                  <ProductLinePicker values={m.product_lines} onChange={saveProductLines} />
+                </div>
+              </div>
               <TagsField
                 wideField
-                typedTags
                 label="Tags"
 
                 values={m.tags}
