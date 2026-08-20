@@ -10,7 +10,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { JOURNEY_STATUS_LABEL, type EntryType, type JourneyStatus } from "@/types/materialPrioritisation";
+import {
+  JOURNEY_STATUS_LABEL,
+  type EntryType,
+  type JourneyStatus,
+  type MaterialRole,
+} from "@/types/materialPrioritisation";
 import { CURRENT_USER, useRegister } from "@/components/materialRegister/registerStore";
 import { cleanTags, tagVocabulary } from "@/components/materialRegister/tags";
 import { cleanProductLines } from "@/components/materialRegister/productLines";
@@ -25,6 +30,7 @@ import {
 import {
   CERTIFICATIONS,
   ENTRY_TYPES,
+  ROLE_OPTIONS,
   SEEDED_CLASSES,
   blankMaterial,
   computeGhg,
@@ -54,6 +60,8 @@ interface Props {
 export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const { data, addMaterials } = useRegister();
 
+  /** Role is required: nothing is saved until one is chosen. */
+  const [role, setRole] = useState<MaterialRole | null>(null);
   const [entryType, setEntryType] = useState<EntryType | null>(null);
   const [name, setName] = useState("");
   const [cas, setCas] = useState("");
@@ -136,10 +144,13 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
 
   const save = (again: boolean) => {
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || role === null) return;
 
     const entered = provenanceOf("entered", CURRENT_USER);
-    const provenance: Record<string, ReturnType<typeof provenanceOf>> = { entry_type: entered };
+    const provenance: Record<string, ReturnType<typeof provenanceOf>> = {
+      entry_type: entered,
+      role: entered,
+    };
     const markEntered = (field: string, present: boolean) => {
       if (present) provenance[field] = entered;
     };
@@ -160,7 +171,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
         : provenanceOf("computed", "emission factor x annual volume");
 
     const draft = {
-      ...blankMaterial(entryType),
+      ...blankMaterial(role === "new" ? entryType : null, role),
       name: trimmedName,
       cas_number: toNullString(cas),
       material_class: toNullString(materialClass),
@@ -193,9 +204,39 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
         Add what you have. Missing figures carry no rank on that measure.
       </p>
 
-      {/* Step 1 */}
+      {/* Step 1 — role, the one field that cannot be skipped */}
       <section className="space-y-2">
-        <h3 className={LABEL}>1 — Type (optional)</h3>
+        <h3 className={LABEL}>1 — Role (required)</h3>
+        <div className="grid gap-2 md:grid-cols-2">
+          {ROLE_OPTIONS.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRole(r.id)}
+              aria-pressed={role === r.id}
+              className={cn(
+                "rounded-md border p-2 text-left transition-colors",
+                role === r.id
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border hover:border-muted-foreground/40",
+              )}
+            >
+              <div className="text-[11px] font-medium text-foreground">{r.label}</div>
+              <div className="text-[10px] leading-tight text-muted-foreground">{r.description}</div>
+            </button>
+          ))}
+        </div>
+        {role === null && (
+          <p className="text-[10px] text-muted-foreground">
+            Choose a role before saving. It is not inferred from anything else.
+          </p>
+        )}
+      </section>
+
+      {/* Replacement type — only meaningful on a new material */}
+      {role === "new" && (
+      <section className="space-y-2 border-t border-border pt-4">
+        <h3 className={LABEL}>Replacement type (optional)</h3>
         <div className="grid gap-2 md:grid-cols-3">
           {ENTRY_TYPES.map((t) => (
             <button
@@ -221,6 +262,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
           </p>
         )}
       </section>
+      )}
 
       {/* Step 2 */}
       <section className="space-y-3 border-t border-border pt-4">
@@ -488,20 +530,20 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       </section>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-        <Button size="sm" className="h-7 text-[11px]" disabled={!name.trim()} onClick={() => save(false)}>
+        <Button size="sm" className="h-7 text-[11px]" disabled={!name.trim() || role === null} onClick={() => save(false)}>
           Save
         </Button>
         <Button
           size="sm"
           variant="outline"
           className="h-7 text-[11px]"
-          disabled={!name.trim()}
+          disabled={!name.trim() || role === null}
           onClick={() => save(true)}
         >
           Save and add another
         </Button>
         <span className="text-[10px] text-muted-foreground">
-          Only the name is required. Everything else can follow later.
+          Role and name are required. Everything else can follow later.
         </span>
       </div>
     </div>

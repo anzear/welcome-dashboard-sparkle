@@ -1,4 +1,10 @@
-import type { AssessmentCriterion, Contributor, TeamId } from "@/types/materialPrioritisation";
+import type {
+  AssessmentCriterion,
+  Contributor,
+  MaterialRole,
+  TeamId,
+} from "@/types/materialPrioritisation";
+
 
 /**
  * Five assessment criteria per material. Two are read from evidence the platform
@@ -64,8 +70,53 @@ export const CRITERIA: AssessmentCriterion[] = [
 
 export const JUDGED_CRITERIA = CRITERIA.filter((c) => c.kind === "judgement");
 
+/**
+ * ROLE WORDING. The criteria, the 1–5 scale, the rationale rule and the
+ * documents are identical for both roles — only the question being asked
+ * changes. On a new material the question is why to implement it (the wording
+ * above); on an existing material it is why to replace it.
+ */
+export const EXISTING_ROLE_WORDING: Record<string, { helper: string; anchors: string }> = {
+  risk_of_inaction: {
+    helper:
+      "Extent to which regulatory pressure, competitor activity, changing customer expectations, reputational exposure, or sustainability commitments create a need to move away from this material.",
+    anchors: "5 = pressure is real · 1 = no pressure to move.",
+  },
+  strategic_importance: {
+    helper:
+      "Extent to which replacing this material matters to long-term business priorities, including product strategy, regulatory readiness, and CO₂ roadmaps.",
+    anchors: "5 = replacing it is central to strategy · 1 = peripheral.",
+  },
+  market_pull: {
+    helper:
+      "Extent to which customer demand, differentiation potential, or product claims push for this material to be replaced.",
+    anchors: "5 = customers pushing for a change · 1 = no demand signal.",
+  },
+  economic_case: {
+    helper:
+      "Extent to which this material's cost position, margin contribution, or long-term cost competitiveness is deteriorating.",
+    anchors: "5 = economics deteriorating fast · 1 = economics hold up.",
+  },
+  supply_security: {
+    helper:
+      "Extent to which availability, price volatility, supplier concentration, or supply-chain fragility make this material risky to keep.",
+    anchors: "5 = supply is fragile · 1 = supply is secure.",
+  },
+};
+
+/** The criterion as it should read for that role. Evidence rows are unchanged. */
+export const criterionForRole = (
+  criterion: AssessmentCriterion,
+  role: MaterialRole,
+): AssessmentCriterion => {
+  if (role !== "existing" || criterion.kind !== "judgement") return criterion;
+  const override = EXISTING_ROLE_WORDING[criterion.criterion_id];
+  return override ? { ...criterion, ...override } : criterion;
+};
+
 export const criterionById = (id: string): AssessmentCriterion | undefined =>
   CRITERIA.find((c) => c.criterion_id === id);
+
 
 export const CRITERION_LABEL: Record<string, string> = Object.fromEntries(
   CRITERIA.map((c) => [c.criterion_id, c.label]),

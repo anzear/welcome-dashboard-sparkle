@@ -19,7 +19,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { X } from "lucide-react";
-import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
+import {
+  JOURNEY_STATUS_LABEL,
+  MATERIAL_ROLE_LABEL,
+  MATERIAL_ROLES,
+  type JourneyStatus,
+  type Material,
+  type MaterialRole,
+} from "@/types/materialPrioritisation";
 import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { PRODUCT_LINES, useProductLines } from "@/components/materialRegister/productLines";
@@ -32,6 +39,7 @@ export type BulkKind =
   | "applications"
   | "priority_period"
   | "entry_type"
+  | "role"
   | "product_lines"
   | "tags"
   | "intelligence";
@@ -247,14 +255,17 @@ export const BulkActionDialog: React.FC<Props> = ({
               ? `${mode === "add" ? "Add" : "Remove"} tags — ${materials.length} materials`
               : kind === "priority_period"
               ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
+              : kind === "role"
+                ? `Set role for ${materials.length} materials`
               : kind === "entry_type"
-                ? `${clearingType ? "Clear" : "Set"} type for ${materials.length} materials`
+                ? `${clearingType ? "Clear" : "Set"} replacement type for ${materials.length} materials`
                 : `Request coverage for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
     if (!kind || isMulti || !value) return null;
     if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
     if (kind === "owner") return value === UNASSIGNED ? "Unassigned" : value;
+    if (kind === "role") return MATERIAL_ROLE_LABEL[value as MaterialRole] ?? value;
     if (kind === "entry_type")
       return value === CLEAR_ENTRY_TYPE
         ? "Not set"
@@ -263,12 +274,14 @@ export const BulkActionDialog: React.FC<Props> = ({
   }, [kind, isMulti, value]);
 
   const breakdown = useMemo(() => {
-    if (kind !== "status" && kind !== "owner" && kind !== "entry_type") return [];
+    if (kind !== "status" && kind !== "owner" && kind !== "entry_type" && kind !== "role") return [];
     const counts = new Map<string, number>();
     materials.forEach((m) => {
       const l =
         kind === "status"
           ? JOURNEY_STATUS_LABEL[m.journey_status]
+          : kind === "role"
+            ? MATERIAL_ROLE_LABEL[m.role]
           : kind === "entry_type"
             ? (ENTRY_TYPES.find((e) => e.id === m.entry_type)?.label ?? "Not set")
             : (m.owner ?? "Unassigned");
@@ -324,8 +337,10 @@ export const BulkActionDialog: React.FC<Props> = ({
                     ? "New owner"
                     : kind === "priority_period"
                       ? "Priority period"
+                      : kind === "role"
+                        ? "New role"
                       : kind === "entry_type"
-                        ? "New type"
+                        ? "New replacement type"
                         : `${mode === "add" ? "Values to add" : "Values to remove"}`}
               </div>
 
@@ -453,7 +468,13 @@ export const BulkActionDialog: React.FC<Props> = ({
                     <SelectValue placeholder="Select a value" />
                   </SelectTrigger>
                   <SelectContent className="portfolio-type">
-                    {kind === "entry_type"
+                    {kind === "role"
+                      ? MATERIAL_ROLES.map((r) => (
+                          <SelectItem key={r} value={r} className="text-xs">
+                            {MATERIAL_ROLE_LABEL[r]}
+                          </SelectItem>
+                        ))
+                      : kind === "entry_type"
                       ? [
                           ...ENTRY_TYPES.map((e) => (
                             <SelectItem key={e.id} value={e.id} className="text-xs">

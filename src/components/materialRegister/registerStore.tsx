@@ -21,6 +21,9 @@ import {
 } from "@/config/assessmentCriteria";
 import {
   JOURNEY_STATUS_LABEL,
+  MATERIAL_ROLE_LABEL,
+  migrateMaterialRole,
+  oppositeRole,
   type AssessmentCriterion,
   type AssessmentEntry,
   type AssessmentState,
@@ -33,6 +36,7 @@ import {
   type BatchOrigin,
   type MaterialEvent,
   type MaterialEventType,
+  type MaterialRole,
   type TeamId,
   type DocumentFileType,
   type SupportingDocument,
@@ -166,6 +170,8 @@ export interface RankedRow {
 
 export interface Filters {
   search: string;
+  /** Role. Empty array is All — never a default of one role. */
+  roles: MaterialRole[];
   classes: string[];
   statuses: string[];
   owners: string[];
@@ -213,6 +219,7 @@ export const NO_BLOCKER = "__no_blocker__";
 
 export const EMPTY_FILTERS: Filters = {
   search: "",
+  roles: [],
   classes: [],
   statuses: [],
   owners: [],
@@ -306,6 +313,11 @@ interface Store {
     events?: EventInput[],
   ) => void;
   applyBulk: (payload: BulkPayload, ids: Set<string>) => void;
+  /** Links a material to one of the opposite role, or removes that link. */
+  toggleLink: (materialId: string, otherId: string, link: boolean) => void;
+  /** Opposite-role materials matching a name query and not already linked. */
+  linkCandidates: (materialId: string, query: string) => Material[];
+  linkedMaterials: (materialId: string) => Material[];
   /**
    * Appends new register rows. Drafts arrive with their own provenance so entered,
    * computed and ingested figures stay distinct. Returns the assigned ids.
@@ -468,7 +480,37 @@ export const useRegister = () => {
 
 /** The register as seeded, with gate positions and their events folded in. */
 const gateSeed = applyGateSeed(seedMaterialsWithHistory);
-export const seededMaterials = migrateProductLinesFromTags(applyProductLines(gateSeed.materials));
+/**
+ * ROLE MIGRATION. No stored record carried a role, so every one of them is an
+ * existing material — the company already buys it. Nothing is inferred from
+ * the other fields, and links start empty on both sides.
+ */
+export const migrateRoles = (rows: Material[]) => {
+  let migrated = 0;
+  const out = rows.map((m) => {
+    const role = migrateMaterialRole((m as Partial<Material>).role);
+    if ((m as Partial<Material>).role === undefined) migrated += 1;
+    return {
+      ...m,
+      role,
+      linked_material_ids: m.linked_material_ids ?? [],
+      provenance: {
+        ...m.provenance,
+        role: m.provenance?.role ?? { origin: "entered", source: "Migration", date: null },
+      },
+    } as Material;
+  });
+  return { rows: out, migrated };
+};
+
+const roleMigration = migrateRoles(
+  migrateProductLinesFromTags(applyProductLines(gateSeed.materials)),
+);
+
+/** Count reported in the console once, so the migration is not silent. */
+export const ROLE_MIGRATION_COUNT = roleMigration.migrated;
+
+export const seededMaterials = roleMigration.rows;
 
 const SCOPE_KEY = "material-portfolio-scope";
 
@@ -536,6 +578,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
   const filtersActive =
     filters.search.trim() !== "" ||
+    filters.roles.length > 0 ||
     filters.classes.length > 0 ||
     filters.statuses.length > 0 ||
     filters.owners.length > 0 ||
@@ -601,6 +644,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         const hay = [m.name, m.cas_number ?? "", ...(m.customer_material_ids ?? [])].join(" ").toLowerCase();
         if (!hay.includes(q)) return false;
       }
+      if (filters.roles.length && !filters.roles.includes(m.role)) return false;
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
@@ -805,6 +849,73 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     recordEvents(eventInputs);
   };
 
+  /**
+   * LINKING. Held on both sides so either brief can show it. Only opposite
+   * roles may be joined, and a link carries no decision: statuses, scores and
+   * gates on the two materials stay entirely independent of each other.
+   */
+  const toggleLink = (materialId: string, otherId: string, link: boolean) => {
+    const a = data.find((m) => m.material_id === materialId);
+    const b = data.find((m) => m.material_id === otherId);
+    if (!a || !b) return;
+    if (b.role !== oppositeRole(a.role)) return;
+
+    setData((prev) =>
+      prev.map((m) => {
+        if (m.material_id !== materialId && m.material_id !== otherId) return m;
+        const partner = m.material_id === materialId ? otherId : materialId;
+        const existing = m.linked_material_ids ?? [];
+        const nextIds = link
+          ? existing.includes(partner)
+            ? existing
+            : [...existing, partner]
+          : existing.filter((x) => x !== partner);
+        return { ...m, linked_material_ids: nextIds, provenance: { ...m.provenance, linked_material_ids: enteredProvenance() } };
+      }),
+    );
+
+    recordEvents([
+      {
+        material_id: materialId,
+        event_type: "field_correction",
+        field: "linked_material_ids",
+        from_value: link ? null : b.name,
+        to_value: link ? b.name : null,
+      },
+      {
+        material_id: otherId,
+        event_type: "field_correction",
+        field: "linked_material_ids",
+        from_value: link ? null : a.name,
+        to_value: link ? a.name : null,
+      },
+    ]);
+  };
+
+  /** Materials of the opposite role, name-searched. Already-linked ones excluded. */
+  const linkCandidates = (materialId: string, query: string) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m) return [];
+    const want = oppositeRole(m.role);
+    const q = query.trim().toLowerCase();
+    return data
+      .filter(
+        (o) =>
+          o.role === want &&
+          !(m.linked_material_ids ?? []).includes(o.material_id) &&
+          (q === "" || o.name.toLowerCase().includes(q)),
+      )
+      .slice(0, 40);
+  };
+
+  const linkedMaterials = (materialId: string) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m) return [];
+    return (m.linked_material_ids ?? [])
+      .map((id) => data.find((o) => o.material_id === id))
+      .filter((o): o is Material => Boolean(o));
+  };
+
   const applyBulk = (payload: BulkPayload, ids: Set<string>) => {
     const snapshot = data.filter((m) => ids.has(m.material_id)).map((m) => ({ ...m }));
     const stamp = today();
@@ -851,6 +962,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         } else if (payload.kind === "tags") {
           next.tags = nextList(m.tags ?? []);
           next.provenance.tags = enteredProvenance();
+        } else if (payload.kind === "role") {
+          next.role = payload.value as MaterialRole;
+          next.provenance.role = enteredProvenance();
+          /** A role change never rewrites links: the user removes those itself. */
         } else if (payload.kind === "entry_type") {
           next.entry_type = (payload.value ? payload.value : null) as Material["entry_type"];
           next.provenance.entry_type = enteredProvenance();
@@ -901,6 +1016,16 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             field: "priority_period",
             from_value: m.priority_period,
             to_value: payload.value && payload.value.trim() ? payload.value.trim() : null,
+            batch_id: batchId,
+          } as EventInput;
+        }
+        if (payload.kind === "role") {
+          return {
+            material_id: m.material_id,
+            event_type: "field_correction",
+            field: "role",
+            from_value: MATERIAL_ROLE_LABEL[m.role],
+            to_value: MATERIAL_ROLE_LABEL[payload.value as MaterialRole] ?? payload.value,
             batch_id: batchId,
           } as EventInput;
         }
@@ -1608,6 +1733,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     closeBrief: () => setOpenId(null),
     updateMaterial,
     applyBulk,
+    toggleLink,
+    linkCandidates,
+    linkedMaterials,
     addMaterials,
     removeMaterials,
     mergeCustomerIds,

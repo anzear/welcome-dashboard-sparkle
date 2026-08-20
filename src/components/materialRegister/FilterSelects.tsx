@@ -6,6 +6,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import {
   COMPETITOR_ACTIVITY_LABEL,
   JOURNEY_STATUS_LABEL,
+  MATERIAL_ROLE_LABEL,
+  MATERIAL_ROLES,
   SUBSTITUTABILITY_LABEL,
   type CompetitorActivity,
   type JourneyStatus,
@@ -26,6 +28,7 @@ import { PRODUCT_LINES, useProductLines } from "@/components/materialRegister/pr
 export type FilterKey =
   | "statuses"
   | "owners"
+  | "roles"
   | "entryTypes"
   | "classes"
   | "products"
@@ -63,6 +66,10 @@ const FilterSelects: React.FC<{
         ...uniq(data.map((m) => m.owner)).map((v) => ({ value: v, label: v })),
         { value: UNASSIGNED_OWNER, label: "Unassigned" },
       ],
+      roles: MATERIAL_ROLES.map((r) => ({
+        value: r,
+        label: `${MATERIAL_ROLE_LABEL[r]} (${data.filter((m) => m.role === r).length})`,
+      })),
       entryTypes: [
         ...ENTRY_TYPES.map((e) => ({
           value: e.id as string,
@@ -124,7 +131,8 @@ const FilterSelects: React.FC<{
   const controls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
     ["statuses", "Status", options.statuses, filters.statuses],
     ["owners", "Owner", options.owners, filters.owners],
-    ["entryTypes", "Type", options.entryTypes, filters.entryTypes],
+    ["roles", "Role", options.roles, filters.roles],
+    ["entryTypes", "Replacement type", options.entryTypes, filters.entryTypes],
     ["classes", "Material category", options.classes, filters.classes],
     ["products", "Applications", options.products, filters.products],
     ["applications", "Product category", options.applications, filters.applications],

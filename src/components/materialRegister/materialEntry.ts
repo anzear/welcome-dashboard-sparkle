@@ -8,8 +8,10 @@ import type {
   JourneyStatus,
   Material,
   MaterialRequirements,
+  MaterialRole,
   ProvenanceOrigin,
 } from "@/types/materialPrioritisation";
+import { MATERIAL_ROLE_LABEL, MATERIAL_ROLES } from "@/types/materialPrioritisation";
 
 export const ENTRY_TYPES: { id: EntryType; label: string; description: string }[] = [
   {
@@ -123,8 +125,25 @@ export const requirementsOrNull = (r: MaterialRequirements): MaterialRequirement
   return stated ? r : null;
 };
 
+/** Role options, in the order they are offered. */
+export const ROLE_OPTIONS: { id: MaterialRole; label: string; description: string }[] = [
+  {
+    id: "existing",
+    label: MATERIAL_ROLE_LABEL.existing,
+    description: "Already bought and used today. May need replacing.",
+  },
+  {
+    id: "new",
+    label: MATERIAL_ROLE_LABEL.new,
+    description: "A candidate that could replace an existing material.",
+  },
+];
+
 /** A blank register row. Every figure starts null so nothing reads as measured. */
-export function blankMaterial(entry_type: EntryType | null = null): Omit<Material, "material_id"> {
+export function blankMaterial(
+  entry_type: EntryType | null = null,
+  role: MaterialRole = "existing",
+): Omit<Material, "material_id"> {
   return {
     ...EMPTY_GATE,
     gate_conditions: [],
@@ -132,6 +151,8 @@ export function blankMaterial(entry_type: EntryType | null = null): Omit<Materia
     name: "",
     cas_number: null,
     material_class: null,
+    role,
+    linked_material_ids: [],
     tags: [],
     product_lines: [],
     application_categories: [],
@@ -173,7 +194,7 @@ export function blankMaterial(entry_type: EntryType | null = null): Omit<Materia
 export interface CsvColumn {
   field: string;
   label: string;
-  kind: "text" | "number" | "list" | "status" | "entry_type" | "date";
+  kind: "text" | "number" | "list" | "status" | "entry_type" | "role" | "date";
   example1: string;
   example2: string;
 }
@@ -219,8 +240,15 @@ export const CSV_COLUMNS: CsvColumn[] = [
     example2: "Skin care",
   },
   {
+    field: "role",
+    label: "Role",
+    kind: "role",
+    example1: "existing",
+    example2: "new",
+  },
+  {
     field: "entry_type",
-    label: "Type",
+    label: "Replacement type",
     kind: "entry_type",
     example1: "new_material",
     example2: "substitution",
@@ -409,6 +437,13 @@ export function validateRows(
         cellState = "warning";
         message = "Unknown status — imported as Not started";
       } else if (
+        c.kind === "role" &&
+        raw.trim() !== "" &&
+        !MATERIAL_ROLES.includes(raw.trim() as MaterialRole)
+      ) {
+        cellState = "warning";
+        message = "Unknown role — imported as Existing material";
+      } else if (
         c.kind === "entry_type" &&
         raw.trim() !== "" &&
         !ENTRY_TYPES.some((e) => e.id === raw.trim())
@@ -465,7 +500,12 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   const annual_spend = spendGiven !== null ? spendGiven : computeSpend(annual_volume, unit_price);
   const ghg_contribution = ghgGiven !== null ? ghgGiven : computeGhg(annual_volume, ghg_emission_factor);
 
-  const base = blankMaterial(entry_type);
+  const roleRaw = (v.role ?? "").trim();
+  const role: MaterialRole = MATERIAL_ROLES.includes(roleRaw as MaterialRole)
+    ? (roleRaw as MaterialRole)
+    : "existing";
+
+  const base = blankMaterial(entry_type, role);
   const ingested = provenanceOf("ingested", filename);
   const computed = (inputs: string) => provenanceOf("computed", inputs);
 
@@ -488,6 +528,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   if (toNullString(v.owner)) provenance.owner = ingested;
   if (toNullString(v.material_class)) provenance.material_class = ingested;
   provenance.entry_type = provenanceOf("entered", filename);
+  provenance.role = provenanceOf("entered", filename);
 
   const requirements = requirementsOrNull({
     target_volume: num("target_volume"),
@@ -508,6 +549,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
     product_lines: cleanProductLines(splitList(v.product_lines)),
     application_categories: splitList(v.application_categories),
     application_areas: splitList(v.application_areas),
+    role,
     entry_type,
     annual_volume,
     unit_price,
