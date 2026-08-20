@@ -496,6 +496,9 @@ export const materials: Material[] = rows.map((row, i) => {
     name: row.name,
     cas_number: row.cas,
     material_class: row.cls,
+    /** Seed data is the company's current book: every record is an existing material. */
+    role: "existing" as const,
+    linked_material_ids: [],
     tags: [row.tag],
     product_lines: [],
     application_categories: categoriesFor(row),
