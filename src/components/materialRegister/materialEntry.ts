@@ -13,24 +13,19 @@ import type {
 
 export const ENTRY_TYPES: { id: EntryType; label: string; description: string }[] = [
   {
-    id: "drop_in",
-    label: "Drop-in",
-    description: "Same material, renewable or circular source",
-  },
-  {
-    id: "substitution",
-    label: "Substitution",
-    description: "Different chemistry, replaces an existing material",
-  },
-  {
     id: "new_material",
     label: "New material",
     description: "Nothing being replaced",
   },
+  {
+    id: "substitution",
+    label: "Source substitution",
+    description: "Moves an existing material to a renewable or circular source",
+  },
 ];
 
 /** Panel A only makes sense when something is actually being replaced. */
-export const showsReplacedPanel = (t: EntryType) => t !== "new_material";
+export const showsReplacedPanel = (t: EntryType | null) => t !== "new_material";
 
 /** Classes already in the register — the ontology the fake lookup resolves against. */
 export const SEEDED_CLASSES: string[] = [
@@ -129,7 +124,7 @@ export const requirementsOrNull = (r: MaterialRequirements): MaterialRequirement
 };
 
 /** A blank register row. Every figure starts null so nothing reads as measured. */
-export function blankMaterial(entry_type: EntryType = "drop_in"): Omit<Material, "material_id"> {
+export function blankMaterial(entry_type: EntryType | null = null): Omit<Material, "material_id"> {
   return {
     ...EMPTY_GATE,
     gate_conditions: [],
@@ -225,9 +220,9 @@ export const CSV_COLUMNS: CsvColumn[] = [
   },
   {
     field: "entry_type",
-    label: "Entry type",
+    label: "Type",
     kind: "entry_type",
-    example1: "drop_in",
+    example1: "new_material",
     example2: "substitution",
   },
   { field: "annual_volume", label: "Annual volume (t/yr)", kind: "number", example1: "4200", example2: "" },
@@ -419,7 +414,7 @@ export function validateRows(
         !ENTRY_TYPES.some((e) => e.id === raw.trim())
       ) {
         cellState = "warning";
-        message = "Unknown entry type — imported as drop-in substitute";
+        message = "Unknown type — imported with Type left empty";
       }
 
       cells[c.field] = { raw, state: cellState, message };
@@ -454,9 +449,9 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   const num = (f: string) => parseNumberCell(v[f]).value;
 
   const entryRaw = (v.entry_type ?? "").trim();
-  const entry_type: EntryType = ENTRY_TYPES.some((e) => e.id === entryRaw)
+  const entry_type: EntryType | null = ENTRY_TYPES.some((e) => e.id === entryRaw)
     ? (entryRaw as EntryType)
-    : "drop_in";
+    : null;
   const statusRaw = (v.journey_status ?? "").trim();
   const journey_status: JourneyStatus = STATUS_VALUES.includes(statusRaw as JourneyStatus)
     ? (statusRaw as JourneyStatus)
@@ -492,7 +487,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   if (toNullString(v.journey_status)) provenance.journey_status = ingested;
   if (toNullString(v.owner)) provenance.owner = ingested;
   if (toNullString(v.material_class)) provenance.material_class = ingested;
-  provenance.entry_type = ingested;
+  provenance.entry_type = provenanceOf("entered", filename);
 
   const requirements = requirementsOrNull({
     target_volume: num("target_volume"),

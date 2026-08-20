@@ -1,4 +1,4 @@
-import { EMPTY_GATE, migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
+import { EMPTY_GATE, migrateEntryType, migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
 import type {
   CompetitorActivity,
   SubstitutabilityReadiness,
@@ -450,7 +450,8 @@ export const materials: Material[] = rows.map((row, i) => {
   put("customer_material_ids", ["x"], loaded);
   put("application_categories", categoriesFor(row), loaded);
   put("application_areas", row.prods, loaded);
-  p.entry_type = loaded;
+  // Type is a company-entered choice, never ingested or computed.
+  p.entry_type = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
 
   // Measured figures.
   put("annual_volume", row.vol, erp);
@@ -499,7 +500,7 @@ export const materials: Material[] = rows.map((row, i) => {
     product_lines: [],
     application_categories: categoriesFor(row),
     application_areas: row.prods,
-    entry_type: i % 9 === 4 ? "substitution" : "drop_in",
+    entry_type: migrateEntryType(i % 9 === 4 ? "substitution" : "drop_in"),
     requirements: (() => {
       const base = row.req ? { ...emptyRequirements(), ...row.req } : null;
       // Migrate the old `target` field into earliest_need_date when the

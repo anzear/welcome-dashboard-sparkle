@@ -31,6 +31,10 @@ import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDi
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
+import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+
+/** Select needs a non-empty value for the explicit "no type" choice. */
+const NOT_SET_TYPE = "__not_set__";
 
 import {
   CURRENT_USER,
@@ -648,9 +652,13 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                     <NoneYet />
                   )}
                 </HeadGroup>
-                <HeadGroup label="Entry type">
+                <HeadGroup label="Type">
                   <span className="text-[11px] text-foreground">
-                    {ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type}
+                    {m.entry_type ? (
+                      ENTRY_TYPE_LABEL[m.entry_type]
+                    ) : (
+                      <span className="text-muted-foreground/70">Not set</span>
+                    )}
                   </span>
                 </HeadGroup>
               </div>
@@ -822,31 +830,35 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                 }
               />
               <div className="px-1 py-1 sm:col-span-2">
-                <div className="text-[13px] text-muted-foreground">Entry type</div>
+                <div className="text-[13px] text-muted-foreground">Type</div>
                 <Select
-                  value={m.entry_type}
+                  value={m.entry_type ?? NOT_SET_TYPE}
                   onValueChange={(v) => {
-                    if (v === m.entry_type) return;
-                    updateMaterial(m.material_id, { entry_type: v as Material["entry_type"] }, ["entry_type"], [
+                    const next = v === NOT_SET_TYPE ? null : (v as Material["entry_type"]);
+                    if (next === m.entry_type) return;
+                    updateMaterial(m.material_id, { entry_type: next }, ["entry_type"], [
                       {
                         material_id: m.material_id,
                         event_type: "field_correction",
                         field: "entry_type",
-                        from_value: ENTRY_TYPE_LABEL[m.entry_type] ?? m.entry_type,
-                        to_value: ENTRY_TYPE_LABEL[v as Material["entry_type"]] ?? v,
+                        from_value: m.entry_type ? ENTRY_TYPE_LABEL[m.entry_type] : null,
+                        to_value: next ? ENTRY_TYPE_LABEL[next] : null,
                       },
                     ]);
                   }}
                 >
                   <SelectTrigger className="mt-1 h-8 max-w-[240px] text-xs">
-                    <SelectValue />
+                    <SelectValue placeholder="Not set" />
                   </SelectTrigger>
                   <SelectContent className="portfolio-type">
-                    {(Object.keys(ENTRY_TYPE_LABEL) as Material["entry_type"][]).map((k) => (
-                      <SelectItem key={k} value={k} className="text-xs">
-                        {ENTRY_TYPE_LABEL[k]}
+                    {ENTRY_TYPES.map((e) => (
+                      <SelectItem key={e.id} value={e.id} className="text-xs">
+                        {e.label}
                       </SelectItem>
                     ))}
+                    <SelectItem value={NOT_SET_TYPE} className="text-xs text-muted-foreground">
+                      Not set
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>

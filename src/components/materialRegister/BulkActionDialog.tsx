@@ -36,6 +36,9 @@ export type BulkKind =
   | "tags"
   | "intelligence";
 
+/** Sentinel for the bulk "clear type" choice — Select needs a non-empty value. */
+export const CLEAR_ENTRY_TYPE = "__clear_type__";
+
 /** Multi-value actions add by default; remove is an explicit mode. */
 export type BulkMode = "add" | "remove";
 
@@ -218,6 +221,7 @@ export const BulkActionDialog: React.FC<Props> = ({
     return { none, already: materials.length - none };
   }, [kind, materials]);
 
+  const clearingType = kind === "entry_type" && value === CLEAR_ENTRY_TYPE;
   const requiresBlocker = kind === "status" && (value === "hold" || value === "no_go");
   const canApply =
     kind === "intelligence"
@@ -244,14 +248,17 @@ export const BulkActionDialog: React.FC<Props> = ({
               : kind === "priority_period"
               ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
               : kind === "entry_type"
-                ? `Set entry type for ${materials.length} materials`
+                ? `${clearingType ? "Clear" : "Set"} type for ${materials.length} materials`
                 : `Request coverage for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
     if (!kind || isMulti || !value) return null;
     if (kind === "status") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
     if (kind === "owner") return value === UNASSIGNED ? "Unassigned" : value;
-    if (kind === "entry_type") return ENTRY_TYPES.find((e) => e.id === value)?.label ?? value;
+    if (kind === "entry_type")
+      return value === CLEAR_ENTRY_TYPE
+        ? "Not set"
+        : (ENTRY_TYPES.find((e) => e.id === value)?.label ?? value);
     return null;
   }, [kind, isMulti, value]);
 
@@ -263,7 +270,7 @@ export const BulkActionDialog: React.FC<Props> = ({
         kind === "status"
           ? JOURNEY_STATUS_LABEL[m.journey_status]
           : kind === "entry_type"
-            ? (ENTRY_TYPES.find((e) => e.id === m.entry_type)?.label ?? m.entry_type)
+            ? (ENTRY_TYPES.find((e) => e.id === m.entry_type)?.label ?? "Not set")
             : (m.owner ?? "Unassigned");
       counts.set(l, (counts.get(l) ?? 0) + 1);
     });
@@ -318,7 +325,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                     : kind === "priority_period"
                       ? "Priority period"
                       : kind === "entry_type"
-                        ? "New entry type"
+                        ? "New type"
                         : `${mode === "add" ? "Values to add" : "Values to remove"}`}
               </div>
 
@@ -447,11 +454,16 @@ export const BulkActionDialog: React.FC<Props> = ({
                   </SelectTrigger>
                   <SelectContent className="portfolio-type">
                     {kind === "entry_type"
-                      ? ENTRY_TYPES.map((e) => (
-                          <SelectItem key={e.id} value={e.id} className="text-xs">
-                            {e.label}
-                          </SelectItem>
-                        ))
+                      ? [
+                          ...ENTRY_TYPES.map((e) => (
+                            <SelectItem key={e.id} value={e.id} className="text-xs">
+                              {e.label}
+                            </SelectItem>
+                          )),
+                          <SelectItem key="clear" value={CLEAR_ENTRY_TYPE} className="text-xs">
+                            Clear type (not set)
+                          </SelectItem>,
+                        ]
                       : kind === "status"
                       ? STATUS_ORDER.map((s) => (
                           <SelectItem key={s} value={s} className="text-xs">
@@ -630,7 +642,9 @@ export const BulkActionDialog: React.FC<Props> = ({
                       ? value.trim() || null
                       : kind === "intelligence"
                         ? null
-                        : value,
+                        : clearingType
+                          ? null
+                          : value,
                 values: isMulti ? cleanTags(values) : undefined,
                 mode: isMulti ? mode : undefined,
                 blocker_category: requiresBlocker ? blockerCategory : undefined,
