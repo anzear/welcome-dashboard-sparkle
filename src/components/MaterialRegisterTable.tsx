@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
 import FilterChips from "@/components/materialRegister/FilterChips";
-import { isProductLineTag } from "@/components/materialRegister/productLines";
 import BulkActionDialog, { type BulkKind } from "@/components/materialRegister/BulkActionDialog";
 import { Missing, NumCell, StatusPill } from "@/components/materialRegister/primitives";
 import {
@@ -51,6 +50,7 @@ type OptionalColumn =
   | "status"
   | "completeness"
   | "materialType"
+  | "productLine"
   | "volume"
   | "spend"
   | "emissions"
@@ -67,6 +67,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data filled", "Share of expected fields recorded"],
   ["materialType", "Entry type", "How the material enters the portfolio"],
+  ["productLine", "Product line", "Product lines the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
   ["emissions", "GHG contribution", "tCO2e per year"],
@@ -181,6 +182,8 @@ export const MaterialRegisterTable: React.FC = () => {
     OPTIONAL_COLUMNS.map(([k]) => k).filter((k) => k !== "rank"),
   );
   const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
+  /** Product line sorting is a view preference; it never reorders the ranking itself. */
+  const [lineSort, setLineSort] = useState<"asc" | "desc" | null>(null);
 
   const moveCol = (key: OptionalColumn, dir: -1 | 1) =>
     setColOrder((prev) => {
@@ -263,6 +266,24 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data filled</th>;
       case "materialType":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Entry type</th>;
+      case "productLine":
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-left")}>
+            <button
+              type="button"
+              onClick={() =>
+                setLineSort((d) => (d === null ? "asc" : d === "asc" ? "desc" : null))
+              }
+              className="inline-flex items-center gap-1 uppercase tracking-widest hover:text-foreground"
+              title="Sort by product line"
+            >
+              Product line
+              <span className="text-[9px] text-muted-foreground/70">
+                {lineSort === "asc" ? "▲" : lineSort === "desc" ? "▼" : "↕"}
+              </span>
+            </button>
+          </th>
+        );
       case "volume":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-right", emphHead("volume"))}>
@@ -347,6 +368,25 @@ export const MaterialRegisterTable: React.FC = () => {
               provenance={m.provenance.ghg_contribution}
               emphasis={activeCol("emissions")}
             />
+          </td>
+        );
+      case "productLine":
+        return (
+          <td className="px-3 py-2 align-middle">
+            {(m.product_lines ?? []).length === 0 ? (
+              <Missing />
+            ) : (
+              <div className="flex flex-wrap items-center gap-1">
+                {(m.product_lines ?? []).map((line) => (
+                  <span
+                    key={line}
+                    className="rounded-sm border border-provenance-entered/40 bg-provenance-entered/10 px-1.5 py-0.5 text-[10px] text-foreground"
+                  >
+                    {line}
+                  </span>
+                ))}
+              </div>
+            )}
           </td>
         );
       case "applications":
@@ -462,6 +502,19 @@ export const MaterialRegisterTable: React.FC = () => {
 
 
 
+
+  const rows = useMemo(() => {
+    if (!lineSort) return visible;
+    const key = (m: Material) => (m.product_lines ?? []).slice().sort().join(", ");
+    return [...visible].sort((a, b) => {
+      const ka = key(a.m);
+      const kb = key(b.m);
+      if (!ka && !kb) return 0;
+      if (!ka) return 1;
+      if (!kb) return -1;
+      return lineSort === "asc" ? ka.localeCompare(kb) : kb.localeCompare(ka);
+    });
+  }, [visible, lineSort]);
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -831,7 +884,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 </td>
               </tr>
             )}
-            {visible.map((row) => {
+            {rows.map((row) => {
               const { m, rank } = row;
               const isSelected = selected.has(m.material_id);
               return (
@@ -953,7 +1006,7 @@ export const MaterialRegisterTable: React.FC = () => {
         productSuggestions={[...new Set(data.flatMap((m) => m.application_areas ?? []))].sort()}
         applicationSuggestions={[...new Set(data.flatMap((m) => m.application_categories ?? []))].sort()}
         tagSuggestions={[
-          ...new Set(data.flatMap((m) => (m.tags ?? []).filter((t) => !isProductLineTag(t)))),
+          ...new Set(data.flatMap((m) => m.tags ?? [])),
         ].sort()}
         periodSuggestions={[
           ...new Set(data.map((m) => m.priority_period).filter((v): v is string => Boolean(v))),
