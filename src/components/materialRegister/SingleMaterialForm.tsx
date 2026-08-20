@@ -530,20 +530,20 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       </section>
 
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-        <Button size="sm" className="h-7 text-[11px]" disabled={!name.trim()} onClick={() => save(false)}>
+        <Button size="sm" className="h-7 text-[11px]" disabled={!name.trim() || role === null} onClick={() => save(false)}>
           Save
         </Button>
         <Button
           size="sm"
           variant="outline"
           className="h-7 text-[11px]"
-          disabled={!name.trim()}
+          disabled={!name.trim() || role === null}
           onClick={() => save(true)}
         >
           Save and add another
         </Button>
         <span className="text-[10px] text-muted-foreground">
-          Only the name is required. Everything else can follow later.
+          Role and name are required. Everything else can follow later.
         </span>
       </div>
     </div>
