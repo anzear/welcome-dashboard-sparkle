@@ -148,6 +148,8 @@ const Prioritisation: React.FC = () => {
   const [xId, setXId] = useState<AxisVarId>(DEFAULT_PRESET.x);
   const [yId, setYId] = useState<AxisVarId>(DEFAULT_PRESET.y);
   const [listSide, setListSide] = useState<"plotted" | "unplotted">("plotted");
+  /** One role on the plot at a time — the two are never mixed on one grid. */
+  const [roleView, setRoleView] = useState<MaterialRole>("existing");
 
   const xv = findAxisVar(axisVars, xId);
   const yv = findAxisVar(axisVars, yId);
@@ -185,10 +187,10 @@ const Prioritisation: React.FC = () => {
     return () => clearTimeout(t);
   }, [justPlotted]);
 
-  const rows = useMemo(
-    () => (prioritySetOnly ? ordered.filter((r) => inPrioritySet(r.m)) : ordered),
-    [ordered, prioritySetOnly, inPrioritySet],
-  );
+  const rows = useMemo(() => {
+    const byRole = ordered.filter((r) => r.m.role === roleView);
+    return prioritySetOnly ? byRole.filter((r) => inPrioritySet(r.m)) : byRole;
+  }, [ordered, prioritySetOnly, inPrioritySet, roleView]);
 
   /** Why a judged criterion cannot place a material. Neutral is not a position. */
   const judgementGap = (m: Material, v: AxisVar): "no_entries" | "all_neutral" => {
@@ -353,6 +355,25 @@ const Prioritisation: React.FC = () => {
           className="h-7 w-60 rounded-lg bg-card text-[11px]"
         />
         <FilterSelects variant="popover" />
+
+        <div className="inline-flex items-center gap-1 rounded-md bg-muted p-0.5">
+          {MATERIAL_ROLES.map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRoleView(r)}
+              aria-pressed={roleView === r}
+              className={cn(
+                "rounded-[4px] px-2.5 py-1 text-[11px] font-medium transition-colors",
+                roleView === r
+                  ? "bg-foreground text-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {MATERIAL_ROLE_LABEL[r]}
+            </button>
+          ))}
+        </div>
 
         <>
             <div className="flex flex-wrap items-center gap-1">
