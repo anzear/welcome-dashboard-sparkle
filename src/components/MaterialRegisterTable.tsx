@@ -51,6 +51,8 @@ type OptionalColumn =
   | "rank"
   | "status"
   | "completeness"
+  | "role"
+  | "links"
   | "materialType"
   | "productLine"
   | "volume"
@@ -68,7 +70,9 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
-  ["materialType", "Type", "How the material enters the portfolio"],
+  ["role", "Role", "Existing material, or a new one that could replace it"],
+  ["links", "Links", "Number of linked materials of the opposite role"],
+  ["materialType", "Replacement type", "How a new material would replace an incumbent"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
@@ -266,8 +270,16 @@ export const MaterialRegisterTable: React.FC = () => {
     switch (key) {
       case "completeness":
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
+      case "role":
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Role</th>;
+      case "links":
+        return (
+          <th className={cn(HEAD, "w-16 px-3 py-2.5 text-right")} title="Linked materials of the opposite role">
+            Links
+          </th>
+        );
       case "materialType":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Type</th>;
+        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Replacement type</th>;
       case "productLine":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-left")}>
@@ -336,10 +348,39 @@ export const MaterialRegisterTable: React.FC = () => {
             <CompletenessCell m={m} />
           </td>
         );
+      case "role":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <span
+              className={cn(
+                "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
+                m.role === "new"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {MATERIAL_ROLE_SHORT[m.role]}
+            </span>
+          </td>
+        );
+      case "links": {
+        const n = (m.linked_material_ids ?? []).length;
+        return (
+          <td className="px-3 py-2 text-right align-middle text-[12px] tabular-nums">
+            {n === 0 ? (
+              <span className="text-muted-foreground/60">&mdash;</span>
+            ) : (
+              <span className="text-foreground">{n}</span>
+            )}
+          </td>
+        );
+      }
       case "materialType":
         return (
           <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
-            {m.entry_type ? (
+            {m.role !== "new" ? (
+              <span className="text-muted-foreground/60">&mdash;</span>
+            ) : m.entry_type ? (
               ENTRY_TYPE_LABEL[m.entry_type]
             ) : (
               <span className="text-muted-foreground/60">&mdash;</span>
