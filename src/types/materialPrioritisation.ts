@@ -170,6 +170,12 @@ export interface Material {
   material_class: string | null;
   /** Free-text customer tags. Never null — empty array when none. */
   tags: string[];
+  /**
+   * Product lines the material belongs to. Its own field, separate from Tags,
+   * drawn from the controlled workspace list. Empty array = none assigned.
+   */
+  product_lines: string[];
+
   application_categories: string[];
   application_areas: string[];
   entry_type: EntryType;
@@ -263,6 +269,7 @@ export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
   owner: "company_entered",
   entry_type: "company_entered",
   tags: "company_entered",
+  product_lines: "company_entered",
   application_categories: "company_entered",
   application_areas: "company_entered",
   journey_status: "team_judgement",
@@ -322,6 +329,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   cas_number: "CAS number",
   material_class: "Material class",
   tags: "Tags",
+  product_lines: "Product line",
   customer_material_ids: "Customer material IDs",
   material_added: "Material added",
   recommendation: "Recommendation",

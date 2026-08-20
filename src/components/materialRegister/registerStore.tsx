@@ -42,8 +42,9 @@ import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/materialRegister/tags";
 import { applyProductLines } from "@/data/productLinesMock";
 import {
+  cleanProductLines,
   inScope,
-  isProductLineTag,
+  migrateProductLinesFromTags,
   productLineCounts,
   scopeLabel as labelForScope,
   type Scope,
@@ -169,6 +170,8 @@ export interface Filters {
   entryTypes: string[];
   /** Tag values, matched with ANY. May include UNTAGGED. */
   tags: string[];
+  /** Product lines, matched with ANY. Controlled values only; may include NO_PRODUCT_LINE. */
+  productLines: string[];
   /** Application areas, matched with ANY. */
   products: string[];
   /** Product categories, matched with ANY. */
@@ -202,6 +205,8 @@ export interface Filters {
 }
 
 export const NO_PRIORITY = "__no_priority__";
+/** Filter value for materials with no product line assigned. Empty, not zero. */
+export const NO_PRODUCT_LINE = "__no_product_line__";
 export const NO_BLOCKER = "__no_blocker__";
 
 export const EMPTY_FILTERS: Filters = {
@@ -211,6 +216,7 @@ export const EMPTY_FILTERS: Filters = {
   owners: [],
   entryTypes: [],
   tags: [],
+  productLines: [],
   products: [],
   applications: [],
   priorityPeriods: [],
@@ -460,7 +466,7 @@ export const useRegister = () => {
 
 /** The register as seeded, with gate positions and their events folded in. */
 const gateSeed = applyGateSeed(seedMaterialsWithHistory);
-export const seededMaterials = applyProductLines(gateSeed.materials);
+export const seededMaterials = migrateProductLinesFromTags(applyProductLines(gateSeed.materials));
 
 const SCOPE_KEY = "material-portfolio-scope";
 
@@ -535,6 +541,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.products.length > 0 ||
     filters.applications.length > 0 ||
     filters.tags.length > 0 ||
+    filters.productLines.length > 0 ||
     filters.priorityPeriods.length > 0 ||
     filters.blockers.length > 0 ||
     filters.vcgSubstitutability.length > 0 ||
@@ -619,6 +626,13 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         const keys = new Set(filters.tags.filter((t) => t !== UNTAGGED).map(tagKey));
         const anyMatch =
           (wantUntagged && m.tags.length === 0) || m.tags.some((t) => keys.has(tagKey(t)));
+        if (!anyMatch) return false;
+      }
+      if (filters.productLines.length) {
+        const wantNone = filters.productLines.includes(NO_PRODUCT_LINE);
+        const keys = new Set(filters.productLines.filter((t) => t !== NO_PRODUCT_LINE).map(tagKey));
+        const lines = m.product_lines ?? [];
+        const anyMatch = (wantNone && lines.length === 0) || lines.some((t) => keys.has(tagKey(t)));
         if (!anyMatch) return false;
       }
       if (filters.priorityPeriods.length) {
@@ -828,12 +842,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         } else if (payload.kind === "applications") {
           next.application_categories = nextList(m.application_categories ?? []);
           next.provenance.application_categories = enteredProvenance();
-        } else if (payload.kind === "product_lines" || payload.kind === "tags") {
-          // Tags are one array with two types; each action touches only its own partition.
-          const isLine = payload.kind === "product_lines";
-          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
-          const others = (m.tags ?? []).filter((t) => isProductLineTag(t) !== isLine);
-          next.tags = [...others, ...nextList(mine)];
+        } else if (payload.kind === "product_lines") {
+          next.product_lines = cleanProductLines(nextList(m.product_lines ?? []));
+          next.provenance.product_lines = enteredProvenance();
+        } else if (payload.kind === "tags") {
+          next.tags = nextList(m.tags ?? []);
           next.provenance.tags = enteredProvenance();
         } else if (payload.kind === "entry_type") {
           next.entry_type = payload.value as Material["entry_type"];
@@ -900,11 +913,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         }
         if (payload.kind === "product_lines" || payload.kind === "tags") {
           const isLine = payload.kind === "product_lines";
-          const mine = (m.tags ?? []).filter((t) => isProductLineTag(t) === isLine);
+          const mine = (isLine ? m.product_lines : m.tags) ?? [];
           return {
             material_id: m.material_id,
             event_type: "field_correction",
-            field: "tags",
+            field: isLine ? "product_lines" : "tags",
             from_value: formatTags(mine) || null,
             to_value: formatTags(nextList(mine)) || null,
             batch_id: batchId,
@@ -947,7 +960,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
                 : payload.kind === "entry_type"
                   ? "Entry type"
                   : payload.kind === "product_lines"
-                    ? "Product lines"
+                    ? "Product line"
                     : payload.kind === "tags"
                       ? "Tags"
                       : "Intelligence";

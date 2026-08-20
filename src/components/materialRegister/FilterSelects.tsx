@@ -17,9 +17,11 @@ import { tagVocabulary, UNTAGGED } from "@/components/materialRegister/tags";
 import {
   ENTRY_TYPE_LABEL,
   NO_PRIORITY,
+  NO_PRODUCT_LINE,
   UNASSIGNED_OWNER,
   useRegister,
 } from "@/components/materialRegister/registerStore";
+import { PRODUCT_LINES, useProductLines } from "@/components/materialRegister/productLines";
 
 export type FilterKey =
   | "statuses"
@@ -29,6 +31,7 @@ export type FilterKey =
   | "products"
   | "applications"
   | "tags"
+  | "productLines"
   | "priorityPeriods"
   | "vcgSubstitutability"
   | "vcgCompetitor";
@@ -44,6 +47,8 @@ const FilterSelects: React.FC<{
   variant?: "inline" | "popover";
 }> = ({ className, include, variant = "inline" }) => {
   const { data, filters, setFilters } = useRegister();
+  /** The controlled list can grow while the filter is mounted. */
+  useProductLines();
 
 
   const options = useMemo(() => {
@@ -76,6 +81,17 @@ const FilterSelects: React.FC<{
         ...tagVocabulary(data).map((t) => ({ value: t.tag, label: `${t.tag} (${t.count})` })),
         { value: UNTAGGED, label: `Untagged (${data.filter((m) => m.tags.length === 0).length})` },
       ],
+      // Controlled workspace list, not a free-text search over tags.
+      productLines: [
+        ...PRODUCT_LINES.map((line) => ({
+          value: line,
+          label: `${line} (${data.filter((m) => (m.product_lines ?? []).some((v) => v === line)).length})`,
+        })),
+        {
+          value: NO_PRODUCT_LINE,
+          label: `No product line (${data.filter((m) => (m.product_lines ?? []).length === 0).length})`,
+        },
+      ],
       vcgSubstitutability: (Object.keys(SUBSTITUTABILITY_LABEL) as SubstitutabilityReadiness[]).map((v) => ({
         value: v,
         label: SUBSTITUTABILITY_LABEL[v],
@@ -106,6 +122,7 @@ const FilterSelects: React.FC<{
     ["classes", "Material category", options.classes, filters.classes],
     ["products", "Application area", options.products, filters.products],
     ["applications", "Product category", options.applications, filters.applications],
+    ["productLines", "Product line", options.productLines, filters.productLines],
     ["tags", "Tags", options.tags, filters.tags],
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
   ];

@@ -1,10 +1,9 @@
-// Product line assignment across the register. Company-entered tags, with real
+// Product line assignment across the register. Company-entered field values, with real
 // overlap: surfactants and solvents run across several brand lines, specialty
 // materials usually sit in one, and a handful carry no product line at all.
 
 import type { FieldProvenance, Material } from "@/types/materialPrioritisation";
-import { addTags } from "@/components/materialRegister/tags";
-import { PRODUCT_LINES } from "@/components/materialRegister/productLines";
+import { PRODUCT_LINES, cleanProductLines } from "@/components/materialRegister/productLines";
 
 const LOAD_SOURCE = "Material master 2026-01";
 const LOAD_DATE = "2026-01-18";
@@ -66,8 +65,11 @@ export function applyProductLines(rows: Material[]): Material[] {
     }
     return {
       ...m,
-      tags: addTags(m.tags ?? [], lines),
-      provenance: { ...m.provenance, tags: m.provenance?.tags ?? provenance },
+      product_lines: cleanProductLines(lines),
+      provenance: {
+        ...m.provenance,
+        product_lines: m.provenance?.product_lines ?? provenance,
+      },
     };
   });
 }
