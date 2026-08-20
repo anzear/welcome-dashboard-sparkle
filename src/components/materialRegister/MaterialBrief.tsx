@@ -20,6 +20,10 @@ import {
   type FieldProvenance,
   type JourneyStatus,
   type Material,
+  type MaterialRole,
+  LINK_SECTION_LABEL,
+  MATERIAL_ROLES,
+  MATERIAL_ROLE_LABEL,
 } from "@/types/materialPrioritisation";
 import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, StatusPill } from "@/components/materialRegister/primitives";
@@ -27,6 +31,7 @@ import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
@@ -1072,6 +1077,13 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
             note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
           >
             <BriefAssessment material={m} />
+          </Section>
+
+          <Section
+            title={LINK_SECTION_LABEL[m.role]}
+            note="A link records candidacy only. Scores and decisions on each side stay independent."
+          >
+            <BriefLinks material={m} />
           </Section>
 
         </div>

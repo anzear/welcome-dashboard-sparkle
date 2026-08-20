@@ -19,7 +19,7 @@ import {
  * from the other.
  */
 const BriefLinks: React.FC<{ material: Material }> = ({ material }) => {
-  const { toggleLink, linkCandidates, linkedMaterials, entriesFor } = useRegister();
+  const { toggleLink, linkCandidates, linkedMaterials, entriesFor, openBrief } = useRegister();
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -100,12 +100,13 @@ const BriefLinks: React.FC<{ material: Material }> = ({ material }) => {
         <ul className="divide-y divide-border/60">
           {linked.map((l) => (
             <li key={l.material_id} className="flex items-center gap-2 py-1.5">
-              <a
-                href={`/material/${l.material_id}`}
-                className="truncate text-[11px] text-foreground hover:underline"
+              <button
+                type="button"
+                onClick={() => openBrief(l.material_id)}
+                className="truncate text-left text-[11px] text-foreground hover:underline"
               >
                 {l.name}
-              </a>
+              </button>
               <span className="ml-auto shrink-0">
                 <StatusPill status={l.journey_status} />
               </span>
