@@ -61,15 +61,7 @@ export const CURRENT_USER = "You";
  * The criterion set is shared, so a change to it is not a change to one
  * material. These are kept apart from material History for that reason.
  */
-export interface CriterionSetEvent {
-  event_id: string;
-  action: "added" | "edited" | "removed";
-  criterion_id: string;
-  label: string;
-  detail: string | null;
-  changed_by: string;
-  changed_at: string;
-}
+export type { CriterionSetEvent } from "@/components/materialRegister/criteriaStore";
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
@@ -379,23 +371,31 @@ interface Store {
    * document recorded against it. Only a material owner may change the set.
    */
   criteria: AssessmentCriterion[];
+  /** Active judged criteria, in order: the seven standard ones, then custom. */
   judgedCriteria: AssessmentCriterion[];
+  /** Judged criteria taken out of use. Their entries stay readable. */
+  hiddenCriteria: AssessmentCriterion[];
+  customCriteriaCount: number;
   criterionLabelOf: (id: string) => string;
   criteriaEvents: CriterionSetEvent[];
   /** True when this person owns at least one material in the portfolio. */
   canEditCriteria: boolean;
-  /** How many entries and documents a removal would destroy, portfolio-wide. */
+  /** What a criterion holds portfolio-wide. Hiding keeps all of it. */
   criterionFootprint: (criterionId: string) => {
     materials: number;
     entries: number;
     documents: number;
   };
-  addCriterion: (draft: { label: string; helper: string; anchors: string }) => boolean;
-  updateCriterion: (
+  /** Hiding is the only way out of use. Reversible, and nothing is deleted. */
+  hideCriterion: (criterionId: string) => boolean;
+  restoreCriterion: (criterionId: string) => boolean;
+  addCustomCriterion: (draft: CustomCriterionDraft) => { ok: boolean; error?: string };
+  updateCustomCriterion: (
     criterionId: string,
-    patch: { label: string; helper: string; anchors: string },
-  ) => boolean;
-  removeCriterion: (criterionId: string) => boolean;
+    draft: CustomCriterionDraft,
+  ) => { ok: boolean; error?: string };
+  /** Only a custom criterion holding no entries can be deleted. */
+  deleteCustomCriterion: (criterionId: string) => boolean;
   /** Sparse entry map. A missing key means that person has no view recorded. */
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
@@ -595,10 +595,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   /** Criterion-level evidence. Shared across the team, mock records only. */
   const [documents, setDocuments] = useState<SupportingDocument[]>(seedDocuments);
   const [currentUserId, setCurrentUserId] = useState<string>(DEFAULT_CONTRIBUTOR.user_id);
-  /** One shared criterion set. Every material reads this list. */
-  const [criteria, setCriteria] = useState<AssessmentCriterion[]>(CRITERIA);
-  const [criteriaEvents, setCriteriaEvents] = useState<CriterionSetEvent[]>([]);
-  const judgedCriteria = useMemo(() => criteria.filter((c) => c.kind === "judgement"), [criteria]);
+  /** One shared criterion set, held at workspace level. Never per material. */
+  const { criteria, events: criteriaEvents } = useCriteriaSet();
+  /** Hidden criteria are out of use everywhere the active set is read. */
+  const judgedCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement" && !c.hidden),
+    [criteria],
+  );
+  const hiddenCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement" && c.hidden),
+    [criteria],
+  );
+  const customCriteriaCount = useMemo(() => criteria.filter((c) => c.custom).length, [criteria]);
   const judgedCriteriaRef = judgedCriteria;
   const [measureId, setMeasureId] = useState<MeasureId>("spend");
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
@@ -1674,75 +1682,27 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       ...prev,
     ]);
 
-  const addCriterion = (draft: { label: string; helper: string; anchors: string }) => {
-    if (!canEditCriteria) return false;
-    const label = draft.label.trim();
-    if (!label) return false;
-    const criterion_id = `crit_${Date.now().toString(36)}`;
-    setCriteria((prev) => [
-      ...prev,
-      {
-        criterion_id,
-        label,
-        kind: "judgement",
-        helper: draft.helper.trim(),
-        anchors: draft.anchors.trim() || undefined,
-      },
-    ]);
-    logCriterionChange("added", criterion_id, label, "Added to every material, with no entries yet.");
-    return true;
-  };
+  /** Hiding and unhiding are workspace-level acts. Nothing is ever deleted. */
+  const hideCriterionAction = (criterionId: string) =>
+    canEditCriteria ? hideCriterionInSet(criterionId, currentUser.name) : false;
 
-  const updateCriterion = (
-    criterionId: string,
-    patch: { label: string; helper: string; anchors: string },
-  ) => {
-    if (!canEditCriteria) return false;
-    const existing = criteria.find((c) => c.criterion_id === criterionId);
-    if (!existing || existing.kind !== "judgement") return false;
-    const label = patch.label.trim();
-    if (!label) return false;
-    setCriteria((prev) =>
-      prev.map((c) =>
-        c.criterion_id === criterionId
-          ? { ...c, label, helper: patch.helper.trim(), anchors: patch.anchors.trim() || undefined }
-          : c,
-      ),
-    );
-    logCriterionChange(
-      "edited",
-      criterionId,
-      label,
-      existing.label === label ? "Wording changed." : `Renamed from "${existing.label}".`,
-    );
-    return true;
-  };
+  const restoreCriterionAction = (criterionId: string) =>
+    canEditCriteria ? restoreCriterionInSet(criterionId, currentUser.name) : false;
 
-  /** Removal is portfolio-wide and final: the entries and documents go with it. */
-  const removeCriterion = (criterionId: string) => {
-    if (!canEditCriteria) return false;
-    const existing = criteria.find((c) => c.criterion_id === criterionId);
-    if (!existing || existing.kind !== "judgement") return false;
-    const { entries, materials } = criterionFootprint(criterionId);
-    setCriteria((prev) => prev.filter((c) => c.criterion_id !== criterionId));
-    setAssessments((prev) => {
-      const next: Record<string, AssessmentEntry> = {};
-      Object.entries(prev).forEach(([k, e]) => {
-        if (e.criterion_id !== criterionId) next[k] = e;
-      });
-      return next;
-    });
-    setDocuments((prev) => prev.filter((d) => d.criterion_id !== criterionId));
-    logCriterionChange(
-      "removed",
-      criterionId,
-      existing.label,
-      entries === 0
-        ? "Removed from every material. No entries existed."
-        : `Removed from every material, with ${entries} ${entries === 1 ? "entry" : "entries"} across ${materials} ${materials === 1 ? "material" : "materials"}.`,
-    );
-    return true;
-  };
+  const addCustomCriterionAction = (draft: CustomCriterionDraft) =>
+    canEditCriteria
+      ? addCustom(draft, currentUser.name)
+      : { ok: false, error: "Only a material owner can change the criteria set." };
+
+  const updateCustomCriterionAction = (criterionId: string, draft: CustomCriterionDraft) =>
+    canEditCriteria
+      ? updateCustom(criterionId, draft, currentUser.name)
+      : { ok: false, error: "Only a material owner can change the criteria set." };
+
+  const deleteCustomCriterionAction = (criterionId: string) =>
+    canEditCriteria
+      ? deleteCustom(criterionId, currentUser.name, criterionFootprint(criterionId).entries)
+      : false;
 
 
   const value: Store = {
@@ -1799,6 +1759,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     contributors: CONTRIBUTORS,
     criteria,
     judgedCriteria,
+    hiddenCriteria,
+    customCriteriaCount,
     criterionLabelOf,
     criteriaEvents,
     canEditCriteria,
