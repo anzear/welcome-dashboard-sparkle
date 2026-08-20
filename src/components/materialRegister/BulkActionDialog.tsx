@@ -22,12 +22,8 @@ import { X } from "lucide-react";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus, type Material } from "@/types/materialPrioritisation";
 import { cleanTags, hasTag, normalizeTag } from "@/components/materialRegister/tags";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
-import {
-  isProductLineTag,
-  PRODUCT_LINES,
-  registerProductLine,
-  useProductLines,
-} from "@/components/materialRegister/productLines";
+import { PRODUCT_LINES, useProductLines } from "@/components/materialRegister/productLines";
+import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 
 export type BulkKind =
   | "status"
