@@ -220,9 +220,9 @@ export const CSV_COLUMNS: CsvColumn[] = [
   },
   {
     field: "entry_type",
-    label: "Entry type",
+    label: "Type",
     kind: "entry_type",
-    example1: "drop_in",
+    example1: "new_material",
     example2: "substitution",
   },
   { field: "annual_volume", label: "Annual volume (t/yr)", kind: "number", example1: "4200", example2: "" },
