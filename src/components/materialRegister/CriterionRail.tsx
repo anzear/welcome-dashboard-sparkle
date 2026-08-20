@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { NEUTRAL_HELPER, SCORE_POINTS, TEAM_LABEL, initialsOf, contributorById } from "@/config/assessmentCriteria";
 import { shortDate } from "@/components/materialRegister/primitives";
-import type { AssessmentEntry } from "@/types/materialPrioritisation";
+import type { AssessmentEntry, MaterialRole } from "@/types/materialPrioritisation";
 
 /** Short ends of the 1-5 scale. Replaces the permanent anchor paragraph. */
 export const RAIL_ENDS: Record<string, { low: string; high: string }> = {
@@ -13,9 +13,22 @@ export const RAIL_ENDS: Record<string, { low: string; high: string }> = {
   supply_security: { low: "No improvement", high: "Materially more secure" },
 };
 
+/** Same scale, same criteria — the question is why to replace, not why to add. */
+export const RAIL_ENDS_EXISTING: Record<string, { low: string; high: string }> = {
+  risk_of_inaction: { low: "No pressure", high: "Pressure is real" },
+  strategic_importance: { low: "Peripheral", high: "Central to strategy" },
+  market_pull: { low: "No demand signal", high: "Customers pushing" },
+  economic_case: { low: "Economics hold up", high: "Economics deteriorating" },
+  supply_security: { low: "Supply secure", high: "Supply fragile" },
+};
+
 const FALLBACK_ENDS = { low: "Weak case", high: "Strong case" };
 
-export const railEnds = (criterionId: string) => RAIL_ENDS[criterionId] ?? FALLBACK_ENDS;
+export const railEnds = (criterionId: string, role: MaterialRole = "new") =>
+  (role === "existing" ? RAIL_ENDS_EXISTING[criterionId] : RAIL_ENDS[criterionId]) ??
+  RAIL_ENDS[criterionId] ??
+  FALLBACK_ENDS;
+
 
 /** Position of a score on the track, as a percentage of the usable width. */
 const pct = (score: number) => ((score - 1) / (SCORE_POINTS.length - 1)) * 100;
@@ -47,6 +60,8 @@ const CriterionRail: React.FC<{
   onEditMine: () => void;
   /** Keep the pick positions visible — used while scoring. */
   picking?: boolean;
+  /** Only the wording of the ends changes with the material's role. */
+  role?: MaterialRole;
 }> = ({
   criterionId,
   criterionLabel,
@@ -57,8 +72,10 @@ const CriterionRail: React.FC<{
   onPick,
   onEditMine,
   picking = false,
+  role = "new",
 }) => {
-  const ends = railEnds(criterionId);
+  const ends = railEnds(criterionId, role);
+
   const empty = scored.length === 0;
   const low = empty ? null : Math.min(...scored.map((e) => e.score as number));
   const high = empty ? null : Math.max(...scored.map((e) => e.score as number));

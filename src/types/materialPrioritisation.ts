@@ -6,6 +6,42 @@ export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
 };
 
 /**
+ * ROLE — what the material is in the portfolio. Two values only, required on
+ * every record. An existing material is one the company already buys and may
+ * want to replace; a new material is a candidate that could replace one.
+ * Company-entered data: never derived, never inferred from other fields.
+ */
+export type MaterialRole = "existing" | "new";
+
+export const MATERIAL_ROLE_LABEL: Record<MaterialRole, string> = {
+  existing: "Existing material",
+  new: "New material",
+};
+
+/** Short form for dense table cells. */
+export const MATERIAL_ROLE_SHORT: Record<MaterialRole, string> = {
+  existing: "Existing",
+  new: "New",
+};
+
+export const MATERIAL_ROLES: MaterialRole[] = ["existing", "new"];
+
+/** Stored/legacy data carries no role. Everything without one is existing. */
+export const migrateMaterialRole = (v: unknown): MaterialRole =>
+  v === "new" || v === "new_material" ? "new" : "existing";
+
+/** A link only ever joins opposite roles. */
+export const oppositeRole = (role: MaterialRole): MaterialRole =>
+  role === "existing" ? "new" : "existing";
+
+/** What the link section is called on each side. */
+export const LINK_SECTION_LABEL: Record<MaterialRole, string> = {
+  existing: "Potential replacements",
+  new: "Could replace",
+};
+
+
+/**
  * Legacy entry-type values seen in stored/mock data. Only "drop-in" maps onto
  * a new option; anything else is left empty rather than inferred.
  */
@@ -166,6 +202,16 @@ export interface Material {
   name: string;
   cas_number: string | null;
   material_class: string | null;
+  /**
+   * What this record is: an existing material, or a new one. Required — every
+   * material carries a role, and nothing derives it.
+   */
+  role: MaterialRole;
+  /**
+   * Materials of the opposite role this one is linked to. Many-to-many, held on
+   * both sides. A link carries no decision and no score.
+   */
+  linked_material_ids: string[];
   /** Free-text customer tags. Never null — empty array when none. */
   tags: string[];
   /**
@@ -176,7 +222,9 @@ export interface Material {
 
   application_categories: string[];
   application_areas: string[];
+  /** Replacement type. Only meaningful on a new material. */
   entry_type: EntryType | null;
+
   annual_volume: number | null;
   unit_price: number | null;
   annual_spend: number | null;
@@ -265,6 +313,9 @@ export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
   supplier_availability: "vcg_computed",
   competitor_activity: "vcg_computed",
   owner: "company_entered",
+  role: "company_entered",
+  linked_material_ids: "company_entered",
+
   entry_type: "company_entered",
   tags: "company_entered",
   product_lines: "company_entered",
@@ -320,7 +371,10 @@ export interface MaterialEvent {
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
   journey_status: "Status",
-  entry_type: "Type",
+  entry_type: "Replacement type",
+  role: "Role",
+  linked_material_ids: "Linked materials",
+
   owner: "Owner",
   priority_period: "Priority period",
   blocker_category: "Blocker",

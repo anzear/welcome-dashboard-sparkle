@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { NEUTRAL_LABEL, TEAM_LABEL, contributorById, initialsOf } from "@/config/assessmentCriteria";
+import {
+  NEUTRAL_LABEL,
+  TEAM_LABEL,
+  contributorById,
+  criterionForRole,
+  initialsOf,
+} from "@/config/assessmentCriteria";
 import { today, useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, provenanceLine, shortDate } from "@/components/materialRegister/primitives";
 import CriterionRail from "@/components/materialRegister/CriterionRail";
@@ -8,7 +14,12 @@ import CriterionDocuments from "@/components/materialRegister/CriterionDocuments
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
 import { Info, SlidersHorizontal, Pencil } from "lucide-react";
-import type { AssessmentEntry, AssessmentCriterion, Material } from "@/types/materialPrioritisation";
+import type {
+  AssessmentEntry,
+  AssessmentCriterion,
+  Material,
+  MaterialRole,
+} from "@/types/materialPrioritisation";
 
 /** One link treatment for the whole component. */
 const LINK =
@@ -308,10 +319,13 @@ const RationaleLine: React.FC<{ entry: AssessmentEntry; isMine: boolean }> = ({ 
 };
 
 /** One judged criterion: header, rail, reasons. The rail is the row. */
-const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: string }> = ({
-  criterion,
-  materialId,
-}) => {
+const JudgementRow: React.FC<{
+  criterion: AssessmentCriterion;
+  materialId: string;
+  /** Only the wording changes with the role: the scale and the rules do not. */
+  role: MaterialRole;
+}> = ({ criterion: rawCriterion, materialId, role }) => {
+  const criterion = criterionForRole(rawCriterion, role);
   const { assessmentState, myEntry, saveAssessment, clearAssessment, currentUser } = useRegister();
   const state = assessmentState(materialId, criterion.criterion_id);
   const mine = myEntry(materialId, criterion.criterion_id);
@@ -402,6 +416,7 @@ const JudgementRow: React.FC<{ criterion: AssessmentCriterion; materialId: strin
             setBlocked(false);
           }}
           picking={editing}
+          role={role}
         />
       </div>
 
@@ -554,7 +569,12 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
 
       <div className="space-y-6 pt-1">
         {judged.map((c) => (
-          <JudgementRow key={c.criterion_id} criterion={c} materialId={material.material_id} />
+          <JudgementRow
+            key={c.criterion_id}
+            criterion={c}
+            materialId={material.material_id}
+            role={material.role}
+          />
         ))}
       </div>
 
