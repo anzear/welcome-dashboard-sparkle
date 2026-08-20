@@ -19,12 +19,14 @@ import {
   type Filters,
 } from "@/components/materialRegister/registerStore";
 import { UNTAGGED } from "@/components/materialRegister/tags";
+import { NO_PRODUCT_LINE } from "@/components/materialRegister/registerStore";
 
 const labelFor = (kind: keyof Filters, value: string) => {
   if (kind === "statuses") return JOURNEY_STATUS_LABEL[value as JourneyStatus];
   if (kind === "owners") return value === UNASSIGNED_OWNER ? "Unassigned" : value;
   if (kind === "entryTypes") return ENTRY_TYPE_LABEL[value as EntryType] ?? value;
   if (kind === "tags" && value === UNTAGGED) return "Untagged";
+  if (kind === "productLines" && value === NO_PRODUCT_LINE) return "No product line";
   if (kind === "priorityPeriods" && value === NO_PRIORITY) return "Not prioritised";
   if (kind === "blockers" && value === NO_BLOCKER) return "No blocker";
   if (kind === "vcgSubstitutability")
@@ -47,6 +49,7 @@ const FilterChips: React.FC = () => {
       "products",
       "applications",
       "tags",
+      "productLines",
       "priorityPeriods",
       
       "blockers",
