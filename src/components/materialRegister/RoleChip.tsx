@@ -23,17 +23,24 @@ export const ROLE_MARKER_CANDIDATE =
 
 export function RoleChip({
   isExisting,
+  notSet,
   children,
   className,
   title,
 }: {
   isExisting: boolean;
+  notSet?: boolean;
   children: React.ReactNode;
   className?: string;
   title?: string;
 }) {
+  const variant = notSet
+    ? ROLE_CHIP_NOT_SET
+    : isExisting
+      ? ROLE_CHIP_EXISTING
+      : ROLE_CHIP_CANDIDATE;
   return (
-    <span className={cn(roleChipClass(isExisting), className)} title={title}>
+    <span className={cn(ROLE_CHIP_BASE, variant, className)} title={title}>
       {children}
     </span>
   );
