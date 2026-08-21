@@ -31,7 +31,7 @@ const CRITERION_PROFILE: Record<string, { coverage: number; base: number; teams:
   [ECONOMIC]: { coverage: 0.64, base: 2.6, teams: ["procurement", "marketing"] },
   [SUPPLY]: { coverage: 0.76, base: 3.1, teams: ["procurement", "regulatory"] },
   [SUSTAINABILITY]: { coverage: 0.9, base: 3.8, teams: ["sustainability", "rnd", "regulatory"] },
-  [PERFORMANCE]: { coverage: 0.34, base: 2.9, teams: ["rnd", "marketing"] },
+  [PERFORMANCE]: { coverage: 0.46, base: 2.9, teams: ["rnd", "marketing"] },
 };
 
 /**
@@ -203,10 +203,15 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
     const budget = depth === "most" ? JUDGED_CRITERIA.length : 2 + Math.floor(r() * 3);
     let used = 0;
 
-    JUDGED_CRITERIA.forEach((c, ci) => {
+    /** Rotate the order so a partial record does not always drop the same tail. */
+    const order = JUDGED_CRITERIA.map((c, i) => ({ c, i })).sort(
+      (a, b) => ((a.i + mi * 3) % JUDGED_CRITERIA.length) - ((b.i + mi * 3) % JUDGED_CRITERIA.length),
+    );
+
+    order.forEach(({ c, i: ci }) => {
       if (used >= budget) return;
       const profile = CRITERION_PROFILE[c.criterion_id] ?? { coverage: 0.5, base: 3, teams: [] };
-      const threshold = depth === "most" ? profile.coverage : profile.coverage * 0.8;
+      const threshold = depth === "most" ? Math.min(1, profile.coverage * 1.3) : profile.coverage * 0.8;
       if (r() > threshold) return;
       used += 1;
 
