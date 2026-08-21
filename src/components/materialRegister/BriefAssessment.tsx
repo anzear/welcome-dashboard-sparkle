@@ -585,7 +585,11 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
       </div>
 
 
-      <div className="space-y-6 pt-1">
+      <p className="pt-1 text-[11px] leading-snug text-muted-foreground/80">
+        {ASSESSMENT_FRAMING[material.role]}
+      </p>
+
+      <div className="space-y-6">
         {judged.map((c) => (
           <JudgementRow
             key={c.criterion_id}
