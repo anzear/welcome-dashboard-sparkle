@@ -346,7 +346,240 @@ const rows: Row[] = [
     apps: [], prods: ["Liquid detergent"],
     intel: "in_progress", intelScope: "Enzyme supplier landscape outside DK",
   },
+
+  // ======================================================= Replacement candidates
+  // Bio-based and circular alternatives the team is looking at against the book
+  // above. Candidates carry a replacement type; a few have none recorded yet.
+  // Volumes are often absent — nothing is bought at scale yet, and that gap is
+  // real, never a zero.
+
+  // -------------------------------------------- Sugar and amino-acid surfactants
+  {
+    name: "Sodium coco-sulfate (RSPO segregated)", cas: "97375-27-4", cls: "Alkyl sulfate", tag: "Surfactants",
+    vol: 420, price: 1.92, ghg: 1.85, status: "in_testing", owner: "S. Rautio",
+    role: "new", etype: "substitution", linkTo: ["Sodium lauryl sulfate", "Sodium laureth sulfate"],
+    apps: ["Surfactancy"], prods: ["Shampoo base", "Hand soap"],
+    target: "2026-10-31", priority: "H2 2026",
+  },
+  {
+    name: "Sodium lauroyl methyl isethionate", cas: "1191945-24-4", cls: "Isethionate surfactant", tag: "Surfactants",
+    vol: 180, price: 3.45, ghg: 2.15, status: "under_evaluation", owner: "S. Rautio",
+    role: "new", etype: "new_material", linkTo: ["Sodium laureth sulfate"],
+    apps: ["Surfactancy"], prods: ["Shampoo base", "Body wash"],
+  },
+  {
+    name: "Disodium cocoyl glutamate", cas: "68187-32-6", cls: "Amino acid surfactant", tag: "Surfactants",
+    vol: 95, price: 4.6, ghg: 2.05, status: "under_evaluation", owner: "A. Vermeer",
+    role: "new", etype: "new_material", linkTo: ["Sodium laureth sulfate", "Cocamidopropyl betaine"],
+    apps: ["Surfactancy"], prods: ["Shampoo base", "Body wash"],
+    intel: "requested", intelScope: "Amino acid surfactant capacity, EU and JP",
+  },
+  {
+    name: "Sodium methyl cocoyl taurate", cas: "61791-42-2", cls: "Taurate surfactant", tag: "Surfactants",
+    vol: null, price: 5.2, ghg: null, status: "not_started", owner: null,
+    role: "new", etype: "new_material", linkTo: ["Sodium lauryl sulfate"],
+    apps: ["Surfactancy"], prods: ["Hand soap"],
+  },
+  {
+    name: "Sodium lauroyl sarcosinate", cas: "137-16-6", cls: "Amino acid surfactant", tag: "Surfactants",
+    vol: 60, price: 5.85, ghg: 2.45, status: "under_evaluation", owner: "S. Rautio",
+    role: "new", linkTo: ["Sodium lauryl sulfate"],
+    apps: [], prods: ["Shampoo base"],
+  },
+  {
+    name: "Sodium cocoyl isethionate", cas: "61789-32-0", cls: "Isethionate surfactant", tag: "Surfactants",
+    vol: 130, price: 3.9, ghg: null, status: "in_testing", owner: "K. Brandt",
+    role: "new", etype: "substitution", linkTo: ["Sodium C14-16 olefin sulfonate"],
+    apps: ["Surfactancy"], prods: ["Hand soap", "Body wash"],
+    target: "2027-02-28",
+  },
+  {
+    name: "Sodium lauryl glucose carboxylate", cas: "383178-66-3", cls: "Alkyl polyglucoside", tag: "Surfactants",
+    vol: 75, price: 4.15, ghg: 1.75, status: "under_evaluation", owner: "S. Rautio",
+    role: "new", etype: "new_material", linkTo: ["Sodium laureth sulfate", "Coco glucoside"],
+    apps: ["Surfactancy"], prods: ["Shampoo base"],
+  },
+  {
+    name: "Sodium C10-16 alkyl glucoside (sugar beet)", cas: "141464-42-8", cls: "Alkyl polyglucoside", tag: "Surfactants",
+    vol: 260, price: 2.55, ghg: 1.4, status: "qualified", owner: "S. Rautio",
+    role: "new", etype: "substitution", linkTo: ["Coco glucoside", "Decyl glucoside", "Lauryl glucoside"],
+    apps: ["Surfactancy"], prods: ["Body wash", "Surface cleaner"],
+    priority: "H2 2026", target: "2026-09-30",
+  },
+  {
+    name: "Lauramidopropyl betaine (coconut-free)", cas: "4292-10-8", cls: "Amphoteric betaine", tag: "Surfactants",
+    vol: 210, price: 2.35, ghg: 1.95, status: "in_testing", owner: "S. Rautio",
+    role: "new", etype: "substitution", linkTo: ["Cocamidopropyl betaine"],
+    apps: ["Surfactancy", "Viscosity control"], prods: ["Shampoo base", "Hand soap"],
+  },
+
+  // ------------------------------------------------------------- Biosurfactants
+  {
+    name: "Rhamnolipid biosurfactant", cas: "4348-76-9", cls: "Glycolipid biosurfactant", tag: "Surfactants",
+    vol: 18, price: 12.4, ghg: 1.55, status: "under_evaluation", owner: "S. Rautio",
+    role: "new", etype: "new_material", linkTo: ["Sodium C14-16 olefin sulfonate", "Nonylphenol ethoxylate"],
+    apps: ["Surfactancy"], prods: ["Surface cleaner", "Liquid detergent"],
+    intel: "in_progress", intelScope: "Fermentation biosurfactant scale-up, 2027-2029",
+  },
+  {
+    name: "Sophorolipid biosurfactant", cas: "148409-20-8", cls: "Glycolipid biosurfactant", tag: "Surfactants",
+    vol: null, price: 14.9, ghg: null, status: "under_evaluation", owner: "L. Haugen",
+    role: "new", etype: "new_material", linkTo: ["Nonylphenol ethoxylate"],
+    apps: [], prods: ["Surface cleaner"],
+  },
+  {
+    name: "Mannosylerythritol lipid", cas: "74381-53-6", cls: "Glycolipid biosurfactant", tag: "Surfactants",
+    vol: 6, price: 26.5, ghg: null, status: "not_started", owner: null,
+    role: "new", linkTo: [],
+    apps: ["Surfactancy"], prods: ["Conditioner"],
+  },
+
+  // ------------------------------------------------------- Fatty alcohol routes
+  {
+    name: "C12-C14 fatty alcohol (used cooking oil route)", cas: "80206-82-2", cls: "C12-C14 fatty alcohol", tag: "Surfactants",
+    vol: 880, price: 2.45, ghg: 1.25, status: "in_testing", owner: "K. Brandt",
+    role: "new", etype: "substitution", linkTo: ["C12-C14 fatty alcohol"],
+    apps: ["Surfactancy"], prods: ["Liquid detergent", "Body wash"],
+    target: "2026-12-31", priority: "H2 2026",
+    req: { target_volume: 900, price_ceiling: 2.3, ghg_reduction_target: 45, required_certifications: ["ISCC PLUS"], earliest_need_date: "2027-01-01", notes: "Needs mass balance chain of custody through the sulfation step." },
+  },
+  {
+    name: "C12-C14 fatty alcohol (algal oil route)", cas: "80206-82-2", cls: "C12-C14 fatty alcohol", tag: "Surfactants",
+    vol: null, price: 4.8, ghg: 0.95, status: "under_evaluation", owner: "L. Haugen",
+    role: "new", etype: "substitution", linkTo: ["C12-C14 fatty alcohol"],
+    apps: ["Surfactancy"], prods: ["Liquid detergent"],
+  },
+  {
+    name: "C16-C18 fatty alcohol (shea stearin)", cas: "67762-27-0", cls: "Fatty alcohol emulsifier", tag: "Emollients",
+    vol: 240, price: 3.1, ghg: 1.6, status: "in_testing", owner: "A. Vermeer",
+    role: "new", etype: "substitution", linkTo: ["Cetearyl alcohol", "Glyceryl stearate"],
+    apps: ["Emulsification"], prods: ["Conditioner", "Body wash"],
+    target: "2027-01-31",
+  },
+  {
+    name: "Cocoyl glycinate emulsifier blend", cas: null, cls: "Nonionic emulsifier", tag: "Emollients",
+    vol: 45, price: 6.3, ghg: null, status: "not_started", owner: null,
+    role: "new", etype: "new_material", linkTo: ["PEG-40 hydrogenated castor oil"],
+    apps: ["Emulsification"], prods: ["Shampoo base"],
+  },
+  {
+    name: "Polyglyceryl-4 caprate", cas: "160391-93-5", cls: "Polyglycerol ester emulsifier", tag: "Emollients",
+    vol: 30, price: 7.8, ghg: 2.2, status: "under_evaluation", owner: "A. Vermeer",
+    role: "new", etype: "new_material", linkTo: ["PEG-40 hydrogenated castor oil", "Sorbitan oleate"],
+    apps: ["Emulsification"], prods: ["Conditioner"],
+  },
+  {
+    name: "Coco-caprylate ester", cas: "107898-54-4", cls: "Ester emollient", tag: "Emollients",
+    vol: 55, price: 4.4, ghg: 1.7, status: "not_started", owner: null,
+    role: "new", etype: "substitution", linkTo: ["Isopropyl myristate"],
+    apps: [], prods: ["Body wash"],
+  },
+
+  // ------------------------------------------------- Humectants and glycol routes
+  {
+    name: "Glycerine (used cooking oil derived)", cas: "56-81-5", cls: "Polyol humectant", tag: "Emollients",
+    vol: 1250, price: 1.28, ghg: 0.75, status: "sourcing", owner: "L. Haugen",
+    role: "new", etype: "substitution", linkTo: ["Glycerine (vegetable)"],
+    apps: ["Emulsification"], prods: ["Shampoo base", "Body wash", "Conditioner"],
+    target: "2026-09-30", priority: "H1 2027",
+    intel: "delivered", intelScope: "Waste-oil glycerine supply, EU refiners",
+  },
+  {
+    name: "1,3-Propanediol (fermentation)", cas: "504-63-2", cls: "Diol solvent", tag: "Solvents",
+    vol: 640, price: 2.65, ghg: 1.15, status: "in_testing", owner: "L. Haugen",
+    role: "new", etype: "substitution", linkTo: ["Propylene glycol"],
+    apps: ["Fragrance carrier"], prods: ["Conditioner", "Surface cleaner"],
+    target: "2026-11-30", priority: "H2 2026",
+  },
+  {
+    name: "Bio-based 1,2-propanediol (glycerol route)", cas: "57-55-6", cls: "Glycol solvent", tag: "Solvents",
+    vol: null, price: 2.2, ghg: 1.45, status: "under_evaluation", owner: "M. Oyelaran",
+    role: "new", etype: "substitution", linkTo: ["Propylene glycol"],
+    apps: ["Fragrance carrier"], prods: ["Surface cleaner"],
+  },
+  {
+    name: "Betaine (sugar beet molasses)", cas: "107-43-7", cls: "Polyol humectant", tag: "Emollients",
+    vol: 120, price: 3.35, ghg: 1.05, status: "under_evaluation", owner: "A. Vermeer",
+    role: "new", etype: "new_material", linkTo: ["Glycerine (vegetable)"],
+    apps: [], prods: ["Shampoo base", "Conditioner"],
+  },
+
+  // ------------------------------------------------------------- Solvent routes
+  {
+    name: "Bio-based isopropyl alcohol (fermentation)", cas: "67-63-0", cls: "Short-chain alcohol solvent", tag: "Solvents",
+    vol: 780, price: 1.72, ghg: 0.85, status: "sourcing", owner: "M. Oyelaran",
+    role: "new", etype: "substitution", linkTo: ["Isopropyl alcohol"],
+    apps: ["Fragrance carrier"], prods: ["Surface cleaner"],
+    target: "2026-12-31",
+  },
+  {
+    name: "Bio-ethanol (agricultural residue)", cas: "64-17-5", cls: "Short-chain alcohol solvent", tag: "Solvents",
+    vol: 1600, price: 1.15, ghg: 0.55, status: "qualified", owner: "M. Oyelaran",
+    role: "new", etype: "substitution", linkTo: ["Isopropyl alcohol"],
+    apps: ["Fragrance carrier"], prods: ["Surface cleaner", "Hand soap"],
+    priority: "H2 2026",
+  },
+  {
+    name: "Ethyl lactate", cas: "97-64-3", cls: "Lactate ester solvent", tag: "Solvents",
+    vol: 90, price: 3.6, ghg: null, status: "under_evaluation", owner: "L. Haugen",
+    role: "new", etype: "new_material", linkTo: ["Propylene glycol", "Isopropyl alcohol"],
+    apps: ["Fragrance carrier"], prods: ["Surface cleaner"],
+  },
+  {
+    name: "Orange terpene distillate (circular)", cas: "5989-27-5", cls: "Terpene solvent", tag: "Fragrance",
+    vol: 140, price: 4.9, ghg: 0.95, status: "in_testing", owner: "L. Haugen",
+    role: "new", linkTo: ["d-Limonene"],
+    apps: ["Fragrance carrier"], prods: ["Surface cleaner", "Liquid detergent"],
+  },
+
+  // --------------------------------------------- Chelants, preservatives, rheology
+  {
+    name: "Tetrasodium iminodisuccinate", cas: "144538-83-0", cls: "Biodegradable chelant", tag: "Chelants",
+    vol: 310, price: 2.35, ghg: 1.9, status: "in_testing", owner: "M. Oyelaran",
+    role: "new", etype: "substitution", linkTo: ["Tetrasodium EDTA"],
+    apps: ["Chelation"], prods: ["Liquid detergent", "Surface cleaner"],
+    target: "2026-10-31", priority: "H2 2026",
+  },
+  {
+    name: "Sodium polyaspartate", cas: "181828-06-8", cls: "Biodegradable chelant", tag: "Chelants",
+    vol: null, price: 3.15, ghg: null, status: "under_evaluation", owner: "M. Oyelaran",
+    role: "new", etype: "new_material", linkTo: ["Tetrasodium EDTA", "Sodium citrate"],
+    apps: ["Chelation"], prods: ["Liquid detergent"],
+  },
+  {
+    name: "Lactobacillus ferment filtrate", cas: null, cls: "Fermentation-route preservative", tag: "Preservatives",
+    vol: 35, price: 9.4, ghg: null, status: "under_evaluation", owner: "N. Kowalczyk",
+    role: "new", etype: "new_material", linkTo: ["Phenoxyethanol", "Methylisothiazolinone"],
+    apps: ["Preservation"], prods: ["Body wash", "Shampoo base"],
+    intel: "requested", intelScope: "Ferment preservative efficacy dossiers",
+  },
+  {
+    name: "Sodium levulinate / anisate blend", cas: null, cls: "Organic acid preservative", tag: "Preservatives",
+    vol: 60, price: 6.1, ghg: 1.85, status: "in_testing", owner: "N. Kowalczyk",
+    role: "new", etype: "substitution", linkTo: ["Phenoxyethanol", "Benzyl alcohol"],
+    apps: ["Preservation"], prods: ["Body wash", "Hand soap"],
+  },
+  {
+    name: "Cellulose nanofibre rheology modifier", cas: "9004-34-6", cls: "Biopolymer thickener", tag: "Rheology",
+    vol: 12, price: 16.8, ghg: null, status: "under_evaluation", owner: "A. Vermeer",
+    role: "new", etype: "substitution", linkTo: ["Carbomer", "Acrylates copolymer"],
+    apps: ["Viscosity control"], prods: ["Hand soap", "Body wash"],
+  },
+  {
+    name: "Sclerotium gum", cas: "39464-87-4", cls: "Biopolymer thickener", tag: "Rheology",
+    vol: 22, price: 11.2, ghg: 2.05, status: "not_started", owner: null,
+    role: "new", linkTo: [],
+    apps: [], prods: ["Hand soap"],
+  },
+  {
+    name: "Rice starch opacifier", cas: "9005-25-8", cls: "Starch opacifier", tag: "Opacifiers",
+    vol: 70, price: 2.15, ghg: 1.25, status: "under_evaluation", owner: "A. Vermeer",
+    role: "new", etype: "substitution", linkTo: ["Titanium dioxide (rutile)", "Glycol distearate"],
+    apps: ["Opacification"], prods: ["Hand soap", "Body wash"],
+    intel: "delivered", intelScope: "Non-TiO2 opacifiers for rinse-off",
+  },
 ];
+
 
 const LOAD_SOURCE = "Customer material master (load 2025-11-20)";
 const LOAD_DATE = "2025-11-20";
