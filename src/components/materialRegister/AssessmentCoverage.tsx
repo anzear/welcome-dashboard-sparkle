@@ -60,6 +60,10 @@ const AssessmentCoverage: React.FC = () => {
   const [gapsOnly, setGapsOnly] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
 
+  /** Confirmation shown after a bulk save. Carries the count written and the
+   * pre-write snapshot so the save can be undone. */
+  const [saved, setSaved] = useState<{ count: number; snapshot: Record<string, AssessmentEntry> } | null>(null);
+
 
   const rows = useMemo(() => {
     const base = ordered.map(({ m }) => ({ m, summary: assessmentSummary(m.material_id) }));
