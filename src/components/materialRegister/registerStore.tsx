@@ -176,31 +176,16 @@ export interface RankedRow {
 
 /**
  * ROLE PRESET — the register's base scope. One horizontal segmented control,
- * five mutually exclusive segments. Every material falls in at least one of
- * them, so nothing can be hidden from all scopes: candidates with no
- * replacement type still appear under "Replacement candidates".
+ * three mutually exclusive segments on role alone. Replacement type is a filter,
+ * not a scope, so a candidate with no type set still appears under "Replacement
+ * candidates".
  */
-export type RolePresetId =
-  | "all"
-  | "existing"
-  | "candidates"
-  | "candidates_new"
-  | "candidates_substitution";
+export type RolePresetId = "all" | "existing" | "candidates";
 
 export const ROLE_PRESETS: { id: RolePresetId; label: string; match: (m: Material) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
   { id: "existing", label: "Existing materials", match: (m) => m.role === "existing" },
   { id: "candidates", label: "Replacement candidates", match: (m) => m.role === "new" },
-  {
-    id: "candidates_new",
-    label: "Candidates — new material",
-    match: (m) => m.role === "new" && m.entry_type === "new_material",
-  },
-  {
-    id: "candidates_substitution",
-    label: "Candidates — substitution",
-    match: (m) => m.role === "new" && m.entry_type === "substitution",
-  },
 ];
 
 const presetMatch = (id: RolePresetId) => ROLE_PRESETS.find((p) => p.id === id)!.match;
