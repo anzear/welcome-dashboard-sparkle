@@ -198,7 +198,6 @@ const FilterSelects: React.FC<{
   const gateActive =
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
-    filters.gateOverdue ||
     filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
