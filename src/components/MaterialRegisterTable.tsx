@@ -61,7 +61,7 @@ type OptionalColumn =
   | `crit:${string}`
   | "status"
   | "completeness"
-  | "role"
+  | "links"
   | "links"
   | "materialType"
   | "productLine"
