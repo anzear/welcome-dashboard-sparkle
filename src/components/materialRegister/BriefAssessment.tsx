@@ -5,7 +5,6 @@ import {
   TEAM_LABEL,
   contributorById,
   criterionForRole,
-  initialsOf,
 } from "@/config/assessmentCriteria";
 import { today, useRegister } from "@/components/materialRegister/registerStore";
 import { Missing, nf, provenanceLine, shortDate } from "@/components/materialRegister/primitives";
