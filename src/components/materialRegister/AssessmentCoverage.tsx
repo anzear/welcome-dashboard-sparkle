@@ -533,6 +533,37 @@ const AssessmentCoverage: React.FC = () => {
         </table>
       </div>
 
+      {/* Bulk-save confirmation. OK commits, Undo reverts the whole pass, Edit
+          keeps the selection and staged scores so they can be adjusted. */}
+      <Dialog open={saved !== null} onOpenChange={(o) => { if (!o) setSaved(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <span className="tabular-nums text-foreground">{saved?.count ?? 0}</span>{" "}
+              material{(saved?.count ?? 0) === 1 ? "" : "s"} assessed
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Button variant="ghost" size="sm" className="h-8 text-[11px]" onClick={() => {
+              clearSelection();
+              setSaved(null);
+            }}>
+              OK
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 text-[11px]" onClick={() => {
+              if (saved) restoreAssessments(saved.snapshot);
+              clearSelection();
+              setSaved(null);
+            }}>
+              Undo
+            </Button>
+            <Button size="sm" className="h-8 text-[11px]" onClick={() => setSaved(null)}>
+              Edit
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 };
