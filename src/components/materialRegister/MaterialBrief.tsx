@@ -664,7 +664,9 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   <span
                     className={cn(
                       "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                      m.role === "new" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                      m.role === "new"
+                        ? "border border-amber-700/40 bg-transparent text-amber-800/80"
+                        : "bg-muted text-muted-foreground",
                     )}
                   >
                     {MATERIAL_ROLE_LABEL[m.role]}
