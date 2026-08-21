@@ -4,12 +4,8 @@ import { ChevronDown, Filter } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
-  COMPETITOR_ACTIVITY_LABEL,
   JOURNEY_STATUS_LABEL,
-  SUBSTITUTABILITY_LABEL,
-  type CompetitorActivity,
   type JourneyStatus,
-  type SubstitutabilityReadiness,
 } from "@/types/materialPrioritisation";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
@@ -34,8 +30,7 @@ export type FilterKey =
   | "tags"
   | "productLines"
   | "priorityPeriods"
-  | "vcgSubstitutability"
-  | "vcgCompetitor";
+  | "priorityPeriods";
 
 /**
  * The register's filter controls. Shared scope: any view mounting this filters the
@@ -99,14 +94,6 @@ const FilterSelects: React.FC<{
           label: `No product line (${data.filter((m) => (m.product_lines ?? []).length === 0).length})`,
         },
       ],
-      vcgSubstitutability: (Object.keys(SUBSTITUTABILITY_LABEL) as SubstitutabilityReadiness[]).map((v) => ({
-        value: v,
-        label: SUBSTITUTABILITY_LABEL[v],
-      })),
-      vcgCompetitor: (Object.keys(COMPETITOR_ACTIVITY_LABEL) as CompetitorActivity[]).map((v) => ({
-        value: v,
-        label: COMPETITOR_ACTIVITY_LABEL[v],
-      })),
       priorityPeriods: [
         ...uniq(data.map((m) => m.priority_period)).map((v) => ({
           value: v,
@@ -141,17 +128,8 @@ const FilterSelects: React.FC<{
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
   ];
 
-  /** VCG-computed signals sit in their own section: our data, not the client's. */
-  const vcgControls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
-    ["vcgSubstitutability", "Substitutability", options.vcgSubstitutability, filters.vcgSubstitutability],
-    ["vcgCompetitor", "Competitor activity", options.vcgCompetitor, filters.vcgCompetitor],
-  ];
-
   const active = controls.filter(([k]) => shown(k));
-  const activeVcg = vcgControls.filter(([k]) => shown(k));
-  const suppliersShown = !include || include.includes("vcgSubstitutability");
-  const suppliersActive =
-    filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null || filters.vcgSuppliersNotAssessed;
+
   const evidenceSection = (
     <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
       <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Evidence</div>
@@ -201,60 +179,11 @@ const FilterSelects: React.FC<{
     filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    activeVcg.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    (suppliersShown && suppliersActive ? 1 : 0) +
     (gateActive ? 1 : 0) +
     (filters.hasDocuments ? 1 : 0) +
     (filters.notAssessed ? 1 : 0) +
     (filters.teamsDisagree ? 1 : 0) +
     Object.values(filters.criterionScores).filter((v) => v.length > 0).length;
-
-  const suppliersRange = (
-    <div className="space-y-1.5 pt-0.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">Suppliers</span>
-        <div className="flex items-center gap-1">
-          <input
-            type="number"
-            min={0}
-            value={filters.vcgSuppliersMin ?? ""}
-            placeholder="min"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                vcgSuppliersMin: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
-          />
-          <span className="text-[10px] text-muted-foreground">to</span>
-          <input
-            type="number"
-            min={0}
-            value={filters.vcgSuppliersMax ?? ""}
-            placeholder="max"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                vcgSuppliersMax: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
-          />
-        </div>
-      </div>
-      {/* Outside the range on purpose: not assessed is not a number. */}
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.vcgSuppliersNotAssessed}
-          onChange={(e) => setFilters((f) => ({ ...f, vcgSuppliersNotAssessed: e.target.checked }))}
-          className="h-3 w-3 accent-provenance-vcg"
-        />
-        Not assessed
-      </label>
-    </div>
-  );
 
   /**
    * Gate section. The five statuses are categories — filtered, never ranked or
@@ -341,27 +270,6 @@ const FilterSelects: React.FC<{
     </div>
   );
 
-  const vcgSection =
-    activeVcg.length > 0 || suppliersShown ? (
-      <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-        <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg">
-          VCG signals
-        </div>
-        {activeVcg.map(([key, label, opts, sel]) => (
-          <div key={key} className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">{label}</span>
-            <MultiSelectFilter
-              label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
-              options={opts}
-              selected={sel}
-              onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
-            />
-          </div>
-        ))}
-        {suppliersShown && suppliersRange}
-      </div>
-    ) : null;
-
   if (variant === "popover") {
     return (
       <Popover>
@@ -415,17 +323,14 @@ const FilterSelects: React.FC<{
           {assessmentSection}
           {criterionScoreSection}
           {evidenceSection}
-          {vcgSection}
+          
           {activeCount > 0 && (
             <button
               type="button"
               onClick={() =>
                 setFilters((f) => {
                   const next = { ...f };
-                  [...active, ...activeVcg].forEach(([k]) => ((next as any)[k] = []));
-                  next.vcgSuppliersMin = null;
-                  next.vcgSuppliersMax = null;
-                  next.vcgSuppliersNotAssessed = false;
+                  active.forEach(([k]) => ((next as any)[k] = []));
                   next.gateOverdueCondition = false;
                   next.gateHoldReviewOverdue = false;
                   next.gateRecommendation = "any";
@@ -449,7 +354,7 @@ const FilterSelects: React.FC<{
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {[...active, ...activeVcg].map(([key, label, opts, sel]) => (
+      {active.map(([key, label, opts, sel]) => (
         <MultiSelectFilter
           key={key}
           label={label}
