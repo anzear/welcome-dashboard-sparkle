@@ -80,7 +80,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
-  ["drivers", "Drivers", "All seven, in fixed order"],
+  ["drivers", "Drivers", ""],
   ["role", "Role", "Existing material, or a new one that could replace it"],
   ["links", "Links", "Number of linked materials of the opposite role"],
   ["materialType", "Replacement type", "How a new material would replace an incumbent"],
