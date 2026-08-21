@@ -15,7 +15,7 @@ export const roleChipClass = (isExisting: boolean) =>
   cn(ROLE_CHIP_BASE, isExisting ? ROLE_CHIP_EXISTING : ROLE_CHIP_CANDIDATE);
 
 /** Small legend markers matching the same filled/outlined language. */
-export const ROLE_MARKER_EXISTING = "inline-block h-2 w-2 rounded-sm bg-amber-700/50";
+export const ROLE_MARKER_EXISTING = "inline-block h-2 w-2 rounded-sm bg-muted-foreground/60";
 export const ROLE_MARKER_CANDIDATE =
   "inline-block h-2 w-2 rounded-sm border border-amber-700/50 bg-transparent";
 
