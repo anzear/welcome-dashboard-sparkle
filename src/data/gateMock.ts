@@ -32,30 +32,30 @@ type Role =
   | "reopened";
 
 /**
- * 42 slots. 21 untouched, 4 recommended but undecided, 5 go (one of them
- * overturning a Hold recommendation), 5 with conditions, 4 on hold, 2 no-go and
- * one reopened after a no-go.
+ * 75 slots, one per seeded material. Most sit under evaluation — 40 untouched, 6
+ * recommended but undecided and 2 reopened after a no-go. The rest are decided:
+ * 7 go (one overturning a Hold recommendation), 8 with conditions, 7 on hold and
+ * 5 no-go.
  */
 const ROLES: Role[] = [
-  ...Array<Role>(21).fill("open"),
-  ...Array<Role>(4).fill("recommended"),
-  "go",
-  "go",
-  "go",
-  "go",
+  ...Array<Role>(40).fill("open"),
+  ...Array<Role>(6).fill("recommended"),
+  "reopened",
+  "reopened",
+  ...Array<Role>(6).fill("go"),
   "go_overturned",
   "conditions_open",
   "conditions_open",
+  "conditions_open",
+  "conditions_partial",
   "conditions_partial",
   "conditions_complete",
   "conditions_overdue",
-  "hold",
-  "hold",
-  "hold",
+  "conditions_overdue",
+  ...Array<Role>(5).fill("hold"),
   "hold_overdue",
-  "no_go",
-  "no_go",
-  "reopened",
+  "hold_overdue",
+  ...Array<Role>(5).fill("no_go"),
 ];
 
 const RECOMMENDATION_TEXT: Record<GateOutcome, string[]> = {
