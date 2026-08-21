@@ -176,7 +176,7 @@ export interface RankedRow {
 
 /**
  * ROLE PRESET — the register's base scope. One horizontal segmented control,
- * three mutually exclusive segments on role alone. Replacement type is a filter,
+ * three mutually exclusive segments on role alone. Material strategy is a filter,
  * not a scope, so a candidate with no type set still appears under "Replacement
  * candidates".
  */

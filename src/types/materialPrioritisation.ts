@@ -222,7 +222,7 @@ export interface Material {
 
   application_categories: string[];
   application_areas: string[];
-  /** Replacement type. Only meaningful on a new material. */
+  /** Material strategy. Only meaningful on a new material. */
   entry_type: EntryType | null;
 
   annual_volume: number | null;

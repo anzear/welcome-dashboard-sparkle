@@ -110,7 +110,7 @@ const FilterSelects: React.FC<{
   const shown = (key: FilterKey) => !include || include.includes(key);
 
   /**
-   * Replacement type is a property of replacement candidates. In the existing
+   * Material strategy is a property of replacement candidates. In the existing
    * materials scope there is nothing for it to act on, so it is offered but
    * disabled rather than silently doing nothing.
    */
