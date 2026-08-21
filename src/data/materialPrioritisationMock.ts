@@ -737,14 +737,16 @@ export const materials: Material[] = rows.map((row, i) => {
     name: row.name,
     cas_number: row.cas,
     material_class: row.cls,
-    /** Seed data is the company's current book: every record is an existing material. */
-    role: "existing" as const,
+    /** The book the company buys today, plus the candidates set against it. */
+    role: row.role === "new" ? ("new" as const) : ("existing" as const),
+    /** Links are filled in below, from both sides of each pair. */
     linked_material_ids: [],
     tags: [row.tag],
     product_lines: [],
     application_categories: categoriesFor(row),
     application_areas: row.prods,
-    entry_type: migrateEntryType(i % 9 === 4 ? "substitution" : "drop_in"),
+    /** Replacement type belongs to candidates only. Existing materials hold none. */
+    entry_type: entryType,
     requirements: (() => {
       const base = row.req ? { ...emptyRequirements(), ...row.req } : null;
       // Migrate the old `target` field into earliest_need_date when the
