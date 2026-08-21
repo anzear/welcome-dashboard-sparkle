@@ -1035,9 +1035,6 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   variant="inline"
                 />
               </div>
-              <div className="mt-1 h-[13px] text-[10px] leading-[13px] text-muted-foreground">
-                Four separate rankings
-              </div>
             </div>
           )}
 
