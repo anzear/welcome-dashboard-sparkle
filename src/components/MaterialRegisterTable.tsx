@@ -436,21 +436,6 @@ export const MaterialRegisterTable: React.FC = () => {
             <DriversCell m={m} />
           </td>
         );
-      case "role":
-        return (
-          <td className="px-3 py-2 align-middle">
-            <span
-              className={cn(
-                "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                m.role === "new"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {MATERIAL_ROLE_SHORT[m.role]}
-            </span>
-          </td>
-        );
       case "links": {
         const n = (m.linked_material_ids ?? []).length;
         return (
@@ -463,18 +448,29 @@ export const MaterialRegisterTable: React.FC = () => {
           </td>
         );
       }
-      case "materialType":
+      case "materialType": {
+        // Chip style carries role: filled = existing material, outlined = replacement candidate.
+        const existing = m.role !== "new";
+        const label = existing
+          ? "Existing material"
+          : m.entry_type
+            ? ENTRY_TYPE_LABEL[m.entry_type]
+            : "Not set";
         return (
-          <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
-            {m.role !== "new" ? (
-              <span className="text-muted-foreground/60">&mdash;</span>
-            ) : m.entry_type ? (
-              ENTRY_TYPE_LABEL[m.entry_type]
-            ) : (
-              <span className="text-muted-foreground/60">&mdash;</span>
-            )}
+          <td className="px-3 py-2 align-middle">
+            <span
+              className={cn(
+                "inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
+                existing
+                  ? "bg-muted text-foreground/80"
+                  : "border border-foreground/40 bg-transparent text-muted-foreground",
+              )}
+            >
+              {label}
+            </span>
           </td>
         );
+      }
       case "volume":
         return (
           <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
