@@ -1890,6 +1890,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     myEntry,
     saveAssessment,
     clearAssessment,
+    restoreAssessments,
     canSetGate: gateWritable,
     saveRecommendation,
     setGateOutcome,
