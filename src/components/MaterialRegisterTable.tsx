@@ -709,10 +709,10 @@ export const MaterialRegisterTable: React.FC = () => {
                       p.id === "existing"
                         ? active
                           ? "bg-background/80"
-                          : "bg-muted-foreground/60"
+                        : "bg-muted-foreground/60"
                         : cn(
                             "border bg-transparent",
-                            active ? "border-background/80" : "border-muted-foreground/60",
+                            active ? "border-background/80" : "border-amber-700/50",
                           ),
                     )}
                   />
