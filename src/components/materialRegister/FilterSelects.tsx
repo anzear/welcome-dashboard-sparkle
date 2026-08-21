@@ -343,10 +343,7 @@ const FilterSelects: React.FC<{
               onClick={() =>
                 setFilters((f) => {
                   const next = { ...f };
-                  [...active, ...activeVcg].forEach(([k]) => ((next as any)[k] = []));
-                  next.vcgSuppliersMin = null;
-                  next.vcgSuppliersMax = null;
-                  next.vcgSuppliersNotAssessed = false;
+                  active.forEach(([k]) => ((next as any)[k] = []));
                   next.gateOverdueCondition = false;
                   next.gateHoldReviewOverdue = false;
                   next.gateRecommendation = "any";
