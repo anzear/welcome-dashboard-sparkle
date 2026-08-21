@@ -1,6 +1,7 @@
-import { EMPTY_GATE, migrateEntryType, migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
+import { EMPTY_GATE, migrateJourneyStatus, SUPPLIER_CEILING } from "@/types/materialPrioritisation";
 import type {
   CompetitorActivity,
+  EntryType,
   SubstitutabilityReadiness,
   SupplierAvailability,
   FieldProvenance,
@@ -408,14 +409,14 @@ const rows: Row[] = [
   {
     name: "Sodium C10-16 alkyl glucoside (sugar beet)", cas: "141464-42-8", cls: "Alkyl polyglucoside", tag: "Surfactants",
     vol: 260, price: 2.55, ghg: 1.4, status: "qualified", owner: "S. Rautio",
-    role: "new", etype: "substitution", linkTo: ["Coco glucoside", "Decyl glucoside", "Lauryl glucoside"],
+    role: "new", etype: "substitution", linkTo: ["Coco glucoside", "Decyl glucoside", "Lauryl glucoside", "Caprylyl glucoside"],
     apps: ["Surfactancy"], prods: ["Body wash", "Surface cleaner"],
     priority: "H2 2026", target: "2026-09-30",
   },
   {
     name: "Lauramidopropyl betaine (coconut-free)", cas: "4292-10-8", cls: "Amphoteric betaine", tag: "Surfactants",
     vol: 210, price: 2.35, ghg: 1.95, status: "in_testing", owner: "S. Rautio",
-    role: "new", etype: "substitution", linkTo: ["Cocamidopropyl betaine"],
+    role: "new", etype: "substitution", linkTo: ["Cocamidopropyl betaine", "Cocamide MEA"],
     apps: ["Surfactancy", "Viscosity control"], prods: ["Shampoo base", "Hand soap"],
   },
 
@@ -458,7 +459,7 @@ const rows: Row[] = [
   {
     name: "C16-C18 fatty alcohol (shea stearin)", cas: "67762-27-0", cls: "Fatty alcohol emulsifier", tag: "Emollients",
     vol: 240, price: 3.1, ghg: 1.6, status: "in_testing", owner: "A. Vermeer",
-    role: "new", etype: "substitution", linkTo: ["Cetearyl alcohol", "Glyceryl stearate"],
+    role: "new", etype: "substitution", linkTo: ["Cetearyl alcohol", "Glyceryl stearate", "Behentrimonium chloride"],
     apps: ["Emulsification"], prods: ["Conditioner", "Body wash"],
     target: "2027-01-31",
   },
@@ -477,7 +478,7 @@ const rows: Row[] = [
   {
     name: "Coco-caprylate ester", cas: "107898-54-4", cls: "Ester emollient", tag: "Emollients",
     vol: 55, price: 4.4, ghg: 1.7, status: "not_started", owner: null,
-    role: "new", etype: "substitution", linkTo: ["Isopropyl myristate"],
+    role: "new", etype: "substitution", linkTo: ["Isopropyl myristate", "Dimethicone (350 cSt)"],
     apps: [], prods: ["Body wash"],
   },
 
@@ -542,14 +543,14 @@ const rows: Row[] = [
   {
     name: "Tetrasodium iminodisuccinate", cas: "144538-83-0", cls: "Biodegradable chelant", tag: "Chelants",
     vol: 310, price: 2.35, ghg: 1.9, status: "in_testing", owner: "M. Oyelaran",
-    role: "new", etype: "substitution", linkTo: ["Tetrasodium EDTA"],
+    role: "new", etype: "substitution", linkTo: ["Tetrasodium EDTA", "Trisodium GLDA"],
     apps: ["Chelation"], prods: ["Liquid detergent", "Surface cleaner"],
     target: "2026-10-31", priority: "H2 2026",
   },
   {
     name: "Sodium polyaspartate", cas: "181828-06-8", cls: "Biodegradable chelant", tag: "Chelants",
     vol: null, price: 3.15, ghg: null, status: "under_evaluation", owner: "M. Oyelaran",
-    role: "new", etype: "new_material", linkTo: ["Tetrasodium EDTA", "Sodium citrate"],
+    role: "new", etype: "new_material", linkTo: ["Tetrasodium EDTA", "Sodium citrate", "Sodium gluconate"],
     apps: ["Chelation"], prods: ["Liquid detergent"],
   },
   {
@@ -562,13 +563,13 @@ const rows: Row[] = [
   {
     name: "Sodium levulinate / anisate blend", cas: null, cls: "Organic acid preservative", tag: "Preservatives",
     vol: 60, price: 6.1, ghg: 1.85, status: "in_testing", owner: "N. Kowalczyk",
-    role: "new", etype: "substitution", linkTo: ["Phenoxyethanol", "Benzyl alcohol"],
+    role: "new", etype: "substitution", linkTo: ["Phenoxyethanol", "Benzyl alcohol", "Sodium benzoate"],
     apps: ["Preservation"], prods: ["Body wash", "Hand soap"],
   },
   {
     name: "Cellulose nanofibre rheology modifier", cas: "9004-34-6", cls: "Biopolymer thickener", tag: "Rheology",
     vol: 12, price: 16.8, ghg: null, status: "under_evaluation", owner: "A. Vermeer",
-    role: "new", etype: "substitution", linkTo: ["Carbomer", "Acrylates copolymer"],
+    role: "new", etype: "substitution", linkTo: ["Carbomer", "Acrylates copolymer", "Xanthan gum", "Guar hydroxypropyltrimonium chloride", "Polyquaternium-10"],
     apps: ["Viscosity control"], prods: ["Hand soap", "Body wash"],
   },
   {
