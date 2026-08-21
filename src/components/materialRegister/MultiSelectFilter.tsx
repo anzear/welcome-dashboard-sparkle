@@ -14,9 +14,11 @@ interface Props {
   options: Option[];
   selected: string[];
   onChange: (next: string[]) => void;
+  /** A filter that cannot apply in the current scope is offered but not usable. */
+  disabled?: boolean;
 }
 
-export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, onChange }) => {
+export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, onChange, disabled = false }) => {
   const toggle = (v: string) =>
     onChange(selected.includes(v) ? selected.filter((x) => x !== v) : [...selected, v]);
 
@@ -25,8 +27,10 @@ export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, o
       <PopoverTrigger asChild>
         <button
           type="button"
+          disabled={disabled}
           className={cn(
             "inline-flex items-center gap-1 rounded-sm border px-2 py-1 text-[11px] font-medium transition-colors",
+            disabled && "cursor-not-allowed opacity-50",
             selected.length > 0
               ? "border-primary/40 bg-primary/5 text-foreground"
               : "border-border text-muted-foreground hover:text-foreground",
