@@ -371,7 +371,7 @@ export interface MaterialEvent {
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
   journey_status: "Status",
-  entry_type: "Replacement type",
+  entry_type: "Material strategy",
   role: "Role",
   linked_material_ids: "Linked materials",
 

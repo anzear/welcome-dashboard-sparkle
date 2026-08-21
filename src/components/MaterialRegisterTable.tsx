@@ -87,7 +87,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["applications", "Product categories", "Product categories the material is used in"],
-  ["materialType", "Replacement type", "How a new material would replace an incumbent"],
+  ["materialType", "Material strategy", "How this material replaces an incumbent — either a genuinely new material, or the same material from a different source."],
   ["links", "Links", "Number of linked materials of the opposite role"],
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
@@ -332,7 +332,11 @@ export const MaterialRegisterTable: React.FC = () => {
           </th>
         );
       case "materialType":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Replacement type</th>;
+        return (
+          <th className={cn(HEAD, "px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
+            Material strategy
+          </th>
+        );
       case "productLine":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-left")}>
@@ -950,7 +954,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 ["product_lines", "Product lines"],
                 ["tags", "Tags"],
                 ["role", "Set role"],
-                ["entry_type", "Set replacement type"],
+                ["entry_type", "Set material strategy"],
                 ["products", "Set applications"],
                 ["applications", "Set application"],
                 ["intelligence", "Request coverage"],
