@@ -30,8 +30,7 @@ export type FilterKey =
   | "tags"
   | "productLines"
   | "priorityPeriods"
-  | "vcgSubstitutability"
-  | "vcgCompetitor";
+  | "priorityPeriods";
 
 /**
  * The register's filter controls. Shared scope: any view mounting this filters the
