@@ -661,7 +661,7 @@ function vcgSignalsFor(i: number, name: string): VcgSignals {
   return { substitutability_readiness: readiness, supplier_availability, competitor_activity, vcg_data_date };
 }
 
-export const materials: Material[] = rows.map((row, i) => {
+const baseMaterials: Material[] = rows.map((row, i) => {
   const annual_spend = row.vol !== null && row.price !== null ? round(row.vol * 1000 * row.price, 0) : null;
   const ghg_contribution = row.vol !== null && row.ghg !== null ? round(row.vol * row.ghg, 0) : null;
 
