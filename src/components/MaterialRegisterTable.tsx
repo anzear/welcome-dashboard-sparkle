@@ -62,7 +62,6 @@ type OptionalColumn =
   | "status"
   | "completeness"
   | "links"
-  | "links"
   | "materialType"
   | "productLine"
   | "volume"
