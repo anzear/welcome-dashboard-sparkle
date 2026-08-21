@@ -196,7 +196,7 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
   seedMaterialsWithHistory.forEach((m, mi) => {
     /** Depth of the record: thorough, partial, or nothing recorded yet. */
     const roll = r();
-    const depth = roll < 0.25 ? "most" : roll < 0.75 ? "some" : "none";
+    const depth = roll < 0.26 ? "most" : roll < 0.7 ? "some" : "none";
     if (depth === "none") return;
 
     /** A partial record only carries two to four criteria. */
