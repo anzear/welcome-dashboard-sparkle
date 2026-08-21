@@ -415,7 +415,7 @@ const FilterSelects: React.FC<{
           {assessmentSection}
           {criterionScoreSection}
           {evidenceSection}
-          {vcgSection}
+          
           {activeCount > 0 && (
             <button
               type="button"
