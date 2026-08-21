@@ -3,11 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  MATERIAL_ROLE_LABEL,
-  MATERIAL_ROLE_SHORT,
-  MATERIAL_ROLES,
   type JourneyStatus,
-  type MaterialRole,
   type Material,
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
