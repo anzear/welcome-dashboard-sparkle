@@ -304,11 +304,11 @@ const RationaleLine: React.FC<{ entry: AssessmentEntry; isMine: boolean }> = ({ 
     <div className="flex items-start gap-2" title={`${name} · ${shortDate(entry.assessed_at)}`}>
       <span
         className={cn(
-          "w-6 shrink-0 tabular-nums text-[10px]",
+          "w-20 shrink-0 text-[10px]",
           isMine ? "font-semibold text-foreground" : "font-medium text-muted-foreground",
         )}
       >
-        {initialsOf(name)}
+        {name}
       </span>
       <span className="w-20 shrink-0 text-[10px] text-muted-foreground/70">{TEAM_LABEL[entry.team]}</span>
       <span className="min-w-0 flex-1 text-[11px] leading-snug text-foreground/90">
