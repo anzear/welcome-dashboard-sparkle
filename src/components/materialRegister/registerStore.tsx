@@ -75,7 +75,11 @@ import {
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
-export type MeasureId = RankMeasureId | "all";
+/**
+ * "driver" ranks by one assessment criterion at a time. The criterion itself is
+ * held in driverCriterionId — there is never a combined or overall driver rank.
+ */
+export type MeasureId = RankMeasureId | "all" | "driver";
 
 export interface Measure {
   id: RankMeasureId;
