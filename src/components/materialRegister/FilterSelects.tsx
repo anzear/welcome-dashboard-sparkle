@@ -192,15 +192,6 @@ const FilterSelects: React.FC<{
         />
         Teams disagree
       </label>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.gateOverdue}
-          onChange={(e) => setFilters((f) => ({ ...f, gateOverdue: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Gate work overdue
-      </label>
     </div>
   );
 
