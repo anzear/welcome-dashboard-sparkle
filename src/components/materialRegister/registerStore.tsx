@@ -185,7 +185,7 @@ export type RolePresetId = "all" | "existing" | "candidates";
 export const ROLE_PRESETS: { id: RolePresetId; label: string; match: (m: Material) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
   { id: "existing", label: "Existing materials", match: (m) => m.role === "existing" },
-  { id: "candidates", label: "Replacement candidates", match: (m) => m.role === "new" },
+  { id: "candidates", label: "Candidate materials", match: (m) => m.role === "new" },
 ];
 
 const presetMatch = (id: RolePresetId) => ROLE_PRESETS.find((p) => p.id === id)!.match;
