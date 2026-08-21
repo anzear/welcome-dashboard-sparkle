@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   NEUTRAL_LABEL,
@@ -326,7 +326,9 @@ const JudgementRow: React.FC<{
   role: MaterialRole;
 }> = ({ criterion: rawCriterion, materialId, role }) => {
   const criterion = criterionForRole(rawCriterion, role);
-  const { assessmentState, myEntry, saveAssessment, clearAssessment, currentUser } = useRegister();
+  const { assessmentState, myEntry, saveAssessment, clearAssessment, currentUser, focusCriterionId } =
+    useRegister();
+  const focused = focusCriterionId === criterion.criterion_id;
   const state = assessmentState(materialId, criterion.criterion_id);
   const mine = myEntry(materialId, criterion.criterion_id);
 
@@ -371,7 +373,13 @@ const JudgementRow: React.FC<{
     : state.entries;
 
   return (
-    <div className="border-l-2 border-provenance-judgement/60 pl-3">
+    <div
+      id={`criterion-${criterion.criterion_id}`}
+      className={cn(
+        "border-l-2 border-provenance-judgement/60 pl-3 transition-colors",
+        focused && "bg-provenance-judgement/5",
+      )}
+    >
       <div className="flex items-baseline justify-between gap-2">
         <span className="flex items-center gap-1 text-[10px] font-medium uppercase tracking-widest text-foreground">
           {criterion.label}
@@ -533,11 +541,21 @@ const JudgementRow: React.FC<{
  * combined into a score.
  */
 const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
-  const { assessmentSummary, criteria, canEditCriteria } = useRegister();
+  const { assessmentSummary, criteria, canEditCriteria, focusCriterionId, clearFocusCriterion } =
+    useRegister();
   const summary = assessmentSummary(material.material_id);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
 
   const judged = criteria.filter((c) => c.kind === "judgement");
+
+  /** Opened from a drivers slot in the register: land on that criterion. */
+  useEffect(() => {
+    if (!focusCriterionId) return;
+    const el = document.getElementById(`criterion-${focusCriterionId}`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    const t = window.setTimeout(clearFocusCriterion, 1600);
+    return () => window.clearTimeout(t);
+  }, [focusCriterionId, clearFocusCriterion]);
 
   return (
     <div className="space-y-4">
