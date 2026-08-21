@@ -266,10 +266,10 @@ export default function MaterialPipelineList() {
           {r.prioritySelected ? (
             <span
               className="inline-flex items-center gap-1 text-[10px] text-foreground"
-              title={r.priorityPeriod ? `Priority · ${r.priorityPeriod}` : "Priority"}
+              title={r.priorityPeriod ? `Priority period · ${r.priorityPeriod}` : "Priority period"}
             >
               <Star className="w-3 h-3 fill-current" />
-              {r.priorityPeriod || "Priority"}
+              {r.priorityPeriod || "Priority period"}
             </span>
           ) : (
             <span className="text-muted-foreground">—</span>
@@ -458,10 +458,10 @@ export default function MaterialPipelineList() {
             onValueChange={(v) => setFilters((f) => ({ ...f, priority: v }))}
           >
             <SelectTrigger className="h-7 w-auto min-w-[9rem] text-[11px]">
-              <SelectValue placeholder="Priority" />
+              <SelectValue placeholder="Priority period" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={ALL} className="text-[11px]">Priority: All</SelectItem>
+              <SelectItem value={ALL} className="text-[11px]">Priority period: All</SelectItem>
               <SelectItem value="Yes" className="text-[11px]">Selected as priority</SelectItem>
               <SelectItem value="No" className="text-[11px]">Not selected</SelectItem>
             </SelectContent>
@@ -512,7 +512,7 @@ export default function MaterialPipelineList() {
                 <th className={cn(headerCls, "text-right")}>GHG (tCO₂e/yr)</th>
                 <th className={cn(headerCls, "text-right")}>Suppliers</th>
                 <th className={cn(headerCls, "text-left")}>Status</th>
-                <th className={cn(headerCls, "text-left")}>Priority</th>
+                <th className={cn(headerCls, "text-left")} title="Period the material is prioritised for">Priority period</th>
                 <th className={cn(headerCls, "text-left")}>Owner</th>
                 <th className={cn(headerCls, "text-left")}>Tags</th>
               </tr>
