@@ -80,6 +80,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["role", "Role", "Existing material, or a new one that could replace it"],
   ["status", "Status", "The gate decision recorded by the team"],
+  ["completeness", "Data status", "Share of expected fields recorded"],
   ["drivers", "Drivers", ""],
   ["volume", "Volume", "Tonnes per year"],
   ["spend", "Spend", "EUR per year"],
@@ -91,7 +92,6 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["priority", "Priority", "Selected for a period"],
   ["owner", "Owner", "Person accountable"],
   ["contributors", "Contributors", "People with at least one input on the brief"],
-  ["completeness", "Data status", "Share of expected fields recorded"],
   ["intelligence", "Coverage", "Whether coverage has been requested"],
   ["lastChange", "Last change", "Age of the most recent real transition"],
 ];
