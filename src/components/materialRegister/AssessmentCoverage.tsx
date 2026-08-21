@@ -72,7 +72,7 @@ const AssessmentCoverage: React.FC = () => {
 
   // ------------------------------------------------------- bulk entry (staged)
   /** Value staged for one criterion. "clear" withdraws the current user's entry. */
-  type Staged = { value: number | "neutral" | "clear"; note: string };
+  type Staged = { value: number | "clear"; note: string };
 
   const [selected, setSelected] = useState<string[]>([]);
   const [staged, setStaged] = useState<Record<string, Staged>>({});
@@ -124,7 +124,6 @@ const AssessmentCoverage: React.FC = () => {
     for (const materialId of selected) {
       for (const [criterionId, s] of Object.entries(staged)) {
         if (s.value === "clear") clearAssessment(materialId, criterionId);
-        else if (s.value === "neutral") saveAssessment(materialId, criterionId, null, null);
         else saveAssessment(materialId, criterionId, s.value, s.note);
       }
     }
@@ -350,19 +349,6 @@ const AssessmentCoverage: React.FC = () => {
                 ))}
                 <button
                   type="button"
-                  onClick={() => setValue(current?.value === "neutral" ? null : "neutral")}
-                  aria-pressed={current?.value === "neutral"}
-                  className={cn(
-                    "inline-flex h-7 items-center rounded-md border px-2 text-[11px] transition-colors",
-                    current?.value === "neutral"
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border bg-card text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  Neutral
-                </button>
-                <button
-                  type="button"
                   onClick={() => setValue(current?.value === "clear" ? null : "clear")}
                   aria-pressed={current?.value === "clear"}
                   className={cn(
@@ -436,7 +422,7 @@ const AssessmentCoverage: React.FC = () => {
         </span>
         <span className="inline-flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-[3px] border border-dashed border-muted-foreground/40" />
-          No score recorded (No entries / Neutral only)
+          No score recorded (no entries)
         </span>
       </div>
 
