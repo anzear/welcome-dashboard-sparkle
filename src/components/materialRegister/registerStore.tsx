@@ -75,7 +75,11 @@ import {
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
-export type MeasureId = RankMeasureId | "all";
+/**
+ * "driver" ranks by one assessment criterion at a time. The criterion itself is
+ * held in driverCriterionId — there is never a combined or overall driver rank.
+ */
+export type MeasureId = RankMeasureId | "all" | "driver";
 
 export interface Measure {
   id: RankMeasureId;
@@ -313,6 +317,13 @@ interface Store {
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
   measure: Measure | null;
+  /**
+   * The criterion the register is ranked by, when ranking by a driver. The mean
+   * of contributor scores is the sort order only — it is never displayed.
+   */
+  driverCriterionId: string | null;
+  driverCriterion: AssessmentCriterion | null;
+  setDriverCriterion: (criterionId: string | null) => void;
   rolePreset: RolePresetId;
   setRolePreset: React.Dispatch<React.SetStateAction<RolePresetId>>;
   rolePresetCounts: Record<RolePresetId, number>;
@@ -618,7 +629,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   );
   const customCriteriaCount = useMemo(() => criteria.filter((c) => c.custom).length, [criteria]);
   const judgedCriteriaRef = judgedCriteria;
-  const [measureId, setMeasureId] = useState<MeasureId>("spend");
+  const [measureId, setMeasureIdState] = useState<MeasureId>("spend");
+  const [driverCriterionId, setDriverCriterionId] = useState<string | null>(null);
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
@@ -640,7 +652,25 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
 
-  const measure = measureId === "all" ? null : MEASURES.find((x) => x.id === measureId)!;
+  /** Picking a segment clears the driver dropdown; picking a driver clears the segments. */
+  const setMeasureId = (id: MeasureId) => {
+    setMeasureIdState(id);
+    if (id !== "driver") setDriverCriterionId(null);
+    setOnlyNoFigure(false);
+  };
+  const setDriverCriterion = (criterionId: string | null) => {
+    setDriverCriterionId(criterionId);
+    setMeasureIdState(criterionId ? "driver" : "spend");
+    setOnlyNoFigure(false);
+  };
+
+  const measure =
+    measureId === "all" || measureId === "driver"
+      ? null
+      : MEASURES.find((x) => x.id === measureId)!;
+  /** Only an active criterion can be ranked by; hiding one drops the ranking. */
+  const driverCriterion =
+    judgedCriteria.find((c) => c.criterion_id === driverCriterionId) ?? null;
 
   const filtersActive =
     filters.search.trim() !== "" ||
@@ -799,6 +829,70 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       };
     }
 
+    /**
+     * RANKING BY ONE CRITERION. The mean of the contributor scores recorded for
+     * that criterion is the sort order and nothing else: it is never rendered,
+     * exported or exposed. Neutral entries carry no score, so they do not count.
+     * No entries at all means no score — never a zero — so those materials sit
+     * below the ranked list.
+     */
+    if (measureId === "driver") {
+      const buildRow = (m: Material, rank: number | null): RankedRow => {
+        const ranks = {} as Record<RankMeasureId, number | null>;
+        MEASURES.forEach((mm) => {
+          ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
+        });
+        return { m, rank, ranks, gapMeasure: null, gapSize: 0 };
+      };
+
+      if (!driverCriterionId || !judgedCriteria.some((c) => c.criterion_id === driverCriterionId)) {
+        return {
+          ordered: filtered.map((m) => buildRow(m, null)),
+          rankTables: tables,
+          rankedCount: 0,
+        };
+      }
+
+      const meanOf = (m: Material): number | null => {
+        const scores = Object.values(assessments)
+          .filter(
+            (e) =>
+              e.material_id === m.material_id &&
+              e.criterion_id === driverCriterionId &&
+              e.score !== null,
+          )
+          .map((e) => e.score as number);
+        if (scores.length === 0) return null;
+        return scores.reduce((a, b) => a + b, 0) / scores.length;
+      };
+
+      const withMean = filtered.map((m) => ({ m, mean: meanOf(m) }));
+      const scoredRows = withMean.filter((r) => r.mean !== null);
+      const unscoredRows = withMean.filter((r) => r.mean === null);
+      scoredRows.sort((a, b) =>
+        (b.mean as number) !== (a.mean as number)
+          ? (b.mean as number) - (a.mean as number)
+          : a.m.name.localeCompare(b.m.name),
+      );
+      unscoredRows.sort((a, b) => a.m.name.localeCompare(b.m.name));
+
+      let lastMean: number | null = null;
+      let lastRank = 0;
+      const rankedOrdered = scoredRows.map((r, i) => {
+        const rank = lastMean !== null && r.mean === lastMean ? lastRank : i + 1;
+        lastMean = r.mean;
+        lastRank = rank;
+        return buildRow(r.m, rank);
+      });
+
+      return {
+        ordered: [...rankedOrdered, ...unscoredRows.map((r) => buildRow(r.m, null))],
+        rankTables: tables,
+        rankedCount: rankedOrdered.length,
+      };
+    }
+
+
     const active = tables[measureId];
     const threshold = active.rankedCount * DIVERGENCE_THRESHOLD_RATIO;
 
@@ -834,7 +928,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       rankTables: tables,
       rankedCount: active.rankedCount,
     };
-  }, [filtered, measureId]);
+  }, [filtered, measureId, driverCriterionId, judgedCriteria, assessments]);
 
   const filteredTotal = filtered.length;
   const missingCount = filteredTotal - rankedCount;
@@ -1709,6 +1803,9 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     measureId,
     setMeasureId,
     measure,
+    driverCriterionId,
+    driverCriterion,
+    setDriverCriterion,
     rolePreset,
     setRolePreset,
     rolePresetCounts,

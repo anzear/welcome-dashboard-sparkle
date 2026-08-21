@@ -148,6 +148,9 @@ export const MaterialRegisterTable: React.FC = () => {
     measureId,
     setMeasureId,
     measure,
+    judgedCriteria,
+    driverCriterion,
+    setDriverCriterion,
     filters,
     setFilters,
     filtersActive,
@@ -772,6 +775,49 @@ export const MaterialRegisterTable: React.FC = () => {
                 {mm.label}
               </button>
             ))}
+            {/* Drivers — a dropdown, one criterion at a time. Never a combined rank. */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                    measureId === "driver"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {driverCriterion ? driverCriterion.label : "Drivers"}
+                  <ChevronDown className="h-3 w-3 opacity-70" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-60 p-1">
+                {judgedCriteria.map((c) => (
+                  <button
+                    key={c.criterion_id}
+                    type="button"
+                    onClick={() =>
+                      setDriverCriterion(
+                        driverCriterion?.criterion_id === c.criterion_id ? null : c.criterion_id,
+                      )
+                    }
+                    className={cn(
+                      "flex w-full items-center gap-1.5 rounded px-2 py-1 text-left text-[11px] hover:bg-muted",
+                      driverCriterion?.criterion_id === c.criterion_id
+                        ? "font-medium text-foreground"
+                        : "text-muted-foreground",
+                    )}
+                  >
+                    <span className="flex-1">{c.label}</span>
+                    {c.custom && (
+                      <span className="rounded border border-border px-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+                        Custom
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </PopoverContent>
+            </Popover>
           </div>
         </div>
       </div>
@@ -785,11 +831,16 @@ export const MaterialRegisterTable: React.FC = () => {
               onClick={() => setOnlyNoFigure((v) => !v)}
               className="underline decoration-dotted underline-offset-2 hover:text-foreground"
             >
-              {onlyNoFigure ? "Show all" : `${missingCount} with no ${measure.noun} figure`}
+              {onlyNoFigure
+                ? "Show all"
+                : measure
+                  ? `${missingCount} with no ${measure.noun} figure`
+                  : `${missingCount} with no score recorded`}
             </button>
             <span className="text-border">·</span>
           </>
         )}
+
         <span>
           <span className="tabular-nums text-foreground">{visible.length}</span>
           {visible.length !== data.length && (
@@ -948,7 +999,8 @@ export const MaterialRegisterTable: React.FC = () => {
                   className="px-3 py-6 text-center text-[11px] text-muted-foreground"
                 >
                   No material can be both without a figure and divergent — a material with no{" "}
-                  {measure.noun} figure has no position to diverge from. Turn off one filter.
+                  {measure ? `${measure.noun} figure` : "score recorded"} has no position to diverge
+                  from. Turn off one filter.
                 </td>
               </tr>
             )}
@@ -991,7 +1043,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <tr>
                       <td colSpan={colCount + extraCols} className="p-0">
                         <div className="border-t border-border px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                          No {measure.noun} figure recorded
+                          {measure ? `No ${measure.noun} figure recorded` : "Not scored"}
                         </div>
                       </td>
                     </tr>
