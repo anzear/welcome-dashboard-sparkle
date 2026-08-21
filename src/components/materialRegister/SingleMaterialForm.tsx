@@ -481,8 +481,9 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             </div>
           )}
 
+          {showPanelB && (
           <div className="space-y-3 rounded-md border border-border p-3">
-            <div className="text-[11px] font-medium text-foreground">Requirements for the replacement</div>
+            <div className="text-[11px] font-medium text-foreground">Requirements for implementation</div>
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField
                 label="Target volume"
