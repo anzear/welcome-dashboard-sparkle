@@ -258,7 +258,7 @@ export const BulkActionDialog: React.FC<Props> = ({
               : kind === "role"
                 ? `Set role for ${materials.length} materials`
               : kind === "entry_type"
-                ? `${clearingType ? "Clear" : "Set"} replacement type for ${materials.length} materials`
+                ? `${clearingType ? "Clear" : "Set"} material strategy for ${materials.length} materials`
                 : `Request coverage for ${materials.length} materials`;
 
   const targetLabel = useMemo(() => {
@@ -340,7 +340,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                       : kind === "role"
                         ? "New role"
                       : kind === "entry_type"
-                        ? "New replacement type"
+                        ? "New material strategy"
                         : `${mode === "add" ? "Values to add" : "Values to remove"}`}
               </div>
 

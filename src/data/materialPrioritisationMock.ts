@@ -91,7 +91,7 @@ interface Row {
   unknownOrigin?: string[];
   /** Replacement candidates are marked; everything else is an existing material. */
   role?: "new";
-  /** Replacement type. Only ever set on a candidate, and not on all of them. */
+  /** Material strategy. Only ever set on a candidate, and not on all of them. */
   etype?: "new_material" | "substitution";
   /** Names of the existing materials this candidate is a replacement for. */
   linkTo?: string[];
@@ -356,7 +356,7 @@ const rows: Row[] = [
 
   // ======================================================= Replacement candidates
   // Bio-based and circular alternatives the team is looking at against the book
-  // above. Candidates carry a replacement type; a few have none recorded yet.
+  // above. Candidates carry a material strategy; a few have none recorded yet.
   // Volumes are often absent — nothing is bought at scale yet, and that gap is
   // real, never a zero.
 
@@ -690,7 +690,7 @@ const baseMaterials: Material[] = rows.map((row, i) => {
   put("customer_material_ids", ["x"], loaded);
   put("application_categories", categoriesFor(row), loaded);
   put("application_areas", row.prods, loaded);
-  // Role and replacement type are company-entered choices, never ingested or computed.
+  // Role and material strategy are company-entered choices, never ingested or computed.
   p.role = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
   const entryType: EntryType | null = row.role === "new" ? (row.etype ?? null) : null;
   if (entryType !== null) p.entry_type = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
@@ -746,7 +746,7 @@ const baseMaterials: Material[] = rows.map((row, i) => {
     product_lines: [],
     application_categories: categoriesFor(row),
     application_areas: row.prods,
-    /** Replacement type belongs to candidates only. Existing materials hold none. */
+    /** Material strategy belongs to candidates only. Existing materials hold none. */
     entry_type: entryType,
     requirements: (() => {
       const base = row.req ? { ...emptyRequirements(), ...row.req } : null;

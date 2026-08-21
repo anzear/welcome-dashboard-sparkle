@@ -248,7 +248,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
   },
   {
     field: "entry_type",
-    label: "Replacement type",
+    label: "Material strategy",
     kind: "entry_type",
     example1: "new_material",
     example2: "substitution",

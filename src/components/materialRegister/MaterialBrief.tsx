@@ -80,9 +80,9 @@ const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 /** Header classification group: a quiet label with its values beside it. */
-const HeadGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const HeadGroup: React.FC<{ label: string; title?: string; children: React.ReactNode }> = ({ label, title, children }) => (
   <span className="flex flex-wrap items-center gap-1.5">
-    <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70">{label}</span>
+    <span className="text-[10px] uppercase tracking-widest text-muted-foreground/70" title={title}>{label}</span>
     {children}
   </span>
 );
@@ -673,7 +673,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   </span>
                 </HeadGroup>
                 {m.role === "new" && (
-                  <HeadGroup label="Replacement type">
+                  <HeadGroup label="Material strategy" title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
                     <span className="text-[11px] text-foreground">
                       {m.entry_type ? (
                         ENTRY_TYPE_LABEL[m.entry_type]
@@ -887,7 +887,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               </div>
               {m.role === "new" && (
               <div className="px-1 py-1 sm:col-span-2">
-                <div className="text-[13px] text-muted-foreground">Replacement type</div>
+                <div className="text-[13px] text-muted-foreground" title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">Material strategy</div>
                 <Select
                   value={m.entry_type ?? NOT_SET_TYPE}
                   onValueChange={(v) => {

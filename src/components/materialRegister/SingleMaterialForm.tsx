@@ -233,10 +233,10 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
         )}
       </section>
 
-      {/* Replacement type — only meaningful on a new material */}
+      {/* Material strategy — only meaningful on a new material */}
       {role === "new" && (
       <section className="space-y-2 border-t border-border pt-4">
-        <h3 className={LABEL}>Replacement type (optional)</h3>
+        <h3 className={LABEL} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">Material strategy (optional)</h3>
         <div className="grid gap-2 md:grid-cols-3">
           {ENTRY_TYPES.map((t) => (
             <button

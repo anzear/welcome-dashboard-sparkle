@@ -222,7 +222,7 @@ export interface Material {
 
   application_categories: string[];
   application_areas: string[];
-  /** Replacement type. Only meaningful on a new material. */
+  /** Material strategy. Only meaningful on a new material. */
   entry_type: EntryType | null;
 
   annual_volume: number | null;
@@ -371,7 +371,7 @@ export interface MaterialEvent {
 
 export const EVENT_FIELD_LABEL: Record<string, string> = {
   journey_status: "Status",
-  entry_type: "Replacement type",
+  entry_type: "Material strategy",
   role: "Role",
   linked_material_ids: "Linked materials",
 
