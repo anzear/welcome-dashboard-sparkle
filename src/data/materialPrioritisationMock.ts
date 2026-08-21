@@ -88,6 +88,12 @@ interface Row {
   req?: Partial<MaterialRequirements>;
   /** Fields whose value exists but whose origin was never captured. */
   unknownOrigin?: string[];
+  /** Replacement candidates are marked; everything else is an existing material. */
+  role?: "new";
+  /** Replacement type. Only ever set on a candidate, and not on all of them. */
+  etype?: "new_material" | "substitution";
+  /** Names of the existing materials this candidate is a replacement for. */
+  linkTo?: string[];
 }
 
 const rows: Row[] = [
