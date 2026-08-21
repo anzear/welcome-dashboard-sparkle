@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TEAM_LABEL } from "@/config/assessmentCriteria";
 import { ROLE_PRESETS } from "@/components/materialRegister/registerStore";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
@@ -20,6 +21,7 @@ import FilterChips from "@/components/materialRegister/FilterChips";
 import { Paperclip, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { CoverageMark, FlagChip } from "@/components/materialRegister/assessmentPrimitives";
 import { shortDate } from "@/components/materialRegister/primitives";
+import type { AssessmentEntry } from "@/types/materialPrioritisation";
 
 
 type SortId = "register" | "coverage" | "splits" | "recent";
