@@ -8,19 +8,26 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import type { AssessmentCriterion, Material } from "@/types/materialPrioritisation";
 
 /**
- * Seven independent readings, side by side. Each slot is its own five-step track:
- * the filled position carries the score, the filled width carries the level of
- * disagreement. Nothing is summed, averaged, weighted or joined into a shape —
- * there is deliberately no line, outline or shared container across the slots,
- * because the strip must never read as one overall score.
+ * Seven independent readings, side by side. Each criterion is a small vertical
+ * bar sitting in a faint full-height track (the 1–5 scale). The solid portion
+ * is what every contributor agrees on at minimum; the paler portion above it is
+ * the contested range. An empty track means nothing is recorded — not a score
+ * of 1, not a zero. The bars are never summed, averaged, weighted, connected or
+ * combined into any value, visual or numeric.
  */
 
-const STEPS = [1, 2, 3, 4, 5];
-
 /** Team judgement is never drawn in the computed-data colour. One neutral treatment. */
-const FILL = "bg-provenance-judgement";
-const TRACK = "bg-border/70";
-const TRACK_EMPTY = "bg-border/30";
+const SOLID = "bg-provenance-judgement";
+const PALE = "bg-provenance-judgement/25";
+const TRACK_BG = "bg-border/25";
+
+/** Track height in px — the full 1–5 scale. */
+const TRACK_H = 28;
+/** Bar width in px — wide enough to read individually. */
+const BAR_W = 7;
+
+/** Map a score (1–5) to a pixel height from the base. */
+const scoreToHeight = (score: number) => (score / 5) * TRACK_H;
 
 type SlotState = {
   low: number | null;
@@ -60,7 +67,11 @@ const SlotTooltip: React.FC<{ criterion: AssessmentCriterion; state: SlotState }
   </div>
 );
 
-/** One criterion's five-step track. Standalone: no connection to its neighbours. */
+/**
+ * One criterion's vertical bar inside its full-height track.
+ * Solid fill = agreed minimum. Pale fill = contested range above it.
+ * No fill = nothing recorded. Standalone: no connection to neighbours.
+ */
 const Slot: React.FC<{
   criterion: AssessmentCriterion;
   state: SlotState;
@@ -69,6 +80,11 @@ const Slot: React.FC<{
   onOpen: () => void;
 }> = ({ criterion, state, active, dimmed, onOpen }) => {
   const empty = state.low === null;
+  const low = state.low ?? 0;
+  const high = state.high ?? 0;
+  const solidH = scoreToHeight(low);
+  const paleH = empty ? 0 : scoreToHeight(high) - solidH;
+
   return (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -81,29 +97,33 @@ const Slot: React.FC<{
           aria-label={`${criterion.label}: ${
             empty
               ? "no score recorded"
-              : state.low === state.high
-                ? `score ${state.low}`
-                : `scores ${state.low} to ${state.high}`
+              : low === high
+                ? `score ${low}`
+                : `scores ${low} to ${high}`
           }`}
           className={cn(
-            "flex items-end gap-[1px] rounded-sm py-1 outline-none transition-opacity focus-visible:ring-1 focus-visible:ring-ring",
-            dimmed ? "opacity-40 hover:opacity-70" : "opacity-100",
+            "relative flex-shrink-0 rounded-[2px] outline-none transition-opacity focus-visible:ring-1 focus-visible:ring-ring",
+            dimmed ? "opacity-35 hover:opacity-70" : "opacity-100",
             active && "opacity-100",
           )}
+          style={{ width: BAR_W, height: TRACK_H }}
         >
-          {STEPS.map((s) => {
-            const filled = !empty && s >= (state.low as number) && s <= (state.high as number);
-            return (
-              <span
-                key={s}
-                className={cn(
-                  "block w-[2px] rounded-[1px]",
-                  filled ? cn(FILL, "h-[11px]") : empty ? cn(TRACK_EMPTY, "h-[7px]") : cn(TRACK, "h-[7px]"),
-                  active && filled && "h-[13px]",
-                )}
-              />
-            );
-          })}
+          {/* Faint full-height track — always visible so an empty bar still has a position. */}
+          <span className={cn("absolute inset-0 rounded-[2px]", TRACK_BG)} />
+          {/* Solid fill: base to lowest recorded score. */}
+          {!empty && solidH > 0 && (
+            <span
+              className={cn("absolute bottom-0 left-0 right-0 rounded-b-[2px]", SOLID, active && "ring-1 ring-provenance-judgement/40")}
+              style={{ height: solidH }}
+            />
+          )}
+          {/* Pale fill: lowest to highest (contested range). */}
+          {!empty && paleH > 0 && (
+            <span
+              className={cn("absolute left-0 right-0", PALE)}
+              style={{ bottom: solidH, height: paleH }}
+            />
+          )}
         </button>
       </TooltipTrigger>
       <TooltipContent side="top" className="portfolio-type">
@@ -118,7 +138,7 @@ export const DriversCell: React.FC<{ m: Material }> = ({ m }) => {
   const { judgedCriteria, assessmentState, driverCriterionId, openBriefAtCriterion } = useRegister();
   const anyActive = driverCriterionId !== null;
   return (
-    <div className="flex items-end gap-[4px]">
+    <div className="flex items-end gap-[5px]">
       {judgedCriteria.map((c) => {
         const st = assessmentState(m.material_id, c.criterion_id);
         const active = c.criterion_id === driverCriterionId;
@@ -157,7 +177,7 @@ export const CriterionValueCell: React.FC<{ m: Material; criterionId: string }> 
   );
 };
 
-/** What the strip means, sat in the header so the reading rule is never guessed. */
+/** What the bars mean, sat in the header so the reading rule is never guessed. */
 export const DriversLegend: React.FC = () => {
   const { judgedCriteria } = useRegister();
   return (
@@ -165,7 +185,7 @@ export const DriversLegend: React.FC = () => {
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label="How to read the drivers strip"
+          aria-label="How to read the drivers bars"
           className="text-muted-foreground/60 hover:text-foreground"
         >
           <Info className="h-3 w-3" />
@@ -173,12 +193,14 @@ export const DriversLegend: React.FC = () => {
       </PopoverTrigger>
       <PopoverContent align="start" className="portfolio-type w-72 p-3 text-[11px] leading-snug">
         <div className="pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Reading the strip
+          Reading the bars
         </div>
         <p className="text-muted-foreground">
-          One track per criterion, always the same left-to-right order. The filled position is the
-          score; the filled width is how far apart people sit. An empty, faint track means nothing is
-          recorded — not a score of 1, not a zero. The slots are never combined.
+          One bar per criterion, always the same left-to-right order. Each bar sits in a faint
+          full-height track representing the 1 to 5 scale. The solid portion is what every
+          contributor agrees on at minimum; the paler portion above it is the contested range. An
+          empty track means nothing is recorded — not a score of 1, not a zero. The bars are never
+          combined.
         </p>
         <ol className="mt-2 space-y-0.5 text-[10px] text-muted-foreground">
           {judgedCriteria.map((c, i) => (
