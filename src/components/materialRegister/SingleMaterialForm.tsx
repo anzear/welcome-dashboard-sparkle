@@ -528,6 +528,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
               />
             </Field>
           </div>
+          )}
         </div>
       </section>
 
