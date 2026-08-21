@@ -495,7 +495,7 @@ export const MaterialRegisterTable: React.FC = () => {
                 {(m.product_lines ?? []).map((line) => (
                   <span
                     key={line}
-                    className="rounded-sm border border-provenance-entered/40 bg-provenance-entered/10 px-1.5 py-0.5 text-[10px] text-foreground"
+                    className="rounded-sm border border-provenance-entered/40 bg-provenance-entered/10 px-1 py-px text-[9px] text-foreground"
                   >
                     {line}
                   </span>
