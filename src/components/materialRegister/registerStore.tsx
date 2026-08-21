@@ -829,6 +829,70 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       };
     }
 
+    /**
+     * RANKING BY ONE CRITERION. The mean of the contributor scores recorded for
+     * that criterion is the sort order and nothing else: it is never rendered,
+     * exported or exposed. Neutral entries carry no score, so they do not count.
+     * No entries at all means no score — never a zero — so those materials sit
+     * below the ranked list.
+     */
+    if (measureId === "driver") {
+      const buildRow = (m: Material, rank: number | null): RankedRow => {
+        const ranks = {} as Record<RankMeasureId, number | null>;
+        MEASURES.forEach((mm) => {
+          ranks[mm.id] = tables[mm.id].ranks[m.material_id] ?? null;
+        });
+        return { m, rank, ranks, gapMeasure: null, gapSize: 0 };
+      };
+
+      if (!driverCriterionId || !judgedCriteria.some((c) => c.criterion_id === driverCriterionId)) {
+        return {
+          ordered: filtered.map((m) => buildRow(m, null)),
+          rankTables: tables,
+          rankedCount: 0,
+        };
+      }
+
+      const meanOf = (m: Material): number | null => {
+        const scores = Object.values(assessments)
+          .filter(
+            (e) =>
+              e.material_id === m.material_id &&
+              e.criterion_id === driverCriterionId &&
+              e.score !== null,
+          )
+          .map((e) => e.score as number);
+        if (scores.length === 0) return null;
+        return scores.reduce((a, b) => a + b, 0) / scores.length;
+      };
+
+      const withMean = filtered.map((m) => ({ m, mean: meanOf(m) }));
+      const scoredRows = withMean.filter((r) => r.mean !== null);
+      const unscoredRows = withMean.filter((r) => r.mean === null);
+      scoredRows.sort((a, b) =>
+        (b.mean as number) !== (a.mean as number)
+          ? (b.mean as number) - (a.mean as number)
+          : a.m.name.localeCompare(b.m.name),
+      );
+      unscoredRows.sort((a, b) => a.m.name.localeCompare(b.m.name));
+
+      let lastMean: number | null = null;
+      let lastRank = 0;
+      const rankedOrdered = scoredRows.map((r, i) => {
+        const rank = lastMean !== null && r.mean === lastMean ? lastRank : i + 1;
+        lastMean = r.mean;
+        lastRank = rank;
+        return buildRow(r.m, rank);
+      });
+
+      return {
+        ordered: [...rankedOrdered, ...unscoredRows.map((r) => buildRow(r.m, null))],
+        rankTables: tables,
+        rankedCount: rankedOrdered.length,
+      };
+    }
+
+
     const active = tables[measureId];
     const threshold = active.rankedCount * DIVERGENCE_THRESHOLD_RATIO;
 
