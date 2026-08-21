@@ -391,8 +391,9 @@ export const MaterialRegisterTable: React.FC = () => {
       default:
         if (key.startsWith("crit:")) {
           const c = judgedCriteria.find((x) => `crit:${x.criterion_id}` === key);
+          const isActiveDriver = measureId === "driver" && driverCriterion?.criterion_id === c?.criterion_id;
           return (
-            <th className={cn(HEAD, "w-20 px-3 py-2.5 text-right")} title={c?.label}>
+            <th className={cn(HEAD, "w-20 px-3 py-2.5 text-right", isActiveDriver && "text-primary")} title={c?.label}>
               {c?.label ?? "Criterion"}
             </th>
           );
