@@ -62,6 +62,16 @@ export const CURRENT_USER = "You";
  * material. These are kept apart from material History for that reason.
  */
 export type { CriterionSetEvent } from "@/components/materialRegister/criteriaStore";
+import {
+  useCriteriaSet,
+  hideCriterion as hideCriterionInSet,
+  restoreCriterion as restoreCriterionInSet,
+  addCustomCriterion as addCustom,
+  updateCustomCriterion as updateCustom,
+  deleteCustomCriterion as deleteCustom,
+  type CriterionSetEvent,
+  type CustomCriterionDraft,
+} from "@/components/materialRegister/criteriaStore";
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
