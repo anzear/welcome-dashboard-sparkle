@@ -2,7 +2,7 @@ export type EntryType = "new_material" | "substitution";
 
 export const ENTRY_TYPE_LABELS: Record<EntryType, string> = {
   new_material: "New material",
-  substitution: "Substitution",
+  substitution: "Source substitution",
 };
 
 /**

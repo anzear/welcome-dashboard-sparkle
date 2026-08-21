@@ -8,6 +8,7 @@ import {
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { RoleChip } from "@/components/materialRegister/RoleChip";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -328,7 +329,7 @@ export const MaterialRegisterTable: React.FC = () => {
         );
       case "materialType":
         return (
-          <th className={cn(HEAD, "px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
+          <th className={cn(HEAD, "w-[10.5rem] min-w-[10.5rem] px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
             <button
               type="button"
               onClick={() =>
@@ -456,16 +457,7 @@ export const MaterialRegisterTable: React.FC = () => {
             : "Not set";
         return (
           <td className="px-3 py-2 align-middle">
-            <span
-              className={cn(
-                "inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                existing
-                  ? "bg-muted text-foreground/80"
-                  : "border border-foreground/40 bg-transparent text-muted-foreground",
-              )}
-            >
-              {label}
-            </span>
+            <RoleChip isExisting={existing}>{label}</RoleChip>
           </td>
         );
       }
