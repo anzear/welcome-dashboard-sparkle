@@ -1673,26 +1673,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     };
   };
 
-  const logCriterionChange = (
-    action: CriterionSetEvent["action"],
-    criterion_id: string,
-    label: string,
-    detail: string | null,
-  ) =>
-    setCriteriaEvents((prev) => [
-      {
-        event_id: `cse-${Date.now()}-${prev.length + 1}`,
-        action,
-        criterion_id,
-        label,
-        detail,
-        changed_by: currentUser.name,
-        changed_at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-
   /** Hiding and unhiding are workspace-level acts. Nothing is ever deleted. */
+
   const hideCriterionAction = (criterionId: string) =>
     canEditCriteria ? hideCriterionInSet(criterionId, currentUser.name) : false;
 
