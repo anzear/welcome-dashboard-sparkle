@@ -381,12 +381,12 @@ const AssessmentCoverage: React.FC = () => {
                 className="rounded-md bg-card text-[11px]"
               />
               <div className="text-[10px] text-muted-foreground">
-                The same rationale is written on each selected material.
-                {current.note.trim() === "" && (
+                {current.note.trim() === "" ? (
                   <span className="text-destructive">
-                    {" "}
                     A rationale is required before this driver counts as staged.
                   </span>
+                ) : (
+                  "Applies to every selected material."
                 )}
               </div>
             </div>
