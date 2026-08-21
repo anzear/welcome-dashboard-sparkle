@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { shortDate } from "@/components/materialRegister/primitives";
-import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
 import type { AssessmentCriterion } from "@/types/materialPrioritisation";
 import { AlertTriangle, EyeOff, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { MAX_CUSTOM_CRITERIA } from "@/config/assessmentCriteria";
@@ -301,7 +300,6 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<Draft>(EMPTY);
   const [error, setError] = useState<string | undefined>();
-  const evidence = criteria.filter((c) => c.kind === "evidence");
   const atLimit = customCriteriaCount >= MAX_CUSTOM_CRITERIA;
 
   return (
@@ -407,15 +405,6 @@ const CriteriaSetDialog: React.FC<{ open: boolean; onOpenChange: (open: boolean)
           </div>
         )}
 
-        <div className="space-y-1 border-t border-border/60 pt-2">
-          <span className={LABEL}>Read from data — not judged, not editable</span>
-          {evidence.map((c) => (
-            <p key={c.criterion_id} className="text-[10px] text-muted-foreground">
-              <span className="text-foreground">{c.label}</span> · {c.helper}
-              {c.source === "vcg" && <ComingSoonTag className="ml-1.5 align-middle" />}
-            </p>
-          ))}
-        </div>
 
         <div className="space-y-1 border-t border-border/60 pt-2">
           <span className={LABEL}>Changes to the set</span>
