@@ -17,12 +17,12 @@ export const ENTRY_TYPES: { id: EntryType; label: string; description: string }[
   {
     id: "new_material",
     label: "New material",
-    description: "Nothing being replaced",
+    description: "Replaces nothing; new to the range",
   },
   {
     id: "substitution",
-    label: "Source substitution",
-    description: "Moves an existing material to a renewable or circular source",
+    label: "Substitution material",
+    description: "Replaces an incumbent — same material from a different source",
   },
 ];
 

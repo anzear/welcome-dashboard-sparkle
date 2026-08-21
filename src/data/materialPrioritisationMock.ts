@@ -809,7 +809,8 @@ const addLink = (a: string, b: string) => {
   linkSets.get(a)!.add(b);
 };
 rows.forEach((row, i) => {
-  if (row.role !== "new" || !row.linkTo?.length) return;
+  // A New material replaces nothing, so the seed carries no links on it at all.
+  if (row.role !== "new" || row.etype === "new_material" || !row.linkTo?.length) return;
   const candidateId = `MAT-${String(i + 1).padStart(4, "0")}`;
   row.linkTo.forEach((name) => {
     const otherId = idByName.get(name);

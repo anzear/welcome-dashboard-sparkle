@@ -667,7 +667,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   </RoleChip>
                 </HeadGroup>
                 {m.role === "new" && (
-                  <HeadGroup label="Material strategy" title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
+                  <HeadGroup label="Material strategy" title="Whether this material replaces an incumbent, or is new to the range and replaces nothing.">
                     <span className="text-[11px] text-foreground">
                       {m.entry_type ? (
                         ENTRY_TYPE_LABEL[m.entry_type]
@@ -881,7 +881,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               </div>
               {m.role === "new" && (
               <div className="px-1 py-1 sm:col-span-2">
-                <div className="text-[13px] text-muted-foreground" title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">Material strategy</div>
+                <div className="text-[13px] text-muted-foreground" title="Whether this material replaces an incumbent, or is new to the range and replaces nothing.">Material strategy</div>
                 <Select
                   value={m.entry_type ?? NOT_SET_TYPE}
                   onValueChange={(v) => {

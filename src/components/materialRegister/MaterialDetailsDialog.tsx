@@ -11,7 +11,7 @@ import type { Material } from "@/types/materialPrioritisation";
 /** Type — the two values the customer chooses between, plus no answer. */
 const INTENTS = [
   { value: "new_material", label: "New material" },
-  { value: "substitution", label: "Substitution" },
+  { value: "substitution", label: "Substitution material" },
 ] as const;
 
 const Req = () => <span className="text-destructive"> *</span>;
