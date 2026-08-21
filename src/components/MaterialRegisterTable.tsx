@@ -315,7 +315,7 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
       case "drivers":
         return (
-          <th className={cn(HEAD, "w-[7.5rem] px-3 py-2.5 text-left")}>
+          <th className={cn(HEAD, "w-[8.5rem] px-3 py-2.5 text-left")}>
             <span className="inline-flex items-center gap-1">
               Drivers
               <DriversLegend />
