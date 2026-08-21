@@ -40,6 +40,7 @@ import {
 } from "@/components/materialRegister/registerStore";
 import AddMaterialDialog from "@/components/materialRegister/AddMaterialDialog";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
+import { DriversCell, CriterionValueCell, DriversLegend } from "@/components/materialRegister/DriversCell";
 import { Plus, SlidersHorizontal, X, ChevronDown, ChevronUp, GripVertical, AlertTriangle } from "lucide-react";
 
 const HEAD =
@@ -53,8 +54,11 @@ const UNIT = "text-[10px] font-normal normal-case tracking-normal text-muted-for
 
 
 
+/** `crit:<criterion_id>` columns are the opt-in single-criterion pull-outs. */
 type OptionalColumn =
   | "rank"
+  | "drivers"
+  | `crit:${string}`
   | "status"
   | "completeness"
   | "role"
@@ -76,6 +80,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
+  ["drivers", "Drivers", "All seven, in fixed order"],
   ["role", "Role", "Existing material, or a new one that could replace it"],
   ["links", "Links", "Number of linked materials of the opposite role"],
   ["materialType", "Replacement type", "How a new material would replace an incumbent"],
@@ -188,17 +193,43 @@ export const MaterialRegisterTable: React.FC = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
-  const [cols, setCols] = useState<Record<OptionalColumn, boolean>>(
-    () =>
-      Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])) as Record<
-        OptionalColumn,
-        boolean
-      >,
+  const [cols, setCols] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(OPTIONAL_COLUMNS.map(([k]) => [k, true])),
   );
   /** Rank is pinned, so only the scrolling columns can be reordered. */
   const [colOrder, setColOrder] = useState<OptionalColumn[]>(() =>
     OPTIONAL_COLUMNS.map(([k]) => k).filter((k) => k !== "rank"),
   );
+
+  /**
+   * One opt-in column per judged criterion, so a single criterion can be pulled
+   * out and worked on. Hidden by default: they never show up beside Drivers
+   * unless a user turns them on.
+   */
+  const criterionColumns = useMemo(
+    () =>
+      judgedCriteria.map(
+        (c) =>
+          [`crit:${c.criterion_id}` as OptionalColumn, c.label, "One criterion on its own"] as [
+            OptionalColumn,
+            string,
+            string,
+          ],
+      ),
+    [judgedCriteria],
+  );
+  const allColumns = useMemo(
+    () => [...OPTIONAL_COLUMNS, ...criterionColumns],
+    [criterionColumns],
+  );
+  /** Criterion columns join the order as they appear; they stay switched off. */
+  React.useEffect(() => {
+    setColOrder((prev) => {
+      const missing = criterionColumns.map(([k]) => k).filter((k) => !prev.includes(k));
+      return missing.length ? [...prev, ...missing] : prev;
+    });
+  }, [criterionColumns]);
+  const colOn = (k: OptionalColumn) => cols[k] ?? false;
   const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
   /** Product line sorting is a view preference; it never reorders the ranking itself. */
   const [lineSort, setLineSort] = useState<"asc" | "desc" | null>(null);
@@ -269,19 +300,31 @@ export const MaterialRegisterTable: React.FC = () => {
 
   // Always present: checkbox and Material. Everything else is switchable.
   const colCount = 2;
-  const extraCols = OPTIONAL_COLUMNS.filter(([k]) => cols[k]).length;
+  const extraCols = allColumns.filter(([k]) => colOn(k)).length;
 
   /** Pinned offset shifts when the rank column is switched off. */
-  const materialLeft = cols.rank ? "left-[5rem]" : "left-8";
+  const materialLeft = colOn("rank") ? "left-[5rem]" : "left-8";
 
   /** Column order is user-controlled; rank and Material stay pinned at the front. */
-  const orderedCols = colOrder.filter((k) => cols[k]);
+  const orderedCols = colOrder.filter((k) => colOn(k));
 
 
   const headCell = (key: OptionalColumn) => {
     switch (key) {
       case "completeness":
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
+      case "drivers":
+        return (
+          <th className={cn(HEAD, "w-[7.5rem] px-3 py-2.5 text-left")}>
+            <span className="inline-flex items-center gap-1">
+              Drivers
+              <DriversLegend />
+            </span>
+            <div className={UNIT}>
+              {driverCriterion ? driverCriterion.label : "All seven, in fixed order"}
+            </div>
+          </th>
+        );
       case "role":
         return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Role</th>;
       case "links":
@@ -348,6 +391,14 @@ export const MaterialRegisterTable: React.FC = () => {
       case "lastChange":
         return <th className={cn(HEAD, "px-3 pr-8 py-2.5 text-left")}>Last change</th>;
       default:
+        if (key.startsWith("crit:")) {
+          const c = judgedCriteria.find((x) => `crit:${x.criterion_id}` === key);
+          return (
+            <th className={cn(HEAD, "w-20 px-3 py-2.5 text-right")} title={c?.label}>
+              {c?.label ?? "Criterion"}
+            </th>
+          );
+        }
         return null;
     }
   };
@@ -358,6 +409,12 @@ export const MaterialRegisterTable: React.FC = () => {
         return (
           <td className="px-3 py-2 align-middle">
             <CompletenessCell m={m} />
+          </td>
+        );
+      case "drivers":
+        return (
+          <td className="px-3 py-2 align-middle">
+            <DriversCell m={m} />
           </td>
         );
       case "role":
@@ -554,6 +611,14 @@ export const MaterialRegisterTable: React.FC = () => {
           </td>
         );
       default:
+        if (key.startsWith("crit:")) {
+          const critId = key.slice(5);
+          return (
+            <td className="px-3 py-2 text-right align-middle text-[12px]">
+              <CriterionValueCell m={m} criterionId={critId} />
+            </td>
+          );
+        }
         return null;
     }
   };
@@ -649,16 +714,16 @@ export const MaterialRegisterTable: React.FC = () => {
               type="button"
               className={cn(
                 "inline-flex h-7 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-medium transition-colors",
-                extraCols < OPTIONAL_COLUMNS.length
+                extraCols < allColumns.length
                   ? "border-primary/40 bg-primary/5 text-foreground"
                   : "border-border bg-card text-muted-foreground hover:text-foreground",
               )}
             >
               <SlidersHorizontal className="h-3 w-3 opacity-70" />
               Columns
-              {extraCols < OPTIONAL_COLUMNS.length && (
+              {extraCols < allColumns.length && (
                 <span className="tabular-nums text-primary">
-                  {OPTIONAL_COLUMNS.length - extraCols}
+                  {allColumns.length - extraCols}
                 </span>
               )}
               <ChevronDown className="h-3 w-3 opacity-60" />
@@ -674,7 +739,7 @@ export const MaterialRegisterTable: React.FC = () => {
             {(() => {
               const rank = OPTIONAL_COLUMNS.find(([k]) => k === "rank")!;
               const rest = colOrder
-                .map((k) => OPTIONAL_COLUMNS.find(([kk]) => kk === k)!)
+                .map((k) => allColumns.find(([kk]) => kk === k)!)
                 .filter(Boolean);
               const rows: [OptionalColumn, string, string, boolean][] = [
                 [rank[0], rank[1], rank[2], false],
@@ -704,13 +769,13 @@ export const MaterialRegisterTable: React.FC = () => {
                     <span className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                   )}
                   <Checkbox
-                    checked={cols[key]}
+                    checked={colOn(key)}
                     onCheckedChange={(v) => setCols((c) => ({ ...c, [key]: v === true }))}
                     className="mt-0.5 h-3.5 w-3.5"
                   />
                   <label
                     className="min-w-0 flex-1 cursor-pointer"
-                    onClick={() => setCols((c) => ({ ...c, [key]: !c[key] }))}
+                    onClick={() => setCols((c) => ({ ...c, [key]: !colOn(key) }))}
                   >
                     <span className="block text-[11px] text-foreground">{label}</span>
                     <span className="block text-[10px] leading-tight text-muted-foreground">{hint}</span>

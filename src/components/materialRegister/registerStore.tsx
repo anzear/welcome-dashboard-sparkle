@@ -230,9 +230,18 @@ export interface Filters {
   gateOverdue: boolean;
   /** Carries a split flag on at least one judged criterion. */
   teamsDisagree: boolean;
+  /**
+   * Per-criterion score filter, keyed by criterion id. Values are "1".."5" and
+   * NOT_SCORED. A material matches when any recorded score is selected, or when
+   * NOT_SCORED is selected and nothing is recorded.
+   */
+  criterionScores: Record<string, string[]>;
 }
 
 export const NO_PRIORITY = "__no_priority__";
+
+/** Sentinel for "nothing recorded" in a per-criterion score filter. Never a zero. */
+export const NOT_SCORED = "__not_scored__";
 /** Filter value for materials with no product line assigned. Empty, not zero. */
 export const NO_PRODUCT_LINE = "__no_product_line__";
 export const NO_BLOCKER = "__no_blocker__";
@@ -261,6 +270,7 @@ export const EMPTY_FILTERS: Filters = {
   notAssessed: false,
   gateOverdue: false,
   teamsDisagree: false,
+  criterionScores: {},
 };
 
 export const today = () => new Date().toISOString().slice(0, 10);
@@ -334,6 +344,10 @@ interface Store {
   /** open brief */
   openId: string | null;
   openBrief: (id: string) => void;
+  /** Opens the brief and lands on one criterion in the assessment card. */
+  openBriefAtCriterion: (id: string, criterionId: string) => void;
+  focusCriterionId: string | null;
+  clearFocusCriterion: () => void;
   closeBrief: () => void;
   updateMaterial: (
     id: string,
@@ -626,6 +640,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const [onlySelected, setOnlySelected] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [openId, setOpenId] = useState<string | null>(null);
+  /** Criterion the brief should land on when opened from a drivers slot. */
+  const [focusCriterionId, setFocusCriterionId] = useState<string | null>(null);
   const [highlightIds, setHighlightIds] = useState<Set<string>>(new Set());
   const [toast, setToast] = useState<{
     message: string;
@@ -680,7 +696,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.hasDocuments ||
     filters.notAssessed ||
     filters.gateOverdue ||
-    filters.teamsDisagree;
+    filters.teamsDisagree ||
+    Object.values(filters.criterionScores).some((v) => v.length > 0);
 
   const documentedIds = useMemo(
     () => new Set(documents.map((d) => d.material_id)),
@@ -732,6 +749,20 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
       if (filters.gateOverdue && !hasOverdueCondition(m) && !holdReviewOverdue(m)) return false;
       if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
+      /** Per-criterion score filter. Nothing recorded is its own value, never a zero. */
+      for (const [critId, wanted] of Object.entries(filters.criterionScores)) {
+        if (!wanted.length) continue;
+        const scores = Object.values(assessments)
+          .filter(
+            (e) => e.material_id === m.material_id && e.criterion_id === critId && e.score !== null,
+          )
+          .map((e) => String(e.score));
+        const ok =
+          scores.length === 0
+            ? wanted.includes(NOT_SCORED)
+            : scores.some((sc) => wanted.includes(sc));
+        if (!ok) return false;
+      }
       if (filters.gateOverdueCondition && !hasOverdueCondition(m)) return false;
       if (filters.gateHoldReviewOverdue && !holdReviewOverdue(m)) return false;
       if (filters.gateRecommendation === "yes" && m.recommendation === null) return false;
@@ -791,7 +822,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       }
       return true;
     });
-  }, [scoped, rolePreset, filters, documentedIds, assessedIds, disagreeIds]);
+  }, [scoped, rolePreset, filters, documentedIds, assessedIds, disagreeIds, assessments]);
 
   const { ordered, rankTables, rankedCount } = useMemo(() => {
     const tables = {} as Record<RankMeasureId, RankTable>;
@@ -1814,8 +1845,20 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     divergentCount,
     bothFilters,
     openId,
-    openBrief: setOpenId,
-    closeBrief: () => setOpenId(null),
+    openBrief: (id: string) => {
+      setFocusCriterionId(null);
+      setOpenId(id);
+    },
+    openBriefAtCriterion: (id: string, criterionId: string) => {
+      setFocusCriterionId(criterionId);
+      setOpenId(id);
+    },
+    focusCriterionId,
+    clearFocusCriterion: () => setFocusCriterionId(null),
+    closeBrief: () => {
+      setFocusCriterionId(null);
+      setOpenId(null);
+    },
     updateMaterial,
     applyBulk,
     toggleLink,

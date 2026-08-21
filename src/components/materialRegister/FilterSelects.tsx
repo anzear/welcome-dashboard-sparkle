@@ -18,6 +18,7 @@ import {
   NO_ENTRY_TYPE,
   NO_PRIORITY,
   NO_PRODUCT_LINE,
+  NOT_SCORED,
   UNASSIGNED_OWNER,
   useRegister,
 } from "@/components/materialRegister/registerStore";
@@ -46,7 +47,7 @@ const FilterSelects: React.FC<{
   include?: FilterKey[];
   variant?: "inline" | "popover";
 }> = ({ className, include, variant = "inline" }) => {
-  const { data, filters, setFilters, rolePreset } = useRegister();
+  const { data, filters, setFilters, rolePreset, judgedCriteria } = useRegister();
   /** The controlled list can grow while the filter is mounted. */
   useProductLines();
 
@@ -215,7 +216,8 @@ const FilterSelects: React.FC<{
     (gateActive ? 1 : 0) +
     (filters.hasDocuments ? 1 : 0) +
     (filters.notAssessed ? 1 : 0) +
-    (filters.teamsDisagree ? 1 : 0);
+    (filters.teamsDisagree ? 1 : 0) +
+    Object.values(filters.criterionScores).filter((v) => v.length > 0).length;
 
   const suppliersRange = (
     <div className="space-y-1.5 pt-0.5">
@@ -313,6 +315,42 @@ const FilterSelects: React.FC<{
     </div>
   );
 
+  /**
+   * One filter per judged criterion: the 1–5 values plus "Not scored". Nothing
+   * recorded is its own value — never a zero and never folded into a low score.
+   */
+  const criterionScoreSection = (
+    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
+      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">
+        Driver scores
+      </div>
+      {judgedCriteria.map((c) => {
+        const sel = filters.criterionScores[c.criterion_id] ?? [];
+        return (
+          <div key={c.criterion_id} className="flex items-center justify-between gap-2">
+            <span className="min-w-0 flex-1 truncate text-[11px] text-muted-foreground" title={c.label}>
+              {c.label}
+            </span>
+            <MultiSelectFilter
+              label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
+              options={[
+                ...[1, 2, 3, 4, 5].map((v) => ({ value: String(v), label: String(v) })),
+                { value: NOT_SCORED, label: "Not scored" },
+              ]}
+              selected={sel}
+              onChange={(v) =>
+                setFilters((f) => ({
+                  ...f,
+                  criterionScores: { ...f.criterionScores, [c.criterion_id]: v },
+                }))
+              }
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+
   const vcgSection =
     activeVcg.length > 0 || suppliersShown ? (
       <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
@@ -385,6 +423,7 @@ const FilterSelects: React.FC<{
           </div>
           {gateSection}
           {assessmentSection}
+          {criterionScoreSection}
           {evidenceSection}
           {vcgSection}
           {activeCount > 0 && (
@@ -404,6 +443,7 @@ const FilterSelects: React.FC<{
                   next.notAssessed = false;
                   next.teamsDisagree = false;
                   next.gateOverdue = false;
+                  next.criterionScores = {};
                   return next;
                 })
               }
