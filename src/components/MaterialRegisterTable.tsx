@@ -456,16 +456,7 @@ export const MaterialRegisterTable: React.FC = () => {
             : "Not set";
         return (
           <td className="px-3 py-2 align-middle">
-            <span
-              className={cn(
-                "inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                existing
-                  ? "bg-muted text-foreground/80"
-                  : "border border-foreground/40 bg-transparent text-muted-foreground",
-              )}
-            >
-              {label}
-            </span>
+            <RoleChip isExisting={existing}>{label}</RoleChip>
           </td>
         );
       }
