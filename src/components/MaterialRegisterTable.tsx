@@ -1043,7 +1043,7 @@ export const MaterialRegisterTable: React.FC = () => {
                     <tr>
                       <td colSpan={colCount + extraCols} className="p-0">
                         <div className="border-t border-border px-3 py-1 text-[10px] uppercase tracking-widest text-muted-foreground">
-                          No {measure.noun} figure recorded
+                          {measure ? `No ${measure.noun} figure recorded` : "Not scored"}
                         </div>
                       </td>
                     </tr>
