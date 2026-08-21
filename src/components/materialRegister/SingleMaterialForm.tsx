@@ -39,7 +39,6 @@ import {
   lookupCas,
   provenanceOf,
   requirementsOrNull,
-  showsReplacedPanel,
   toNullString,
   type OntologyResult,
 } from "@/components/materialRegister/materialEntry";
@@ -106,7 +105,8 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
 
   const derivedSpend = spendOverridden ? spend : computeSpend(volume, price);
   const derivedGhg = ghgOverridden ? ghg : computeGhg(volume, factor);
-  const showPanelA = showsReplacedPanel(entryType);
+  const showPanelA = role === "existing";
+  const showPanelB = role === "new";
 
   const runLookup = () => {
     const trimmed = cas.trim();
@@ -423,7 +423,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
       {/* Step 3 */}
       <section className="space-y-3 border-t border-border pt-4">
         <h3 className={LABEL}>3 — Internal data</h3>
-        <div className={cn("grid gap-4", showPanelA ? "lg:grid-cols-2" : "grid-cols-1")}>
+        <div className="grid grid-cols-1 gap-4">
           {showPanelA && (
             <div className="space-y-3 rounded-md border border-border p-3">
               <div className="text-[11px] font-medium text-foreground">Material being replaced</div>
@@ -480,8 +480,9 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
             </div>
           )}
 
+          {showPanelB && (
           <div className="space-y-3 rounded-md border border-border p-3">
-            <div className="text-[11px] font-medium text-foreground">Requirements for the replacement</div>
+            <div className="text-[11px] font-medium text-foreground">Requirements for implementation</div>
             <div className="grid gap-3 sm:grid-cols-2">
               <NumberField
                 label="Target volume"
@@ -526,6 +527,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
               />
             </Field>
           </div>
+          )}
         </div>
       </section>
 
