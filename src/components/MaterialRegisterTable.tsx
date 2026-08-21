@@ -228,6 +228,8 @@ export const MaterialRegisterTable: React.FC = () => {
   const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
   /** Product line sorting is a view preference; it never reorders the ranking itself. */
   const [lineSort, setLineSort] = useState<"asc" | "desc" | null>(null);
+  /** Material strategy sorting follows the fixed role/strategy order, never alphabetical. */
+  const [strategySort, setStrategySort] = useState<"asc" | "desc" | null>(null);
 
   const moveCol = (key: OptionalColumn, dir: -1 | 1) =>
     setColOrder((prev) => {
