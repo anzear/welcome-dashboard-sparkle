@@ -77,7 +77,7 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
-  ["role", "Role", "Existing material, or a new one that could replace it"],
+  
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
   ["drivers", "Drivers", ""],
