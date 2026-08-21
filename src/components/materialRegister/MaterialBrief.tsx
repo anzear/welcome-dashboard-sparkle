@@ -37,6 +37,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { RoleChip } from "@/components/materialRegister/RoleChip";
 
 /** Select needs a non-empty value for the explicit "no type" choice. */
 const NOT_SET_TYPE = "__not_set__";
@@ -661,16 +662,9 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
                   )}
                 </HeadGroup>
                 <HeadGroup label="Role">
-                  <span
-                    className={cn(
-                      "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                      m.role === "new"
-                        ? "border border-amber-700/40 bg-transparent text-amber-800/80"
-                        : "bg-muted text-muted-foreground",
-                    )}
-                  >
+                  <RoleChip isExisting={m.role !== "new"}>
                     {MATERIAL_ROLE_LABEL[m.role]}
-                  </span>
+                  </RoleChip>
                 </HeadGroup>
                 {m.role === "new" && (
                   <HeadGroup label="Material strategy" title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">

@@ -8,6 +8,7 @@ import {
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { RoleChip } from "@/components/materialRegister/RoleChip";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -328,7 +329,7 @@ export const MaterialRegisterTable: React.FC = () => {
         );
       case "materialType":
         return (
-          <th className={cn(HEAD, "px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
+          <th className={cn(HEAD, "w-[10.5rem] min-w-[10.5rem] px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
             <button
               type="button"
               onClick={() =>
