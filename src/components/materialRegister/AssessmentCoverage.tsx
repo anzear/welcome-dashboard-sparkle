@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { TEAM_LABEL } from "@/config/assessmentCriteria";
 import { ROLE_PRESETS } from "@/components/materialRegister/registerStore";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
@@ -20,6 +21,7 @@ import FilterChips from "@/components/materialRegister/FilterChips";
 import { Paperclip, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { CoverageMark, FlagChip } from "@/components/materialRegister/assessmentPrimitives";
 import { shortDate } from "@/components/materialRegister/primitives";
+import type { AssessmentEntry } from "@/types/materialPrioritisation";
 
 
 type SortId = "register" | "coverage" | "splits" | "recent";
@@ -47,6 +49,8 @@ const AssessmentCoverage: React.FC = () => {
     canEditCriteria,
     saveAssessment,
     clearAssessment,
+    restoreAssessments,
+    assessments,
     rolePreset,
     setRolePreset,
     rolePresetCounts,
@@ -55,6 +59,10 @@ const AssessmentCoverage: React.FC = () => {
   const [sort, setSort] = useState<SortId>("register");
   const [gapsOnly, setGapsOnly] = useState(false);
   const [criteriaOpen, setCriteriaOpen] = useState(false);
+
+  /** Confirmation shown after a bulk save. Carries the count written and the
+   * pre-write snapshot so the save can be undone. */
+  const [saved, setSaved] = useState<{ count: number; snapshot: Record<string, AssessmentEntry> } | null>(null);
 
 
   const rows = useMemo(() => {
@@ -124,13 +132,16 @@ const AssessmentCoverage: React.FC = () => {
 
   const applyStaged = () => {
     if (stagedIncomplete || stagedCount === 0 || selected.length === 0) return;
+    // Snapshot the assessment map before any write so the whole pass can be
+    // undone from the confirmation dialog.
+    const snapshot = assessments;
     for (const materialId of selected) {
       for (const [criterionId, s] of Object.entries(staged)) {
         if (s.value === "clear") clearAssessment(materialId, criterionId);
         else saveAssessment(materialId, criterionId, s.value, s.note);
       }
     }
-    clearSelection();
+    setSaved({ count: selected.length, snapshot });
   };
 
   const VALUES: Staged["value"][] = [1, 2, 3, 4, 5];
@@ -380,15 +391,6 @@ const AssessmentCoverage: React.FC = () => {
                 placeholder="Why this score holds for every material selected"
                 className="rounded-md bg-card text-[11px]"
               />
-              <div className="text-[10px] text-muted-foreground">
-                {current.note.trim() === "" ? (
-                  <span className="text-destructive">
-                    A rationale is required before this driver counts as staged.
-                  </span>
-                ) : (
-                  "Applies to every selected material."
-                )}
-              </div>
             </div>
           )}
 
@@ -530,6 +532,37 @@ const AssessmentCoverage: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Bulk-save confirmation. OK commits, Undo reverts the whole pass, Edit
+          keeps the selection and staged scores so they can be adjusted. */}
+      <Dialog open={saved !== null} onOpenChange={(o) => { if (!o) setSaved(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center">
+              <span className="tabular-nums text-foreground">{saved?.count ?? 0}</span>{" "}
+              material{(saved?.count ?? 0) === 1 ? "" : "s"} assessed
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Button variant="ghost" size="sm" className="h-8 text-[11px]" onClick={() => {
+              clearSelection();
+              setSaved(null);
+            }}>
+              OK
+            </Button>
+            <Button variant="ghost" size="sm" className="h-8 text-[11px]" onClick={() => {
+              if (saved) restoreAssessments(saved.snapshot);
+              clearSelection();
+              setSaved(null);
+            }}>
+              Undo
+            </Button>
+            <Button size="sm" className="h-8 text-[11px]" onClick={() => setSaved(null)}>
+              Edit
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
