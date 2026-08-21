@@ -1,8 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-  NEUTRAL_HELPER,
-  NEUTRAL_LABEL,
   SCORE_POINTS,
   TEAM_LABEL,
   initialsOf,
@@ -21,7 +19,6 @@ import {
  */
 const FLAG_STYLE: Record<AssessmentFlag, string> = {
   not_assessed: "border-dashed border-border text-muted-foreground",
-  neutral_only: "border-dashed border-border text-muted-foreground",
   single_view: "border-border bg-muted/60 text-muted-foreground",
   aligned: "border-provenance-judgement/40 bg-provenance-judgement/10 text-provenance-judgement",
   mixed: "border-border bg-muted text-foreground",
@@ -32,12 +29,8 @@ export const FlagChip: React.FC<{ state: AssessmentState; className?: string }> 
   <span
     title={
       state.spread === null
-        ? state.neutralCount > 0
-          ? `${state.neutralCount} neutral, no scores recorded`
-          : "Nobody has recorded a view"
-        : `${state.scoredCount} ${state.scoredCount === 1 ? "score" : "scores"}, ${state.low} to ${state.high}${
-            state.neutralCount > 0 ? ` · ${state.neutralCount} neutral` : ""
-          }`
+        ? "Nobody has recorded a view"
+        : `${state.scoredCount} ${state.scoredCount === 1 ? "score" : "scores"}, ${state.low} to ${state.high}`
     }
     className={cn(
       "inline-flex h-5 items-center gap-1 rounded-full border px-1.5 text-[10px] font-medium",
@@ -60,7 +53,7 @@ export const CoverageMark: React.FC<{ state: AssessmentState }> = ({ state }) =>
     aria-label={ASSESSMENT_FLAG_LABEL[state.flag]}
     title={`${ASSESSMENT_FLAG_LABEL[state.flag]}${
       state.scoredCount ? ` · ${state.scoredCount} scores` : ""
-    }${state.neutralCount ? ` · ${state.neutralCount} neutral` : ""}`}
+    }`}
     className={cn(
       "inline-block h-3 w-3 rounded-[3px] border",
       state.scoredCount === 0
@@ -74,33 +67,27 @@ export const CoverageMark: React.FC<{ state: AssessmentState }> = ({ state }) =>
 
 export const ContributorMark: React.FC<{ entry: AssessmentEntry; name: string }> = ({ entry, name }) => (
   <span
-    title={`${name} (${TEAM_LABEL[entry.team]}) — ${
-      entry.score === null ? `${NEUTRAL_LABEL}: ${NEUTRAL_HELPER}` : entry.score
-    }${entry.note ? ` · ${entry.note}` : ""}`}
+    title={`${name} (${TEAM_LABEL[entry.team]}) — ${entry.score}${
+      entry.note ? ` · ${entry.note}` : ""
+    }`}
     className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-1.5 py-[1px] text-[10px]"
   >
     <span className="text-muted-foreground">{initialsOf(name)}</span>
-    {entry.score === null ? (
-      <span className="text-muted-foreground/80">{NEUTRAL_LABEL}</span>
-    ) : (
-      <span className="tabular-nums font-medium text-provenance-judgement">{entry.score}</span>
-    )}
+    <span className="tabular-nums font-medium text-provenance-judgement">{entry.score}</span>
   </span>
 );
 
 /**
- * 1..5 rail with Neutral beside it. Neutral is a recorded position — no
- * visibility on this criterion — and is never 3, never 0, never a score.
- * `value` is a number for a score, "neutral", or null for nothing recorded.
+ * 1..5 rail. `value` is a number for a recorded score, or null for nothing
+ * recorded. There is no abstain or no-view position on the scale.
  */
 export const ScoreRail: React.FC<{
-  value: number | "neutral" | null;
+  value: number | null;
   onPick: (v: number) => void;
-  onNeutral?: () => void;
   onClear?: () => void;
   ariaLabel?: string;
   size?: "sm" | "md";
-}> = ({ value, onPick, onNeutral, onClear, ariaLabel, size = "md" }) => (
+}> = ({ value, onPick, onClear, ariaLabel, size = "md" }) => (
   <div className="inline-flex items-center gap-[3px]" role="group" aria-label={ariaLabel}>
     {SCORE_POINTS.map((p) => {
       const active = value === p;
@@ -122,22 +109,5 @@ export const ScoreRail: React.FC<{
         </button>
       );
     })}
-    {onNeutral && (
-      <button
-        type="button"
-        aria-pressed={value === "neutral"}
-        title={NEUTRAL_HELPER}
-        onClick={() => (value === "neutral" && onClear ? onClear() : onNeutral())}
-        className={cn(
-          "ml-1.5 rounded-[3px] border px-2 transition-colors",
-          size === "sm" ? "h-5 text-[10px]" : "h-6 text-[11px]",
-          value === "neutral"
-            ? "border-foreground/40 bg-muted font-medium text-foreground"
-            : "border-dashed border-border bg-background text-muted-foreground/70 hover:bg-muted",
-        )}
-      >
-        {NEUTRAL_LABEL}
-      </button>
-    )}
   </div>
 );
