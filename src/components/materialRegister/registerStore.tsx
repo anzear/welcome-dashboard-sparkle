@@ -62,6 +62,16 @@ export const CURRENT_USER = "You";
  * material. These are kept apart from material History for that reason.
  */
 export type { CriterionSetEvent } from "@/components/materialRegister/criteriaStore";
+import {
+  useCriteriaSet,
+  hideCriterion as hideCriterionInSet,
+  restoreCriterion as restoreCriterionInSet,
+  addCustomCriterion as addCustom,
+  updateCustomCriterion as updateCustom,
+  deleteCustomCriterion as deleteCustom,
+  type CriterionSetEvent,
+  type CustomCriterionDraft,
+} from "@/components/materialRegister/criteriaStore";
 
 
 export type RankMeasureId = "spend" | "emissions" | "volume" | "applications";
@@ -1663,26 +1673,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     };
   };
 
-  const logCriterionChange = (
-    action: CriterionSetEvent["action"],
-    criterion_id: string,
-    label: string,
-    detail: string | null,
-  ) =>
-    setCriteriaEvents((prev) => [
-      {
-        event_id: `cse-${Date.now()}-${prev.length + 1}`,
-        action,
-        criterion_id,
-        label,
-        detail,
-        changed_by: currentUser.name,
-        changed_at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-
   /** Hiding and unhiding are workspace-level acts. Nothing is ever deleted. */
+
   const hideCriterionAction = (criterionId: string) =>
     canEditCriteria ? hideCriterionInSet(criterionId, currentUser.name) : false;
 
@@ -1765,9 +1757,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     criteriaEvents,
     canEditCriteria,
     criterionFootprint,
-    addCriterion,
-    updateCriterion,
-    removeCriterion,
+    hideCriterion: hideCriterionAction,
+    restoreCriterion: restoreCriterionAction,
+    addCustomCriterion: addCustomCriterionAction,
+    updateCustomCriterion: updateCustomCriterionAction,
+    deleteCustomCriterion: deleteCustomCriterionAction,
     assessments,
     entriesFor,
     myEntry,
