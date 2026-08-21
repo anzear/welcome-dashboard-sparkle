@@ -73,7 +73,8 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
-  
+
+  ["materialType", "Material strategy", "How this material replaces an incumbent — either a genuinely new material, or the same material from a different source."],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
   ["drivers", "Drivers", ""],
@@ -82,7 +83,6 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["emissions", "GHG contribution", "tCO2e per year"],
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["applications", "Product categories", "Product categories the material is used in"],
-  ["materialType", "Material strategy", "How this material replaces an incumbent — either a genuinely new material, or the same material from a different source."],
   ["links", "Links", "Number of linked materials of the opposite role"],
   ["priority", "Priority period", "Period the material is prioritised for"],
   ["owner", "Owner", "Person accountable"],
