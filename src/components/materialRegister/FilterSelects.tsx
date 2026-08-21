@@ -283,27 +283,6 @@ const FilterSelects: React.FC<{
     </div>
   );
 
-  const vcgSection =
-    activeVcg.length > 0 || suppliersShown ? (
-      <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-        <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg">
-          VCG signals
-        </div>
-        {activeVcg.map(([key, label, opts, sel]) => (
-          <div key={key} className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">{label}</span>
-            <MultiSelectFilter
-              label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
-              options={opts}
-              selected={sel}
-              onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
-            />
-          </div>
-        ))}
-        {suppliersShown && suppliersRange}
-      </div>
-    ) : null;
-
   if (variant === "popover") {
     return (
       <Popover>
