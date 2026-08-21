@@ -3,11 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
-  MATERIAL_ROLE_LABEL,
-  MATERIAL_ROLE_SHORT,
-  MATERIAL_ROLES,
   type JourneyStatus,
-  type MaterialRole,
   type Material,
 } from "@/types/materialPrioritisation";
 import { completenessOf } from "@/components/materialRegister/completeness";
@@ -61,7 +57,6 @@ type OptionalColumn =
   | `crit:${string}`
   | "status"
   | "completeness"
-  | "role"
   | "links"
   | "materialType"
   | "productLine"
@@ -78,7 +73,7 @@ type OptionalColumn =
 /** Every column except Material can be switched off, each with the reason it exists. */
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
-  ["role", "Role", "Existing material, or a new one that could replace it"],
+  
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
   ["drivers", "Drivers", ""],
@@ -233,6 +228,8 @@ export const MaterialRegisterTable: React.FC = () => {
   const [dragKey, setDragKey] = useState<OptionalColumn | null>(null);
   /** Product line sorting is a view preference; it never reorders the ranking itself. */
   const [lineSort, setLineSort] = useState<"asc" | "desc" | null>(null);
+  /** Material strategy sorting follows the fixed role/strategy order, never alphabetical. */
+  const [strategySort, setStrategySort] = useState<"asc" | "desc" | null>(null);
 
   const moveCol = (key: OptionalColumn, dir: -1 | 1) =>
     setColOrder((prev) => {
@@ -323,8 +320,6 @@ export const MaterialRegisterTable: React.FC = () => {
             {driverCriterion && <div className={cn(UNIT, measureId === "driver" && "text-primary/60")}>{driverCriterion.label}</div>}
           </th>
         );
-      case "role":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Role</th>;
       case "links":
         return (
           <th className={cn(HEAD, "w-16 px-3 py-2.5 text-right")} title="Linked materials of the opposite role">
@@ -334,7 +329,19 @@ export const MaterialRegisterTable: React.FC = () => {
       case "materialType":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
-            Material strategy
+            <button
+              type="button"
+              onClick={() =>
+                setStrategySort((d) => (d === null ? "asc" : d === "asc" ? "desc" : null))
+              }
+              className="inline-flex items-center gap-1 uppercase tracking-widest hover:text-foreground"
+              title="Sort by material strategy"
+            >
+              Material strategy
+              <span className="text-[9px] text-muted-foreground/70">
+                {strategySort === "asc" ? "▲" : strategySort === "desc" ? "▼" : "↕"}
+              </span>
+            </button>
           </th>
         );
       case "productLine":
@@ -427,21 +434,6 @@ export const MaterialRegisterTable: React.FC = () => {
             <DriversCell m={m} />
           </td>
         );
-      case "role":
-        return (
-          <td className="px-3 py-2 align-middle">
-            <span
-              className={cn(
-                "inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
-                m.role === "new"
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-muted-foreground",
-              )}
-            >
-              {MATERIAL_ROLE_SHORT[m.role]}
-            </span>
-          </td>
-        );
       case "links": {
         const n = (m.linked_material_ids ?? []).length;
         return (
@@ -454,18 +446,29 @@ export const MaterialRegisterTable: React.FC = () => {
           </td>
         );
       }
-      case "materialType":
+      case "materialType": {
+        // Chip style carries role: filled = existing material, outlined = replacement candidate.
+        const existing = m.role !== "new";
+        const label = existing
+          ? "Existing material"
+          : m.entry_type
+            ? ENTRY_TYPE_LABEL[m.entry_type]
+            : "Not set";
         return (
-          <td className="px-3 py-2 align-middle text-[12px] text-muted-foreground">
-            {m.role !== "new" ? (
-              <span className="text-muted-foreground/60">&mdash;</span>
-            ) : m.entry_type ? (
-              ENTRY_TYPE_LABEL[m.entry_type]
-            ) : (
-              <span className="text-muted-foreground/60">&mdash;</span>
-            )}
+          <td className="px-3 py-2 align-middle">
+            <span
+              className={cn(
+                "inline-flex items-center whitespace-nowrap rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
+                existing
+                  ? "bg-muted text-foreground/80"
+                  : "border border-foreground/40 bg-transparent text-muted-foreground",
+              )}
+            >
+              {label}
+            </span>
           </td>
         );
+      }
       case "volume":
         return (
           <td className={cn("px-3 py-2 text-right align-middle", colTint("volume"))}>
@@ -638,6 +641,14 @@ export const MaterialRegisterTable: React.FC = () => {
 
 
   const rows = useMemo(() => {
+    if (strategySort) {
+      // Fixed order, never alphabetical.
+      const rank = (m: Material) =>
+        m.role !== "new" ? 0 : m.entry_type === "new_material" ? 1 : m.entry_type ? 2 : 3;
+      return [...visible].sort((a, b) =>
+        strategySort === "asc" ? rank(a.m) - rank(b.m) : rank(b.m) - rank(a.m),
+      );
+    }
     if (!lineSort) return visible;
     const key = (m: Material) => (m.product_lines ?? []).slice().sort().join(", ");
     return [...visible].sort((a, b) => {
@@ -648,7 +659,7 @@ export const MaterialRegisterTable: React.FC = () => {
       if (!kb) return -1;
       return lineSort === "asc" ? ka.localeCompare(kb) : kb.localeCompare(ka);
     });
-  }, [visible, lineSort]);
+  }, [visible, lineSort, strategySort]);
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
@@ -698,6 +709,22 @@ export const MaterialRegisterTable: React.FC = () => {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
+                {p.id !== "all" && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "h-2 w-3 rounded-[2px]",
+                      p.id === "existing"
+                        ? active
+                          ? "bg-background/80"
+                          : "bg-muted-foreground/60"
+                        : cn(
+                            "border bg-transparent",
+                            active ? "border-background/80" : "border-muted-foreground/60",
+                          ),
+                    )}
+                  />
+                )}
                 {p.label}
                 <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-60")}>
                   {rolePresetCounts[p.id]}
