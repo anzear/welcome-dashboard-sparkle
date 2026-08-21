@@ -928,7 +928,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       rankTables: tables,
       rankedCount: active.rankedCount,
     };
-  }, [filtered, measureId]);
+  }, [filtered, measureId, driverCriterionId, judgedCriteria, assessments]);
 
   const filteredTotal = filtered.length;
   const missingCount = filteredTotal - rankedCount;
