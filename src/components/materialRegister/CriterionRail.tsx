@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { NEUTRAL_HELPER, SCORE_POINTS, TEAM_LABEL, initialsOf, contributorById } from "@/config/assessmentCriteria";
+import { SCORE_POINTS, TEAM_LABEL, initialsOf, contributorById } from "@/config/assessmentCriteria";
 import { shortDate } from "@/components/materialRegister/primitives";
 import type { AssessmentEntry, MaterialRole } from "@/types/materialPrioritisation";
 
@@ -40,15 +40,14 @@ const entryTitle = (entry: AssessmentEntry) =>
 
 /**
  * The score rail. A 1-5 track carrying one dot per contributor, a spread bar
- * when they disagree, and a tray for Neutral — which is never on the scale.
- * The middle of a spread is never marked: there is no average here.
+ * when they disagree. The middle of a spread is never marked: there is no
+ * average here.
  */
 const CriterionRail: React.FC<{
   criterionId: string;
   criterionLabel: string;
-  /** Scored entries only. Neutral entries go in `neutral`. */
+  /** Every entry carries a 1–5 score. */
   scored: AssessmentEntry[];
-  neutral: AssessmentEntry[];
   currentUserId: string;
   /** Score being drafted right now, before it is saved. */
   draft: number | null;
@@ -64,7 +63,6 @@ const CriterionRail: React.FC<{
   criterionId,
   criterionLabel,
   scored,
-  neutral,
   currentUserId,
   draft,
   onPick,
@@ -171,15 +169,6 @@ const CriterionRail: React.FC<{
 
         <span className="w-2 shrink-0 tabular-nums text-[10px] text-muted-foreground/70">5</span>
 
-        {/* Neutral sits off the rail. It is not a position on the scale. */}
-        {neutral.length > 0 && (
-          <div className="shrink-0 border-l border-border/60 pl-2 text-center" title={NEUTRAL_HELPER}>
-            <div className="tabular-nums text-[10px] font-medium text-muted-foreground">
-              {neutral.map((e) => initialsOf(nameOf(e))).join(" ")}
-            </div>
-            <div className="text-[9px] text-muted-foreground/70">No view</div>
-          </div>
-        )}
       </div>
 
       {/* initials under their dot */}

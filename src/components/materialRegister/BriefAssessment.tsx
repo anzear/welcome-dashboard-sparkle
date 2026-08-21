@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   ASSESSMENT_FRAMING,
-  NEUTRAL_LABEL,
   TEAM_LABEL,
   contributorById,
   criterionForRole,
@@ -332,15 +331,15 @@ const JudgementRow: React.FC<{
   const state = assessmentState(materialId, criterion.criterion_id);
   const mine = myEntry(materialId, criterion.criterion_id);
 
-  const savedValue: number | "neutral" | null = mine ? (mine.score === null ? "neutral" : mine.score) : null;
+  const savedValue: number | null = mine ? mine.score : null;
   const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<number | "neutral" | null>(null);
+  const [draft, setDraft] = useState<number | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
 
   const value = draft ?? savedValue;
   const noteValue = note ?? mine?.note ?? "";
-  const needsReason = value !== null && value !== "neutral" && noteValue.trim() === "";
+  const needsReason = value !== null && noteValue.trim() === "";
   const dirty =
     value !== savedValue || (mine ? (mine.note ?? "") !== noteValue.trim() : noteValue.trim() !== "");
 
@@ -356,7 +355,7 @@ const JudgementRow: React.FC<{
     const ok = saveAssessment(
       materialId,
       criterion.criterion_id,
-      value === "neutral" ? null : value,
+      value,
       noteValue.trim() || null,
     );
     if (!ok) {
@@ -366,8 +365,7 @@ const JudgementRow: React.FC<{
     stop();
   };
 
-  const scored = state.entries.filter((e) => e.score !== null);
-  const neutral = state.entries.filter((e) => e.score === null);
+  const scored = state.entries;
   const withReasons = mine
     ? [mine, ...state.entries.filter((e) => e.user_id !== currentUser.user_id)]
     : state.entries;
@@ -411,7 +409,6 @@ const JudgementRow: React.FC<{
           criterionId={criterion.criterion_id}
           criterionLabel={criterion.label}
           scored={scored}
-          neutral={neutral}
           currentUserId={currentUser.user_id}
           draft={editing && typeof value === "number" ? value : null}
           onPick={(v) => {
@@ -455,11 +452,7 @@ const JudgementRow: React.FC<{
               if (e.key === "Enter" && !needsReason && dirty) commit();
               if (e.key === "Escape") stop();
             }}
-            placeholder={
-              value === "neutral"
-                ? "Why no visibility (optional)"
-                : "Why this score — required before it can be saved"
-            }
+            placeholder="Why this score — required before it can be saved"
             className={cn(
               "w-full rounded-md border bg-background px-2 py-1 text-[11px] text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring",
               blocked && needsReason ? "border-amber-500/70" : "border-input",
@@ -475,19 +468,6 @@ const JudgementRow: React.FC<{
                 Save
               </button>
             )}
-            <button
-              type="button"
-              onClick={() => {
-                setDraft("neutral");
-                setBlocked(false);
-              }}
-              className={cn(
-                LINK,
-                value === "neutral" && "text-foreground",
-              )}
-            >
-              {NEUTRAL_LABEL}
-            </button>
             {mine && (
               <button
                 type="button"

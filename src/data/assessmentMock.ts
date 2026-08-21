@@ -127,19 +127,6 @@ const RATIONALES: Record<string, { low: Phrase[]; high: Phrase[] }> = {
   },
 };
 
-const NEUTRAL_NOTES: Record<string, string[]> = {
-  [MARKET]: [
-    "No visibility on the consumer side from here.",
-    "Procurement cannot judge what a claim is worth on shelf.",
-  ],
-  [PERFORMANCE]: ["Not our call — formulation owns this one."],
-  [ADVANTAGE]: ["We do not see competitor formulations from this seat."],
-  [SUSTAINABILITY]: ["Waiting on the recalculated factor before taking a position."],
-  [REGULATORY]: ["Regulatory affairs has this under review; no position from marketing."],
-  [ECONOMIC]: ["No costed offer on the file yet."],
-  [SUPPLY]: [],
-};
-
 const clamp = (v: number) => Math.min(5, Math.max(1, Math.round(v)));
 
 const pick = <T,>(list: T[], r: () => number) => list[Math.floor(r() * list.length)]!;
@@ -160,7 +147,7 @@ const at = (mi: number, ci: number, k: number, day: number) =>
  * entries on most criteria, half carry two to four, and a quarter carry none at
  * all. Within that, some cells hold one view, some hold several that agree, and
  * some hold several that plainly do not. Absence stays absent — never written as
- * a score, and Neutral is not a score either.
+ * a score. Every entry carries a 1–5 score and a rationale.
  */
 export const seedAssessments: Record<string, AssessmentEntry> = (() => {
   const out: Record<string, AssessmentEntry> = {};
@@ -170,8 +157,8 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
     materialId: string,
     criterionId: string,
     userIndex: number,
-    score: number | null,
-    note: string | null,
+    score: number,
+    note: string,
     stamp: string,
   ) => {
     const person = CONTRIBUTORS[userIndex % CONTRIBUTORS.length]!;
@@ -234,15 +221,12 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
           score = wide ? (k % 2 === 0 ? 5 : 1) : clamp(centre + (k % 2 === 0 ? 1 : -1));
         else score = clamp(profile.base + tilt + (r() - 0.5) * 1.6);
 
-        /** Some functions genuinely have no visibility here. That is Neutral. */
-        const neutralPool = NEUTRAL_NOTES[c.criterion_id] ?? [];
-        const neutral = shape !== "split" && neutralPool.length > 0 && r() < 0.12;
         put(
           m.material_id,
           c.criterion_id,
           userIndex,
-          neutral ? null : score,
-          neutral ? pick(neutralPool, r) : rationaleFor(c.criterion_id, score, m, r),
+          score,
+          rationaleFor(c.criterion_id, score, m, r),
           at(mi, ci, k, 4 + Math.floor(r() * 24)),
         );
       }
@@ -250,12 +234,11 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
   });
 
   /* ------------------------------------------------------- deliberate patterns
-   * Two materials read as clearly aligned, two as clearly split, and one
-   * criterion is answered Neutral by everyone who looked at it.
+   * Two materials read as clearly aligned and two as clearly split.
    * -------------------------------------------------------------------------- */
 
   const ids = seedMaterialsWithHistory.map((m) => m.material_id);
-  const [a1, a2, d1, d2, n1] = [ids[1], ids[4], ids[7], ids[10], ids[13]];
+  const [a1, a2, d1, d2] = [ids[1], ids[4], ids[7], ids[10]];
 
   if (a1) {
     put(a1, SUSTAINABILITY, 3, 4, "Palm-derived today. The residue route cuts the factor by about a third.", at(1, 1, 0, 12));
@@ -276,12 +259,6 @@ export const seedAssessments: Record<string, AssessmentEntry> = (() => {
     put(d2, ECONOMIC, 0, 5, "Incumbent price has run away from us. The alternative is now cheaper per wash.", at(10, 3, 0, 16));
     put(d2, ECONOMIC, 7, 4, "Holds up even without a volume commitment, which is unusual here.", at(10, 3, 1, 17));
     put(d2, ECONOMIC, 4, 1, "Only true at spot. Contract renewal wipes the whole gain out.", at(10, 3, 2, 18));
-  }
-  if (n1) {
-    /** All-neutral criterion: nobody who looked at it holds a view. Not a score. */
-    put(n1, ADVANTAGE, 0, null, "We do not see competitor formulations from this seat.", at(13, 0, 0, 5));
-    put(n1, ADVANTAGE, 1, null, "No competitor benchmark on file for this one.", at(13, 0, 1, 6));
-    put(n1, ADVANTAGE, 6, null, "R&D cannot judge what a rival could or could not copy.", at(13, 0, 2, 7));
   }
 
   return out;

@@ -12,12 +12,11 @@ export interface UnplottedEntry {
   /** Value on the axis it does have, used to put highest exposure first. */
   sortValue: number | null;
   /** Why a judged criterion cannot place it, keyed by axis id. */
-  reasons?: Record<string, "no_entries" | "all_neutral">;
+  reasons?: Record<string, "no_entries">;
 }
 
-const REASON_TEXT: Record<"no_entries" | "all_neutral", string> = {
+const REASON_TEXT: Record<"no_entries", string> = {
   no_entries: "Nobody has scored it",
-  all_neutral: "Every entry is Neutral",
 };
 
 const FIRST_PAGE = 12;
@@ -145,12 +144,10 @@ const UnplottedList: React.FC<{
     const perAxis = new Map<string, number>();
     let both = 0;
     let noEntries = 0;
-    let allNeutral = 0;
     entries.forEach((e) => {
       e.gaps.forEach((a) => {
         const reason = e.reasons?.[a.id];
         if (reason === "no_entries") noEntries += 1;
-        else if (reason === "all_neutral") allNeutral += 1;
         else perAxis.set(a.noun, (perAxis.get(a.noun) ?? 0) + 1);
       });
       if (e.gaps.length > 1) both += 1;
@@ -159,7 +156,6 @@ const UnplottedList: React.FC<{
       .sort((a, b) => b[1] - a[1])
       .map(([noun, n]) => `${n} missing ${noun}`);
     if (noEntries > 0) parts.push(`${noEntries} not scored on a judged criterion`);
-    if (allNeutral > 0) parts.push(`${allNeutral} Neutral on every entry`);
     if (both > 0) parts.push(`${both} missing both`);
     return parts.join(", ");
   }, [entries]);

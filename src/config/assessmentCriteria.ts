@@ -186,9 +186,6 @@ export const SCORE_LABEL: Record<number, string> = {
   5: "5 — very strong",
 };
 
-/** Neutral is a recorded position, not a score. It never enters a count of scores. */
-export const NEUTRAL_LABEL = "Neutral";
-export const NEUTRAL_HELPER = "This team has no visibility here. Not 3, not 0 — never counted as a score.";
 
 export const TEAM_LABEL: Record<TeamId, string> = {
   rnd: "R&D",

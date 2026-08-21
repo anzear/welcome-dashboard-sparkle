@@ -57,7 +57,7 @@ const SlotTooltip: React.FC<{ criterion: AssessmentCriterion; state: SlotState }
                 {person?.role ?? TEAM_LABEL[e.team as keyof typeof TEAM_LABEL] ?? e.team}
                 {" · "}
               </span>
-              <span className="tabular-nums font-medium">{e.score === null ? "Neutral" : e.score}</span>
+              <span className="tabular-nums font-medium">{e.score}</span>
             </li>
           );
         })}

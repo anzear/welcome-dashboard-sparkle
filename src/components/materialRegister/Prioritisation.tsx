@@ -138,7 +138,7 @@ const Prioritisation: React.FC = () => {
     [criteria],
   );
 
-  /** Only 1-5 entries count. Neutral records an absence of view, never a position. */
+  /** Only recorded 1-5 entries count. Absence is never a position. */
   const scoresFor = React.useCallback(
     (materialId: string, criterionId: string) =>
       entriesFor(materialId, criterionId)
@@ -199,10 +199,10 @@ const Prioritisation: React.FC = () => {
     return prioritySetOnly ? byRole.filter((r) => inPrioritySet(r.m)) : byRole;
   }, [ordered, prioritySetOnly, inPrioritySet, roleView]);
 
-  /** Why a judged criterion cannot place a material. Neutral is not a position. */
-  const judgementGap = (m: Material, v: AxisVar): "no_entries" | "all_neutral" => {
+  /** Why a judged criterion cannot place a material. */
+  const judgementGap = (m: Material, v: AxisVar): "no_entries" => {
     const all = entriesFor(m.material_id, v.criterionId!);
-    return all.length === 0 ? "no_entries" : "all_neutral";
+    return "no_entries";
   };
 
   const classified = useMemo(() => {
@@ -221,7 +221,7 @@ const Prioritisation: React.FC = () => {
       const y = yv.value(m);
       if (x === null || y === null) {
         const gaps: AxisVar[] = [];
-        const reasons: Record<string, "no_entries" | "all_neutral"> = {};
+        const reasons: Record<string, "no_entries"> = {};
         if (x === null) {
           gaps.push(xv);
           if (xv.kind === "judgement") reasons[xv.id] = judgementGap(m, xv);
@@ -592,7 +592,7 @@ const Prioritisation: React.FC = () => {
                   );
                 })}
 
-                {/* zero line on a driver axis — a recorded neutral judgement is a position */}
+                {/* zero line, drawn only when an axis domain crosses zero */}
                 {yv.domain && yv.domain.min < 0 && (
                   <g>
                     <line
@@ -604,7 +604,7 @@ const Prioritisation: React.FC = () => {
                       strokeOpacity={0.35}
                     />
                     <text x={PAD.l + PW - 2} y={sy(0) - 4} textAnchor="end" className="fill-muted-foreground text-[9px]">
-                      0 — neutral judgement
+                      0
                     </text>
                   </g>
                 )}
@@ -623,7 +623,7 @@ const Prioritisation: React.FC = () => {
                       y={PAD.t + 9}
                       className="fill-muted-foreground text-[9px]"
                     >
-                      0 — neutral judgement
+                      0
                     </text>
                   </g>
                 )}
@@ -859,7 +859,7 @@ const Prioritisation: React.FC = () => {
                         <p key={e.user_id} className="text-muted-foreground">
                           <span className="text-foreground">{TEAM_LABEL[e.team] ?? e.team}</span>{" "}
                           <span className="tabular-nums text-foreground">
-                            {e.score === null ? "Neutral" : e.score}
+                            {e.score}
                           </span>
                           {e.note ? ` · ${e.note}` : ""}
                         </p>

@@ -415,13 +415,14 @@ interface Store {
   ) => { ok: boolean; error?: string };
   /** Only a custom criterion holding no entries can be deleted. */
   deleteCustomCriterion: (criterionId: string) => boolean;
-  /** Sparse entry map. A missing key means that person has no view recorded. */
+  /** Sparse entry map. A missing key means that person has recorded nothing. */
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
   myEntry: (materialId: string, criterionId: string) => AssessmentEntry | null;
   /**
-   * Records or replaces the current user's entry on one criterion. score null =
-   * Neutral. A 1–5 score without a rationale is refused; returns false.
+   * Records or replaces the current user's entry on one criterion. Both a 1–5
+   * score and a written rationale are required; anything else is refused and
+   * returns false. There is no abstain or no-view entry.
    */
   saveAssessment: (
     materialId: string,
@@ -440,8 +441,6 @@ interface Store {
     contributors: string[];
     teams: TeamId[];
     splits: number;
-    /** Neutral entries recorded. Never part of criteriaAssessed. */
-    neutralEntries: number;
     entryCount: number;
     lastAssessedAt: string | null;
   };
@@ -718,8 +717,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const byKey = new Map<string, number[]>();
     Object.values(assessments).forEach((e) => {
       if (!judgedCriteriaRef.some((c) => c.criterion_id === e.criterion_id)) return;
-      /** Neutral is no visibility, not a low score — it can never make a split. */
-      if (e.score === null) return;
       const key = `${e.material_id}::${e.criterion_id}`;
       const list = byKey.get(key) ?? [];
       list.push(e.score);
@@ -847,8 +844,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     /**
      * RANKING BY ONE CRITERION. The mean of the contributor scores recorded for
      * that criterion is the sort order and nothing else: it is never rendered,
-     * exported or exposed. Neutral entries carry no score, so they do not count.
-     * No entries at all means no score — never a zero — so those materials sit
+     * exported or exposed. No entries at all means no score — never a zero — so those materials sit
      * below the ranked list.
      */
     if (measureId === "driver") {
@@ -1407,24 +1403,21 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     assessments[assessmentKey(materialId, criterionId, currentUserId)] ?? null;
 
   /**
-   * Spread across the recorded 1–5 scores. No entry is not a score, and Neutral
-   * is not a score either — neither enters the spread. The entries are never
-   * averaged; the flag reports how far apart people sit, nothing more.
+   * Spread across the recorded 1–5 scores. No entry is not a score. The entries
+   * are never averaged; the flag reports how far apart people sit, nothing more.
    */
   const assessmentState = (materialId: string, criterionId: string): AssessmentState => {
     const entries = entriesFor(materialId, criterionId);
     const values = entries.map((e) => e.score).filter((s): s is number => s !== null);
-    const neutralCount = entries.length - values.length;
     const teams = Array.from(new Set(entries.map((e) => e.team)));
     if (values.length === 0) {
       return {
-        flag: entries.length === 0 ? "not_assessed" : "neutral_only",
+        flag: "not_assessed",
         entries,
         low: null,
         high: null,
         spread: null,
         scoredCount: 0,
-        neutralCount,
         teams,
       };
     }
@@ -1433,18 +1426,17 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     const spread = high - low;
     const flag =
       values.length === 1 ? "single_view" : spread <= 1 ? "aligned" : spread === 2 ? "mixed" : "split";
-    return { flag, entries, low, high, spread, scoredCount: values.length, neutralCount, teams };
+    return { flag, entries, low, high, spread, scoredCount: values.length, teams };
   };
 
   const assessmentSummary = (materialId: string) => {
     const mine = Object.values(assessments).filter((e) => e.material_id === materialId);
     const contributors = Array.from(new Set(mine.map((e) => e.user_id)));
     const teams = Array.from(new Set(mine.map((e) => e.team)));
-    /** Only a 1–5 score counts as assessed. Neutral is a recorded absence of view. */
+    /** Every entry carries a score, so an entry is coverage. */
     const criteriaAssessed = judgedCriteria.filter((c) =>
-      mine.some((e) => e.criterion_id === c.criterion_id && e.score !== null),
+      mine.some((e) => e.criterion_id === c.criterion_id),
     ).length;
-    const neutralEntries = mine.filter((e) => e.score === null).length;
     const splits = judgedCriteria.filter(
       (c) => assessmentState(materialId, c.criterion_id).flag === "split",
     ).length;
@@ -1458,7 +1450,6 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       contributors,
       teams,
       splits,
-      neutralEntries,
       entryCount: mine.length,
       lastAssessedAt,
     };
@@ -1540,9 +1531,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
   /**
-   * A 1–5 score cannot be saved without a rationale — a score with no reason
-   * cannot be challenged six months later. Neutral (score null) may be saved
-   * with no note. Returns false when the save was refused.
+   * An entry needs both a 1–5 score and a rationale — a contributor with no
+   * score is not an entry at all. Returns false when the save was refused.
    */
   const saveAssessment = (
     materialId: string,
@@ -1551,7 +1541,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     note: string | null,
   ): boolean => {
     const cleanNote = note?.trim() ? note.trim() : null;
-    if (score !== null && cleanNote === null) return false;
+    if (score === null || cleanNote === null) return false;
     const key = assessmentKey(materialId, criterionId, currentUserId);
     setAssessments((prev) => ({
       ...prev,
