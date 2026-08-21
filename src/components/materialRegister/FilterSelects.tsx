@@ -198,53 +198,6 @@ const FilterSelects: React.FC<{
     (filters.teamsDisagree ? 1 : 0) +
     Object.values(filters.criterionScores).filter((v) => v.length > 0).length;
 
-  const suppliersRange = (
-    <div className="space-y-1.5 pt-0.5">
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">Suppliers</span>
-        <div className="flex items-center gap-1">
-          <input
-            type="number"
-            min={0}
-            value={filters.vcgSuppliersMin ?? ""}
-            placeholder="min"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                vcgSuppliersMin: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
-          />
-          <span className="text-[10px] text-muted-foreground">to</span>
-          <input
-            type="number"
-            min={0}
-            value={filters.vcgSuppliersMax ?? ""}
-            placeholder="max"
-            onChange={(e) =>
-              setFilters((f) => ({
-                ...f,
-                vcgSuppliersMax: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            className="h-6 w-14 rounded-sm border border-border bg-background px-1 text-right tabular-nums text-[11px]"
-          />
-        </div>
-      </div>
-      {/* Outside the range on purpose: not assessed is not a number. */}
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.vcgSuppliersNotAssessed}
-          onChange={(e) => setFilters((f) => ({ ...f, vcgSuppliersNotAssessed: e.target.checked }))}
-          className="h-3 w-3 accent-provenance-vcg"
-        />
-        Not assessed
-      </label>
-    </div>
-  );
-
   /**
    * Gate section. The five statuses are categories — filtered, never ranked or
    * summed. Overdue is a fact about a date, not a score.
