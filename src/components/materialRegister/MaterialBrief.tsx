@@ -1066,7 +1066,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
         <div className="space-y-4 lg:col-span-2">
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
-            title="Gate"
+            title="Status"
             note="Set by the owner. Never calculated from the assessment."
           >
             <BriefGate material={m} />
