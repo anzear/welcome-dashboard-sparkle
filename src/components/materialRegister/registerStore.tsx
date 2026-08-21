@@ -629,7 +629,8 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   );
   const customCriteriaCount = useMemo(() => criteria.filter((c) => c.custom).length, [criteria]);
   const judgedCriteriaRef = judgedCriteria;
-  const [measureId, setMeasureId] = useState<MeasureId>("spend");
+  const [measureId, setMeasureIdState] = useState<MeasureId>("spend");
+  const [driverCriterionId, setDriverCriterionId] = useState<string | null>(null);
   const [priorityPeriod, setPriorityPeriod] = useState("H2 2026");
 
   const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
