@@ -691,7 +691,7 @@ const baseMaterials: Material[] = rows.map((row, i) => {
   put("application_areas", row.prods, loaded);
   // Role and replacement type are company-entered choices, never ingested or computed.
   p.role = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
-  const entryType = row.role === "new" ? migrateEntryType(row.etype ?? null) : null;
+  const entryType: EntryType | null = row.role === "new" ? (row.etype ?? null) : null;
   if (entryType !== null) p.entry_type = prov("entered", row.owner ?? "Category buyer", LOAD_DATE);
 
   // Measured figures.
