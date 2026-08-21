@@ -132,13 +132,16 @@ const AssessmentCoverage: React.FC = () => {
 
   const applyStaged = () => {
     if (stagedIncomplete || stagedCount === 0 || selected.length === 0) return;
+    // Snapshot the assessment map before any write so the whole pass can be
+    // undone from the confirmation dialog.
+    const snapshot = assessments;
     for (const materialId of selected) {
       for (const [criterionId, s] of Object.entries(staged)) {
         if (s.value === "clear") clearAssessment(materialId, criterionId);
         else saveAssessment(materialId, criterionId, s.value, s.note);
       }
     }
-    clearSelection();
+    setSaved({ count: selected.length, snapshot });
   };
 
   const VALUES: Staged["value"][] = [1, 2, 3, 4, 5];
