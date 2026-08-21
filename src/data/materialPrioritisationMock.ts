@@ -796,6 +796,43 @@ export const materials: Material[] = rows.map((row, i) => {
 });
 
 /**
+ * LINKS. Written from the candidate side and mirrored onto the incumbent, so both
+ * records read the same pair. Several candidates sit against more than one
+ * existing material, a few candidates are linked to nothing yet, and a handful of
+ * existing materials have no candidate at all — all real states in a live register.
+ */
+const idByName = new Map(baseMaterials.map((m) => [m.name, m.material_id]));
+const linkSets = new Map<string, Set<string>>();
+const addLink = (a: string, b: string) => {
+  if (!linkSets.has(a)) linkSets.set(a, new Set());
+  linkSets.get(a)!.add(b);
+};
+rows.forEach((row, i) => {
+  if (row.role !== "new" || !row.linkTo?.length) return;
+  const candidateId = `MAT-${String(i + 1).padStart(4, "0")}`;
+  row.linkTo.forEach((name) => {
+    const otherId = idByName.get(name);
+    if (!otherId || otherId === candidateId) return;
+    addLink(candidateId, otherId);
+    addLink(otherId, candidateId);
+  });
+});
+
+const linkProv: FieldProvenance = prov("entered", "Category team", "2026-02-20");
+
+export const materials: Material[] = baseMaterials.map((m) => {
+  const links = linkSets.get(m.material_id);
+  if (!links || links.size === 0) return m;
+  return {
+    ...m,
+    linked_material_ids: Array.from(links).sort(),
+    provenance: { ...m.provenance, linked_material_ids: linkProv },
+  };
+});
+
+
+
+/**
  * A rendered value with no provenance entry is a defect, not a state. Checked in
  * development so the seed can never drift back into printing "not recorded" for
  * a field that plainly holds a value.
