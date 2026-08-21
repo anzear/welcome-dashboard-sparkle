@@ -1064,7 +1064,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
           {/* The gate sits above the assessment: a decision, not a measurement. */}
           <Section
             title="Status"
-            
+            note="Set by the owner."
           >
             <BriefGate material={m} />
           </Section>
