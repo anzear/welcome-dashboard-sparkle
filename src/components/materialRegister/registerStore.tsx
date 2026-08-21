@@ -1575,6 +1575,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     });
   };
 
+  const restoreAssessments = (snapshot: Record<string, AssessmentEntry>) => {
+    setAssessments(snapshot);
+  };
+
 
   // ------------------------------------------------------------------ the gate
 
