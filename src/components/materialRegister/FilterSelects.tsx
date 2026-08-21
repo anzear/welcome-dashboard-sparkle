@@ -4,12 +4,8 @@ import { ChevronDown, Filter } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import {
-  COMPETITOR_ACTIVITY_LABEL,
   JOURNEY_STATUS_LABEL,
-  SUBSTITUTABILITY_LABEL,
-  type CompetitorActivity,
   type JourneyStatus,
-  type SubstitutabilityReadiness,
 } from "@/types/materialPrioritisation";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
