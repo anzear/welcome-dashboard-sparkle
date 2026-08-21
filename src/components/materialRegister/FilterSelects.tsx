@@ -141,17 +141,6 @@ const FilterSelects: React.FC<{
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
   ];
 
-  /** VCG-computed signals sit in their own section: our data, not the client's. */
-  const vcgControls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
-    ["vcgSubstitutability", "Substitutability", options.vcgSubstitutability, filters.vcgSubstitutability],
-    ["vcgCompetitor", "Competitor activity", options.vcgCompetitor, filters.vcgCompetitor],
-  ];
-
-  const active = controls.filter(([k]) => shown(k));
-  const activeVcg = vcgControls.filter(([k]) => shown(k));
-  const suppliersShown = !include || include.includes("vcgSubstitutability");
-  const suppliersActive =
-    filters.vcgSuppliersMin !== null || filters.vcgSuppliersMax !== null || filters.vcgSuppliersNotAssessed;
   const evidenceSection = (
     <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
       <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Evidence</div>
