@@ -94,14 +94,6 @@ const FilterSelects: React.FC<{
           label: `No product line (${data.filter((m) => (m.product_lines ?? []).length === 0).length})`,
         },
       ],
-      vcgSubstitutability: (Object.keys(SUBSTITUTABILITY_LABEL) as SubstitutabilityReadiness[]).map((v) => ({
-        value: v,
-        label: SUBSTITUTABILITY_LABEL[v],
-      })),
-      vcgCompetitor: (Object.keys(COMPETITOR_ACTIVITY_LABEL) as CompetitorActivity[]).map((v) => ({
-        value: v,
-        label: COMPETITOR_ACTIVITY_LABEL[v],
-      })),
       priorityPeriods: [
         ...uniq(data.map((m) => m.priority_period)).map((v) => ({
           value: v,
