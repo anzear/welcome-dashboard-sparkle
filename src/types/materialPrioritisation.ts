@@ -15,7 +15,7 @@ export type MaterialRole = "existing" | "new";
 
 export const MATERIAL_ROLE_LABEL: Record<MaterialRole, string> = {
   existing: "Existing material",
-  new: "Replacement candidate",
+  new: "Candidate material",
 };
 
 /** Short form for dense table cells. */
