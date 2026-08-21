@@ -744,7 +744,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
       if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
-      if (filters.gateOverdue && !hasOverdueCondition(m) && !holdReviewOverdue(m)) return false;
+      
       if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
       /** Per-criterion score filter. Nothing recorded is its own value, never a zero. */
       for (const [critId, wanted] of Object.entries(filters.criterionScores)) {
