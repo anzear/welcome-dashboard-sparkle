@@ -102,24 +102,6 @@ export const EVIDENCE_CRITERIA: AssessmentCriterion[] = [
   },
 ];
 
-/**
- * RETIRED CRITERION. "Strategic importance" has no replacement in the standard
- * set, and its recorded scores, rationales and contributors must stay readable.
- * It is therefore carried as a hidden criterion: out of use, nothing deleted.
- */
-export const RETIRED_JUDGED: AssessmentCriterion[] = withAnchors([
-  {
-    criterion_id: "strategic_importance",
-    label: "Strategic importance",
-    kind: "judgement",
-    helper:
-      "Retired criterion. Kept hidden so the judgements already recorded against it stay readable.",
-    anchor_low: "Peripheral",
-    anchor_high: "Central to strategy",
-    hidden: true,
-  },
-]);
-
 export const STANDARD_JUDGED_IDS = STANDARD_JUDGED.map((c) => c.criterion_id);
 
 /**
@@ -155,12 +137,8 @@ export const anchorLine = (c: AssessmentCriterion) => anchorsOf(c.anchor_low, c.
 /** How many custom criteria a workspace may hold. */
 export const MAX_CUSTOM_CRITERIA = 2;
 
-/** The seeded set: evidence rows, the seven standard criteria, then the retired one. */
-export const CRITERIA: AssessmentCriterion[] = [
-  ...EVIDENCE_CRITERIA,
-  ...STANDARD_JUDGED,
-  ...RETIRED_JUDGED,
-];
+/** The seeded set: the two evidence rows, then the seven standard criteria. */
+export const CRITERIA: AssessmentCriterion[] = [...EVIDENCE_CRITERIA, ...STANDARD_JUDGED];
 
 /** Every judged criterion, hidden ones included. */
 export const ALL_JUDGED_CRITERIA = CRITERIA.filter((c) => c.kind === "judgement");

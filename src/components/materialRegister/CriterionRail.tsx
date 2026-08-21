@@ -7,7 +7,6 @@ import type { AssessmentEntry, MaterialRole } from "@/types/materialPrioritisati
 /** Short ends of the 1-5 scale. Replaces the permanent anchor paragraph. */
 export const RAIL_ENDS: Record<string, { low: string; high: string }> = {
   risk_of_inaction: { low: "Incumbent fine", high: "Pressure is real" },
-  strategic_importance: { low: "Peripheral", high: "Central to strategy" },
   market_pull: { low: "No demand signal", high: "Customers asking" },
   economic_case: { low: "Worse economics", high: "Economics improve" },
   supply_security: { low: "No improvement", high: "Materially more secure" },
@@ -16,7 +15,6 @@ export const RAIL_ENDS: Record<string, { low: string; high: string }> = {
 /** Same scale, same criteria — the question is why to replace, not why to add. */
 export const RAIL_ENDS_EXISTING: Record<string, { low: string; high: string }> = {
   risk_of_inaction: { low: "No pressure", high: "Pressure is real" },
-  strategic_importance: { low: "Peripheral", high: "Central to strategy" },
   market_pull: { low: "No demand signal", high: "Customers pushing" },
   economic_case: { low: "Economics hold up", high: "Economics deteriorating" },
   supply_security: { low: "Supply secure", high: "Supply fragile" },
