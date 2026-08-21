@@ -122,6 +122,33 @@ export const RETIRED_JUDGED: AssessmentCriterion[] = withAnchors([
 
 export const STANDARD_JUDGED_IDS = STANDARD_JUDGED.map((c) => c.criterion_id);
 
+/**
+ * ROLE WORDING. There is one set of seven criteria — the scale, the rules and
+ * the anchor labels never change. Only the framing of the question flips with
+ * the role: on an existing material the team assesses why to replace it; on a
+ * replacement candidate they assess why to implement it. The default `helper`
+ * on each standard criterion is phrased for a replacement candidate (why to
+ * implement); the map below carries the existing-material phrasing (why to
+ * replace), which is swapped in by `criterionForRole`. Custom criteria have no
+ * role-specific wording and read identically either way.
+ */
+export const EXISTING_HELPERS: Record<string, string> = {
+  regulatory_pressure:
+    "Extent to which restrictions in force or clearly coming affect this material, creating a need to move away from it.",
+  market_pull:
+    "Extent to which customer demand, tenders, brand commitments, changing expectations or reputational exposure create pressure to move away from this material.",
+  competitive_advantage:
+    "Extent to which continuing with this material costs competitive position, and whether competitors have already moved away from it.",
+  economic_case:
+    "Extent to which this material's cost position, margin contribution or long-term cost competitiveness is deteriorating.",
+  supply_security:
+    "Extent to which this material carries availability, supplier concentration, price volatility or supply-chain resilience problems.",
+  sustainability_impact:
+    "Extent to which this material's greenhouse gas emissions, product carbon footprint or wider environmental burden is a problem for the business.",
+  product_performance:
+    "Extent to which this material's technical or sensory performance falls short of what the finished product requires.",
+};
+
 /** Anchors as one printable line. Derived, never stored separately by a user. */
 export const anchorLine = (c: AssessmentCriterion) => anchorsOf(c.anchor_low, c.anchor_high);
 
@@ -142,14 +169,26 @@ export const ALL_JUDGED_CRITERIA = CRITERIA.filter((c) => c.kind === "judgement"
 export const JUDGED_CRITERIA = ALL_JUDGED_CRITERIA.filter((c) => !c.hidden);
 
 /**
- * ROLE WORDING. The criteria read the same for both roles: every one of the
- * seven is phrased around the switch itself, so nothing needs rewording for an
- * existing material versus a replacement candidate.
+ * The one-line framing shown above the criteria. Quiet, secondary weight, no
+ * banner. Reads the assessment as a question, scoped by the material's role.
+ */
+export const ASSESSMENT_FRAMING: Record<MaterialRole, string> = {
+  existing: "Assessing why this material should be replaced.",
+  new: "Assessing why this material should be implemented.",
+};
+
+/**
+ * ROLE WORDING. The criterion object is the same for both roles — only the
+ * helper (tooltip) is reworded for an existing material. Custom and retired
+ * criteria keep their single helper either way.
  */
 export const criterionForRole = (
   criterion: AssessmentCriterion,
-  _role: MaterialRole,
-): AssessmentCriterion => criterion;
+  role: MaterialRole,
+): AssessmentCriterion =>
+  role === "existing" && EXISTING_HELPERS[criterion.criterion_id]
+    ? { ...criterion, helper: EXISTING_HELPERS[criterion.criterion_id] }
+    : criterion;
 
 export const criterionById = (id: string): AssessmentCriterion | undefined =>
   CRITERIA.find((c) => c.criterion_id === id);
