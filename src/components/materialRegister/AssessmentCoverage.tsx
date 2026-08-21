@@ -84,11 +84,14 @@ const AssessmentCoverage: React.FC = () => {
     () => selected.map((id) => data.find((m) => m.material_id === id)).filter(Boolean) as typeof data,
     [selected, data],
   );
-  const stagedCount = Object.keys(staged).length;
-  /** A 1–5 score is refused without a rationale, in bulk exactly as on the brief. */
-  const stagedIncomplete = Object.values(staged).some(
-    (s) => typeof s.value === "number" && s.note.trim() === "",
-  );
+  /** A driver is staged only once it carries both a score and a rationale. */
+  const isComplete = (s: Staged) => s.value === "clear" || s.note.trim() !== "";
+  const stagedEntries = Object.entries(staged);
+  const stagedCount = stagedEntries.filter(([, s]) => isComplete(s)).length;
+  const incompleteLabels = stagedEntries
+    .filter(([, s]) => !isComplete(s))
+    .map(([id]) => judgedCriteria.find((c) => c.criterion_id === id)?.label ?? id);
+  const stagedIncomplete = incompleteLabels.length > 0;
 
   const toggleRow = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
