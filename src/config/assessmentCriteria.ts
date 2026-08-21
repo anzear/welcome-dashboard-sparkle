@@ -182,8 +182,8 @@ export const TEAM_LABEL: Record<TeamId, string> = {
 };
 
 /**
- * The six demo users. Their names are the same vocabulary the Owner field uses,
- * so "Viewing as" can be compared against a material's owner for gate rights.
+ * The demo users. Their names are the same vocabulary the Owner field uses, so
+ * "Viewing as" can be compared against a material's owner for gate rights.
  */
 export const CONTRIBUTORS: Contributor[] = [
   { user_id: "u-brandt", name: "K. Brandt", team: "procurement", role: "Category manager" },
@@ -192,6 +192,10 @@ export const CONTRIBUTORS: Contributor[] = [
   { user_id: "u-haugen", name: "L. Haugen", team: "sustainability", role: "Sustainability manager" },
   { user_id: "u-vermeer", name: "A. Vermeer", team: "marketing", role: "Brand director" },
   { user_id: "u-kowalczyk", name: "N. Kowalczyk", team: "regulatory", role: "Regulatory affairs manager" },
+  { user_id: "u-delacroix", name: "R. Delacroix", team: "rnd", role: "Formulation scientist" },
+  { user_id: "u-iqbal", name: "T. Iqbal", team: "procurement", role: "Category buyer" },
+  { user_id: "u-moreau", name: "J. Moreau", team: "marketing", role: "Claims manager" },
+  { user_id: "u-sandoval", name: "P. Sandoval", team: "regulatory", role: "Product compliance lead" },
 ];
 
 /** Names available as a condition owner. */
