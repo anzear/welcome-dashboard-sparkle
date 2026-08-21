@@ -391,15 +391,6 @@ const AssessmentCoverage: React.FC = () => {
                 placeholder="Why this score holds for every material selected"
                 className="rounded-md bg-card text-[11px]"
               />
-              <div className="text-[10px] text-muted-foreground">
-                {current.note.trim() === "" ? (
-                  <span className="text-destructive">
-                    A rationale is required before this driver counts as staged.
-                  </span>
-                ) : (
-                  "Applies to every selected material."
-                )}
-              </div>
             </div>
           )}
 
