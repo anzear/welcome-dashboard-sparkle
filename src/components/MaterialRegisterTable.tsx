@@ -643,6 +643,14 @@ export const MaterialRegisterTable: React.FC = () => {
 
 
   const rows = useMemo(() => {
+    if (strategySort) {
+      // Fixed order, never alphabetical.
+      const rank = (m: Material) =>
+        m.role !== "new" ? 0 : m.entry_type === "new_material" ? 1 : m.entry_type ? 2 : 3;
+      return [...visible].sort((a, b) =>
+        strategySort === "asc" ? rank(a.m) - rank(b.m) : rank(b.m) - rank(a.m),
+      );
+    }
     if (!lineSort) return visible;
     const key = (m: Material) => (m.product_lines ?? []).slice().sort().join(", ");
     return [...visible].sort((a, b) => {
@@ -653,7 +661,7 @@ export const MaterialRegisterTable: React.FC = () => {
       if (!kb) return -1;
       return lineSort === "asc" ? ka.localeCompare(kb) : kb.localeCompare(ka);
     });
-  }, [visible, lineSort]);
+  }, [visible, lineSort, strategySort]);
 
   const visibleIds = visible.map((r) => r.m.material_id);
   const visibleSelectedCount = visibleIds.filter((id) => selected.has(id)).length;
