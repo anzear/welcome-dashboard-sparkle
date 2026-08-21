@@ -542,8 +542,11 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
       {/* Header — full-width opaque bar, hairline beneath, above all page content */}
       <header
         className={cn(
-          "sticky top-0 z-40 -mx-4 border-b border-border bg-background px-4 shadow-[0_1px_0_0_hsl(var(--border))] transition-all",
+          "sticky top-0 z-40 -mx-4 bg-background px-4 transition-all",
           stuck ? "py-2" : "pb-4 pt-2",
+          m.role === "existing"
+            ? "border-b-2 border-border"
+            : "border-b border-dashed border-amber-700/40",
         )}
       >
         <div className="grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-2">
