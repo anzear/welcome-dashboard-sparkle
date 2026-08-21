@@ -322,8 +322,6 @@ export const MaterialRegisterTable: React.FC = () => {
             {driverCriterion && <div className={cn(UNIT, measureId === "driver" && "text-primary/60")}>{driverCriterion.label}</div>}
           </th>
         );
-      case "role":
-        return <th className={cn(HEAD, "px-3 py-2.5 text-left")}>Role</th>;
       case "links":
         return (
           <th className={cn(HEAD, "w-16 px-3 py-2.5 text-right")} title="Linked materials of the opposite role">
@@ -333,7 +331,19 @@ export const MaterialRegisterTable: React.FC = () => {
       case "materialType":
         return (
           <th className={cn(HEAD, "px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
-            Material strategy
+            <button
+              type="button"
+              onClick={() =>
+                setStrategySort((d) => (d === null ? "asc" : d === "asc" ? "desc" : null))
+              }
+              className="inline-flex items-center gap-1 uppercase tracking-widest hover:text-foreground"
+              title="Sort by material strategy"
+            >
+              Material strategy
+              <span className="text-[9px] text-muted-foreground/70">
+                {strategySort === "asc" ? "▲" : strategySort === "desc" ? "▼" : "↕"}
+              </span>
+            </button>
           </th>
         );
       case "productLine":
