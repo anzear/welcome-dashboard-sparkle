@@ -473,11 +473,11 @@ export interface AssessmentEntry {
   user_id: string;
   team: TeamId;
   /**
-   * 1..5, or null for Neutral — this team has no visibility here. Neutral is not
-   * 3 and not 0: it never enters a spread, an average or any count of scores.
+   * 1..5 always. An entry cannot exist without a score and a rationale — there
+   * is no abstain, skip or no-view state.
    */
-  score: number | null;
-  note: string | null;
+  score: number;
+  note: string;
   assessed_at: string;
 }
 
@@ -487,7 +487,6 @@ export interface AssessmentEntry {
  */
 export type AssessmentFlag =
   | "not_assessed"
-  | "neutral_only"
   | "single_view"
   | "aligned"
   | "mixed"
@@ -495,7 +494,6 @@ export type AssessmentFlag =
 
 export const ASSESSMENT_FLAG_LABEL: Record<AssessmentFlag, string> = {
   not_assessed: "No entries",
-  neutral_only: "Neutral only",
   single_view: "One view",
   aligned: "Aligned",
   mixed: "Mixed",
@@ -505,13 +503,12 @@ export const ASSESSMENT_FLAG_LABEL: Record<AssessmentFlag, string> = {
 export interface AssessmentState {
   flag: AssessmentFlag;
   entries: AssessmentEntry[];
-  /** null when no 1–5 score has been recorded — never 0. Neutral is excluded. */
+  /** null when nothing has been recorded — never 0. */
   low: number | null;
   high: number | null;
   spread: number | null;
-  /** Count of 1–5 scores only. Neutral entries are counted separately. */
+  /** Count of recorded 1–5 scores. */
   scoredCount: number;
-  neutralCount: number;
   teams: TeamId[];
 }
 
