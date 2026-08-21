@@ -711,6 +711,22 @@ export const MaterialRegisterTable: React.FC = () => {
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
+                {p.id !== "all" && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "h-2 w-3 rounded-[2px]",
+                      p.id === "existing"
+                        ? active
+                          ? "bg-background/80"
+                          : "bg-muted-foreground/60"
+                        : cn(
+                            "border bg-transparent",
+                            active ? "border-background/80" : "border-muted-foreground/60",
+                          ),
+                    )}
+                  />
+                )}
                 {p.label}
                 <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-60")}>
                   {rolePresetCounts[p.id]}
