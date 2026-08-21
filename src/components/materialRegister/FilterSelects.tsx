@@ -370,7 +370,7 @@ const FilterSelects: React.FC<{
 
   return (
     <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      {[...active, ...activeVcg].map(([key, label, opts, sel]) => (
+      {active.map(([key, label, opts, sel]) => (
         <MultiSelectFilter
           key={key}
           label={label}
