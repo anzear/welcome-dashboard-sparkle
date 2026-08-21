@@ -75,7 +75,7 @@ type OptionalColumn =
 const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["rank", "Rank", "Position under the active measure"],
 
-  ["materialType", "Material strategy", "How this material replaces an incumbent — either a genuinely new material, or the same material from a different source."],
+  ["materialType", "Material strategy", "Whether this material replaces an incumbent, or is new to the range and replaces nothing."],
   ["status", "Status", "The gate decision recorded by the team"],
   ["completeness", "Data status", "Share of expected fields recorded"],
   ["drivers", "Drivers", ""],
@@ -329,7 +329,7 @@ export const MaterialRegisterTable: React.FC = () => {
         );
       case "materialType":
         return (
-          <th className={cn(HEAD, "w-[10.5rem] min-w-[10.5rem] px-3 py-2.5 text-left")} title="How this material replaces an incumbent — either a genuinely new material, or the same material from a different source.">
+          <th className={cn(HEAD, "w-[10.5rem] min-w-[10.5rem] px-3 py-2.5 text-left")} title="Whether this material replaces an incumbent, or is new to the range and replaces nothing.">
             <button
               type="button"
               onClick={() =>
@@ -639,7 +639,7 @@ export const MaterialRegisterTable: React.FC = () => {
     if (strategySort) {
       // Fixed order, never alphabetical.
       const rank = (m: Material) =>
-        m.role !== "new" ? 0 : m.entry_type === "new_material" ? 1 : m.entry_type ? 2 : 3;
+        m.role !== "new" ? 0 : m.entry_type === "substitution" ? 1 : m.entry_type === "new_material" ? 2 : 3;
       return [...visible].sort((a, b) =>
         strategySort === "asc" ? rank(a.m) - rank(b.m) : rank(b.m) - rank(a.m),
       );
