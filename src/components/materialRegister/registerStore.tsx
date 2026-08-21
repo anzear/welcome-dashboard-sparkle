@@ -652,7 +652,25 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
 
 
 
-  const measure = measureId === "all" ? null : MEASURES.find((x) => x.id === measureId)!;
+  /** Picking a segment clears the driver dropdown; picking a driver clears the segments. */
+  const setMeasureId = (id: MeasureId) => {
+    setMeasureIdState(id);
+    if (id !== "driver") setDriverCriterionId(null);
+    setOnlyNoFigure(false);
+  };
+  const setDriverCriterion = (criterionId: string | null) => {
+    setDriverCriterionId(criterionId);
+    setMeasureIdState(criterionId ? "driver" : "spend");
+    setOnlyNoFigure(false);
+  };
+
+  const measure =
+    measureId === "all" || measureId === "driver"
+      ? null
+      : MEASURES.find((x) => x.id === measureId)!;
+  /** Only an active criterion can be ranked by; hiding one drops the ranking. */
+  const driverCriterion =
+    judgedCriteria.find((c) => c.criterion_id === driverCriterionId) ?? null;
 
   const filtersActive =
     filters.search.trim() !== "" ||
