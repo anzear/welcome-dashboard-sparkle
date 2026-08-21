@@ -192,8 +192,6 @@ const FilterSelects: React.FC<{
     filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    activeVcg.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    (suppliersShown && suppliersActive ? 1 : 0) +
     (gateActive ? 1 : 0) +
     (filters.hasDocuments ? 1 : 0) +
     (filters.notAssessed ? 1 : 0) +
