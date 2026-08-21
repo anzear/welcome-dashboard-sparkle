@@ -432,6 +432,11 @@ interface Store {
   ) => boolean;
   /** Withdraws the current user's entry. Absence, never a zero. */
   clearAssessment: (materialId: string, criterionId: string) => void;
+  /**
+   * Replaces the entire assessment map. Used only to undo a bulk save: the
+   * caller snapshots the map before writing, then restores it on undo.
+   */
+  restoreAssessments: (snapshot: Record<string, AssessmentEntry>) => void;
   /** Spread and flag for one criterion. Counts only — entries are never averaged. */
   assessmentState: (materialId: string, criterionId: string) => AssessmentState;
   /** Per-material roll-up: criteria covered, contributors, split criteria. */
