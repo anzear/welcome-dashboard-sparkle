@@ -317,6 +317,13 @@ interface Store {
   measureId: MeasureId;
   setMeasureId: (id: MeasureId) => void;
   measure: Measure | null;
+  /**
+   * The criterion the register is ranked by, when ranking by a driver. The mean
+   * of contributor scores is the sort order only — it is never displayed.
+   */
+  driverCriterionId: string | null;
+  driverCriterion: AssessmentCriterion | null;
+  setDriverCriterion: (criterionId: string | null) => void;
   rolePreset: RolePresetId;
   setRolePreset: React.Dispatch<React.SetStateAction<RolePresetId>>;
   rolePresetCounts: Record<RolePresetId, number>;
