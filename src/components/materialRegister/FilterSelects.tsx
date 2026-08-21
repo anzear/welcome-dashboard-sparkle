@@ -432,7 +432,7 @@ const FilterSelects: React.FC<{
                   next.hasDocuments = false;
                   next.notAssessed = false;
                   next.teamsDisagree = false;
-                  next.gateOverdue = false;
+                  
                   next.criterionScores = {};
                   return next;
                 })
