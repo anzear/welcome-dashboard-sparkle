@@ -106,7 +106,8 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
 
   const derivedSpend = spendOverridden ? spend : computeSpend(volume, price);
   const derivedGhg = ghgOverridden ? ghg : computeGhg(volume, factor);
-  const showPanelA = showsReplacedPanel(entryType);
+  const showPanelA = role === "existing" && showsReplacedPanel(entryType);
+  const showPanelB = role === "new";
 
   const runLookup = () => {
     const trimmed = cas.trim();
