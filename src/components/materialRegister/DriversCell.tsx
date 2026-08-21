@@ -58,7 +58,6 @@ const SlotTooltip: React.FC<{ criterion: AssessmentCriterion; state: SlotState }
                 {" · "}
               </span>
               <span className="tabular-nums font-medium">{e.score === null ? "Neutral" : e.score}</span>
-              {e.note && <div className="opacity-80">{e.note}</div>}
             </li>
           );
         })}
