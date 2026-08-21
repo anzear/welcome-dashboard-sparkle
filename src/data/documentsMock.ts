@@ -112,8 +112,8 @@ const TEMPLATES: Template[] = [
   },
 ];
 
-/** Documents seed only where assessments exist — the two new criteria stay empty. */
-const CARRIED = ["risk_of_inaction", "strategic_importance", "market_pull"];
+/** Documents seed only where assessments exist, and only on a handful of criteria. */
+const CARRIED = ["regulatory_pressure", "supply_security", "sustainability_impact", "product_performance"];
 const CRIT = JUDGED_CRITERIA.filter((c) => CARRIED.includes(c.criterion_id)).map(
   (c) => c.criterion_id,
 );
