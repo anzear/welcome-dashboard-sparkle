@@ -21,7 +21,7 @@ export const ENTRY_TYPES: { id: EntryType; label: string; description: string }[
   },
   {
     id: "substitution",
-    label: "Substitution",
+    label: "Source substitution",
     description: "Moves an existing material to a renewable or circular source",
   },
 ];
