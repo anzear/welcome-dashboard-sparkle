@@ -141,6 +141,8 @@ const FilterSelects: React.FC<{
     ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
   ];
 
+  const active = controls.filter(([k]) => shown(k));
+
   const evidenceSection = (
     <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
       <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Evidence</div>
