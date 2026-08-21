@@ -226,8 +226,6 @@ export interface Filters {
   hasDocuments: boolean;
   /** Zero assessment entries from anyone. The one word for this state. */
   notAssessed: boolean;
-  /** Either an overdue condition or an overdue hold review. */
-  gateOverdue: boolean;
   /** Carries a split flag on at least one judged criterion. */
   teamsDisagree: boolean;
   /**
