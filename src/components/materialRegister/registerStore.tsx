@@ -692,7 +692,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.gateRecommendation !== "any" ||
     filters.hasDocuments ||
     filters.notAssessed ||
-    filters.gateOverdue ||
+    
     filters.teamsDisagree ||
     Object.values(filters.criterionScores).some((v) => v.length > 0);
 
