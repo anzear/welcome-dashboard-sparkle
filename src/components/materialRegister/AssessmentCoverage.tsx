@@ -144,6 +144,34 @@ const AssessmentCoverage: React.FC = () => {
 
   return (
     <div className="w-full space-y-2">
+      {/* Preset scope — same role base scope as the register. */}
+      <div className="-mx-0.5 mb-1 overflow-x-auto pb-0.5">
+        <div className="inline-flex w-max items-center gap-0.5 whitespace-nowrap rounded-lg bg-muted p-0.5">
+          {ROLE_PRESETS.map((p) => {
+            const active = rolePreset === p.id;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                aria-pressed={active}
+                onClick={() => setRolePreset(p.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors",
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {p.label}
+                <span className={cn("tabular-nums", active ? "opacity-70" : "opacity-60")}>
+                  {rolePresetCounts[p.id]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
         <Input
           value={filters.search}
