@@ -422,7 +422,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
 
       {/* Step 3 */}
       <section className="space-y-3 border-t border-border pt-4">
-        <h3 className={LABEL}>3 — Data they already hold</h3>
+        <h3 className={LABEL}>3 — Internal data</h3>
         <div className={cn("grid gap-4", showPanelA ? "lg:grid-cols-2" : "grid-cols-1")}>
           {showPanelA && (
             <div className="space-y-3 rounded-md border border-border p-3">
