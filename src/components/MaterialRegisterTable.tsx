@@ -315,12 +315,12 @@ export const MaterialRegisterTable: React.FC = () => {
         return <th className={cn(HEAD, "w-28 px-3 py-2.5 text-right")}>Data status</th>;
       case "drivers":
         return (
-          <th className={cn(HEAD, "w-[8.5rem] px-3 py-2.5 text-left")}>
+          <th className={cn(HEAD, "w-[8.5rem] px-3 py-2.5 text-left", measureId === "driver" && "text-primary")}>
             <span className="inline-flex items-center gap-1">
               Drivers
               <DriversLegend />
             </span>
-            {driverCriterion && <div className={UNIT}>{driverCriterion.label}</div>}
+            {driverCriterion && <div className={cn(UNIT, measureId === "driver" && "text-primary/60")}>{driverCriterion.label}</div>}
           </th>
         );
       case "role":
