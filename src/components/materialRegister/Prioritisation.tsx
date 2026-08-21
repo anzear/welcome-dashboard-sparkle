@@ -592,7 +592,7 @@ const Prioritisation: React.FC = () => {
                   );
                 })}
 
-                {/* zero line on a driver axis — a recorded neutral judgement is a position */}
+                {/* zero line, drawn only when an axis domain crosses zero */}
                 {yv.domain && yv.domain.min < 0 && (
                   <g>
                     <line
@@ -604,7 +604,7 @@ const Prioritisation: React.FC = () => {
                       strokeOpacity={0.35}
                     />
                     <text x={PAD.l + PW - 2} y={sy(0) - 4} textAnchor="end" className="fill-muted-foreground text-[9px]">
-                      0 — neutral judgement
+                      0
                     </text>
                   </g>
                 )}
@@ -623,7 +623,7 @@ const Prioritisation: React.FC = () => {
                       y={PAD.t + 9}
                       className="fill-muted-foreground text-[9px]"
                     >
-                      0 — neutral judgement
+                      0
                     </text>
                   </g>
                 )}

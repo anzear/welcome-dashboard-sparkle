@@ -415,7 +415,7 @@ interface Store {
   ) => { ok: boolean; error?: string };
   /** Only a custom criterion holding no entries can be deleted. */
   deleteCustomCriterion: (criterionId: string) => boolean;
-  /** Sparse entry map. A missing key means that person has no view recorded. */
+  /** Sparse entry map. A missing key means that person has recorded nothing. */
   assessments: Record<string, AssessmentEntry>;
   entriesFor: (materialId: string, criterionId: string) => AssessmentEntry[];
   myEntry: (materialId: string, criterionId: string) => AssessmentEntry | null;
