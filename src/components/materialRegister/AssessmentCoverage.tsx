@@ -49,6 +49,8 @@ const AssessmentCoverage: React.FC = () => {
     canEditCriteria,
     saveAssessment,
     clearAssessment,
+    restoreAssessments,
+    assessments,
     rolePreset,
     setRolePreset,
     rolePresetCounts,
