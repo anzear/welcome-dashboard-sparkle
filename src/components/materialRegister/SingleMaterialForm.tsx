@@ -39,7 +39,6 @@ import {
   lookupCas,
   provenanceOf,
   requirementsOrNull,
-  showsReplacedPanel,
   toNullString,
   type OntologyResult,
 } from "@/components/materialRegister/materialEntry";
