@@ -185,7 +185,9 @@ export type RolePresetId = "all" | "existing" | "candidates";
 export const ROLE_PRESETS: { id: RolePresetId; label: string; match: (m: Material) => boolean }[] = [
   { id: "all", label: "All", match: () => true },
   { id: "existing", label: "Existing materials", match: (m) => m.role === "existing" },
-  { id: "candidates", label: "Candidate materials", match: (m) => m.role === "new" },
+  // Candidates with no strategy ("Not set") are only surfaced under "All"; the
+  // "Candidate materials" scope shows candidates that carry a strategy.
+  { id: "candidates", label: "Candidate materials", match: (m) => m.role === "new" && m.entry_type != null },
 ];
 
 const presetMatch = (id: RolePresetId) => ROLE_PRESETS.find((p) => p.id === id)!.match;
