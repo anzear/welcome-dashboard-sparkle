@@ -226,8 +226,6 @@ export interface Filters {
   hasDocuments: boolean;
   /** Zero assessment entries from anyone. The one word for this state. */
   notAssessed: boolean;
-  /** Either an overdue condition or an overdue hold review. */
-  gateOverdue: boolean;
   /** Carries a split flag on at least one judged criterion. */
   teamsDisagree: boolean;
   /**
@@ -268,7 +266,6 @@ export const EMPTY_FILTERS: Filters = {
   gateRecommendation: "any",
   hasDocuments: false,
   notAssessed: false,
-  gateOverdue: false,
   teamsDisagree: false,
   criterionScores: {},
 };
@@ -695,7 +692,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.gateRecommendation !== "any" ||
     filters.hasDocuments ||
     filters.notAssessed ||
-    filters.gateOverdue ||
+    
     filters.teamsDisagree ||
     Object.values(filters.criterionScores).some((v) => v.length > 0);
 
@@ -747,7 +744,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
       if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
-      if (filters.gateOverdue && !hasOverdueCondition(m) && !holdReviewOverdue(m)) return false;
+      
       if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
       /** Per-criterion score filter. Nothing recorded is its own value, never a zero. */
       for (const [critId, wanted] of Object.entries(filters.criterionScores)) {

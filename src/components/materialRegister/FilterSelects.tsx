@@ -192,22 +192,12 @@ const FilterSelects: React.FC<{
         />
         Teams disagree
       </label>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.gateOverdue}
-          onChange={(e) => setFilters((f) => ({ ...f, gateOverdue: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Gate work overdue
-      </label>
     </div>
   );
 
   const gateActive =
     filters.gateOverdueCondition ||
     filters.gateHoldReviewOverdue ||
-    filters.gateOverdue ||
     filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
@@ -442,7 +432,7 @@ const FilterSelects: React.FC<{
                   next.hasDocuments = false;
                   next.notAssessed = false;
                   next.teamsDisagree = false;
-                  next.gateOverdue = false;
+                  
                   next.criterionScores = {};
                   return next;
                 })
