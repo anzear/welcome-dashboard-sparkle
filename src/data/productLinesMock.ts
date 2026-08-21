@@ -41,7 +41,7 @@ const BY_GROUP: Record<string, string[][]> = {
 };
 
 /** Deliberately left without a product line — the master is never complete. */
-const NO_LINE = new Set(["MAT-0007", "MAT-0019", "MAT-0028", "MAT-0036"]);
+const NO_LINE = new Set(["MAT-0007", "MAT-0019", "MAT-0028", "MAT-0036", "MAT-0051", "MAT-0068"]);
 
 const provenance: FieldProvenance = {
   origin: "ingested",
