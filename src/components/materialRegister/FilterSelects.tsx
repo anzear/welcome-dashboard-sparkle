@@ -46,7 +46,7 @@ const FilterSelects: React.FC<{
   include?: FilterKey[];
   variant?: "inline" | "popover";
 }> = ({ className, include, variant = "inline" }) => {
-  const { data, filters, setFilters } = useRegister();
+  const { data, filters, setFilters, rolePreset } = useRegister();
   /** The controlled list can grow while the filter is mounted. */
   useProductLines();
 
@@ -120,6 +120,13 @@ const FilterSelects: React.FC<{
   }, [data]);
 
   const shown = (key: FilterKey) => !include || include.includes(key);
+
+  /**
+   * Replacement type is a property of replacement candidates. In the existing
+   * materials scope there is nothing for it to act on, so it is offered but
+   * disabled rather than silently doing nothing.
+   */
+  const entryTypeDisabled = rolePreset === "existing";
 
   const controls: [FilterKey, string, { value: string; label: string }[], string[]][] = [
     ["statuses", "Status", options.statuses, filters.statuses],
@@ -351,17 +358,30 @@ const FilterSelects: React.FC<{
         </PopoverTrigger>
         <PopoverContent align="end" className="portfolio-type w-64 p-2">
           <div className="space-y-1.5">
-            {active.map(([key, label, opts, sel]) => (
-              <div key={key} className="flex items-center justify-between gap-2">
-                <span className="text-[11px] text-muted-foreground">{label}</span>
-                <MultiSelectFilter
-                  label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
-                  options={opts}
-                  selected={sel}
-                  onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
-                />
-              </div>
-            ))}
+            {active.map(([key, label, opts, sel]) => {
+              const off = key === "entryTypes" && entryTypeDisabled;
+              return (
+                <div key={key} className="space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={cn("text-[11px] text-muted-foreground", off && "opacity-50")}>
+                      {label}
+                    </span>
+                    <MultiSelectFilter
+                      label={sel.length > 0 ? `${sel.length} chosen` : "Any"}
+                      options={opts}
+                      selected={sel}
+                      onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
+                      disabled={off}
+                    />
+                  </div>
+                  {off && (
+                    <div className="text-[10px] leading-tight text-muted-foreground">
+                      Applies to replacement candidates only.
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           {gateSection}
           {assessmentSection}
@@ -406,6 +426,7 @@ const FilterSelects: React.FC<{
           options={opts}
           selected={sel}
           onChange={(v) => setFilters((f) => ({ ...f, [key]: v }))}
+          disabled={key === "entryTypes" && entryTypeDisabled}
         />
       ))}
     </div>
