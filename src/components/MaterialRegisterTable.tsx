@@ -320,9 +320,7 @@ export const MaterialRegisterTable: React.FC = () => {
               Drivers
               <DriversLegend />
             </span>
-            <div className={UNIT}>
-              {driverCriterion ? driverCriterion.label : "All seven, in fixed order"}
-            </div>
+            {driverCriterion && <div className={UNIT}>{driverCriterion.label}</div>}
           </th>
         );
       case "role":
