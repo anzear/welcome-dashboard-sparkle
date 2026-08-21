@@ -266,7 +266,6 @@ export const EMPTY_FILTERS: Filters = {
   gateRecommendation: "any",
   hasDocuments: false,
   notAssessed: false,
-  gateOverdue: false,
   teamsDisagree: false,
   criterionScores: {},
 };
