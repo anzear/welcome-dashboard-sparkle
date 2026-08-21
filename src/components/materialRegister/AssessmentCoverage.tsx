@@ -84,11 +84,14 @@ const AssessmentCoverage: React.FC = () => {
     () => selected.map((id) => data.find((m) => m.material_id === id)).filter(Boolean) as typeof data,
     [selected, data],
   );
-  const stagedCount = Object.keys(staged).length;
-  /** A 1–5 score is refused without a rationale, in bulk exactly as on the brief. */
-  const stagedIncomplete = Object.values(staged).some(
-    (s) => typeof s.value === "number" && s.note.trim() === "",
-  );
+  /** A driver is staged only once it carries both a score and a rationale. */
+  const isComplete = (s: Staged) => s.value === "clear" || s.note.trim() !== "";
+  const stagedEntries = Object.entries(staged);
+  const stagedCount = stagedEntries.filter(([, s]) => isComplete(s)).length;
+  const incompleteLabels = stagedEntries
+    .filter(([, s]) => !isComplete(s))
+    .map(([id]) => judgedCriteria.find((c) => c.criterion_id === id)?.label ?? id);
+  const stagedIncomplete = incompleteLabels.length > 0;
 
   const toggleRow = (id: string) =>
     setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
@@ -368,7 +371,7 @@ const AssessmentCoverage: React.FC = () => {
           {typeof current?.value === "number" && (
             <div className="space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Rationale · required
+                Rationale — applies to all selected materials
               </div>
               <Textarea
                 value={current.note}
@@ -379,6 +382,12 @@ const AssessmentCoverage: React.FC = () => {
               />
               <div className="text-[10px] text-muted-foreground">
                 The same rationale is written on each selected material.
+                {current.note.trim() === "" && (
+                  <span className="text-destructive">
+                    {" "}
+                    A rationale is required before this driver counts as staged.
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -388,7 +397,10 @@ const AssessmentCoverage: React.FC = () => {
               <span className="tabular-nums text-foreground">{stagedCount}</span> criteri
               {stagedCount === 1 ? "on" : "a"} staged. Nothing is written until you save.
               {stagedIncomplete && (
-                <span className="text-destructive"> A 1–5 score needs a rationale.</span>
+                <span className="text-destructive">
+                  {" "}
+                  Rationale still missing on {incompleteLabels.join(", ")}.
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2">
