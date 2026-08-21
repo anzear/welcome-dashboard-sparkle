@@ -394,17 +394,7 @@ const AssessmentCoverage: React.FC = () => {
             </div>
           )}
 
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-[10px] text-muted-foreground">
-              <span className="tabular-nums text-foreground">{stagedCount}</span> criteri
-              {stagedCount === 1 ? "on" : "a"} staged. Nothing is written until you save.
-              {stagedIncomplete && (
-                <span className="text-destructive">
-                  {" "}
-                  Rationale still missing on {incompleteLabels.join(", ")}.
-                </span>
-              )}
-            </div>
+          <div className="flex items-center justify-end gap-3">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={clearSelection}>
                 Cancel
