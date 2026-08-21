@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TEAM_LABEL } from "@/config/assessmentCriteria";
+import { ROLE_PRESETS } from "@/components/materialRegister/registerStore";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import FilterSelects from "@/components/materialRegister/FilterSelects";
@@ -46,6 +47,9 @@ const AssessmentCoverage: React.FC = () => {
     canEditCriteria,
     saveAssessment,
     clearAssessment,
+    rolePreset,
+    setRolePreset,
+    rolePresetCounts,
   } = useRegister();
 
   const [sort, setSort] = useState<SortId>("register");
