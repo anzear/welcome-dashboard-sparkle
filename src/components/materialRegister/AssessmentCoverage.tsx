@@ -371,7 +371,7 @@ const AssessmentCoverage: React.FC = () => {
           {typeof current?.value === "number" && (
             <div className="space-y-1">
               <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Rationale · required
+                Rationale — applies to all selected materials
               </div>
               <Textarea
                 value={current.note}
@@ -382,6 +382,12 @@ const AssessmentCoverage: React.FC = () => {
               />
               <div className="text-[10px] text-muted-foreground">
                 The same rationale is written on each selected material.
+                {current.note.trim() === "" && (
+                  <span className="text-destructive">
+                    {" "}
+                    A rationale is required before this driver counts as staged.
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -391,7 +397,10 @@ const AssessmentCoverage: React.FC = () => {
               <span className="tabular-nums text-foreground">{stagedCount}</span> criteri
               {stagedCount === 1 ? "on" : "a"} staged. Nothing is written until you save.
               {stagedIncomplete && (
-                <span className="text-destructive"> A 1–5 score needs a rationale.</span>
+                <span className="text-destructive">
+                  {" "}
+                  Rationale still missing on {incompleteLabels.join(", ")}.
+                </span>
               )}
             </div>
             <div className="flex items-center gap-2">
