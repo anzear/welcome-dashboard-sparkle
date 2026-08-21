@@ -450,6 +450,7 @@ export const MaterialRegisterTable: React.FC = () => {
       case "materialType": {
         // Chip style carries role: filled = existing material, outlined = replacement candidate.
         const existing = m.role !== "new";
+        const notSet = !existing && !m.entry_type;
         const label = existing
           ? "Existing material"
           : m.entry_type
@@ -457,7 +458,9 @@ export const MaterialRegisterTable: React.FC = () => {
             : "Not set";
         return (
           <td className="px-3 py-2 align-middle">
-            <RoleChip isExisting={existing}>{label}</RoleChip>
+            <RoleChip isExisting={existing} notSet={notSet}>
+              {label}
+            </RoleChip>
           </td>
         );
       }
