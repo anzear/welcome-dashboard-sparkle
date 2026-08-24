@@ -248,6 +248,32 @@ export const DashboardAvailableNow: React.FC = () => {
             </p>
           </button>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/50 transition-colors enabled:hover:border-foreground/40 enabled:hover:text-foreground disabled:opacity-30"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="tabular-nums">
+              {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/50 transition-colors enabled:hover:border-foreground/40 enabled:hover:text-foreground disabled:opacity-30"
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </section>
 
       {/* One link, one count. No preview of the register here. */}
