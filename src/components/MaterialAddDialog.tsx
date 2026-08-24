@@ -9,6 +9,7 @@ import type { MaterialRole } from "@/types/materialPrioritisation";
 import { MATERIAL_ROLE_LABEL } from "@/types/materialPrioritisation";
 import { materials as portfolioMaterials } from "@/data/materialPrioritisationMock";
 import { readPortfolioAdditions } from "@/lib/portfolioAdditions";
+import { VCG_DATABASE_MATERIALS } from "@/data/vcgMaterialDatabase";
 
 /** Pathway node position the run starts from. Same run, different entry point. */
 export type MaterialRunAs = "Feedstock" | "Material";
@@ -67,8 +68,8 @@ const INTENTS: { value: MaterialAddIntent; label: string; description: string }[
   },
 ];
 
-/** Materials the system already knows: portfolio rows plus anything already covered. */
-type KnownState = "portfolio" | "available" | "active";
+/** Materials the system already knows: portfolio rows, covered materials, VCG database. */
+type KnownState = "portfolio" | "available" | "active" | "database";
 interface KnownMaterial {
   name: string;
   state: KnownState;
@@ -80,7 +81,9 @@ const KNOWN_STATE_LABEL: Record<KnownState, string> = {
   portfolio: "In your portfolio",
   active: "Coverage active",
   available: "Coverage available",
+  database: "In our database",
 };
+
 
 function readCoveredMaterials(): KnownMaterial[] {
   const out: KnownMaterial[] = [];
@@ -114,8 +117,16 @@ function knownMaterials(): KnownMaterial[] {
   );
   readPortfolioAdditions().forEach((a) => put({ name: a.name, state: "portfolio" }));
   readCoveredMaterials().forEach((c) => put(c));
-  return [...byName.values()];
+  const own = [...byName.values()];
+  // Database entries only surface where the customer has nothing of their own.
+  const database = VCG_DATABASE_MATERIALS.filter((n) => !byName.has(n.toLowerCase())).map(
+    (n): KnownMaterial => ({ name: n, state: "database" }),
+  );
+  return [...own, ...database];
 }
+
+const OWN_SUGGESTION_CAP = 6;
+const DATABASE_SUGGESTION_CAP = 5;
 
 export default function MaterialAddDialog({
   open,
@@ -140,12 +151,29 @@ export default function MaterialAddDialog({
   const known = useMemo(() => (open ? knownMaterials() : []), [open]);
 
   const query = name.trim().toLowerCase();
-  const suggestions = useMemo(() => {
-    if (!suggestionsOpen || query.length < 2) return [];
-    return known
-      .filter((k) => k.name.toLowerCase().includes(query) && k.name.toLowerCase() !== query)
-      .slice(0, 6);
+  const { ownSuggestions, dbSuggestions } = useMemo(() => {
+    if (!suggestionsOpen || query.length < 2) return { ownSuggestions: [], dbSuggestions: [] };
+    const hits = known.filter(
+      (k) => k.name.toLowerCase().includes(query) && k.name.toLowerCase() !== query,
+    );
+    // Closest matches first: a leading match beats a match buried mid-name.
+    const closeness = (k: KnownMaterial) =>
+      (k.name.toLowerCase().startsWith(query) ? 0 : 1) * 1000 + k.name.length;
+    const sortByCloseness = (list: KnownMaterial[]) =>
+      [...list].sort((a, b) => closeness(a) - closeness(b));
+    return {
+      // The customer's own materials always come first and are never crowded out.
+      ownSuggestions: sortByCloseness(hits.filter((k) => k.state !== "database")).slice(
+        0,
+        OWN_SUGGESTION_CAP,
+      ),
+      dbSuggestions: sortByCloseness(hits.filter((k) => k.state === "database")).slice(
+        0,
+        DATABASE_SUGGESTION_CAP,
+      ),
+    };
   }, [known, query, suggestionsOpen]);
+
 
   /** An exact match tells us whether this act is already done for that material. */
   const match = known.find((k) => k.name.toLowerCase() === query) || null;
@@ -216,26 +244,37 @@ export default function MaterialAddDialog({
                 onBlur={() => window.setTimeout(() => setSuggestionsOpen(false), 120)}
                 className="border-2 border-success/20 focus:border-success/40 rounded-md h-9"
               />
-              {suggestions.length > 0 && (
-                <div className="absolute z-50 left-0 right-0 top-[calc(100%+2px)] max-h-56 overflow-y-auto rounded-md border border-border/60 bg-popover shadow-lg">
-                  {suggestions.map((s) => (
-                    <button
-                      key={s.name}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => {
-                        onNameChange(s.name);
-                        setSuggestionsOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/60"
-                    >
-                      <span className="text-sm text-foreground">{s.name}</span>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                        {KNOWN_STATE_LABEL[s.state]}
-                      </span>
-                    </button>
+              {ownSuggestions.length + dbSuggestions.length > 0 && (
+                <div className="absolute z-50 left-0 right-0 top-[calc(100%+2px)] max-h-72 overflow-y-auto rounded-md border border-border/60 bg-popover shadow-lg">
+                  {[
+                    ...ownSuggestions,
+                    ...dbSuggestions,
+                  ].map((s, index) => (
+                    <div key={s.name}>
+                      {/* Divider marks where the customer's own materials end. */}
+                      {index === ownSuggestions.length && ownSuggestions.length > 0 && (
+                        <div className="border-t border-border/60 px-3 py-1 text-[10px] uppercase tracking-wider text-muted-foreground bg-muted/30">
+                          From our database
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          onNameChange(s.name);
+                          setSuggestionsOpen(false);
+                        }}
+                        className="w-full flex items-center justify-between gap-3 px-3 py-2 text-left hover:bg-muted/60"
+                      >
+                        <span className="text-sm text-foreground">{s.name}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                          {KNOWN_STATE_LABEL[s.state]}
+                        </span>
+                      </button>
+                    </div>
                   ))}
                 </div>
+
               )}
             </div>
             {coverageBlocked && (
