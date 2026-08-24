@@ -60,6 +60,8 @@ type KnownState = "portfolio" | "available" | "active" | "database";
 interface KnownMaterial {
   name: string;
   state: KnownState;
+  /** A coverage request is already in for this material, awaiting set-up. */
+  pending?: boolean;
   /** Pathway node position, used to build the brief link for covered materials. */
   category?: "feedstock" | "product";
 }
@@ -70,6 +72,11 @@ const KNOWN_STATE_LABEL: Record<KnownState, string> = {
   available: "Coverage available",
   database: "In our database",
 };
+
+/** Pending overrides the displayed state: it is the fact that governs the action. */
+const stateLabel = (k: KnownMaterial) =>
+  k.pending ? "Coverage requested" : KNOWN_STATE_LABEL[k.state];
+
 
 
 function readCoveredMaterials(): KnownMaterial[] {
