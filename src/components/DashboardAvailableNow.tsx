@@ -141,7 +141,7 @@ export const DashboardAvailableNow: React.FC = () => {
       if (activeMeasure) {
         const v = activeMeasure.value(m);
         if (v === null) return null;
-        return { key: v, text: `${nf(activeMeasure.decimals ?? 0)(v)} ${activeMeasure.unit}` };
+        return { key: v, text: `${nf(activeMeasure.decimals ?? 0).format(v)} ${activeMeasure.unit}` };
       }
       if (activeCriterion) {
         const scores = Object.values(seedAssessments)
