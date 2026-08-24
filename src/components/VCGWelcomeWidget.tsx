@@ -49,10 +49,39 @@ const VCGWelcomeWidget = () => {
   // Helper to normalize portfolio items (string or object)
   const normalizeItem = (item: any) => {
     if (typeof item === 'string') {
-      return { name: item, synonyms: '', objective: 'Valorise' as const };
+      return { name: item, synonyms: '' };
     }
     return item;
   };
+
+  // Placeholder entries left in the prototype by the old add flow.
+  const isStubTopic = (name: string) => {
+    const n = (name || '').trim().toLowerCase();
+    if (!n) return true;
+    if (n.length <= 2) return true;
+    return /^(test|testing|tst|abc|asdf|qwerty|foo|bar|xxx|aaa|zzz|dummy|placeholder|sample|demo)([\s\-_]*[a-z0-9]{0,3})?$/.test(n);
+  };
+
+  /**
+   * A topic created by a coverage request but never agreed must not open into an
+   * empty material brief. It is lifted out of the portfolio list and recorded as
+   * a pending coverage request instead. Stub test entries are simply dropped.
+   */
+  const sanitizeTopicList = (list: any[]) => {
+    const kept: any[] = [];
+    for (const item of list) {
+      const name = typeof item === 'string' ? item : item?.name;
+      if (!name || isStubTopic(name)) continue;
+      const unagreed = typeof item === 'object' && !!item?.isNew;
+      if (unagreed) {
+        addPendingCoverage({ name });
+        continue;
+      }
+      kept.push(item);
+    }
+    return kept;
+  };
+
 
   // Load items from localStorage on mount
   useEffect(() => {
