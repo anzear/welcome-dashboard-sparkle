@@ -3,8 +3,10 @@
  *
  * A request must not vanish. Once made, the material appears in Your topics as a
  * pending topic: legible, dimmed, non-interactive, and impossible to request
- * again. Nothing here touches the Material Portfolio register: requesting
- * coverage does not change a material's role, strategy, assessment or links.
+ * again. A request for a material that is not yet in the Material Portfolio
+ * creates the register row too, carrying only name and role — every other field
+ * stays empty. It never changes an existing material's strategy, assessment or
+ * links, and Run as is never written to the register.
  */
 import type { MaterialRole } from "@/types/materialPrioritisation";
 import { materials } from "@/data/materialPrioritisationMock";

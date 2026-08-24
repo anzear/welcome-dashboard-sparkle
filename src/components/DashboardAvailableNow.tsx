@@ -45,6 +45,7 @@ import {
   addPendingCoverage,
   readLegacyRequestedIds,
   readPendingCoverage,
+  reconcilePendingCoverage,
   PENDING_COVERAGE_EVENT,
 } from "@/lib/pendingCoverage";
 import { MATERIAL_ROLE_LABEL, type Material, type MaterialRole } from "@/types/materialPrioritisation";
@@ -223,14 +224,17 @@ export const DashboardAvailableNow: React.FC = () => {
     // Coverage also lands the material in the register, with a role so its
     // assessment framing is set. A material already tracked is left alone.
     // Run as belongs to the coverage request, not to the register row.
-    if (addRole) {
+    if (!match && addRole) {
       addPortfolioAddition({ name: itemName, role: addRole });
     }
     const added = addPendingCoverage({
       name: itemName,
       materialId: match?.material_id,
       runAs: addRunAs,
+      role: addRole || undefined,
     });
+    // Guarantees the register row exists for the request that was just made.
+    reconcilePendingCoverage();
     setRequested(readRequested());
     toast(added ? "Coverage requested" : "A request is already in", {
       description: (
