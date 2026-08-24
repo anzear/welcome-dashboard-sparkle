@@ -41,11 +41,6 @@ const readRequested = (): string[] => {
   }
 };
 
-/** One line on what the coverage would give them, kept role-aware. */
-const coverageLine = (m: Material) =>
-  m.role === "existing"
-    ? `Alternatives to ${m.name}, who supplies them and where the routes stand today.`
-    : `Whether ${m.name} is real at your volumes — routes, suppliers and who else is moving.`;
 
 export const DashboardAvailableNow: React.FC = () => {
   const [requested, setRequested] = useState<string[]>(() => readRequested());
@@ -220,7 +215,6 @@ export const DashboardAvailableNow: React.FC = () => {
               <RoleChip isExisting={m.role === "existing"} className="self-start">
                 {MATERIAL_ROLE_LABEL[m.role]}
               </RoleChip>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">{coverageLine(m)}</p>
               <Button
                 size="sm"
                 className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
