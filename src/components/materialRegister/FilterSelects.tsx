@@ -220,7 +220,6 @@ const FilterSelects: React.FC<{
             })}
           </div>
           {criterionScoreSection}
-          {evidenceSection}
 
           {activeCount > 0 && (
             <button
