@@ -37,6 +37,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { toast } from "sonner";
 import RequestCoverageDialog from "@/components/materialRegister/RequestCoverageDialog";
 import { RoleChip } from "@/components/materialRegister/RoleChip";
 
