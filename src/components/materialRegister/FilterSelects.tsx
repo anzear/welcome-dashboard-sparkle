@@ -238,6 +238,7 @@ const FilterSelects: React.FC<{
             })}
           </div>
           {criterionScoreSection}
+          {coverageSection}
 
           {activeCount > 0 && (
             <button
@@ -246,6 +247,7 @@ const FilterSelects: React.FC<{
                 setFilters((f) => {
                   const next = { ...f };
                   active.forEach(([k]) => ((next as any)[k] = []));
+                  next.hideDeliveredCoverage = false;
 
                   next.criterionScores = {};
                   return next;
