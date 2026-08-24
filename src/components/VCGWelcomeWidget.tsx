@@ -49,42 +49,73 @@ const VCGWelcomeWidget = () => {
   // Helper to normalize portfolio items (string or object)
   const normalizeItem = (item: any) => {
     if (typeof item === 'string') {
-      return { name: item, synonyms: '', objective: 'Valorise' as const };
+      return { name: item, synonyms: '' };
     }
     return item;
   };
+
+  // Placeholder entries left in the prototype by the old add flow.
+  const isStubTopic = (name: string) => {
+    const n = (name || '').trim().toLowerCase();
+    if (!n) return true;
+    if (n.length <= 2) return true;
+    return /^(test|testing|tst|abc|asdf|qwerty|foo|bar|xxx|aaa|zzz|dummy|placeholder|sample|demo)([\s\-_]*[a-z0-9]{0,3})?$/.test(n);
+  };
+
+  /**
+   * A topic created by a coverage request but never agreed must not open into an
+   * empty material brief. It is lifted out of the portfolio list and recorded as
+   * a pending coverage request instead. Stub test entries are simply dropped.
+   */
+  const sanitizeTopicList = (list: any[]) => {
+    const kept: any[] = [];
+    for (const item of list) {
+      const name = typeof item === 'string' ? item : item?.name;
+      if (!name || isStubTopic(name)) continue;
+      const unagreed = typeof item === 'object' && !!item?.isNew;
+      if (unagreed) {
+        addPendingCoverage({ name });
+        continue;
+      }
+      kept.push(item);
+    }
+    return kept;
+  };
+
 
   // Load items from localStorage on mount
   useEffect(() => {
     const loadPortfolioItems = () => {
       // Feedstock: normalize and ensure Fructose has full object data
-      let feedstock = JSON.parse(localStorage.getItem('portfolio_feedstock') || '[{"name":"Fructose","synonyms":"","objective":"Valorise","category":"Side Stream","isNew":false}]');
-      feedstock = feedstock.filter((item: any) => {
+      let feedstock = JSON.parse(localStorage.getItem('portfolio_feedstock') || '[{"name":"Fructose","synonyms":"","category":"Side Stream","isNew":false}]');
+      feedstock = sanitizeTopicList(feedstock).filter((item: any) => {
         const name = typeof item === 'string' ? item : item?.name;
         return name && name !== 'K';
       });
       const normalizedFeedstock = feedstock.map((item: any) => {
         if (typeof item === 'string' && item === 'Fructose') {
-          return { name: 'Fructose', synonyms: '', objective: 'Valorise', category: 'Side Stream', isNew: false };
+          return { name: 'Fructose', synonyms: '', category: 'Side Stream', isNew: false };
         }
         return item;
       });
+
       const hasFructose = normalizedFeedstock.some((item: any) =>
         (typeof item === 'string' ? item : item?.name) === 'Fructose'
       );
       if (!hasFructose) {
-        normalizedFeedstock.unshift({ name: 'Fructose', synonyms: '', objective: 'Valorise', category: 'Side Stream', isNew: false });
+        normalizedFeedstock.unshift({ name: 'Fructose', synonyms: '', category: 'Side Stream', isNew: false });
       }
       setFeedstockItems(normalizedFeedstock);
       localStorage.setItem('portfolio_feedstock', JSON.stringify(normalizedFeedstock));
 
       // Products: normalize and ensure Lactic Acid has full object data, preserve Sulphuric Acid position
-      let products = JSON.parse(localStorage.getItem('portfolio_product') || '[{"name":"Lactic Acid","synonyms":"","objective":"Produce","category":"Chemical","isNew":false}]');
+      let products = JSON.parse(localStorage.getItem('portfolio_product') || '[{"name":"Lactic Acid","synonyms":"","category":"Chemical","isNew":false}]');
+      products = sanitizeTopicList(products);
 
       // Remove any string-only Lactic Acid and replace with full object
       products = products.map((item: any) => {
         if (typeof item === 'string' && item === 'Lactic Acid') {
-          return { name: 'Lactic Acid', synonyms: '', objective: 'Produce', category: 'Chemical', isNew: false };
+          return { name: 'Lactic Acid', synonyms: '', category: 'Chemical', isNew: false };
         }
         return item;
       });
@@ -94,7 +125,8 @@ const VCGWelcomeWidget = () => {
         (typeof item === 'string' ? item : item?.name) === 'Lactic Acid'
       );
 
-      const lacticAcidObj = { name: 'Lactic Acid', synonyms: '', objective: 'Produce', category: 'Chemical', isNew: false };
+      const lacticAcidObj = { name: 'Lactic Acid', synonyms: '', category: 'Chemical', isNew: false };
+
 
       if (lacticIndex === -1) {
         // Lactic Acid missing — add at top
@@ -574,12 +606,6 @@ const VCGWelcomeWidget = () => {
     };
   });
 
-  // Deterministic Produce/Source assignment for product items
-  const productTagFor = (name: string): "PRODUCE" | "SOURCE" => {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return h % 2 === 0 ? "PRODUCE" : "SOURCE";
-  };
 
   // ── Material brief progress ───────────────────────────────────────────────
   // Mirrors the section-completion logic in MaterialBriefForm.tsx
@@ -613,7 +639,6 @@ const VCGWelcomeWidget = () => {
       return {
         name: normalized.name,
         category: "FEEDSTOCK" as const,
-        tag: (normalized.objective || "VALORISE").toUpperCase() as "SOURCE" | "PRODUCE" | "VALORISE",
         description: `Analysis tracking for ${normalized.name}. Monitor supply chain dynamics, pricing trends, and market developments.`,
         status: isNew ? "brief-pending" : (Math.random() > 0.5 ? "new-updates" : "tracking"),
         insights: isNew ? 0 : Math.floor(Math.random() * 8) + 1,
@@ -628,7 +653,6 @@ const VCGWelcomeWidget = () => {
       return {
         name: normalized.name,
         category: "PRODUCT" as const,
-        tag: (normalized.objective || productTagFor(normalized.name)).toUpperCase() as "SOURCE" | "PRODUCE" | "VALORISE",
         description: `Product intelligence for ${normalized.name}. Track applications, regulatory changes, and competitive landscape.`,
         status: isNew ? "brief-pending" : (Math.random() > 0.6 ? "recently-viewed" : "new-updates"),
         insights: isNew ? 0 : Math.floor(Math.random() * 8) + 1,
@@ -1342,12 +1366,8 @@ const VCGWelcomeWidget = () => {
             );
           })()}
                 <div className="p-4">
-                  <p className={`text-[10px] font-semibold tracking-wider mb-1.5 ${
-            topic.tag === "VALORISE" ? "text-success" :
-            topic.tag === "PRODUCE" ? "text-application-purple" :
-            "text-primary"}`
-            }>
-                    {topic.tag}
+                  <p className="text-[10px] font-semibold tracking-wider mb-1.5 text-muted-foreground">
+                    {topic.category}
                   </p>
                   <h3 className="text-sm font-bold text-foreground mb-1.5">{topic.name}</h3>
 
