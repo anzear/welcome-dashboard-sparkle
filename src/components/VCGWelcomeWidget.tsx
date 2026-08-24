@@ -15,7 +15,7 @@ import { CheckCircle2 } from "lucide-react";
 import { computeBriefCompletion } from "@/components/MaterialBriefForm";
 import { usePipelineBriefStore, BRIEF_PALETTE, PIPELINE_BRIEFS_EVENT } from "@/store/pipelineBriefStore";
 import { useCurrentUser } from "@/lib/currentUser";
-import MaterialAddDialog, { type MaterialAddIntent } from "@/components/MaterialAddDialog";
+import MaterialAddDialog, { type MaterialAddIntent, type MaterialRunAs } from "@/components/MaterialAddDialog";
 import { addPortfolioAddition } from "@/lib/portfolioAdditions";
 import type { MaterialRole } from "@/types/materialPrioritisation";
 
@@ -239,8 +239,7 @@ const VCGWelcomeWidget = () => {
   const [customItemCategory, setCustomItemCategory] = useState<"Feedstock" | "Product">("Feedstock");
   const [customItemSubcategory, setCustomItemSubcategory] = useState("");
   const [customItemDescription, setCustomItemDescription] = useState("");
-  const [customItemSynonyms, setCustomItemSynonyms] = useState("");
-  const [customItemObjective, setCustomItemObjective] = useState<"Source" | "Produce" | "Valorise" | "">("Source");
+  const [customItemRunAs, setCustomItemRunAs] = useState<MaterialRunAs | "">("Feedstock");
   // The add flow serves two different acts: coverage (research) or portfolio (internal tracking).
   const [customItemIntent, setCustomItemIntent] = useState<MaterialAddIntent | "">("");
   const [customItemRole, setCustomItemRole] = useState<MaterialRole | "">("");
@@ -445,8 +444,7 @@ const VCGWelcomeWidget = () => {
     setCustomItemName("");
     setCustomItemSubcategory("");
     setCustomItemDescription("");
-    setCustomItemSynonyms("");
-    setCustomItemObjective("Source");
+    setCustomItemRunAs("Feedstock");
     setCustomItemIntent("");
     setCustomItemRole("");
   };
@@ -457,7 +455,6 @@ const VCGWelcomeWidget = () => {
     if (!itemName || !customItemRole) return;
     const added = addPortfolioAddition({
       name: itemName,
-      synonyms: customItemSynonyms.trim(),
       role: customItemRole,
     });
     toast(added ? "Added to your portfolio" : "Already in your portfolio", {
@@ -471,16 +468,15 @@ const VCGWelcomeWidget = () => {
   };
 
   const handleCustomItemSubmit = () => {
-    if (!customItemName.trim() || !customItemObjective) return;
+    if (!customItemName.trim() || !customItemRunAs) return;
 
-    const resolvedCategory = customItemObjective === "Produce" ? "Product" : "Feedstock";
+    const resolvedCategory = customItemRunAs === "Material" ? "Product" : "Feedstock";
     const storageKey = `portfolio_${resolvedCategory.toLowerCase()}`;
     const existingItems = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const itemName = customItemName.trim();
     const newItem = {
       name: itemName,
-      synonyms: customItemSynonyms.trim(),
-      objective: customItemObjective,
+      runAs: customItemRunAs,
       category: resolvedCategory,
       isNew: true,
     };
@@ -691,7 +687,7 @@ const VCGWelcomeWidget = () => {
             setSelectedPath("know");
             setCustomItemCategory("Feedstock");
             setCustomItemSubcategory("");
-            setCustomItemObjective("Source");
+            setCustomItemRunAs("Feedstock");
             setShowCustomItemDialog(true);
           }}
         >
@@ -1228,10 +1224,8 @@ const VCGWelcomeWidget = () => {
               onOpenChange={(open) => { setShowCustomItemDialog(open); if (!open) resetCustomItemForm(); }}
               name={customItemName}
               onNameChange={setCustomItemName}
-              synonyms={customItemSynonyms}
-              onSynonymsChange={setCustomItemSynonyms}
-              objective={customItemObjective}
-              onObjectiveChange={setCustomItemObjective}
+              runAs={customItemRunAs}
+              onRunAsChange={setCustomItemRunAs}
               intent={customItemIntent}
               onIntentChange={setCustomItemIntent}
               role={customItemRole}

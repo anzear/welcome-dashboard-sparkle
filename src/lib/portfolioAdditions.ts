@@ -14,7 +14,8 @@ export const PORTFOLIO_ADDITIONS_EVENT = "materialPortfolioUpdated";
 
 export interface PortfolioAddition {
   name: string;
-  synonyms: string;
+  /** Legacy: older records may carry alternative names. No longer collected. */
+  synonyms?: string;
   role: MaterialRole;
   added_at: number;
 }
