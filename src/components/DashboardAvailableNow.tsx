@@ -28,7 +28,14 @@ import {
   portfolioAdditionRows,
   PORTFOLIO_ADDITIONS_EVENT,
 } from "@/lib/portfolioAdditions";
+import {
+  addPendingCoverage,
+  readLegacyRequestedIds,
+  readPendingCoverage,
+  PENDING_COVERAGE_EVENT,
+} from "@/lib/pendingCoverage";
 import { MATERIAL_ROLE_LABEL, type Material, type MaterialRole } from "@/types/materialPrioritisation";
+
 
 /** Pending requests live in one place so Your topics can show them. */
 const readRequested = (): string[] => [
