@@ -279,6 +279,11 @@ export const DashboardAvailableNow: React.FC = () => {
         ? `${itemName} is now in the Material Portfolio register. Fill in the rest there.`
         : `${itemName} is already tracked in the Material Portfolio.`,
       duration: 6000,
+      action: {
+        label: "Fill in the rest",
+        onClick: () =>
+          navigate(`/material-prioritisation?brief=${encodeURIComponent(itemName)}`),
+      },
     });
     setShowAddDialog(false);
     resetAddForm();
