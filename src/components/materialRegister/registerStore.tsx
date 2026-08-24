@@ -231,6 +231,8 @@ export interface Filters {
   notAssessed: boolean;
   /** Carries a split flag on at least one judged criterion. */
   teamsDisagree: boolean;
+  /** Excludes materials whose coverage has already been delivered. */
+  hideDeliveredCoverage: boolean;
   /**
    * Per-criterion score filter, keyed by criterion id. Values are "1".."5" and
    * NOT_SCORED. A material matches when any recorded score is selected, or when
