@@ -332,29 +332,46 @@ export const DashboardAvailableNow: React.FC = () => {
 
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {pageMaterials.map((m) => (
-            <div
-              key={m.material_id}
-              className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-xs font-semibold leading-snug text-foreground">{m.name}</h3>
-                <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-success/15">
-                  <Sparkles className="h-2.5 w-2.5 text-success" />
-                </div>
-              </div>
-              <RoleChip isExisting={m.role === "existing"} className="self-start">
-                {MATERIAL_ROLE_LABEL[m.role]}
-              </RoleChip>
-              <Button
-                size="sm"
-                className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
-                onClick={() => setTarget(m)}
+          {pageMaterials.map((m) => {
+            const value = sortActive ? valueFor(m) : null;
+            return (
+              <div
+                key={m.material_id}
+                className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
               >
-                Request coverage
-              </Button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-xs font-semibold leading-snug text-foreground">{m.name}</h3>
+                  <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-success/15">
+                    <Sparkles className="h-2.5 w-2.5 text-success" />
+                  </div>
+                </div>
+                <RoleChip isExisting={m.role === "existing"} className="self-start">
+                  {MATERIAL_ROLE_LABEL[m.role]}
+                </RoleChip>
+                {/* The value being sorted on. An em dash means nothing recorded — never a zero. */}
+                {sortActive && (
+                  <p className="text-[11px] text-muted-foreground">
+                    <span className="uppercase tracking-widest text-[10px] text-muted-foreground/70">
+                      {activeMeasure?.label ?? activeCriterion?.label}
+                    </span>{" "}
+                    {value ? (
+                      <span className="tabular-nums font-medium text-foreground">{value.text}</span>
+                    ) : (
+                      <span className="text-muted-foreground/60">—</span>
+                    )}
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
+                  onClick={() => setTarget(m)}
+                >
+                  Request coverage
+                </Button>
+              </div>
+            );
+          })}
+
 
           {/* Request another material — an action, not a material. */}
           <button
