@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
