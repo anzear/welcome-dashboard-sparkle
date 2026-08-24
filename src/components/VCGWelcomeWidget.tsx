@@ -20,6 +20,7 @@ import { addPortfolioAddition } from "@/lib/portfolioAdditions";
 import {
   addPendingCoverage,
   readPendingCoverage,
+  reconcilePendingCoverage,
   PENDING_COVERAGE_EVENT,
   type PendingCoverageEntry,
 } from "@/lib/pendingCoverage";
@@ -40,6 +41,9 @@ const VCGWelcomeWidget = () => {
   // other topics in a pending state so a request never vanishes.
   const [pending, setPending] = useState<PendingCoverageEntry[]>(() => readPendingCoverage());
   useEffect(() => {
+    // Any pending topic without a register row gets one; role-less stubs go.
+    reconcilePendingCoverage();
+    setPending(readPendingCoverage());
     const sync = () => setPending(readPendingCoverage());
     window.addEventListener(PENDING_COVERAGE_EVENT, sync);
     return () => window.removeEventListener(PENDING_COVERAGE_EVENT, sync);
@@ -72,11 +76,10 @@ const VCGWelcomeWidget = () => {
     for (const item of list) {
       const name = typeof item === 'string' ? item : item?.name;
       if (!name || isStubTopic(name)) continue;
+      // Created by a coverage request but never agreed, and from before the role
+      // question existed — a prototype stub, so it is dropped rather than guessed at.
       const unagreed = typeof item === 'object' && !!item?.isNew;
-      if (unagreed) {
-        addPendingCoverage({ name });
-        continue;
-      }
+      if (unagreed) continue;
       kept.push(item);
     }
     return kept;
@@ -526,7 +529,11 @@ const VCGWelcomeWidget = () => {
     if (customItemRole) {
       addPortfolioAddition({ name: itemName, role: customItemRole });
     }
-    const added = addPendingCoverage({ name: itemName, runAs: customItemRunAs });
+    const added = addPendingCoverage({
+      name: itemName,
+      runAs: customItemRunAs,
+      role: customItemRole || undefined,
+    });
     setPending(readPendingCoverage());
     toast(added ? "Coverage requested" : "A request is already in", {
       description: (
