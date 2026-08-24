@@ -19,14 +19,15 @@ interface MaterialAddDialogProps {
   onSynonymsChange: (value: string) => void;
   objective: MaterialObjective | "";
   onObjectiveChange: (value: MaterialObjective) => void;
-  intent: MaterialAddIntent | "";
-  onIntentChange: (value: MaterialAddIntent) => void;
-  role: MaterialRole | "";
-  onRoleChange: (value: MaterialRole) => void;
+  /** Omitted on legacy coverage-only callers, which keep the old single path. */
+  intent?: MaterialAddIntent | "";
+  onIntentChange?: (value: MaterialAddIntent) => void;
+  role?: MaterialRole | "";
+  onRoleChange?: (value: MaterialRole) => void;
   /** Requests coverage for the material. */
   onSubmit: () => void;
   /** Adds the material to the Material Portfolio, without coverage. */
-  onSubmitPortfolio: () => void;
+  onSubmitPortfolio?: () => void;
   onCancel: () => void;
 }
 
@@ -63,15 +64,17 @@ export default function MaterialAddDialog({
   onSynonymsChange,
   objective,
   onObjectiveChange,
-  intent,
+  intent = "",
   onIntentChange,
-  role,
+  role = "",
   onRoleChange,
   onSubmit,
   onSubmitPortfolio,
   onCancel,
 }: MaterialAddDialogProps) {
-  const isPortfolio = intent === "portfolio";
+  const dualPath = Boolean(onSubmitPortfolio && onIntentChange && onRoleChange);
+  const effectiveIntent = dualPath ? intent : "coverage";
+  const isPortfolio = effectiveIntent === "portfolio";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -85,6 +88,7 @@ export default function MaterialAddDialog({
         </DialogHeader>
         <div className="space-y-4">
           {/* The question comes first: the rest of the form depends on the answer. */}
+          {dualPath && (
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold">What would you like to do? *</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -96,7 +100,7 @@ export default function MaterialAddDialog({
                     key={option.value}
                     type="button"
                     variant="ghost"
-                    onClick={() => onIntentChange(option.value)}
+                    onClick={() => onIntentChange?.(option.value)}
                     className={`h-auto flex-col items-start gap-1 p-3 rounded-lg border-2 text-left transition-all hover:bg-background whitespace-normal ${
                       isSelected
                         ? "border-success bg-success/10"
@@ -115,6 +119,7 @@ export default function MaterialAddDialog({
               })}
             </div>
           </div>
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="material-add-name" className="text-sm font-semibold">Material name *</Label>
@@ -140,7 +145,7 @@ export default function MaterialAddDialog({
           </div>
 
           {/* Objective belongs to coverage only. */}
-          {intent === "coverage" && (
+          {effectiveIntent === "coverage" && (
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold">Select my objective *</Label>
               <div className="grid grid-cols-3 gap-2">
@@ -193,7 +198,7 @@ export default function MaterialAddDialog({
                       key={option.value}
                       type="button"
                       variant="ghost"
-                      onClick={() => onRoleChange(option.value)}
+                      onClick={() => onRoleChange?.(option.value)}
                       className={`h-auto flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all hover:bg-background ${
                         isSelected ? selected : "border-border/40 bg-background hover:border-muted-foreground/30"
                       }`}
@@ -220,7 +225,7 @@ export default function MaterialAddDialog({
               type="button"
               onClick={isPortfolio ? onSubmitPortfolio : onSubmit}
               disabled={
-                !intent ||
+                !effectiveIntent ||
                 !name.trim() ||
                 (isPortfolio ? !role : !objective)
               }
