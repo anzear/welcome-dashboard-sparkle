@@ -254,164 +254,194 @@ export default function MaterialAddDialog({
           </div>
 
           {dualPath ? (
-            nameEntered && (
-              <div className="space-y-3">
-                {/* STEP 2 — the two actions. Coverage carries the emphasis; portfolio is the quiet one. */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Button
-                      type="button"
-                      disabled={!nameEntered || coverageBlocked || (effectiveIntent === "coverage" && !runAs)}
-                      onClick={
-                        effectiveIntent === "coverage"
-                          ? onSubmit
-                          : () => {
-                              onIntentChange?.("coverage");
-                              // Discard what was entered on the other path. Safe: only
-                              // dual-path callers reach here, and their role state accepts "".
-                              onRoleChange?.("" as MaterialRole);
-                            }
-                      }
-                      className={`w-full h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground ${
-                        effectiveIntent === "coverage" ? "ring-2 ring-success/40 ring-offset-1 ring-offset-card" : ""
-                      }`}
-                    >
-                      <Search className="w-3.5 h-3.5 mr-1.5" />
-                      Request coverage
-                    </Button>
-                    <p className="text-[10px] leading-snug text-muted-foreground">
-                      VCG researches this material and builds its brief.
-                    </p>
-                    {coveragePending ? (
-                      <p className="text-xs text-amber-700">
-                        A coverage request is already in for {match?.name}.
-                      </p>
-                    ) : coverageBlocked ? (
-                      <p className="text-xs text-amber-700">
-                        Coverage is already active for {match?.name}.{" "}
-                        <Link to={briefHref} className="underline font-medium">
-                          Open its brief
-                        </Link>
-                      </p>
-                    ) : null}
+            nameEntered && (() => {
+              // STEP 2 — the two actions are a selection, not a submission.
+              // Both stay clickable so the user can switch; coverage stays dominant.
+              const actionChosen = effectiveIntent === "coverage" || isPortfolio;
+              const coverageComplete = effectiveIntent === "coverage" && runAs && !coverageBlocked;
+              const portfolioComplete = isPortfolio && role && !portfolioBlocked;
+              const canConfirm = coverageComplete || portfolioComplete;
+              // The hint tells the user what is still missing rather than leaving it blank.
+              const missingHint =
+                coveragePending && effectiveIntent === "coverage"
+                  ? `A coverage request is already in for ${match?.name}.`
+                  : coverageBlocked && effectiveIntent === "coverage"
+                    ? `Coverage is already active for ${match?.name}.`
+                    : portfolioBlocked && isPortfolio
+                      ? `${match?.name} is already tracked in your portfolio.`
+                      : !actionChosen
+                        ? "Choose an action to continue."
+                        : effectiveIntent === "coverage" && !runAs
+                          ? "Choose how to run it."
+                          : isPortfolio && !role
+                            ? "Choose a role."
+                            : "";
 
+              return (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          onIntentChange?.("coverage");
+                          onRoleChange?.("" as MaterialRole);
+                        }}
+                        className={`w-full h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground ${
+                          effectiveIntent === "coverage" ? "ring-2 ring-success/40 ring-offset-1 ring-offset-card" : "opacity-70"
+                        }`}
+                      >
+                        <Search className="w-3.5 h-3.5 mr-1.5" />
+                        Request coverage
+                      </Button>
+                      <p className="text-[10px] leading-snug text-muted-foreground">
+                        VCG researches this material and builds its brief.
+                      </p>
+                      {coveragePending ? (
+                        <p className="text-xs text-amber-700">
+                          A coverage request is already in for {match?.name}.
+                        </p>
+                      ) : coverageBlocked ? (
+                        <p className="text-xs text-amber-700">
+                          Coverage is already active for {match?.name}.{" "}
+                          <Link to={briefHref} className="underline font-medium">
+                            Open its brief
+                          </Link>
+                        </p>
+                      ) : null}
+                    </div>
+
+                    <div className="space-y-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          onIntentChange?.("portfolio");
+                          onRunAsChange("" as MaterialRunAs);
+                        }}
+                        className={`w-full h-9 border-2 rounded-md ${
+                          isPortfolio ? "ring-2 ring-foreground/30 ring-offset-1 ring-offset-card" : "opacity-70"
+                        }`}
+                      >
+                        <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
+                        Add to portfolio
+                      </Button>
+                      <p className="text-[10px] leading-snug text-muted-foreground">
+                        Track this material internally, without coverage.
+                      </p>
+                      {portfolioBlocked && (
+                        <p className="text-xs text-amber-700">
+                          {match?.name} is already tracked in your portfolio.{" "}
+                          <Link to="/material-prioritisation" className="underline font-medium">
+                            Open it in the register
+                          </Link>
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
+                  {/* STEP 3 — the one follow-up field for the chosen action. */}
+                  {effectiveIntent === "coverage" && (
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Run as *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {RUN_AS.map((option) => {
+                          const isSelected = runAs === option.value;
+                          const Icon = option.Icon;
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant="ghost"
+                              onClick={() => onRunAsChange(option.value)}
+                              className={`h-auto flex flex-col items-start gap-1 p-3 rounded-lg border-2 text-left whitespace-normal transition-all hover:bg-background ${
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-border/40 bg-background hover:border-muted-foreground/30"
+                              }`}
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                                <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>
+                                  {option.label}
+                                </span>
+                              </span>
+                              <span className="text-[10px] leading-snug text-muted-foreground">{option.description}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {isPortfolio && (
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Role *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {ROLES.map((option) => {
+                          const isSelected = role === option.value;
+                          const selected = option.value === "existing"
+                            ? "border-foreground/40 bg-muted"
+                            : "border-amber-700/50 bg-amber-500/5";
+                          return (
+                            <Button
+                              key={option.value}
+                              type="button"
+                              variant="ghost"
+                              onClick={() => onRoleChange?.(option.value)}
+                              className={`h-auto flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all hover:bg-background ${
+                                isSelected ? selected : "border-border/40 bg-background hover:border-muted-foreground/30"
+                              }`}
+                            >
+                              <span className="text-sm font-semibold text-foreground">
+                                {MATERIAL_ROLE_LABEL[option.value]}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground">{option.description}</span>
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        The rest is filled in inside the Material Portfolio.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* FOOTER — Cancel and a confirm button whose label matches the chosen action. */}
+                  <div className="flex gap-3 pt-1">
                     <Button
                       type="button"
                       variant="outline"
-                      disabled={!nameEntered || portfolioBlocked || (isPortfolio && !role)}
-                      onClick={
-                        isPortfolio
-                          ? onSubmitPortfolio
-                          : () => {
-                              onIntentChange?.("portfolio");
-                              // Discard what was entered on the other path. Safe: only
-                              // dual-path callers reach here, and their runAs state accepts "".
-                              onRunAsChange("" as MaterialRunAs);
-                            }
-                      }
-                      className={`w-full h-9 border-2 rounded-md ${
-                        isPortfolio ? "ring-2 ring-foreground/30 ring-offset-1 ring-offset-card" : ""
-                      }`}
+                      onClick={onCancel}
+                      className="flex-1 h-9 border-2 rounded-md"
                     >
-                      <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
-                      Add to portfolio
+                      Cancel
                     </Button>
-                    <p className="text-[10px] leading-snug text-muted-foreground">
-                      Track this material internally, without coverage.
-                    </p>
-                    {portfolioBlocked && (
-                      <p className="text-xs text-amber-700">
-                        {match?.name} is already tracked in your portfolio.{" "}
-                        <Link to="/material-prioritisation" className="underline font-medium">
-                          Open it in the register
-                        </Link>
-                      </p>
-                    )}
+                    <Button
+                      type="button"
+                      disabled={!canConfirm}
+                      onClick={isPortfolio ? onSubmitPortfolio : onSubmit}
+                      className="flex-1 h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground disabled:opacity-50"
+                    >
+                      {isPortfolio ? (
+                        <>
+                          <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
+                          Add to portfolio
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-3.5 h-3.5 mr-1.5" />
+                          Request coverage
+                        </>
+                      )}
+                    </Button>
                   </div>
+                  {!canConfirm && missingHint && (
+                    <p className="text-xs text-muted-foreground text-center -mt-1">{missingHint}</p>
+                  )}
                 </div>
-
-                {/* STEP 3 — the one follow-up field for the chosen action, inline in the same modal. */}
-                {effectiveIntent === "coverage" && (
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-semibold">Run as *</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {RUN_AS.map((option) => {
-                        const isSelected = runAs === option.value;
-                        const Icon = option.Icon;
-                        return (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant="ghost"
-                            onClick={() => onRunAsChange(option.value)}
-                            className={`h-auto flex flex-col items-start gap-1 p-3 rounded-lg border-2 text-left whitespace-normal transition-all hover:bg-background ${
-                              isSelected
-                                ? "border-primary bg-primary/10"
-                                : "border-border/40 bg-background hover:border-muted-foreground/30"
-                            }`}
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                              <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                                {option.label}
-                              </span>
-                            </span>
-                            <span className="text-[10px] leading-snug text-muted-foreground">{option.description}</span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {isPortfolio && (
-                  <div className="space-y-1.5">
-                    <Label className="text-sm font-semibold">Role *</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {ROLES.map((option) => {
-                        const isSelected = role === option.value;
-                        const selected = option.value === "existing"
-                          ? "border-foreground/40 bg-muted"
-                          : "border-amber-700/50 bg-amber-500/5";
-                        return (
-                          <Button
-                            key={option.value}
-                            type="button"
-                            variant="ghost"
-                            onClick={() => onRoleChange?.(option.value)}
-                            className={`h-auto flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all hover:bg-background ${
-                              isSelected ? selected : "border-border/40 bg-background hover:border-muted-foreground/30"
-                            }`}
-                          >
-                            <span className="text-sm font-semibold text-foreground">
-                              {MATERIAL_ROLE_LABEL[option.value]}
-                            </span>
-                            <span className="text-[10px] text-muted-foreground">{option.description}</span>
-                          </Button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      The rest is filled in inside the Material Portfolio.
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex pt-1">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={onCancel}
-                    className="flex-1 h-9 border-2 rounded-md"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            )
+              );
+            })()
           ) : (
             <>
               {/* Legacy coverage-only caller: a single short form. */}
