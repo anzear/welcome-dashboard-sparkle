@@ -423,17 +423,7 @@ export default function MaterialAddDialog({
                       onClick={isPortfolio ? onSubmitPortfolio : onSubmit}
                       className="flex-1 h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground disabled:opacity-50"
                     >
-                      {isPortfolio ? (
-                        <>
-                          <FolderPlus className="w-3.5 h-3.5 mr-1.5" />
-                          Add to portfolio
-                        </>
-                      ) : (
-                        <>
-                          <Search className="w-3.5 h-3.5 mr-1.5" />
-                          Request coverage
-                        </>
-                      )}
+                      Confirm
                     </Button>
                   </div>
                   {!canConfirm && missingHint && (
