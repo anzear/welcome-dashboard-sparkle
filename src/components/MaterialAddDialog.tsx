@@ -10,6 +10,8 @@ import { MATERIAL_ROLE_LABEL } from "@/types/materialPrioritisation";
 import { materials as portfolioMaterials } from "@/data/materialPrioritisationMock";
 import { readPortfolioAdditions } from "@/lib/portfolioAdditions";
 import { VCG_DATABASE_MATERIALS } from "@/data/vcgMaterialDatabase";
+import { readPendingCoverage } from "@/lib/pendingCoverage";
+
 
 /** Pathway node position the run starts from. Same run, different entry point. */
 export type MaterialRunAs = "Feedstock" | "Material";
