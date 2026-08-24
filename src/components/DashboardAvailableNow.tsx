@@ -83,6 +83,8 @@ export const DashboardAvailableNow: React.FC = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addName, setAddName] = useState("");
   const [addRunAs, setAddRunAs] = useState<MaterialRunAs | "">("Feedstock");
+  // Optional question from the shared coverage step. Coverage path only.
+  const [addQuestion, setAddQuestion] = useState("");
   const [addIntent, setAddIntent] = useState<MaterialAddIntent | "">("coverage");
   const [addRole, setAddRole] = useState<MaterialRole | "">("");
 
@@ -191,9 +193,17 @@ export const DashboardAvailableNow: React.FC = () => {
   }, [sorted, page]);
 
 
-  const confirmRequest = (m: Material) => {
+  const confirmRequest = (
+    m: Material,
+    request: { runAs: MaterialRunAs; question: string | null },
+  ) => {
     // Records the request as a pending topic. The register row is untouched.
-    addPendingCoverage({ name: m.name, materialId: m.material_id });
+    addPendingCoverage({
+      name: m.name,
+      materialId: m.material_id,
+      runAs: request.runAs,
+      question: request.question ?? undefined,
+    });
     setRequested(readRequested());
     toast("Coverage requested", {
       description: `${m.name} now sits under Your topics as a pending topic. Our team will contact you to set it up.`,
@@ -205,6 +215,7 @@ export const DashboardAvailableNow: React.FC = () => {
   const resetAddForm = () => {
     setAddName("");
     setAddRunAs("Feedstock");
+    setAddQuestion("");
     // Coverage is the section's purpose — keep it as the default on reopen.
     setAddIntent("coverage");
     setAddRole("");
@@ -232,6 +243,7 @@ export const DashboardAvailableNow: React.FC = () => {
       materialId: match?.material_id,
       runAs: addRunAs,
       role: addRole || undefined,
+      question: addQuestion.trim() === "" ? undefined : addQuestion.trim(),
     });
     // Guarantees the register row exists for the request that was just made.
     reconcilePendingCoverage();
@@ -436,7 +448,7 @@ export const DashboardAvailableNow: React.FC = () => {
           onOpenChange={(o) => !o && setTarget(null)}
           materialName={target.name}
           role={target.role}
-          onConfirm={() => confirmRequest(target)}
+          onConfirm={(request) => confirmRequest(target, request)}
         />
       )}
 
@@ -450,6 +462,8 @@ export const DashboardAvailableNow: React.FC = () => {
         onNameChange={setAddName}
         runAs={addRunAs}
         onRunAsChange={setAddRunAs}
+        coverageQuestion={addQuestion}
+        onCoverageQuestionChange={setAddQuestion}
         intent={addIntent}
         onIntentChange={setAddIntent}
         role={addRole}

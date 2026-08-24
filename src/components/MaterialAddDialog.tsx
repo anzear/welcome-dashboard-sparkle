@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, FolderPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  RunAsPicker,
+  CoverageQuestionField,
+  type CoverageRunAs,
+} from "@/components/coverage/CoverageStep";
 import type { MaterialRole } from "@/types/materialPrioritisation";
 import { MATERIAL_ROLE_LABEL } from "@/types/materialPrioritisation";
 import { materials as portfolioMaterials } from "@/data/materialPrioritisationMock";
@@ -13,8 +18,8 @@ import { VCG_DATABASE_MATERIALS } from "@/data/vcgMaterialDatabase";
 import { readPendingCoverage } from "@/lib/pendingCoverage";
 
 
-/** Pathway node position the run starts from. Same run, different entry point. */
-export type MaterialRunAs = "Feedstock" | "Material";
+/** Pathway node position the run starts from. Shared with the coverage step. */
+export type MaterialRunAs = CoverageRunAs;
 /** Two different acts. Coverage is research we do; portfolio is internal tracking. */
 export type MaterialAddIntent = "coverage" | "portfolio";
 
@@ -25,6 +30,9 @@ interface MaterialAddDialogProps {
   onNameChange: (value: string) => void;
   runAs: MaterialRunAs | "";
   onRunAsChange: (value: MaterialRunAs) => void;
+  /** Optional question the coverage should answer — coverage path only. */
+  coverageQuestion?: string;
+  onCoverageQuestionChange?: (value: string) => void;
   /** Omitted on legacy coverage-only callers, which keep the old single path. */
   intent?: MaterialAddIntent | "";
   onIntentChange?: (value: MaterialAddIntent) => void;
@@ -36,21 +44,6 @@ interface MaterialAddDialogProps {
   onSubmitPortfolio?: () => void;
   onCancel: () => void;
 }
-
-const RUN_AS: { value: MaterialRunAs; label: string; description: string; Icon: typeof ArrowRight }[] = [
-  {
-    value: "Feedstock",
-    label: "Feedstock",
-    description: "The input a pathway starts from. Run this way to see what can be made from it.",
-    Icon: ArrowRight,
-  },
-  {
-    value: "Material",
-    label: "Material",
-    description: "The output a pathway arrives at. Run this way to see what it can be made from.",
-    Icon: ArrowLeft,
-  },
-];
 
 const ROLES: { value: MaterialRole; description: string }[] = [
   { value: "existing", description: "You buy or use it today" },
@@ -139,6 +132,8 @@ export default function MaterialAddDialog({
   name,
   onNameChange,
   runAs = "",
+  coverageQuestion = "",
+  onCoverageQuestionChange,
   onRunAsChange,
   intent = "",
   onIntentChange,
@@ -347,39 +342,17 @@ export default function MaterialAddDialog({
                     </div>
                   </div>
 
-                  {/* STEP 3 — the one follow-up field for the chosen action. */}
+                  {/* STEP 3 — the shared coverage step, or the portfolio role. */}
                   {effectiveIntent === "coverage" && (
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Run as *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {RUN_AS.map((option) => {
-                          const isSelected = runAs === option.value;
-                          const Icon = option.Icon;
-                          return (
-                            <Button
-                              key={option.value}
-                              type="button"
-                              variant="ghost"
-                              onClick={() => onRunAsChange(option.value)}
-                              className={`h-auto flex flex-col items-start gap-1 p-3 rounded-lg border-2 text-left whitespace-normal transition-all hover:bg-background ${
-                                isSelected
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border/40 bg-background hover:border-muted-foreground/30"
-                              }`}
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                                <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                                  {option.label}
-                                </span>
-                              </span>
-                              <span className="text-[10px] leading-snug text-muted-foreground">{option.description}</span>
-                            </Button>
-                          );
-                        })}
-                      </div>
+                    <div className="space-y-3">
+                      <RunAsPicker value={runAs} onChange={onRunAsChange} />
+                      <CoverageQuestionField
+                        value={coverageQuestion}
+                        onChange={(v) => onCoverageQuestionChange?.(v)}
+                      />
                     </div>
                   )}
+
 
                   {/* Role — asked on the portfolio path, and on the coverage path
                       when the material is brand new to the portfolio. A material
@@ -446,37 +419,15 @@ export default function MaterialAddDialog({
             })()
           ) : (
             <>
-              {/* Legacy coverage-only caller: a single short form. */}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold">Run as *</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  {RUN_AS.map((option) => {
-                    const isSelected = runAs === option.value;
-                    const Icon = option.Icon;
-                    return (
-                      <Button
-                        key={option.value}
-                        type="button"
-                        variant="ghost"
-                        onClick={() => onRunAsChange(option.value)}
-                        className={`h-auto flex flex-col items-start gap-1 p-3 rounded-lg border-2 text-left whitespace-normal transition-all hover:bg-background ${
-                          isSelected
-                            ? "border-primary bg-primary/10"
-                            : "border-border/40 bg-background hover:border-muted-foreground/30"
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                          <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                            {option.label}
-                          </span>
-                        </span>
-                        <span className="text-[10px] leading-snug text-muted-foreground">{option.description}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
+              {/* Legacy coverage-only caller: the shared coverage step. */}
+              <div className="space-y-3">
+                <RunAsPicker value={runAs} onChange={onRunAsChange} />
+                <CoverageQuestionField
+                  value={coverageQuestion}
+                  onChange={(v) => onCoverageQuestionChange?.(v)}
+                />
               </div>
+
 
               <div className="flex gap-3 pt-2">
                 <Button type="button" variant="outline" onClick={onCancel} className="flex-1 h-9 border-2 rounded-md">

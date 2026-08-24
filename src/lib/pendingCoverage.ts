@@ -26,6 +26,8 @@ export interface PendingCoverageEntry {
   runAs?: "Feedstock" | "Material";
   /** Role given in the modal, used to create the register row for the request. */
   role?: MaterialRole;
+  /** Optional question the coverage should answer, from the shared coverage step. */
+  question?: string;
   requestedAt: number;
 }
 

@@ -39,6 +39,7 @@ import ProductLinePicker, { ProductLineChips } from "@/components/materialRegist
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
 import { toast } from "sonner";
 import RequestCoverageDialog from "@/components/materialRegister/RequestCoverageDialog";
+import { addPendingCoverage } from "@/lib/pendingCoverage";
 import { RoleChip } from "@/components/materialRegister/RoleChip";
 
 /** Select needs a non-empty value for the explicit "no type" choice. */
@@ -728,12 +729,21 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
         onOpenChange={setCoverageOpen}
         materialName={m.name}
         role={m.role}
-        onConfirm={() =>
+        onConfirm={(request) => {
+          // Same request as the dashboard: the topic goes pending and the
+          // material leaves Available now. Run as stays on the request.
+          addPendingCoverage({
+            name: m.name,
+            materialId: m.material_id,
+            role: m.role,
+            runAs: request.runAs,
+            question: request.question ?? undefined,
+          });
           toast("Coverage requested", {
-            description: `VCG is building the material brief for ${m.name}.`,
+            description: `${m.name} sits under Your topics as a pending topic. Our team will contact you to set this up.`,
             duration: 6000,
-          })
-        }
+          });
+        }}
       />
 
       {/* Classification is corrected here, not in the page body. */}

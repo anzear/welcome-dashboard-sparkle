@@ -1,6 +1,7 @@
 /**
  * The one coverage request flow. Used from the material profile and from the
  * dashboard's "Available now" section — there is no second purchase path.
+ * The questions themselves live in the shared coverage step.
  */
 import React, { useEffect, useState } from "react";
 import {
@@ -12,9 +13,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { RoleChip } from "@/components/materialRegister/RoleChip";
+import { CoverageStep, type CoverageRunAs } from "@/components/coverage/CoverageStep";
 import { MATERIAL_ROLE_LABEL, type MaterialRole } from "@/types/materialPrioritisation";
 
 interface Props {
@@ -22,7 +22,7 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   materialName: string;
   role: MaterialRole;
-  onConfirm: (scope: string | null) => void;
+  onConfirm: (request: { runAs: CoverageRunAs; question: string | null }) => void;
 }
 
 export const RequestCoverageDialog: React.FC<Props> = ({
@@ -32,10 +32,14 @@ export const RequestCoverageDialog: React.FC<Props> = ({
   role,
   onConfirm,
 }) => {
-  const [scope, setScope] = useState("");
+  const [runAs, setRunAs] = useState<CoverageRunAs | "">("");
+  const [question, setQuestion] = useState("");
 
   useEffect(() => {
-    if (open) setScope("");
+    if (open) {
+      setRunAs("");
+      setQuestion("");
+    }
   }, [open]);
 
   return (
@@ -50,22 +54,18 @@ export const RequestCoverageDialog: React.FC<Props> = ({
         </DialogHeader>
 
         <div className="space-y-3">
+          {/* The material and its role are already known — read-only here. */}
           <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-2.5 py-2">
             <span className="text-xs font-semibold text-foreground">{materialName}</span>
             <RoleChip isExisting={role === "existing"}>{MATERIAL_ROLE_LABEL[role]}</RoleChip>
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="coverage-scope" className="text-[11px] font-medium">
-              What should the coverage answer? <span className="text-muted-foreground">(optional)</span>
-            </Label>
-            <Textarea
-              id="coverage-scope"
-              value={scope}
-              onChange={(e) => setScope(e.target.value)}
-              placeholder="e.g. suppliers outside the EU, or routes that avoid palm"
-              className="min-h-[70px] text-xs"
-            />
-          </div>
+          <CoverageStep
+            runAs={runAs}
+            onRunAsChange={setRunAs}
+            question={question}
+            onQuestionChange={setQuestion}
+            questionFieldId="coverage-scope"
+          />
         </div>
 
         <DialogFooter>
@@ -74,13 +74,15 @@ export const RequestCoverageDialog: React.FC<Props> = ({
           </Button>
           <Button
             size="sm"
+            disabled={!runAs}
             className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
             onClick={() => {
-              onConfirm(scope.trim() === "" ? null : scope.trim());
+              if (!runAs) return;
+              onConfirm({ runAs, question: question.trim() === "" ? null : question.trim() });
               onOpenChange(false);
             }}
           >
-            Request coverage
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>
