@@ -28,18 +28,23 @@ import {
   portfolioAdditionRows,
   PORTFOLIO_ADDITIONS_EVENT,
 } from "@/lib/portfolioAdditions";
+import {
+  addPendingCoverage,
+  readLegacyRequestedIds,
+  readPendingCoverage,
+  PENDING_COVERAGE_EVENT,
+} from "@/lib/pendingCoverage";
 import { MATERIAL_ROLE_LABEL, type Material, type MaterialRole } from "@/types/materialPrioritisation";
 
-const REQUESTED_KEY = "material_coverage_requested";
 
-const readRequested = (): string[] => {
-  try {
-    const raw = JSON.parse(window.localStorage.getItem(REQUESTED_KEY) || "[]");
-    return Array.isArray(raw) ? raw.filter((v) => typeof v === "string") : [];
-  } catch {
-    return [];
-  }
-};
+/** Pending requests live in one place so Your topics can show them. */
+const readRequested = (): string[] => [
+  ...readLegacyRequestedIds(),
+  ...readPendingCoverage()
+    .map((e) => e.materialId)
+    .filter((id): id is string => Boolean(id)),
+];
+
 
 
 export const DashboardAvailableNow: React.FC = () => {
@@ -56,12 +61,18 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const refresh = useCallback(() => {
     setAdditions(portfolioAdditionRows(seededMaterials));
+    setRequested(readRequested());
   }, []);
 
   useEffect(() => {
     window.addEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
-    return () => window.removeEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
+    window.addEventListener(PENDING_COVERAGE_EVENT, refresh);
+    return () => {
+      window.removeEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
+      window.removeEventListener(PENDING_COVERAGE_EVENT, refresh);
+    };
   }, [refresh]);
+
 
   const allMaterials = useMemo(() => [...seededMaterials, ...additions], [additions]);
 
@@ -95,18 +106,15 @@ export const DashboardAvailableNow: React.FC = () => {
   }, [available, page]);
 
   const confirmRequest = (m: Material) => {
-    const next = [...new Set([...requested, m.material_id])];
-    try {
-      window.localStorage.setItem(REQUESTED_KEY, JSON.stringify(next));
-    } catch {
-      /* a storage failure must not block the request being shown as made */
-    }
-    setRequested(next);
+    // Records the request as a pending topic. The register row is untouched.
+    addPendingCoverage({ name: m.name, materialId: m.material_id });
+    setRequested(readRequested());
     toast("Coverage requested", {
-      description: `VCG is building the material brief for ${m.name}. It appears under Your topics when ready.`,
+      description: `${m.name} now sits under Your topics as a pending topic. Our team will contact you to set it up.`,
       duration: 6000,
     });
   };
+
 
   const resetAddForm = () => {
     setAddName("");
@@ -122,53 +130,34 @@ export const DashboardAvailableNow: React.FC = () => {
     setShowAddDialog(true);
   };
 
-  /** Coverage path — request intelligence for a material, feedstock- or product-side. */
+  /** Coverage path — the request becomes a pending topic under Your topics. */
   const handleCoverageSubmit = () => {
     if (!addName.trim() || !addRunAs) return;
-
-    const resolvedCategory = addRunAs === "Material" ? "Product" : "Feedstock";
-    const storageKey = `portfolio_${resolvedCategory.toLowerCase()}`;
-    const existingItems = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const itemName = addName.trim();
-    const newItem = {
+    const match = allMaterials.find((m) => m.name.toLowerCase() === itemName.toLowerCase());
+    const added = addPendingCoverage({
       name: itemName,
+      materialId: match?.material_id,
       runAs: addRunAs,
-      category: resolvedCategory,
-      isNew: true,
-    };
-    const exists = existingItems.some((item: any) =>
-      typeof item === "string" ? item === itemName : item.name === itemName,
-    );
-
-    if (!exists) {
-      localStorage.setItem(storageKey, JSON.stringify([newItem, ...existingItems]));
-      const timestampKey = `portfolio_${resolvedCategory.toLowerCase()}_timestamps`;
-      const timestamps = JSON.parse(localStorage.getItem(timestampKey) || "{}");
-      timestamps[itemName] = Date.now();
-      localStorage.setItem(timestampKey, JSON.stringify(timestamps));
-      window.dispatchEvent(
-        new CustomEvent("portfolioUpdated", {
-          detail: { category: resolvedCategory, itemName },
-        }),
-      );
-      toast("Analysis in Progress", {
-        description: (
-          <div className="flex items-start gap-2">
-            <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-            <span>
-              We are looking through all relevant documentation for your selection.
-              VCG will notify when the analysis for{" "}
-              <span className="font-semibold text-success">{itemName}</span> will be available in your portfolio for review.
-            </span>
-          </div>
-        ),
-        duration: 6000,
-      });
-    }
+    });
+    setRequested(readRequested());
+    toast(added ? "Coverage requested" : "A request is already in", {
+      description: (
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+          <span>
+            <span className="font-semibold text-success">{itemName}</span> sits under Your topics as
+            a pending topic. Our team will contact you to set this up.
+          </span>
+        </div>
+      ),
+      duration: 6000,
+    });
 
     setShowAddDialog(false);
     resetAddForm();
   };
+
 
   /** Portfolio path — internal tracking only, no coverage is requested. */
   const handlePortfolioSubmit = () => {

@@ -17,7 +17,14 @@ import { usePipelineBriefStore, BRIEF_PALETTE, PIPELINE_BRIEFS_EVENT } from "@/s
 import { useCurrentUser } from "@/lib/currentUser";
 import MaterialAddDialog, { type MaterialAddIntent, type MaterialRunAs } from "@/components/MaterialAddDialog";
 import { addPortfolioAddition } from "@/lib/portfolioAdditions";
+import {
+  addPendingCoverage,
+  readPendingCoverage,
+  PENDING_COVERAGE_EVENT,
+  type PendingCoverageEntry,
+} from "@/lib/pendingCoverage";
 import type { MaterialRole } from "@/types/materialPrioritisation";
+
 
 
 const VCGWelcomeWidget = () => {
@@ -28,6 +35,16 @@ const VCGWelcomeWidget = () => {
   // State for portfolio items from localStorage
   const [feedstockItems, setFeedstockItems] = useState<any[]>([]);
   const [productItems, setProductItems] = useState<any[]>([]);
+
+  // Coverage requests that have been made but not yet agreed. They sit with the
+  // other topics in a pending state so a request never vanishes.
+  const [pending, setPending] = useState<PendingCoverageEntry[]>(() => readPendingCoverage());
+  useEffect(() => {
+    const sync = () => setPending(readPendingCoverage());
+    window.addEventListener(PENDING_COVERAGE_EVENT, sync);
+    return () => window.removeEventListener(PENDING_COVERAGE_EVENT, sync);
+  }, []);
+
 
   // Helper to normalize portfolio items (string or object)
   const normalizeItem = (item: any) => {
@@ -467,49 +484,29 @@ const VCGWelcomeWidget = () => {
     resetCustomItemForm();
   };
 
+  /** Coverage path — the request becomes a pending topic under Your topics. */
   const handleCustomItemSubmit = () => {
     if (!customItemName.trim() || !customItemRunAs) return;
-
-    const resolvedCategory = customItemRunAs === "Material" ? "Product" : "Feedstock";
-    const storageKey = `portfolio_${resolvedCategory.toLowerCase()}`;
-    const existingItems = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const itemName = customItemName.trim();
-    const newItem = {
-      name: itemName,
-      runAs: customItemRunAs,
-      category: resolvedCategory,
-      isNew: true,
-    };
-    const exists = existingItems.some((item: any) =>
-      typeof item === "string" ? item === itemName : item.name === itemName
-    );
-
-    if (!exists) {
-      localStorage.setItem(storageKey, JSON.stringify([newItem, ...existingItems]));
-      const timestampKey = `portfolio_${resolvedCategory.toLowerCase()}_timestamps`;
-      const timestamps = JSON.parse(localStorage.getItem(timestampKey) || "{}");
-      timestamps[itemName] = Date.now();
-      localStorage.setItem(timestampKey, JSON.stringify(timestamps));
-      window.dispatchEvent(new CustomEvent("portfolioUpdated", {
-        detail: { category: resolvedCategory, itemName },
-      }));
-      toast("Analysis in Progress", {
-        description: (
-          <div className="flex items-start gap-2">
-            <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-            <span>
-              We are looking through all relevant documentation for your selection.
-              VCG will notify when the analysis for <span className="font-semibold text-success">{itemName}</span> will be available in your portfolio for review.
-            </span>
-          </div>
-        ),
-        duration: 6000,
-      });
-    }
+    const added = addPendingCoverage({ name: itemName, runAs: customItemRunAs });
+    setPending(readPendingCoverage());
+    toast(added ? "Coverage requested" : "A request is already in", {
+      description: (
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+          <span>
+            <span className="font-semibold text-success">{itemName}</span> sits under Your topics as a
+            pending topic. Our team will contact you to set this up.
+          </span>
+        </div>
+      ),
+      duration: 6000,
+    });
 
     setShowCustomItemDialog(false);
     resetCustomItemForm();
   };
+
 
   const ITEMS_PER_PAGE = 5;
   interface CategoryItem {
@@ -1407,7 +1404,30 @@ const VCGWelcomeWidget = () => {
                 </div>
               </Card>
         )}
+
+            {/* Pending topics — coverage asked for, not yet agreed. Legible but inert:
+                no brief progress, no signal line, no click-through. */}
+            {pending.map((entry) => (
+              <Card
+                key={`pending-${entry.name}`}
+                aria-disabled
+                className="bg-card border border-dashed border-border/60 shadow-none cursor-default select-none"
+              >
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold tracking-wider mb-1.5 text-muted-foreground/70 inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> COVERAGE REQUESTED
+                  </p>
+                  <h3 className="text-sm font-bold text-foreground mb-1.5">{entry.name}</h3>
+                  <div className="border-t border-dashed border-border/40 pt-2">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground/80">
+                      Our team will contact you to set this up. The topic opens once it's agreed.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
+
 
       {/* Material Prioritization Dialog */}
       <Dialog open={showDiscoveryDialog} onOpenChange={(open) => { setShowDiscoveryDialog(open); if (!open) resetDiscoveryForm(); }}>

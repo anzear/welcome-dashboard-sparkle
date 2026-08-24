@@ -10,6 +10,8 @@ import { MATERIAL_ROLE_LABEL } from "@/types/materialPrioritisation";
 import { materials as portfolioMaterials } from "@/data/materialPrioritisationMock";
 import { readPortfolioAdditions } from "@/lib/portfolioAdditions";
 import { VCG_DATABASE_MATERIALS } from "@/data/vcgMaterialDatabase";
+import { readPendingCoverage } from "@/lib/pendingCoverage";
+
 
 /** Pathway node position the run starts from. Same run, different entry point. */
 export type MaterialRunAs = "Feedstock" | "Material";
@@ -60,6 +62,8 @@ type KnownState = "portfolio" | "available" | "active" | "database";
 interface KnownMaterial {
   name: string;
   state: KnownState;
+  /** A coverage request is already in for this material, awaiting set-up. */
+  pending?: boolean;
   /** Pathway node position, used to build the brief link for covered materials. */
   category?: "feedstock" | "product";
 }
@@ -70,6 +74,11 @@ const KNOWN_STATE_LABEL: Record<KnownState, string> = {
   available: "Coverage available",
   database: "In our database",
 };
+
+/** Pending overrides the displayed state: it is the fact that governs the action. */
+const stateLabel = (k: KnownMaterial) =>
+  k.pending ? "Coverage requested" : KNOWN_STATE_LABEL[k.state];
+
 
 
 function readCoveredMaterials(): KnownMaterial[] {
@@ -104,12 +113,21 @@ function knownMaterials(): KnownMaterial[] {
   );
   readPortfolioAdditions().forEach((a) => put({ name: a.name, state: "portfolio" }));
   readCoveredMaterials().forEach((c) => put(c));
-  const own = [...byName.values()];
+  // A pending request is a fact about a material, whatever else it is.
+  const pendingEntries = readPendingCoverage();
+  pendingEntries.forEach((p) => {
+    const key = p.name.toLowerCase();
+    const existing = byName.get(key);
+    byName.set(key, { name: p.name, state: existing?.state ?? "database", ...existing, pending: true });
+  });
+  const own = [...byName.values()].filter((k) => k.state !== "database" || k.pending);
+  const covered = new Set([...byName.keys()]);
   // Database entries only surface where the customer has nothing of their own.
-  const database = VCG_DATABASE_MATERIALS.filter((n) => !byName.has(n.toLowerCase())).map(
+  const database = VCG_DATABASE_MATERIALS.filter((n) => !covered.has(n.toLowerCase())).map(
     (n): KnownMaterial => ({ name: n, state: "database" }),
   );
   return [...own, ...database];
+
 }
 
 const OWN_SUGGESTION_CAP = 6;
@@ -150,14 +168,12 @@ export default function MaterialAddDialog({
       [...list].sort((a, b) => closeness(a) - closeness(b));
     return {
       // The customer's own materials always come first and are never crowded out.
-      ownSuggestions: sortByCloseness(hits.filter((k) => k.state !== "database")).slice(
-        0,
-        OWN_SUGGESTION_CAP,
-      ),
-      dbSuggestions: sortByCloseness(hits.filter((k) => k.state === "database")).slice(
-        0,
-        DATABASE_SUGGESTION_CAP,
-      ),
+      ownSuggestions: sortByCloseness(
+        hits.filter((k) => k.state !== "database" || k.pending),
+      ).slice(0, OWN_SUGGESTION_CAP),
+      dbSuggestions: sortByCloseness(
+        hits.filter((k) => k.state === "database" && !k.pending),
+      ).slice(0, DATABASE_SUGGESTION_CAP),
     };
   }, [known, query, suggestionsOpen]);
 
@@ -165,11 +181,13 @@ export default function MaterialAddDialog({
   /** An exact match tells us whether this act is already done for that material. */
   const match = known.find((k) => k.name.toLowerCase() === query) || null;
   // Blocking is independent of the chosen action: it is a fact about the material.
-  const coverageBlocked = match?.state === "active";
+  const coveragePending = Boolean(match?.pending);
+  const coverageBlocked = match?.state === "active" || coveragePending;
   const portfolioBlocked = match?.state === "portfolio";
   const briefHref = match
     ? `/landscape/${match.category || "product"}/${encodeURIComponent(match.name)}/material-brief`
     : "#";
+
 
   const nameEntered = name.trim().length > 0;
 
@@ -224,7 +242,7 @@ export default function MaterialAddDialog({
                       >
                         <span className="text-sm text-foreground">{s.name}</span>
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {KNOWN_STATE_LABEL[s.state]}
+                          {stateLabel(s)}
                         </span>
                       </button>
                     </div>
@@ -264,14 +282,19 @@ export default function MaterialAddDialog({
                     <p className="text-[10px] leading-snug text-muted-foreground">
                       VCG researches this material and builds its brief.
                     </p>
-                    {coverageBlocked && (
+                    {coveragePending ? (
+                      <p className="text-xs text-amber-700">
+                        A coverage request is already in for {match?.name}.
+                      </p>
+                    ) : coverageBlocked ? (
                       <p className="text-xs text-amber-700">
                         Coverage is already active for {match?.name}.{" "}
                         <Link to={briefHref} className="underline font-medium">
                           Open its brief
                         </Link>
                       </p>
-                    )}
+                    ) : null}
+
                   </div>
 
                   <div className="space-y-1">
