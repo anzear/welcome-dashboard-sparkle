@@ -146,93 +146,10 @@ const FilterSelects: React.FC<{
     </div>
   );
 
-  /** Coverage of team judgement. "Not assessed" is the one word for zero entries. */
-  const assessmentSection = (
-    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">
-        Assessment
-      </div>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.notAssessed}
-          onChange={(e) => setFilters((f) => ({ ...f, notAssessed: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Not assessed
-      </label>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.teamsDisagree}
-          onChange={(e) => setFilters((f) => ({ ...f, teamsDisagree: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Teams disagree
-      </label>
-    </div>
-  );
-
-  const gateActive =
-    filters.gateOverdueCondition ||
-    filters.gateHoldReviewOverdue ||
-    filters.gateRecommendation !== "any";
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    (gateActive ? 1 : 0) +
     (filters.hasDocuments ? 1 : 0) +
-    (filters.notAssessed ? 1 : 0) +
-    (filters.teamsDisagree ? 1 : 0) +
     Object.values(filters.criterionScores).filter((v) => v.length > 0).length;
-
-  /**
-   * Gate section. The five statuses are categories — filtered, never ranked or
-   * summed. Overdue is a fact about a date, not a score.
-   */
-
-  const gateSection = (
-    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Gate</div>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.gateOverdueCondition}
-          onChange={(e) => setFilters((f) => ({ ...f, gateOverdueCondition: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Has overdue condition
-      </label>
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.gateHoldReviewOverdue}
-          onChange={(e) => setFilters((f) => ({ ...f, gateHoldReviewOverdue: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Hold review overdue
-      </label>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground">Recommendation</span>
-        <div className="inline-flex overflow-hidden rounded-md border border-border">
-          {(["any", "yes", "no"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              onClick={() => setFilters((f) => ({ ...f, gateRecommendation: v }))}
-              className={cn(
-                "px-1.5 py-0.5 text-[10px] capitalize transition-colors",
-                filters.gateRecommendation === v
-                  ? "bg-foreground text-background"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {v === "any" ? "Any" : v === "yes" ? "Exists" : "None"}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   /**
    * One filter per judged criterion: the 1–5 values plus "Not scored". Nothing
@@ -319,11 +236,9 @@ const FilterSelects: React.FC<{
               );
             })}
           </div>
-          {gateSection}
-          {assessmentSection}
           {criterionScoreSection}
           {evidenceSection}
-          
+
           {activeCount > 0 && (
             <button
               type="button"
@@ -331,13 +246,8 @@ const FilterSelects: React.FC<{
                 setFilters((f) => {
                   const next = { ...f };
                   active.forEach(([k]) => ((next as any)[k] = []));
-                  next.gateOverdueCondition = false;
-                  next.gateHoldReviewOverdue = false;
-                  next.gateRecommendation = "any";
                   next.hasDocuments = false;
-                  next.notAssessed = false;
-                  next.teamsDisagree = false;
-                  
+
                   next.criterionScores = {};
                   return next;
                 })
