@@ -467,49 +467,29 @@ const VCGWelcomeWidget = () => {
     resetCustomItemForm();
   };
 
+  /** Coverage path — the request becomes a pending topic under Your topics. */
   const handleCustomItemSubmit = () => {
     if (!customItemName.trim() || !customItemRunAs) return;
-
-    const resolvedCategory = customItemRunAs === "Material" ? "Product" : "Feedstock";
-    const storageKey = `portfolio_${resolvedCategory.toLowerCase()}`;
-    const existingItems = JSON.parse(localStorage.getItem(storageKey) || "[]");
     const itemName = customItemName.trim();
-    const newItem = {
-      name: itemName,
-      runAs: customItemRunAs,
-      category: resolvedCategory,
-      isNew: true,
-    };
-    const exists = existingItems.some((item: any) =>
-      typeof item === "string" ? item === itemName : item.name === itemName
-    );
-
-    if (!exists) {
-      localStorage.setItem(storageKey, JSON.stringify([newItem, ...existingItems]));
-      const timestampKey = `portfolio_${resolvedCategory.toLowerCase()}_timestamps`;
-      const timestamps = JSON.parse(localStorage.getItem(timestampKey) || "{}");
-      timestamps[itemName] = Date.now();
-      localStorage.setItem(timestampKey, JSON.stringify(timestamps));
-      window.dispatchEvent(new CustomEvent("portfolioUpdated", {
-        detail: { category: resolvedCategory, itemName },
-      }));
-      toast("Analysis in Progress", {
-        description: (
-          <div className="flex items-start gap-2">
-            <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
-            <span>
-              We are looking through all relevant documentation for your selection.
-              VCG will notify when the analysis for <span className="font-semibold text-success">{itemName}</span> will be available in your portfolio for review.
-            </span>
-          </div>
-        ),
-        duration: 6000,
-      });
-    }
+    const added = addPendingCoverage({ name: itemName, runAs: customItemRunAs });
+    setPending(readPendingCoverage());
+    toast(added ? "Coverage requested" : "A request is already in", {
+      description: (
+        <div className="flex items-start gap-2">
+          <CheckCircle2 className="w-5 h-5 text-success mt-0.5 flex-shrink-0" />
+          <span>
+            <span className="font-semibold text-success">{itemName}</span> sits under Your topics as a
+            pending topic. Our team will contact you to set this up.
+          </span>
+        </div>
+      ),
+      duration: 6000,
+    });
 
     setShowCustomItemDialog(false);
     resetCustomItemForm();
   };
+
 
   const ITEMS_PER_PAGE = 5;
   interface CategoryItem {
