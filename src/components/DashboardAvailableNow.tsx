@@ -103,6 +103,8 @@ export const DashboardAvailableNow: React.FC = () => {
   }, [refresh]);
 
 
+  const navigate = useNavigate();
+
   const allMaterials = useMemo(() => [...seededMaterials, ...additions], [additions]);
 
   const available = useMemo(
