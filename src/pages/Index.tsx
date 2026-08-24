@@ -1,5 +1,6 @@
 import VCGWelcomeWidget from "@/components/VCGWelcomeWidget";
 import PortfolioUpdatesWidget from "@/components/PortfolioUpdatesWidget";
+import DashboardAvailableNow from "@/components/DashboardAvailableNow";
 import { Sparkles } from "lucide-react";
 
 const Index = () => {
@@ -22,8 +23,11 @@ const Index = () => {
         </p>
       </div>
 
-      {/* OUR PORTFOLIO Section */}
+      {/* YOUR TOPICS Section */}
       <VCGWelcomeWidget />
+
+      {/* AVAILABLE NOW + link through to the Material Portfolio */}
+      <DashboardAvailableNow />
 
       {/* Latest Updates Section */}
       <PortfolioUpdatesWidget />

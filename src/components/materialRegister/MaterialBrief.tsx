@@ -37,6 +37,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
 import ProductLinePicker, { ProductLineChips } from "@/components/materialRegister/ProductLinePicker";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import RequestCoverageDialog from "@/components/materialRegister/RequestCoverageDialog";
 import { RoleChip } from "@/components/materialRegister/RoleChip";
 
 /** Select needs a non-empty value for the explicit "no type" choice. */
@@ -409,6 +410,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
   const [draft, setDraft] = useState<Record<string, string>>({});
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
+  const [coverageOpen, setCoverageOpen] = useState(false);
   const [classOpen, setClassOpen] = useState(false);
   const [exportNote, setExportNote] = useState<string | null>(null);
 
@@ -699,7 +701,11 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
             >
               Export material profile
             </Button>
-            <Button size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90">
+            <Button
+              size="sm"
+              className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
+              onClick={() => setCoverageOpen(true)}
+            >
               Request coverage
             </Button>
           </div>
@@ -714,6 +720,20 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
           </div>
         )}
       </header>
+
+      {/* The single coverage request flow, shared with the dashboard. */}
+      <RequestCoverageDialog
+        open={coverageOpen}
+        onOpenChange={setCoverageOpen}
+        materialName={m.name}
+        role={m.role}
+        onConfirm={() =>
+          toast("Coverage requested", {
+            description: `VCG is building the material brief for ${m.name}.`,
+            duration: 6000,
+          })
+        }
+      />
 
       {/* Classification is corrected here, not in the page body. */}
       <Dialog open={classOpen} onOpenChange={setClassOpen}>

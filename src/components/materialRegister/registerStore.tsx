@@ -43,6 +43,7 @@ import {
 } from "@/types/materialPrioritisation";
 import type { BulkPayload } from "@/components/materialRegister/BulkActionDialog";
 import { ENTRY_TYPES } from "@/components/materialRegister/materialEntry";
+import { portfolioAdditionRows } from "@/lib/portfolioAdditions";
 import { addTags, formatTags, removeTags, tagKey, UNTAGGED } from "@/components/materialRegister/tags";
 import { applyProductLines } from "@/data/productLinesMock";
 import {
@@ -587,7 +588,11 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   rows = seededMaterials,
   children,
 }) => {
-  const [data, setData] = useState<Material[]>(rows);
+  /**
+   * Materials added from the dashboard's portfolio path join the register on
+   * mount. They arrive with a name, synonyms and a role, and nothing else.
+   */
+  const [data, setData] = useState<Material[]>(() => [...rows, ...portfolioAdditionRows(rows)]);
   /** Product line scope. Narrows every list and every count below it, never a material. */
   const [scope, setScopeState] = useState<Scope>(() => readScope());
 

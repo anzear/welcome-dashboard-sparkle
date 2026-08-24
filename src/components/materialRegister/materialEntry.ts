@@ -179,6 +179,8 @@ export function blankMaterial(
     owner: null,
     priority_period: null,
     intelligence_status: "not_ordered",
+    // Availability is set by VCG, never by the customer or by an add form.
+    coverage_available: false,
     intelligence_ordered_date: null,
     intelligence_delivered_date: null,
     intelligence_scope: null,

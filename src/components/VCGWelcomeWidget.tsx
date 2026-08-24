@@ -15,7 +15,9 @@ import { CheckCircle2 } from "lucide-react";
 import { computeBriefCompletion } from "@/components/MaterialBriefForm";
 import { usePipelineBriefStore, BRIEF_PALETTE, PIPELINE_BRIEFS_EVENT } from "@/store/pipelineBriefStore";
 import { useCurrentUser } from "@/lib/currentUser";
-import MaterialAddDialog from "@/components/MaterialAddDialog";
+import MaterialAddDialog, { type MaterialAddIntent } from "@/components/MaterialAddDialog";
+import { addPortfolioAddition } from "@/lib/portfolioAdditions";
+import type { MaterialRole } from "@/types/materialPrioritisation";
 
 
 const VCGWelcomeWidget = () => {
@@ -239,6 +241,9 @@ const VCGWelcomeWidget = () => {
   const [customItemDescription, setCustomItemDescription] = useState("");
   const [customItemSynonyms, setCustomItemSynonyms] = useState("");
   const [customItemObjective, setCustomItemObjective] = useState<"Source" | "Produce" | "Valorise" | "">("Source");
+  // The add flow serves two different acts: coverage (research) or portfolio (internal tracking).
+  const [customItemIntent, setCustomItemIntent] = useState<MaterialAddIntent | "">("");
+  const [customItemRole, setCustomItemRole] = useState<MaterialRole | "">("");
 
   // State for dynamic suggestions
   const [currentSuggestions, setCurrentSuggestions] = useState<{
@@ -442,6 +447,27 @@ const VCGWelcomeWidget = () => {
     setCustomItemDescription("");
     setCustomItemSynonyms("");
     setCustomItemObjective("Source");
+    setCustomItemIntent("");
+    setCustomItemRole("");
+  };
+
+  /** Portfolio path — internal tracking only, no coverage is requested. */
+  const handleAddToPortfolio = () => {
+    const itemName = customItemName.trim();
+    if (!itemName || !customItemRole) return;
+    const added = addPortfolioAddition({
+      name: itemName,
+      synonyms: customItemSynonyms.trim(),
+      role: customItemRole,
+    });
+    toast(added ? "Added to your portfolio" : "Already in your portfolio", {
+      description: added
+        ? `${itemName} is now in the Material Portfolio register. Fill in the rest there.`
+        : `${itemName} is already tracked in the Material Portfolio.`,
+      duration: 6000,
+    });
+    setShowCustomItemDialog(false);
+    resetCustomItemForm();
   };
 
   const handleCustomItemSubmit = () => {
@@ -651,11 +677,11 @@ const VCGWelcomeWidget = () => {
 
   return (
     <div className="w-full space-y-4 animate-fade-in">
-      {/* OUR PORTFOLIO Header */}
+      {/* YOUR TOPICS Header — coverage we hold, not the Material Portfolio */}
       <div className="flex items-center justify-between mb-2">
         <div>
-          <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">OUR PORTFOLIO</h2>
-          <p className="text-[11px] text-muted-foreground mt-0.5">Feedstocks and products you're tracking. Start anywhere — each topic tells a story.</p>
+          <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">YOUR TOPICS</h2>
+          <p className="text-[11px] text-muted-foreground mt-0.5">Materials VCG is tracking for you. Start anywhere — each topic tells a story.</p>
         </div>
         <Button
           variant="ghost"
@@ -1206,7 +1232,12 @@ const VCGWelcomeWidget = () => {
               onSynonymsChange={setCustomItemSynonyms}
               objective={customItemObjective}
               onObjectiveChange={setCustomItemObjective}
+              intent={customItemIntent}
+              onIntentChange={setCustomItemIntent}
+              role={customItemRole}
+              onRoleChange={setCustomItemRole}
               onSubmit={handleCustomItemSubmit}
+              onSubmitPortfolio={handleAddToPortfolio}
               onCancel={() => { setShowCustomItemDialog(false); resetCustomItemForm(); }}
             />
 

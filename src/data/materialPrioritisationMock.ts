@@ -97,7 +97,21 @@ interface Row {
   linkTo?: string[];
 }
 
+/**
+ * Materials VCG has coverage ready for, but the customer has not taken yet.
+ * Set by us, spread across both roles and several material families. Everything
+ * not listed here is unavailable — availability is the exception.
+ */
+const COVERAGE_AVAILABLE = new Set<string>([
+  "Sodium benzoate",
+  "Xanthan gum",
+  "Sophorolipid biosurfactant",
+  "1,3-Propanediol (fermentation)",
+  "Tetrasodium iminodisuccinate",
+]);
+
 const rows: Row[] = [
+
   // ---------------------------------------------------------------- Surfactants
   {
     name: "Sodium laureth sulfate", cas: "9004-82-4", cls: "Ethoxylated alkyl sulfate", tag: "Surfactants",
@@ -786,6 +800,11 @@ const baseMaterials: Material[] = rows.map((row, i) => {
     owner: row.owner,
     priority_period: row.priority ?? null,
     intelligence_status: intel,
+    /**
+     * Coverage availability, set by VCG. Only ever true where no coverage has
+     * been taken yet — a material already covered belongs under Your topics.
+     */
+    coverage_available: intel === "not_ordered" && COVERAGE_AVAILABLE.has(row.name),
     intelligence_ordered_date: orderedDate,
     intelligence_delivered_date: intel === "delivered" ? `2026-0${(i % 4) + 4}-${String((i % 24) + 4).padStart(2, "0")}` : null,
     intelligence_scope: row.intelScope ?? null,
