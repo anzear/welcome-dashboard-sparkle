@@ -280,14 +280,19 @@ export default function MaterialAddDialog({
                     <p className="text-[10px] leading-snug text-muted-foreground">
                       VCG researches this material and builds its brief.
                     </p>
-                    {coverageBlocked && (
+                    {coveragePending ? (
+                      <p className="text-xs text-amber-700">
+                        A coverage request is already in for {match?.name}.
+                      </p>
+                    ) : coverageBlocked ? (
                       <p className="text-xs text-amber-700">
                         Coverage is already active for {match?.name}.{" "}
                         <Link to={briefHref} className="underline font-medium">
                           Open its brief
                         </Link>
                       </p>
-                    )}
+                    ) : null}
+
                   </div>
 
                   <div className="space-y-1">
