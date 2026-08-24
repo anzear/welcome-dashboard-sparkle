@@ -228,7 +228,6 @@ const FilterSelects: React.FC<{
                 setFilters((f) => {
                   const next = { ...f };
                   active.forEach(([k]) => ((next as any)[k] = []));
-                  next.hasDocuments = false;
 
                   next.criterionScores = {};
                   return next;
