@@ -83,6 +83,22 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const trackedCount = allMaterials.length;
 
+  // Pagination — five available materials per page, CTA always in the sixth slot.
+  // Not persisted: resets on reload.
+  const PAGE_SIZE = 5;
+  const totalPages = Math.max(1, Math.ceil(available.length / PAGE_SIZE));
+  const [page, setPage] = useState(1);
+
+  // Clamp page whenever the available list shrinks (e.g. after requesting coverage).
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pageMaterials = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return available.slice(start, start + PAGE_SIZE);
+  }, [available, page]);
+
   const confirmRequest = (m: Material) => {
     const next = [...new Set([...requested, m.material_id])];
     try {
