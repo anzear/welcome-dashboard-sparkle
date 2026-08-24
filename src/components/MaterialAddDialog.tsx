@@ -342,39 +342,17 @@ export default function MaterialAddDialog({
                     </div>
                   </div>
 
-                  {/* STEP 3 — the one follow-up field for the chosen action. */}
+                  {/* STEP 3 — the shared coverage step, or the portfolio role. */}
                   {effectiveIntent === "coverage" && (
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Run as *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {RUN_AS.map((option) => {
-                          const isSelected = runAs === option.value;
-                          const Icon = option.Icon;
-                          return (
-                            <Button
-                              key={option.value}
-                              type="button"
-                              variant="ghost"
-                              onClick={() => onRunAsChange(option.value)}
-                              className={`h-auto flex flex-col items-start gap-1 p-3 rounded-lg border-2 text-left whitespace-normal transition-all hover:bg-background ${
-                                isSelected
-                                  ? "border-primary bg-primary/10"
-                                  : "border-border/40 bg-background hover:border-muted-foreground/30"
-                              }`}
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <Icon className={`w-3.5 h-3.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-                                <span className={`text-sm font-semibold ${isSelected ? "text-primary" : "text-foreground"}`}>
-                                  {option.label}
-                                </span>
-                              </span>
-                              <span className="text-[10px] leading-snug text-muted-foreground">{option.description}</span>
-                            </Button>
-                          );
-                        })}
-                      </div>
+                    <div className="space-y-3">
+                      <RunAsPicker value={runAs} onChange={onRunAsChange} />
+                      <CoverageQuestionField
+                        value={coverageQuestion}
+                        onChange={(v) => onCoverageQuestionChange?.(v)}
+                      />
                     </div>
                   )}
+
 
                   {/* Role — asked on the portfolio path, and on the coverage path
                       when the material is brand new to the portfolio. A material
