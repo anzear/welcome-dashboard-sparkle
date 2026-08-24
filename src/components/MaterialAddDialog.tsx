@@ -117,8 +117,16 @@ function knownMaterials(): KnownMaterial[] {
   );
   readPortfolioAdditions().forEach((a) => put({ name: a.name, state: "portfolio" }));
   readCoveredMaterials().forEach((c) => put(c));
-  return [...byName.values()];
+  const own = [...byName.values()];
+  // Database entries only surface where the customer has nothing of their own.
+  const database = VCG_DATABASE_MATERIALS.filter((n) => !byName.has(n.toLowerCase())).map(
+    (n): KnownMaterial => ({ name: n, state: "database" }),
+  );
+  return [...own, ...database];
 }
+
+const OWN_SUGGESTION_CAP = 6;
+const DATABASE_SUGGESTION_CAP = 5;
 
 export default function MaterialAddDialog({
   open,
@@ -143,12 +151,29 @@ export default function MaterialAddDialog({
   const known = useMemo(() => (open ? knownMaterials() : []), [open]);
 
   const query = name.trim().toLowerCase();
-  const suggestions = useMemo(() => {
-    if (!suggestionsOpen || query.length < 2) return [];
-    return known
-      .filter((k) => k.name.toLowerCase().includes(query) && k.name.toLowerCase() !== query)
-      .slice(0, 6);
+  const { ownSuggestions, dbSuggestions } = useMemo(() => {
+    if (!suggestionsOpen || query.length < 2) return { ownSuggestions: [], dbSuggestions: [] };
+    const hits = known.filter(
+      (k) => k.name.toLowerCase().includes(query) && k.name.toLowerCase() !== query,
+    );
+    // Closest matches first: a leading match beats a match buried mid-name.
+    const closeness = (k: KnownMaterial) =>
+      (k.name.toLowerCase().startsWith(query) ? 0 : 1) * 1000 + k.name.length;
+    const sortByCloseness = (list: KnownMaterial[]) =>
+      [...list].sort((a, b) => closeness(a) - closeness(b));
+    return {
+      // The customer's own materials always come first and are never crowded out.
+      ownSuggestions: sortByCloseness(hits.filter((k) => k.state !== "database")).slice(
+        0,
+        OWN_SUGGESTION_CAP,
+      ),
+      dbSuggestions: sortByCloseness(hits.filter((k) => k.state === "database")).slice(
+        0,
+        DATABASE_SUGGESTION_CAP,
+      ),
+    };
   }, [known, query, suggestionsOpen]);
+
 
   /** An exact match tells us whether this act is already done for that material. */
   const match = known.find((k) => k.name.toLowerCase() === query) || null;
