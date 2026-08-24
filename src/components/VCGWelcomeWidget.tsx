@@ -606,12 +606,6 @@ const VCGWelcomeWidget = () => {
     };
   });
 
-  // Deterministic Produce/Source assignment for product items
-  const productTagFor = (name: string): "PRODUCE" | "SOURCE" => {
-    let h = 0;
-    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-    return h % 2 === 0 ? "PRODUCE" : "SOURCE";
-  };
 
   // ── Material brief progress ───────────────────────────────────────────────
   // Mirrors the section-completion logic in MaterialBriefForm.tsx
