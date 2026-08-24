@@ -180,14 +180,25 @@ export const DashboardAvailableNow: React.FC = () => {
   return (
     <div className="w-full space-y-4">
       <section className="space-y-2">
-        <div>
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Available now
-          </h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground">
-            Materials in your portfolio where our data is ready.
-          </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Available now
+            </h2>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Materials in your portfolio where our data is ready.
+            </p>
+          </div>
+          {/* The way out of the section: register, unfiltered. One link, one count. */}
+          <Link
+            to="/material-prioritisation"
+            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-foreground transition-colors hover:text-foreground/70"
+          >
+            View all <span className="tabular-nums">{trackedCount}</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
+
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {pageMaterials.map((m) => (
@@ -259,15 +270,7 @@ export const DashboardAvailableNow: React.FC = () => {
         )}
       </section>
 
-      {/* One link, one count. No preview of the register here. */}
-      <Link
-        to="/material-prioritisation"
-        className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <span className="tabular-nums font-medium text-foreground">{trackedCount}</span>
-        materials in your portfolio
-        <ArrowRight className="h-3 w-3" />
-      </Link>
+
 
       {target && (
         <RequestCoverageDialog
