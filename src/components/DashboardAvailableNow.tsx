@@ -100,18 +100,15 @@ export const DashboardAvailableNow: React.FC = () => {
   }, [available, page]);
 
   const confirmRequest = (m: Material) => {
-    const next = [...new Set([...requested, m.material_id])];
-    try {
-      window.localStorage.setItem(REQUESTED_KEY, JSON.stringify(next));
-    } catch {
-      /* a storage failure must not block the request being shown as made */
-    }
-    setRequested(next);
+    // Records the request as a pending topic. The register row is untouched.
+    addPendingCoverage({ name: m.name, materialId: m.material_id });
+    setRequested(readRequested());
     toast("Coverage requested", {
-      description: `VCG is building the material brief for ${m.name}. It appears under Your topics when ready.`,
+      description: `${m.name} now sits under Your topics as a pending topic. Our team will contact you to set it up.`,
       duration: 6000,
     });
   };
+
 
   const resetAddForm = () => {
     setAddName("");
