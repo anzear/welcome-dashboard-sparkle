@@ -103,11 +103,22 @@ interface Row {
  * not listed here is unavailable — availability is the exception.
  */
 const COVERAGE_AVAILABLE = new Set<string>([
+  // Existing materials
   "Sodium benzoate",
   "Xanthan gum",
+  "Coco glucoside",
+  "Sodium C14-16 olefin sulfonate",
+  "Glycerine (vegetable)",
+  "Cetearyl alcohol",
+  "Sodium citrate",
+  // Candidate materials
   "Sophorolipid biosurfactant",
   "1,3-Propanediol (fermentation)",
   "Tetrasodium iminodisuccinate",
+  "Sodium lauroyl methyl isethionate",
+  "Sodium cocoyl isethionate",
+  "C12-C14 fatty alcohol (used cooking oil route)",
+  "Bio-based isopropyl alcohol (fermentation)",
 ]);
 
 const rows: Row[] = [
