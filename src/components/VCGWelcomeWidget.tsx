@@ -687,7 +687,7 @@ const VCGWelcomeWidget = () => {
             setSelectedPath("know");
             setCustomItemCategory("Feedstock");
             setCustomItemSubcategory("");
-            setCustomItemObjective("Source");
+            setCustomItemRunAs("Feedstock");
             setShowCustomItemDialog(true);
           }}
         >
