@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 
 import { Textarea } from "@/components/ui/textarea";
 import MaterialPipelineList from "@/components/MaterialPipelineList";
-import MaterialAddDialog, { type MaterialObjective } from "@/components/MaterialAddDialog";
+import MaterialAddDialog, { type MaterialRunAs } from "@/components/MaterialAddDialog";
 import { computeBriefCompletion } from "@/components/MaterialBriefForm";
 import MaterialEvaluationDrawer from "@/components/MaterialEvaluationDrawer";
 import UserSwitcher from "@/components/UserSwitcher";
@@ -153,8 +153,7 @@ export default function MaterialPipeline() {
   // Add-material dialog
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [matName, setMatName] = useState("");
-  const [matSynonyms, setMatSynonyms] = useState("");
-  const [matObjective, setMatObjective] = useState<MaterialObjective>("Source");
+  const [matRunAs, setMatRunAs] = useState<MaterialRunAs>("Feedstock");
 
 
   // New-discovery dialog
@@ -168,7 +167,7 @@ export default function MaterialPipeline() {
   const [discOwner, setDiscOwner] = useState<string>(currentUser.name);
 
   const resetMaterialForm = () => {
-    setMatName(""); setMatSynonyms(""); setMatObjective("Source");
+    setMatName(""); setMatRunAs("Feedstock");
   };
   const resetDiscoveryForm = () => {
     setDiscName(""); setDiscObjective(""); setDiscContext("");
@@ -179,13 +178,13 @@ export default function MaterialPipeline() {
   const handleAddMaterial = () => {
     const name = matName.trim();
     if (!name) return;
-    const key = matObjective === "Produce" ? "portfolio_product" : "portfolio_feedstock";
+    const key = matRunAs === "Material" ? "portfolio_product" : "portfolio_feedstock";
     let arr: any[] = [];
     try { arr = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
     const exists = arr.some((it) => (typeof it === "string" ? it : it?.name)?.toLowerCase() === name.toLowerCase());
     if (!exists) {
       const category = key === "portfolio_product" ? "Product" : "Feedstock";
-      arr.unshift({ name, synonyms: matSynonyms.trim(), objective: matObjective, category, isNew: true });
+      arr.unshift({ name, runAs: matRunAs, category, isNew: true });
       localStorage.setItem(key, JSON.stringify(arr));
       window.dispatchEvent(new Event("portfolioUpdated"));
       window.dispatchEvent(new Event("storage"));
@@ -693,10 +692,8 @@ export default function MaterialPipeline() {
         onOpenChange={(open) => { setShowAddMaterial(open); if (!open) resetMaterialForm(); }}
         name={matName}
         onNameChange={setMatName}
-        synonyms={matSynonyms}
-        onSynonymsChange={setMatSynonyms}
-        objective={matObjective}
-        onObjectiveChange={setMatObjective}
+        runAs={matRunAs}
+        onRunAsChange={setMatRunAs}
         onSubmit={handleAddMaterial}
         onCancel={() => { setShowAddMaterial(false); resetMaterialForm(); }}
       />
