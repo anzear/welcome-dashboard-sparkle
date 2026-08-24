@@ -30,16 +30,14 @@ import {
 } from "@/lib/portfolioAdditions";
 import { MATERIAL_ROLE_LABEL, type Material, type MaterialRole } from "@/types/materialPrioritisation";
 
-const REQUESTED_KEY = "material_coverage_requested";
+/** Pending requests live in one place so Your topics can show them. */
+const readRequested = (): string[] => [
+  ...readLegacyRequestedIds(),
+  ...readPendingCoverage()
+    .map((e) => e.materialId)
+    .filter((id): id is string => Boolean(id)),
+];
 
-const readRequested = (): string[] => {
-  try {
-    const raw = JSON.parse(window.localStorage.getItem(REQUESTED_KEY) || "[]");
-    return Array.isArray(raw) ? raw.filter((v) => typeof v === "string") : [];
-  } catch {
-    return [];
-  }
-};
 
 
 export const DashboardAvailableNow: React.FC = () => {
