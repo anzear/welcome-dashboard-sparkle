@@ -520,6 +520,12 @@ const VCGWelcomeWidget = () => {
   const handleCustomItemSubmit = () => {
     if (!customItemName.trim() || !customItemRunAs) return;
     const itemName = customItemName.trim();
+    // Coverage also lands the material in the register, with a role so its
+    // assessment framing is set. A material already tracked is left alone.
+    // Run as belongs to the coverage request, not to the register row.
+    if (customItemRole) {
+      addPortfolioAddition({ name: itemName, role: customItemRole });
+    }
     const added = addPendingCoverage({ name: itemName, runAs: customItemRunAs });
     setPending(readPendingCoverage());
     toast(added ? "Coverage requested" : "A request is already in", {

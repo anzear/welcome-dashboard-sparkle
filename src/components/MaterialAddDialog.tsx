@@ -258,7 +258,13 @@ export default function MaterialAddDialog({
               // STEP 2 — the two actions are a selection, not a submission.
               // Both stay clickable so the user can switch; coverage stays dominant.
               const actionChosen = effectiveIntent === "coverage" || isPortfolio;
-              const coverageComplete = effectiveIntent === "coverage" && runAs && !coverageBlocked;
+              // A material already tracked, or one whose coverage is already
+              // active/pending, already carries a role — coverage never re-asks.
+              const coverageNeedsRole =
+                effectiveIntent === "coverage" && !portfolioBlocked && !coverageBlocked;
+              const coverageRoleOk = !coverageNeedsRole || !!role;
+              const coverageComplete =
+                effectiveIntent === "coverage" && runAs && !coverageBlocked && coverageRoleOk;
               const portfolioComplete = isPortfolio && role && !portfolioBlocked;
               const canConfirm = coverageComplete || portfolioComplete;
               // The hint tells the user what is still missing rather than leaving it blank.
@@ -273,9 +279,11 @@ export default function MaterialAddDialog({
                         ? "Choose an action to continue."
                         : effectiveIntent === "coverage" && !runAs
                           ? "Choose how to run it."
-                          : isPortfolio && !role
+                          : effectiveIntent === "coverage" && !coverageRoleOk
                             ? "Choose a role."
-                            : "";
+                            : isPortfolio && !role
+                              ? "Choose a role."
+                              : "";
 
               return (
                 <div className="space-y-3">
@@ -285,7 +293,6 @@ export default function MaterialAddDialog({
                         type="button"
                         onClick={() => {
                           onIntentChange?.("coverage");
-                          onRoleChange?.("" as MaterialRole);
                         }}
                         className={`w-full h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground ${
                           effectiveIntent === "coverage" ? "ring-2 ring-success/40 ring-offset-1 ring-offset-card" : "opacity-70"
@@ -374,7 +381,10 @@ export default function MaterialAddDialog({
                     </div>
                   )}
 
-                  {isPortfolio && (
+                  {/* Role — asked on the portfolio path, and on the coverage path
+                      when the material is brand new to the portfolio. A material
+                      already tracked already carries its role; coverage never re-asks. */}
+                  {(isPortfolio || coverageNeedsRole) && (
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Role *</Label>
                       <div className="grid grid-cols-2 gap-2">
@@ -401,9 +411,11 @@ export default function MaterialAddDialog({
                           );
                         })}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        The rest is filled in inside the Material Portfolio.
-                      </p>
+                      {isPortfolio && (
+                        <p className="text-xs text-muted-foreground">
+                          The rest is filled in inside the Material Portfolio.
+                        </p>
+                      )}
                     </div>
                   )}
 
