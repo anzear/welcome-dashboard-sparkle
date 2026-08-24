@@ -264,6 +264,12 @@ export interface Material {
   /** Non-null means the material is in that period's priority set. Null = not prioritised. */
   priority_period: string | null;
   intelligence_status: IntelligenceStatus;
+  /**
+   * Coverage availability. A state VCG sets on the material: our data for it is
+   * ready to be taken. It is never derived from the customer's own data and the
+   * customer cannot set it. Availability is the exception, not the default.
+   */
+  coverage_available: boolean;
   intelligence_ordered_date: string | null;
   intelligence_delivered_date: string | null;
   intelligence_scope: string | null;
