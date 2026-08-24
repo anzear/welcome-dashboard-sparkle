@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import MaterialRegisterTable from "@/components/MaterialRegisterTable";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
@@ -22,7 +23,23 @@ type TabId = (typeof TABS)[number]["id"];
 const Inner: React.FC = () => {
   const [view, setView] = useState<TabId>("register");
   const [addOpen, setAddOpen] = useState(false);
-  const { openId } = useRegister();
+  const { openId, openBrief, allMaterials } = useRegister();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  /** Deep link: ?brief=<material name> opens that material's brief. */
+  const briefName = searchParams.get("brief");
+  useEffect(() => {
+    if (!briefName) return;
+    const match = allMaterials.find(
+      (m) => m.name.trim().toLowerCase() === briefName.trim().toLowerCase(),
+    );
+    if (match) openBrief(match.material_id);
+    const next = new URLSearchParams(searchParams);
+    next.delete("brief");
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [briefName, allMaterials]);
+
 
   if (openId) {
     return (

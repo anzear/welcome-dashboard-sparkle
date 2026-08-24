@@ -12,7 +12,7 @@
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles, Plus, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -102,6 +102,8 @@ export const DashboardAvailableNow: React.FC = () => {
     };
   }, [refresh]);
 
+
+  const navigate = useNavigate();
 
   const allMaterials = useMemo(() => [...seededMaterials, ...additions], [additions]);
 
@@ -279,6 +281,11 @@ export const DashboardAvailableNow: React.FC = () => {
         ? `${itemName} is now in the Material Portfolio register. Fill in the rest there.`
         : `${itemName} is already tracked in the Material Portfolio.`,
       duration: 6000,
+      action: {
+        label: "Fill in the rest",
+        onClick: () =>
+          navigate(`/material-prioritisation?brief=${encodeURIComponent(itemName)}`),
+      },
     });
     setShowAddDialog(false);
     resetAddForm();
