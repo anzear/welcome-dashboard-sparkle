@@ -220,6 +220,12 @@ export const DashboardAvailableNow: React.FC = () => {
     if (!addName.trim() || !addRunAs) return;
     const itemName = addName.trim();
     const match = allMaterials.find((m) => m.name.toLowerCase() === itemName.toLowerCase());
+    // Coverage also lands the material in the register, with a role so its
+    // assessment framing is set. A material already tracked is left alone.
+    // Run as belongs to the coverage request, not to the register row.
+    if (addRole) {
+      addPortfolioAddition({ name: itemName, role: addRole });
+    }
     const added = addPendingCoverage({
       name: itemName,
       materialId: match?.material_id,
