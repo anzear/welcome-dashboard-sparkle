@@ -1404,7 +1404,30 @@ const VCGWelcomeWidget = () => {
                 </div>
               </Card>
         )}
+
+            {/* Pending topics — coverage asked for, not yet agreed. Legible but inert:
+                no brief progress, no signal line, no click-through. */}
+            {pending.map((entry) => (
+              <Card
+                key={`pending-${entry.name}`}
+                aria-disabled
+                className="bg-card border border-dashed border-border/60 shadow-none cursor-default select-none"
+              >
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold tracking-wider mb-1.5 text-muted-foreground/70 inline-flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> COVERAGE REQUESTED
+                  </p>
+                  <h3 className="text-sm font-bold text-foreground mb-1.5">{entry.name}</h3>
+                  <div className="border-t border-dashed border-border/40 pt-2">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground/80">
+                      Our team will contact you to set this up. The topic opens once it's agreed.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
+
 
       {/* Material Prioritization Dialog */}
       <Dialog open={showDiscoveryDialog} onOpenChange={(open) => { setShowDiscoveryDialog(open); if (!open) resetDiscoveryForm(); }}>
