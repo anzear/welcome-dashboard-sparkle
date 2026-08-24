@@ -274,15 +274,61 @@ export const DashboardAvailableNow: React.FC = () => {
               Materials in your portfolio where our data is ready.
             </p>
           </div>
-          {/* The way out of the section: register, unfiltered. One link, one count. */}
-          <Link
-            to="/material-prioritisation"
-            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-foreground transition-colors hover:text-foreground/70"
-          >
-            View all <span className="tabular-nums">{trackedCount}</span>
-            <ArrowRight className="h-3 w-3" />
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            {/* One sort at a time, highest first. Quiet: a dropdown, not a row. */}
+            <Select
+              value={sortId}
+              onValueChange={(v) => {
+                setSortId(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-6 w-auto gap-1 border-none bg-transparent px-1 text-[11px] text-muted-foreground shadow-none hover:text-foreground focus:ring-0 focus:ring-offset-0">
+                <span className="text-muted-foreground/70">Sort</span>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end" className="text-[11px]">
+                <SelectItem value="recent" className="text-[11px]">
+                  Recently available
+                </SelectItem>
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Figures
+                  </SelectLabel>
+                  {MEASURES.map((mm) => (
+                    <SelectItem key={mm.id} value={mm.id} className="text-[11px]">
+                      {mm.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Drivers
+                  </SelectLabel>
+                  {judgedCriteria.map((c) => (
+                    <SelectItem
+                      key={c.criterion_id}
+                      value={`${DRIVER_PREFIX}${c.criterion_id}`}
+                      className="text-[11px]"
+                    >
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            {/* The way out of the section: register, unfiltered. One link, one count. */}
+            <Link
+              to="/material-prioritisation"
+              className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-foreground transition-colors hover:text-foreground/70"
+            >
+              View all <span className="tabular-nums">{trackedCount}</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
         </div>
+
 
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
