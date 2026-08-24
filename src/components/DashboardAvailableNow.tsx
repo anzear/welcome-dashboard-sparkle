@@ -220,7 +220,6 @@ export const DashboardAvailableNow: React.FC = () => {
               <RoleChip isExisting={m.role === "existing"} className="self-start">
                 {MATERIAL_ROLE_LABEL[m.role]}
               </RoleChip>
-              <p className="text-[11px] leading-relaxed text-muted-foreground">{coverageLine(m)}</p>
               <Button
                 size="sm"
                 className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
