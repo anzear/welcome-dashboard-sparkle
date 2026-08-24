@@ -67,8 +67,8 @@ const INTENTS: { value: MaterialAddIntent; label: string; description: string }[
   },
 ];
 
-/** Materials the system already knows: portfolio rows plus anything already covered. */
-type KnownState = "portfolio" | "available" | "active";
+/** Materials the system already knows: portfolio rows, covered materials, VCG database. */
+type KnownState = "portfolio" | "available" | "active" | "database";
 interface KnownMaterial {
   name: string;
   state: KnownState;
@@ -80,7 +80,9 @@ const KNOWN_STATE_LABEL: Record<KnownState, string> = {
   portfolio: "In your portfolio",
   active: "Coverage active",
   available: "Coverage available",
+  database: "In our database",
 };
+
 
 function readCoveredMaterials(): KnownMaterial[] {
   const out: KnownMaterial[] = [];
