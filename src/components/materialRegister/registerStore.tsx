@@ -231,6 +231,8 @@ export interface Filters {
   notAssessed: boolean;
   /** Carries a split flag on at least one judged criterion. */
   teamsDisagree: boolean;
+  /** Excludes materials whose coverage has already been delivered. */
+  hideDeliveredCoverage: boolean;
   /**
    * Per-criterion score filter, keyed by criterion id. Values are "1".."5" and
    * NOT_SCORED. A material matches when any recorded score is selected, or when
@@ -270,6 +272,7 @@ export const EMPTY_FILTERS: Filters = {
   hasDocuments: false,
   notAssessed: false,
   teamsDisagree: false,
+  hideDeliveredCoverage: false,
   criterionScores: {},
 };
 
@@ -705,6 +708,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.notAssessed ||
     
     filters.teamsDisagree ||
+    filters.hideDeliveredCoverage ||
     Object.values(filters.criterionScores).some((v) => v.length > 0);
 
   const documentedIds = useMemo(
@@ -752,6 +756,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       if (filters.classes.length && !filters.classes.includes(m.material_class ?? "")) return false;
       if (filters.statuses.length && !filters.statuses.includes(m.journey_status)) return false;
       if (filters.hasDocuments && !documentedIds.has(m.material_id)) return false;
+      if (filters.hideDeliveredCoverage && m.intelligence_status === "delivered") return false;
       if (filters.notAssessed && assessedIds.has(m.material_id)) return false;
       
       if (filters.teamsDisagree && !disagreeIds.has(m.material_id)) return false;
