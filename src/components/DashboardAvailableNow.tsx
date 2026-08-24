@@ -83,6 +83,8 @@ export const DashboardAvailableNow: React.FC = () => {
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [addName, setAddName] = useState("");
   const [addRunAs, setAddRunAs] = useState<MaterialRunAs | "">("Feedstock");
+  // Optional question from the shared coverage step. Coverage path only.
+  const [addQuestion, setAddQuestion] = useState("");
   const [addIntent, setAddIntent] = useState<MaterialAddIntent | "">("coverage");
   const [addRole, setAddRole] = useState<MaterialRole | "">("");
 
@@ -460,6 +462,8 @@ export const DashboardAvailableNow: React.FC = () => {
         onNameChange={setAddName}
         runAs={addRunAs}
         onRunAsChange={setAddRunAs}
+        coverageQuestion={addQuestion}
+        onCoverageQuestionChange={setAddQuestion}
         intent={addIntent}
         onIntentChange={setAddIntent}
         role={addRole}

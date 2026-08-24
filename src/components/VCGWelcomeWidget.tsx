@@ -497,6 +497,7 @@ const VCGWelcomeWidget = () => {
     setCustomItemSubcategory("");
     setCustomItemDescription("");
     setCustomItemRunAs("Feedstock");
+    setCustomItemQuestion("");
     setCustomItemIntent("");
     setCustomItemRole("");
   };
@@ -533,6 +534,7 @@ const VCGWelcomeWidget = () => {
       name: itemName,
       runAs: customItemRunAs,
       role: customItemRole || undefined,
+      question: customItemQuestion.trim() === "" ? undefined : customItemQuestion.trim(),
     });
     setPending(readPendingCoverage());
     toast(added ? "Coverage requested" : "A request is already in", {
