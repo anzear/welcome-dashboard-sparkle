@@ -206,7 +206,7 @@ export const DashboardAvailableNow: React.FC = () => {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {available.map((m) => (
+          {pageMaterials.map((m) => (
             <div
               key={m.material_id}
               className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
