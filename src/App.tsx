@@ -13,7 +13,6 @@ import { TopicCommentsProvider } from "@/components/TopicCommentsPopover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
-import IntelligenceGate from "./components/IntelligenceGate";
 
 import Analytics from "./pages/Analytics";
 import AnalysisManagement from "./pages/AnalysisManagement";
@@ -195,24 +194,24 @@ const ContentArea = ({ location }: { location: ReturnType<typeof useLocation> })
           <Route path="/super-admin" element={<SuperAdmin />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/organization/:id" element={<OrganizationManagement />} />
-          <Route path="/landscape/:category/:topic" element={<IntelligenceGate><TopicLandscape /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain" element={<IntelligenceGate><ValueChain /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/analysis" element={<IntelligenceGate><ValueChain /></IntelligenceGate>} />
+          <Route path="/landscape/:category/:topic" element={<TopicLandscape />} />
+          <Route path="/landscape/:category/:topic/value-chain" element={<ValueChain />} />
+          <Route path="/landscape/:category/:topic/value-chain/analysis" element={<ValueChain />} />
           <Route path="/landscape/:category/:topic/material-brief" element={<MaterialBrief />} />
-          <Route path="/landscape/:category/:topic/decisions-space" element={<IntelligenceGate><DecisionsSpace /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/priorities" element={<IntelligenceGate><ValidationSpace /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/validation-space" element={<IntelligenceGate><ValidationSpace /></IntelligenceGate>} />
+          <Route path="/landscape/:category/:topic/decisions-space" element={<DecisionsSpace />} />
+          <Route path="/landscape/:category/:topic/priorities" element={<ValidationSpace />} />
+          <Route path="/landscape/:category/:topic/validation-space" element={<ValidationSpace />} />
           <Route path="/landscape/:category/:topic/material-brief-simple" element={<MaterialBriefSimple />} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways/funnel" element={<IntelligenceGate><ValueChainPathwaysFunnel /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways" element={<IntelligenceGate><ValueChainPathways /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId" element={<IntelligenceGate><PathwayDetail /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/ip-landscape" element={<IntelligenceGate><PathwayIPLandscape /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/research-landscape" element={<IntelligenceGate><PathwayResearchLandscape /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/innovation-projects" element={<IntelligenceGate><InnovationProjects /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/publications" element={<IntelligenceGate><ScientificPublications /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/patents" element={<IntelligenceGate><PatentLandscape /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/market-activity" element={<IntelligenceGate><MarketActivity /></IntelligenceGate>} />
-          <Route path="/landscape/:category/:topic/market-activity/review" element={<IntelligenceGate><MarketActivityReview /></IntelligenceGate>} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways/funnel" element={<ValueChainPathwaysFunnel />} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways" element={<ValueChainPathways />} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId" element={<PathwayDetail />} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/ip-landscape" element={<PathwayIPLandscape />} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/research-landscape" element={<PathwayResearchLandscape />} />
+          <Route path="/landscape/:category/:topic/value-chain/pathways/:pathwayId/innovation-projects" element={<InnovationProjects />} />
+          <Route path="/landscape/:category/:topic/publications" element={<ScientificPublications />} />
+          <Route path="/landscape/:category/:topic/patents" element={<PatentLandscape />} />
+          <Route path="/landscape/:category/:topic/market-activity" element={<MarketActivity />} />
+          <Route path="/landscape/:category/:topic/market-activity/review" element={<MarketActivityReview />} />
 
           <Route path="/auth" element={<Auth />} />
           <Route path="/login" element={<Login />} />
