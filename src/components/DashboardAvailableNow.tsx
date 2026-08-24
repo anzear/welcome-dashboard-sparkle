@@ -270,15 +270,7 @@ export const DashboardAvailableNow: React.FC = () => {
         )}
       </section>
 
-      {/* One link, one count. No preview of the register here. */}
-      <Link
-        to="/material-prioritisation"
-        className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <span className="tabular-nums font-medium text-foreground">{trackedCount}</span>
-        materials in your portfolio
-        <ArrowRight className="h-3 w-3" />
-      </Link>
+
 
       {target && (
         <RequestCoverageDialog
