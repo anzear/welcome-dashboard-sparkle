@@ -11,6 +11,7 @@
  * Material modal used everywhere else, pre-set to the Request coverage path.
  */
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Sparkles, Plus, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,22 @@ export const DashboardAvailableNow: React.FC = () => {
   );
 
   const trackedCount = allMaterials.length;
+
+  // Pagination — five available materials per page, CTA always in the sixth slot.
+  // Not persisted: resets on reload.
+  const PAGE_SIZE = 5;
+  const totalPages = Math.max(1, Math.ceil(available.length / PAGE_SIZE));
+  const [page, setPage] = useState(1);
+
+  // Clamp page whenever the available list shrinks (e.g. after requesting coverage).
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const pageMaterials = useMemo(() => {
+    const start = (page - 1) * PAGE_SIZE;
+    return available.slice(start, start + PAGE_SIZE);
+  }, [available, page]);
 
   const confirmRequest = (m: Material) => {
     const next = [...new Set([...requested, m.material_id])];
@@ -189,7 +206,7 @@ export const DashboardAvailableNow: React.FC = () => {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {available.map((m) => (
+          {pageMaterials.map((m) => (
             <div
               key={m.material_id}
               className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
@@ -231,6 +248,32 @@ export const DashboardAvailableNow: React.FC = () => {
             </p>
           </button>
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3 pt-1 text-[11px] text-muted-foreground">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/50 transition-colors enabled:hover:border-foreground/40 enabled:hover:text-foreground disabled:opacity-30"
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="tabular-nums">
+              {page} of {totalPages}
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-md border border-border/50 transition-colors enabled:hover:border-foreground/40 enabled:hover:text-foreground disabled:opacity-30"
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
       </section>
 
       {/* One link, one count. No preview of the register here. */}
