@@ -22,7 +22,20 @@ import MaterialAddDialog, {
   type MaterialAddIntent,
   type MaterialRunAs,
 } from "@/components/MaterialAddDialog";
-import { seededMaterials } from "@/components/materialRegister/registerStore";
+import { seededMaterials, MEASURES, type RankMeasureId } from "@/components/materialRegister/registerStore";
+import { useCriteriaSet } from "@/components/materialRegister/criteriaStore";
+import { nf } from "@/components/materialRegister/primitives";
+import { seedAssessments } from "@/data/assessmentMock";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectLabel,
+  SelectGroup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import {
   addPortfolioAddition,
   portfolioAdditionRows,
@@ -45,10 +58,23 @@ const readRequested = (): string[] => [
     .filter((id): id is string => Boolean(id)),
 ];
 
+/**
+ * SORT OPTIONS — the register's measures plus one option per active driver.
+ * A driver option is prefixed so a criterion id can never collide with a measure.
+ */
+const DRIVER_PREFIX = "driver:";
+type SortId = "recent" | RankMeasureId | string;
 
+/** What the card prints, and the number it is sorted on. */
+interface CardValue {
+  key: number;
+  text: string;
+}
 
 export const DashboardAvailableNow: React.FC = () => {
+  const { criteria } = useCriteriaSet();
   const [requested, setRequested] = useState<string[]>(() => readRequested());
+
   const [additions, setAdditions] = useState<Material[]>(() => portfolioAdditionRows(seededMaterials));
   const [target, setTarget] = useState<Material | null>(null);
 
@@ -89,10 +115,68 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const trackedCount = allMaterials.length;
 
+  /**
+   * SORT — the same measures the register ranks by, one at a time, highest
+   * first. The default keeps the list exactly as it arrives (most recently made
+   * available first) and shows no value line. A material with no figure for the
+   * active measure, or no entries for the active driver, is never treated as
+   * zero and never sorted lowest by value: it sits after the sorted ones,
+   * ordered by name, with an em dash in place of a value. Nothing is hidden.
+   */
+  const [sortId, setSortId] = useState<SortId>("recent");
+  const judgedCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement" && !c.hidden),
+    [criteria],
+  );
+  // A criterion that gets hidden while selected drops the sort back to default.
+  const activeCriterion = sortId.startsWith(DRIVER_PREFIX)
+    ? judgedCriteria.find((c) => c.criterion_id === sortId.slice(DRIVER_PREFIX.length)) ?? null
+    : null;
+  const activeMeasure = MEASURES.find((mm) => mm.id === sortId) ?? null;
+  const sortActive = Boolean(activeMeasure || activeCriterion);
+
+  /** The value shown on the card, and the key sorted on. Null is not zero. */
+  const valueFor = useCallback(
+    (m: Material): CardValue | null => {
+      if (activeMeasure) {
+        const v = activeMeasure.value(m);
+        if (v === null) return null;
+        return { key: v, text: `${nf(activeMeasure.decimals ?? 0).format(v)} ${activeMeasure.unit}` };
+      }
+      if (activeCriterion) {
+        const scores = Object.values(seedAssessments)
+          .filter(
+            (e) =>
+              e.material_id === m.material_id && e.criterion_id === activeCriterion.criterion_id,
+          )
+          .map((e) => e.score);
+        if (scores.length === 0) return null;
+        const high = Math.max(...scores);
+        const low = Math.min(...scores);
+        // Disagreement is reported as the recorded range, never a derived number.
+        return { key: high, text: low === high ? `${high} of 5` : `${low}–${high} of 5` };
+      }
+      return null;
+    },
+    [activeMeasure, activeCriterion],
+  );
+
+  const sorted = useMemo(() => {
+    if (!sortActive) return available;
+    const withValue = available.map((m) => ({ m, v: valueFor(m) }));
+    const scored = withValue.filter((r) => r.v !== null);
+    const missing = withValue.filter((r) => r.v === null);
+    scored.sort((a, b) =>
+      b.v!.key !== a.v!.key ? b.v!.key - a.v!.key : a.m.name.localeCompare(b.m.name),
+    );
+    missing.sort((a, b) => a.m.name.localeCompare(b.m.name));
+    return [...scored, ...missing].map((r) => r.m);
+  }, [available, sortActive, valueFor]);
+
   // Pagination — five available materials per page, CTA always in the sixth slot.
   // Not persisted: resets on reload.
   const PAGE_SIZE = 5;
-  const totalPages = Math.max(1, Math.ceil(available.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const [page, setPage] = useState(1);
 
   // Clamp page whenever the available list shrinks (e.g. after requesting coverage).
@@ -102,8 +186,9 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const pageMaterials = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return available.slice(start, start + PAGE_SIZE);
-  }, [available, page]);
+    return sorted.slice(start, start + PAGE_SIZE);
+  }, [sorted, page]);
+
 
   const confirmRequest = (m: Material) => {
     // Records the request as a pending topic. The register row is untouched.
@@ -189,41 +274,104 @@ export const DashboardAvailableNow: React.FC = () => {
               Materials in your portfolio where our data is ready.
             </p>
           </div>
-          {/* The way out of the section: register, unfiltered. One link, one count. */}
-          <Link
-            to="/material-prioritisation"
-            className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-foreground transition-colors hover:text-foreground/70"
-          >
-            View all <span className="tabular-nums">{trackedCount}</span>
-            <ArrowRight className="h-3 w-3" />
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            {/* One sort at a time, highest first. Quiet: a dropdown, not a row. */}
+            <Select
+              value={sortId}
+              onValueChange={(v) => {
+                setSortId(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-6 w-auto gap-1 border-none bg-transparent px-1 text-[11px] text-muted-foreground shadow-none hover:text-foreground focus:ring-0 focus:ring-offset-0">
+                <span className="text-muted-foreground/70">Sort</span>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end" className="text-[11px]">
+                <SelectItem value="recent" className="text-[11px]">
+                  Recently available
+                </SelectItem>
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Figures
+                  </SelectLabel>
+                  {MEASURES.map((mm) => (
+                    <SelectItem key={mm.id} value={mm.id} className="text-[11px]">
+                      {mm.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Drivers
+                  </SelectLabel>
+                  {judgedCriteria.map((c) => (
+                    <SelectItem
+                      key={c.criterion_id}
+                      value={`${DRIVER_PREFIX}${c.criterion_id}`}
+                      className="text-[11px]"
+                    >
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+
+            {/* The way out of the section: register, unfiltered. One link, one count. */}
+            <Link
+              to="/material-prioritisation"
+              className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-foreground transition-colors hover:text-foreground/70"
+            >
+              View all <span className="tabular-nums">{trackedCount}</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
         </div>
 
 
+
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {pageMaterials.map((m) => (
-            <div
-              key={m.material_id}
-              className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
-            >
-              <div className="flex items-start justify-between gap-2">
-                <h3 className="text-xs font-semibold leading-snug text-foreground">{m.name}</h3>
-                <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-success/15">
-                  <Sparkles className="h-2.5 w-2.5 text-success" />
-                </div>
-              </div>
-              <RoleChip isExisting={m.role === "existing"} className="self-start">
-                {MATERIAL_ROLE_LABEL[m.role]}
-              </RoleChip>
-              <Button
-                size="sm"
-                className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
-                onClick={() => setTarget(m)}
+          {pageMaterials.map((m) => {
+            const value = sortActive ? valueFor(m) : null;
+            return (
+              <div
+                key={m.material_id}
+                className="flex flex-col gap-2 rounded-xl border border-border/50 bg-card p-3.5"
               >
-                Request coverage
-              </Button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="text-xs font-semibold leading-snug text-foreground">{m.name}</h3>
+                  <div className="flex h-4 w-4 shrink-0 items-center justify-center rounded-md bg-success/15">
+                    <Sparkles className="h-2.5 w-2.5 text-success" />
+                  </div>
+                </div>
+                <RoleChip isExisting={m.role === "existing"} className="self-start">
+                  {MATERIAL_ROLE_LABEL[m.role]}
+                </RoleChip>
+                {/* The value being sorted on. An em dash means nothing recorded — never a zero. */}
+                {sortActive && (
+                  <p className="text-[11px] text-muted-foreground">
+                    <span className="uppercase tracking-widest text-[10px] text-muted-foreground/70">
+                      {activeMeasure?.label ?? activeCriterion?.label}
+                    </span>{" "}
+                    {value ? (
+                      <span className="tabular-nums font-medium text-foreground">{value.text}</span>
+                    ) : (
+                      <span className="text-muted-foreground/60">—</span>
+                    )}
+                  </p>
+                )}
+                <Button
+                  size="sm"
+                  className="mt-auto h-7 w-full bg-foreground text-[11px] text-background hover:bg-foreground/90"
+                  onClick={() => setTarget(m)}
+                >
+                  Request coverage
+                </Button>
+              </div>
+            );
+          })}
+
 
           {/* Request another material — an action, not a material. */}
           <button
