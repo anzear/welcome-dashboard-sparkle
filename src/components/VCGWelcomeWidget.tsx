@@ -87,17 +87,18 @@ const VCGWelcomeWidget = () => {
   useEffect(() => {
     const loadPortfolioItems = () => {
       // Feedstock: normalize and ensure Fructose has full object data
-      let feedstock = JSON.parse(localStorage.getItem('portfolio_feedstock') || '[{"name":"Fructose","synonyms":"","objective":"Valorise","category":"Side Stream","isNew":false}]');
-      feedstock = feedstock.filter((item: any) => {
+      let feedstock = JSON.parse(localStorage.getItem('portfolio_feedstock') || '[{"name":"Fructose","synonyms":"","category":"Side Stream","isNew":false}]');
+      feedstock = sanitizeTopicList(feedstock).filter((item: any) => {
         const name = typeof item === 'string' ? item : item?.name;
         return name && name !== 'K';
       });
       const normalizedFeedstock = feedstock.map((item: any) => {
         if (typeof item === 'string' && item === 'Fructose') {
-          return { name: 'Fructose', synonyms: '', objective: 'Valorise', category: 'Side Stream', isNew: false };
+          return { name: 'Fructose', synonyms: '', category: 'Side Stream', isNew: false };
         }
         return item;
       });
+
       const hasFructose = normalizedFeedstock.some((item: any) =>
         (typeof item === 'string' ? item : item?.name) === 'Fructose'
       );
