@@ -130,25 +130,8 @@ const FilterSelects: React.FC<{
 
   const active = controls.filter(([k]) => shown(k));
 
-  const evidenceSection = (
-    <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2">
-      <div className="text-[9px] font-semibold uppercase tracking-widest text-provenance-judgement">Evidence</div>
-      {/* Presence only. Document volume is not a virtue and is never filtered on. */}
-      <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-muted-foreground">
-        <input
-          type="checkbox"
-          checked={filters.hasDocuments}
-          onChange={(e) => setFilters((f) => ({ ...f, hasDocuments: e.target.checked }))}
-          className="h-3 w-3"
-        />
-        Has supporting documents
-      </label>
-    </div>
-  );
-
   const activeCount =
     active.reduce((n, [, , , sel]) => n + sel.length, 0) +
-    (filters.hasDocuments ? 1 : 0) +
     Object.values(filters.criterionScores).filter((v) => v.length > 0).length;
 
   /**
