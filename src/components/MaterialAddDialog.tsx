@@ -166,14 +166,12 @@ export default function MaterialAddDialog({
       [...list].sort((a, b) => closeness(a) - closeness(b));
     return {
       // The customer's own materials always come first and are never crowded out.
-      ownSuggestions: sortByCloseness(hits.filter((k) => k.state !== "database")).slice(
-        0,
-        OWN_SUGGESTION_CAP,
-      ),
-      dbSuggestions: sortByCloseness(hits.filter((k) => k.state === "database")).slice(
-        0,
-        DATABASE_SUGGESTION_CAP,
-      ),
+      ownSuggestions: sortByCloseness(
+        hits.filter((k) => k.state !== "database" || k.pending),
+      ).slice(0, OWN_SUGGESTION_CAP),
+      dbSuggestions: sortByCloseness(
+        hits.filter((k) => k.state === "database" && !k.pending),
+      ).slice(0, DATABASE_SUGGESTION_CAP),
     };
   }, [known, query, suggestionsOpen]);
 
@@ -181,11 +179,13 @@ export default function MaterialAddDialog({
   /** An exact match tells us whether this act is already done for that material. */
   const match = known.find((k) => k.name.toLowerCase() === query) || null;
   // Blocking is independent of the chosen action: it is a fact about the material.
-  const coverageBlocked = match?.state === "active";
+  const coveragePending = Boolean(match?.pending);
+  const coverageBlocked = match?.state === "active" || coveragePending;
   const portfolioBlocked = match?.state === "portfolio";
   const briefHref = match
     ? `/landscape/${match.category || "product"}/${encodeURIComponent(match.name)}/material-brief`
     : "#";
+
 
   const nameEntered = name.trim().length > 0;
 
