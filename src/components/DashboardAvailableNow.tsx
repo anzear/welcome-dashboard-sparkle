@@ -89,10 +89,68 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const trackedCount = allMaterials.length;
 
+  /**
+   * SORT — the same measures the register ranks by, one at a time, highest
+   * first. The default keeps the list exactly as it arrives (most recently made
+   * available first) and shows no value line. A material with no figure for the
+   * active measure, or no entries for the active driver, is never treated as
+   * zero and never sorted lowest by value: it sits after the sorted ones,
+   * ordered by name, with an em dash in place of a value. Nothing is hidden.
+   */
+  const [sortId, setSortId] = useState<SortId>("recent");
+  const judgedCriteria = useMemo(
+    () => criteria.filter((c) => c.kind === "judgement" && !c.hidden),
+    [criteria],
+  );
+  // A criterion that gets hidden while selected drops the sort back to default.
+  const activeCriterion = sortId.startsWith(DRIVER_PREFIX)
+    ? judgedCriteria.find((c) => c.criterion_id === sortId.slice(DRIVER_PREFIX.length)) ?? null
+    : null;
+  const activeMeasure = MEASURES.find((mm) => mm.id === sortId) ?? null;
+  const sortActive = Boolean(activeMeasure || activeCriterion);
+
+  /** The value shown on the card, and the key sorted on. Null is not zero. */
+  const valueFor = useCallback(
+    (m: Material): CardValue | null => {
+      if (activeMeasure) {
+        const v = activeMeasure.value(m);
+        if (v === null) return null;
+        return { key: v, text: `${nf(activeMeasure.decimals ?? 0)(v)} ${activeMeasure.unit}` };
+      }
+      if (activeCriterion) {
+        const scores = Object.values(seedAssessments)
+          .filter(
+            (e) =>
+              e.material_id === m.material_id && e.criterion_id === activeCriterion.criterion_id,
+          )
+          .map((e) => e.score);
+        if (scores.length === 0) return null;
+        const high = Math.max(...scores);
+        const low = Math.min(...scores);
+        // Disagreement is reported as the recorded range, never a derived number.
+        return { key: high, text: low === high ? `${high} of 5` : `${low}–${high} of 5` };
+      }
+      return null;
+    },
+    [activeMeasure, activeCriterion],
+  );
+
+  const sorted = useMemo(() => {
+    if (!sortActive) return available;
+    const withValue = available.map((m) => ({ m, v: valueFor(m) }));
+    const scored = withValue.filter((r) => r.v !== null);
+    const missing = withValue.filter((r) => r.v === null);
+    scored.sort((a, b) =>
+      b.v!.key !== a.v!.key ? b.v!.key - a.v!.key : a.m.name.localeCompare(b.m.name),
+    );
+    missing.sort((a, b) => a.m.name.localeCompare(b.m.name));
+    return [...scored, ...missing].map((r) => r.m);
+  }, [available, sortActive, valueFor]);
+
   // Pagination — five available materials per page, CTA always in the sixth slot.
   // Not persisted: resets on reload.
   const PAGE_SIZE = 5;
-  const totalPages = Math.max(1, Math.ceil(available.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
   const [page, setPage] = useState(1);
 
   // Clamp page whenever the available list shrinks (e.g. after requesting coverage).
@@ -102,8 +160,9 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const pageMaterials = useMemo(() => {
     const start = (page - 1) * PAGE_SIZE;
-    return available.slice(start, start + PAGE_SIZE);
-  }, [available, page]);
+    return sorted.slice(start, start + PAGE_SIZE);
+  }, [sorted, page]);
+
 
   const confirmRequest = (m: Material) => {
     // Records the request as a pending topic. The register row is untouched.
