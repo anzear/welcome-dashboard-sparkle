@@ -41,11 +41,6 @@ const readRequested = (): string[] => {
   }
 };
 
-/** One line on what the coverage would give them, kept role-aware. */
-const coverageLine = (m: Material) =>
-  m.role === "existing"
-    ? `Alternatives to ${m.name}, who supplies them and where the routes stand today.`
-    : `Whether ${m.name} is real at your volumes — routes, suppliers and who else is moving.`;
 
 export const DashboardAvailableNow: React.FC = () => {
   const [requested, setRequested] = useState<string[]>(() => readRequested());
