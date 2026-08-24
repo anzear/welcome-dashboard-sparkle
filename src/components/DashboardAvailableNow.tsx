@@ -116,7 +116,7 @@ export const DashboardAvailableNow: React.FC = () => {
     [allMaterials, requested],
   );
 
-  const trackedCount = allMaterials.length;
+  
 
   /**
    * SORT — the same measures the register ranks by, one at a time, highest
