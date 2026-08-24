@@ -292,6 +292,8 @@ const VCGWelcomeWidget = () => {
   const [customItemSubcategory, setCustomItemSubcategory] = useState("");
   const [customItemDescription, setCustomItemDescription] = useState("");
   const [customItemRunAs, setCustomItemRunAs] = useState<MaterialRunAs | "">("Feedstock");
+  // Optional question from the shared coverage step. Coverage path only.
+  const [customItemQuestion, setCustomItemQuestion] = useState("");
   // The add flow serves two different acts: coverage (research) or portfolio (internal tracking).
   const [customItemIntent, setCustomItemIntent] = useState<MaterialAddIntent | "">("");
   const [customItemRole, setCustomItemRole] = useState<MaterialRole | "">("");
@@ -1261,6 +1263,8 @@ const VCGWelcomeWidget = () => {
               name={customItemName}
               onNameChange={setCustomItemName}
               runAs={customItemRunAs}
+              coverageQuestion={customItemQuestion}
+              onCoverageQuestionChange={setCustomItemQuestion}
               onRunAsChange={setCustomItemRunAs}
               intent={customItemIntent}
               onIntentChange={setCustomItemIntent}
