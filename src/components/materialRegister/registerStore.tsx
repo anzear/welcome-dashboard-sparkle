@@ -272,6 +272,7 @@ export const EMPTY_FILTERS: Filters = {
   hasDocuments: false,
   notAssessed: false,
   teamsDisagree: false,
+  hideDeliveredCoverage: false,
   criterionScores: {},
 };
 
