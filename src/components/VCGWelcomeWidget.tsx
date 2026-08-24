@@ -36,6 +36,16 @@ const VCGWelcomeWidget = () => {
   const [feedstockItems, setFeedstockItems] = useState<any[]>([]);
   const [productItems, setProductItems] = useState<any[]>([]);
 
+  // Coverage requests that have been made but not yet agreed. They sit with the
+  // other topics in a pending state so a request never vanishes.
+  const [pending, setPending] = useState<PendingCoverageEntry[]>(() => readPendingCoverage());
+  useEffect(() => {
+    const sync = () => setPending(readPendingCoverage());
+    window.addEventListener(PENDING_COVERAGE_EVENT, sync);
+    return () => window.removeEventListener(PENDING_COVERAGE_EVENT, sync);
+  }, []);
+
+
   // Helper to normalize portfolio items (string or object)
   const normalizeItem = (item: any) => {
     if (typeof item === 'string') {
