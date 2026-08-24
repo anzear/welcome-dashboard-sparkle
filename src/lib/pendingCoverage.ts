@@ -6,6 +6,10 @@
  * again. Nothing here touches the Material Portfolio register: requesting
  * coverage does not change a material's role, strategy, assessment or links.
  */
+import type { MaterialRole } from "@/types/materialPrioritisation";
+import { materials } from "@/data/materialPrioritisationMock";
+import { addPortfolioAddition, readPortfolioAdditions } from "@/lib/portfolioAdditions";
+
 export const PENDING_COVERAGE_EVENT = "pendingCoverageUpdated";
 
 const PENDING_KEY = "material_coverage_pending";
@@ -18,6 +22,8 @@ export interface PendingCoverageEntry {
   materialId?: string;
   /** How the pathway would be run, when the request came from the modal. */
   runAs?: "Feedstock" | "Material";
+  /** Role given in the modal, used to create the register row for the request. */
+  role?: MaterialRole;
   requestedAt: number;
 }
 
@@ -73,4 +79,44 @@ export function addPendingCoverage(entry: Omit<PendingCoverageEntry, "requestedA
   }
   window.dispatchEvent(new CustomEvent(PENDING_COVERAGE_EVENT));
   return true;
+}
+
+/**
+ * Requesting coverage for a material that is not in the register must create it
+ * there. This reconciles what the prototype already holds: a pending topic with
+ * no register row gets one created from its recorded role; a pending topic with
+ * no role at all predates the role question and is a stub, so it is dropped
+ * rather than guessed at.
+ */
+export function reconcilePendingCoverage(): void {
+  const current = readPendingCoverage();
+  if (current.length === 0) return;
+  const registered = new Set(
+    [...materials.map((m) => m.name), ...readPortfolioAdditions().map((a) => a.name)].map((n) =>
+      n.trim().toLowerCase(),
+    ),
+  );
+  const kept: PendingCoverageEntry[] = [];
+  let changed = false;
+  for (const entry of current) {
+    const key = entry.name.trim().toLowerCase();
+    if (entry.materialId || registered.has(key)) {
+      kept.push(entry);
+      continue;
+    }
+    if (entry.role) {
+      addPortfolioAddition({ name: entry.name, role: entry.role });
+      registered.add(key);
+      kept.push(entry);
+      continue;
+    }
+    changed = true; // stub request from before the role question — remove it
+  }
+  if (!changed) return;
+  try {
+    window.localStorage.setItem(PENDING_KEY, JSON.stringify(kept));
+  } catch {
+    /* ignore */
+  }
+  window.dispatchEvent(new CustomEvent(PENDING_COVERAGE_EVENT));
 }
