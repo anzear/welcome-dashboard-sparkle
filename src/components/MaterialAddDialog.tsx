@@ -111,12 +111,21 @@ function knownMaterials(): KnownMaterial[] {
   );
   readPortfolioAdditions().forEach((a) => put({ name: a.name, state: "portfolio" }));
   readCoveredMaterials().forEach((c) => put(c));
-  const own = [...byName.values()];
+  // A pending request is a fact about a material, whatever else it is.
+  const pendingEntries = readPendingCoverage();
+  pendingEntries.forEach((p) => {
+    const key = p.name.toLowerCase();
+    const existing = byName.get(key);
+    byName.set(key, { name: p.name, state: existing?.state ?? "database", ...existing, pending: true });
+  });
+  const own = [...byName.values()].filter((k) => k.state !== "database" || k.pending);
+  const covered = new Set([...byName.keys()]);
   // Database entries only surface where the customer has nothing of their own.
-  const database = VCG_DATABASE_MATERIALS.filter((n) => !byName.has(n.toLowerCase())).map(
+  const database = VCG_DATABASE_MATERIALS.filter((n) => !covered.has(n.toLowerCase())).map(
     (n): KnownMaterial => ({ name: n, state: "database" }),
   );
   return [...own, ...database];
+
 }
 
 const OWN_SUGGESTION_CAP = 6;
