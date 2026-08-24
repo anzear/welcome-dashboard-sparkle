@@ -103,18 +103,19 @@ const VCGWelcomeWidget = () => {
         (typeof item === 'string' ? item : item?.name) === 'Fructose'
       );
       if (!hasFructose) {
-        normalizedFeedstock.unshift({ name: 'Fructose', synonyms: '', objective: 'Valorise', category: 'Side Stream', isNew: false });
+        normalizedFeedstock.unshift({ name: 'Fructose', synonyms: '', category: 'Side Stream', isNew: false });
       }
       setFeedstockItems(normalizedFeedstock);
       localStorage.setItem('portfolio_feedstock', JSON.stringify(normalizedFeedstock));
 
       // Products: normalize and ensure Lactic Acid has full object data, preserve Sulphuric Acid position
-      let products = JSON.parse(localStorage.getItem('portfolio_product') || '[{"name":"Lactic Acid","synonyms":"","objective":"Produce","category":"Chemical","isNew":false}]');
+      let products = JSON.parse(localStorage.getItem('portfolio_product') || '[{"name":"Lactic Acid","synonyms":"","category":"Chemical","isNew":false}]');
+      products = sanitizeTopicList(products);
 
       // Remove any string-only Lactic Acid and replace with full object
       products = products.map((item: any) => {
         if (typeof item === 'string' && item === 'Lactic Acid') {
-          return { name: 'Lactic Acid', synonyms: '', objective: 'Produce', category: 'Chemical', isNew: false };
+          return { name: 'Lactic Acid', synonyms: '', category: 'Chemical', isNew: false };
         }
         return item;
       });
@@ -124,7 +125,8 @@ const VCGWelcomeWidget = () => {
         (typeof item === 'string' ? item : item?.name) === 'Lactic Acid'
       );
 
-      const lacticAcidObj = { name: 'Lactic Acid', synonyms: '', objective: 'Produce', category: 'Chemical', isNew: false };
+      const lacticAcidObj = { name: 'Lactic Acid', synonyms: '', category: 'Chemical', isNew: false };
+
 
       if (lacticIndex === -1) {
         // Lactic Acid missing — add at top
