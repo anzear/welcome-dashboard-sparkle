@@ -61,12 +61,18 @@ export const DashboardAvailableNow: React.FC = () => {
 
   const refresh = useCallback(() => {
     setAdditions(portfolioAdditionRows(seededMaterials));
+    setRequested(readRequested());
   }, []);
 
   useEffect(() => {
     window.addEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
-    return () => window.removeEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
+    window.addEventListener(PENDING_COVERAGE_EVENT, refresh);
+    return () => {
+      window.removeEventListener(PORTFOLIO_ADDITIONS_EVENT, refresh);
+      window.removeEventListener(PENDING_COVERAGE_EVENT, refresh);
+    };
   }, [refresh]);
+
 
   const allMaterials = useMemo(() => [...seededMaterials, ...additions], [additions]);
 
