@@ -22,12 +22,12 @@ interface MaterialAddDialogProps {
   name: string;
   onNameChange: (value: string) => void;
   runAs: MaterialRunAs | "";
-  onRunAsChange: (value: MaterialRunAs | "") => void;
+  onRunAsChange: (value: MaterialRunAs) => void;
   /** Omitted on legacy coverage-only callers, which keep the old single path. */
   intent?: MaterialAddIntent | "";
   onIntentChange?: (value: MaterialAddIntent) => void;
   role?: MaterialRole | "";
-  onRoleChange?: (value: MaterialRole | "") => void;
+  onRoleChange?: (value: MaterialRole) => void;
   /** Requests coverage for the material. */
   onSubmit: () => void;
   /** Adds the material to the Material Portfolio, without coverage. */
@@ -249,8 +249,9 @@ export default function MaterialAddDialog({
                           ? onSubmit
                           : () => {
                               onIntentChange?.("coverage");
-                              // Discard what was entered on the other path.
-                              onRoleChange?.("");
+                              // Discard what was entered on the other path. Safe: only
+                              // dual-path callers reach here, and their role state accepts "".
+                              onRoleChange?.("" as MaterialRole);
                             }
                       }
                       className={`w-full h-9 bg-success hover:bg-success/90 rounded-md text-success-foreground ${
@@ -283,8 +284,9 @@ export default function MaterialAddDialog({
                           ? onSubmitPortfolio
                           : () => {
                               onIntentChange?.("portfolio");
-                              // Discard what was entered on the other path.
-                              onRunAsChange("");
+                              // Discard what was entered on the other path. Safe: only
+                              // dual-path callers reach here, and their runAs state accepts "".
+                              onRunAsChange("" as MaterialRunAs);
                             }
                       }
                       className={`w-full h-9 border-2 rounded-md ${
