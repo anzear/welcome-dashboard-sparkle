@@ -58,10 +58,23 @@ const readRequested = (): string[] => [
     .filter((id): id is string => Boolean(id)),
 ];
 
+/**
+ * SORT OPTIONS — the register's measures plus one option per active driver.
+ * A driver option is prefixed so a criterion id can never collide with a measure.
+ */
+const DRIVER_PREFIX = "driver:";
+type SortId = "recent" | RankMeasureId | string;
 
+/** What the card prints, and the number it is sorted on. */
+interface CardValue {
+  key: number;
+  text: string;
+}
 
 export const DashboardAvailableNow: React.FC = () => {
+  const { criteria } = useCriteriaSet();
   const [requested, setRequested] = useState<string[]>(() => readRequested());
+
   const [additions, setAdditions] = useState<Material[]>(() => portfolioAdditionRows(seededMaterials));
   const [target, setTarget] = useState<Material | null>(null);
 
