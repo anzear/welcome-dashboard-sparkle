@@ -708,6 +708,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     filters.notAssessed ||
     
     filters.teamsDisagree ||
+    filters.hideDeliveredCoverage ||
     Object.values(filters.criterionScores).some((v) => v.length > 0);
 
   const documentedIds = useMemo(
