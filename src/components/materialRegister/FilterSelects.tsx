@@ -236,11 +236,9 @@ const FilterSelects: React.FC<{
               );
             })}
           </div>
-          {gateSection}
-          {assessmentSection}
           {criterionScoreSection}
           {evidenceSection}
-          
+
           {activeCount > 0 && (
             <button
               type="button"
@@ -248,13 +246,8 @@ const FilterSelects: React.FC<{
                 setFilters((f) => {
                   const next = { ...f };
                   active.forEach(([k]) => ((next as any)[k] = []));
-                  next.gateOverdueCondition = false;
-                  next.gateHoldReviewOverdue = false;
-                  next.gateRecommendation = "any";
                   next.hasDocuments = false;
-                  next.notAssessed = false;
-                  next.teamsDisagree = false;
-                  
+
                   next.criterionScores = {};
                   return next;
                 })
