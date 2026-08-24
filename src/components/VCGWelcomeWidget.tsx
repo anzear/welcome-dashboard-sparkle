@@ -17,7 +17,14 @@ import { usePipelineBriefStore, BRIEF_PALETTE, PIPELINE_BRIEFS_EVENT } from "@/s
 import { useCurrentUser } from "@/lib/currentUser";
 import MaterialAddDialog, { type MaterialAddIntent, type MaterialRunAs } from "@/components/MaterialAddDialog";
 import { addPortfolioAddition } from "@/lib/portfolioAdditions";
+import {
+  addPendingCoverage,
+  readPendingCoverage,
+  PENDING_COVERAGE_EVENT,
+  type PendingCoverageEntry,
+} from "@/lib/pendingCoverage";
 import type { MaterialRole } from "@/types/materialPrioritisation";
+
 
 
 const VCGWelcomeWidget = () => {
