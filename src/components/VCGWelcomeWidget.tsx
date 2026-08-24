@@ -645,7 +645,6 @@ const VCGWelcomeWidget = () => {
       return {
         name: normalized.name,
         category: "FEEDSTOCK" as const,
-        tag: (normalized.objective || "VALORISE").toUpperCase() as "SOURCE" | "PRODUCE" | "VALORISE",
         description: `Analysis tracking for ${normalized.name}. Monitor supply chain dynamics, pricing trends, and market developments.`,
         status: isNew ? "brief-pending" : (Math.random() > 0.5 ? "new-updates" : "tracking"),
         insights: isNew ? 0 : Math.floor(Math.random() * 8) + 1,
@@ -660,7 +659,6 @@ const VCGWelcomeWidget = () => {
       return {
         name: normalized.name,
         category: "PRODUCT" as const,
-        tag: (normalized.objective || productTagFor(normalized.name)).toUpperCase() as "SOURCE" | "PRODUCE" | "VALORISE",
         description: `Product intelligence for ${normalized.name}. Track applications, regulatory changes, and competitive landscape.`,
         status: isNew ? "brief-pending" : (Math.random() > 0.6 ? "recently-viewed" : "new-updates"),
         insights: isNew ? 0 : Math.floor(Math.random() * 8) + 1,
@@ -1374,12 +1372,8 @@ const VCGWelcomeWidget = () => {
             );
           })()}
                 <div className="p-4">
-                  <p className={`text-[10px] font-semibold tracking-wider mb-1.5 ${
-            topic.tag === "VALORISE" ? "text-success" :
-            topic.tag === "PRODUCE" ? "text-application-purple" :
-            "text-primary"}`
-            }>
-                    {topic.tag}
+                  <p className="text-[10px] font-semibold tracking-wider mb-1.5 text-muted-foreground">
+                    {topic.category}
                   </p>
                   <h3 className="text-sm font-bold text-foreground mb-1.5">{topic.name}</h3>
 
