@@ -240,7 +240,7 @@ export default function MaterialAddDialog({
                       >
                         <span className="text-sm text-foreground">{s.name}</span>
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {KNOWN_STATE_LABEL[s.state]}
+                          {stateLabel(s)}
                         </span>
                       </button>
                     </div>
