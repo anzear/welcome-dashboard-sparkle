@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Search, FolderPlus, ArrowRight, ArrowLeft } from "lucide-react";
+import {
+  RunAsPicker,
+  CoverageQuestionField,
+  type CoverageRunAs,
+} from "@/components/coverage/CoverageStep";
 import type { MaterialRole } from "@/types/materialPrioritisation";
 import { MATERIAL_ROLE_LABEL } from "@/types/materialPrioritisation";
 import { materials as portfolioMaterials } from "@/data/materialPrioritisationMock";
@@ -13,8 +18,8 @@ import { VCG_DATABASE_MATERIALS } from "@/data/vcgMaterialDatabase";
 import { readPendingCoverage } from "@/lib/pendingCoverage";
 
 
-/** Pathway node position the run starts from. Same run, different entry point. */
-export type MaterialRunAs = "Feedstock" | "Material";
+/** Pathway node position the run starts from. Shared with the coverage step. */
+export type MaterialRunAs = CoverageRunAs;
 /** Two different acts. Coverage is research we do; portfolio is internal tracking. */
 export type MaterialAddIntent = "coverage" | "portfolio";
 
@@ -25,6 +30,9 @@ interface MaterialAddDialogProps {
   onNameChange: (value: string) => void;
   runAs: MaterialRunAs | "";
   onRunAsChange: (value: MaterialRunAs) => void;
+  /** Optional question the coverage should answer — coverage path only. */
+  coverageQuestion?: string;
+  onCoverageQuestionChange?: (value: string) => void;
   /** Omitted on legacy coverage-only callers, which keep the old single path. */
   intent?: MaterialAddIntent | "";
   onIntentChange?: (value: MaterialAddIntent) => void;
@@ -36,21 +44,6 @@ interface MaterialAddDialogProps {
   onSubmitPortfolio?: () => void;
   onCancel: () => void;
 }
-
-const RUN_AS: { value: MaterialRunAs; label: string; description: string; Icon: typeof ArrowRight }[] = [
-  {
-    value: "Feedstock",
-    label: "Feedstock",
-    description: "The input a pathway starts from. Run this way to see what can be made from it.",
-    Icon: ArrowRight,
-  },
-  {
-    value: "Material",
-    label: "Material",
-    description: "The output a pathway arrives at. Run this way to see what it can be made from.",
-    Icon: ArrowLeft,
-  },
-];
 
 const ROLES: { value: MaterialRole; description: string }[] = [
   { value: "existing", description: "You buy or use it today" },
@@ -139,6 +132,8 @@ export default function MaterialAddDialog({
   name,
   onNameChange,
   runAs = "",
+  coverageQuestion = "",
+  onCoverageQuestionChange,
   onRunAsChange,
   intent = "",
   onIntentChange,
