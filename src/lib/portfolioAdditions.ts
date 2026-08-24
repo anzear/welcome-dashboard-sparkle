@@ -68,7 +68,7 @@ export function portfolioAdditionRows(taken: Material[]): Material[] {
       ...blankMaterial(null, a.role),
       material_id: `MAT-${String(max).padStart(4, "0")}`,
       name: a.name,
-      customer_material_ids: a.synonyms
+      customer_material_ids: (a.synonyms ?? "")
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
