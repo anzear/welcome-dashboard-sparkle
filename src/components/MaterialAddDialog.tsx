@@ -22,12 +22,12 @@ interface MaterialAddDialogProps {
   name: string;
   onNameChange: (value: string) => void;
   runAs: MaterialRunAs | "";
-  onRunAsChange: (value: MaterialRunAs) => void;
+  onRunAsChange: (value: MaterialRunAs | "") => void;
   /** Omitted on legacy coverage-only callers, which keep the old single path. */
   intent?: MaterialAddIntent | "";
   onIntentChange?: (value: MaterialAddIntent) => void;
   role?: MaterialRole | "";
-  onRoleChange?: (value: MaterialRole) => void;
+  onRoleChange?: (value: MaterialRole | "") => void;
   /** Requests coverage for the material. */
   onSubmit: () => void;
   /** Adds the material to the Material Portfolio, without coverage. */
