@@ -1093,7 +1093,19 @@ const ValueChainPathways = () => {
             {/* Table Header */}
             {viewMode !== 'compressed' && (
             <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
-              <span />
+              <span className="flex items-center justify-center">
+                {selectionMode && (
+                  <Checkbox
+                    className="h-3.5 w-3.5"
+                    checked={pagedPathways.length > 0 && pagedPathways.every(({ originalIndex }) => selectedRows.has(originalIndex))}
+                    onCheckedChange={(checked) =>
+                      setSelectedRows(checked ? new Set(pagedPathways.map((r) => r.originalIndex)) : new Set())
+                    }
+                    title="Select all on page"
+                  />
+                )}
+              </span>
+
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
               {([
                 { key: 'feedstock', label: 'Feedstock', green: false },
