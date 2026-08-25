@@ -949,18 +949,18 @@ const ValueChainPathways = () => {
             <div className={viewMode === 'compressed' ? 'space-y-4' : 'border-x border-b border-border rounded-b-lg divide-y divide-border/50'}>
               {(() => {
                 const isCompressed = viewMode === 'compressed';
-                const rowPad = isCompressed ? 'px-4 py-1' : 'px-4 py-3';
+                const rowPad = isCompressed ? 'px-4 py-1' : 'px-4 py-4';
                 const chipCls = (extra: string = '') => isCompressed
                   ? `text-[10px] font-medium truncate text-center ${extra}`
-                  : `text-[10px] font-medium truncate border border-border rounded px-2 py-1.5 bg-muted/20 text-center ${extra}`;
+                  : `text-[10px] font-medium truncate border rounded-md px-2 py-2 text-center ${extra}`;
+                const rankOf = new Map<number, number>();
+                filteredPathways.forEach(({ originalIndex }, i) => rankOf.set(originalIndex, i + 1));
 
                 const renderRow = ({ pathway, originalIndex }: { pathway: any; originalIndex: number }) => {
                   const viability = getViability(pathway.trl);
                   const colors = getViabilityColor(viability);
-                  const vcgScore = Math.max(20, 95 - originalIndex * 3);
-                  const researchScore = Math.min(100, Math.round(vcgScore * 0.95 + (originalIndex % 5) * 2));
-                  const ipScore = Math.max(0, Math.min(100, Math.round(100 - vcgScore + (originalIndex % 7) * 3)));
-                  const trlLabel = getTRLStageLabel(pathway.trl);
+                  const bandLabel = BAND_LABEL[viability as keyof typeof BAND_LABEL] ?? viability;
+                  const flagged = favoritedPathways.has(originalIndex) || dislikedPathways.has(originalIndex);
                   return (
                     <div
                       key={originalIndex}
@@ -969,35 +969,41 @@ const ValueChainPathways = () => {
                       } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''}`}
                       onClick={() => handleCardClick(originalIndex)}
                     >
-                      <div className={`${rowPad} grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2`}>
+                      <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
-                          className="flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                          className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                           title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
                         >
-                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-primary text-primary' : ''}`} />
+                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
                         </button>
-                        <div className="text-xs font-bold text-foreground text-center">{vcgScore}</div>
-                        <div className={chipCls(!isProductRoute && category === 'Feedstock' ? (isCompressed ? 'text-primary' : 'border-primary/40 bg-primary/5 text-primary') : 'text-foreground')}>
+                        <div className="flex justify-center">
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums ${
+                            flagged ? 'border border-amber-400 text-amber-700 bg-amber-50' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {rankOf.get(originalIndex) ?? ''}
+                          </span>
+                        </div>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.feedstock}
                         </div>
-                        <div className={chipCls('text-foreground')}>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.technology}
                         </div>
-                        <div className={chipCls(isProductRoute ? (isCompressed ? 'text-primary' : 'border-primary/40 bg-primary/5 text-primary') : 'text-foreground')}>
+                        <div className={chipCls('border-emerald-300 bg-emerald-50 text-emerald-800')}>
                           {pathway.product}
                         </div>
-                        <div className={isCompressed ? 'text-[10px] text-muted-foreground truncate text-center' : 'text-[10px] text-muted-foreground truncate border border-border rounded px-2 py-1.5 bg-muted/20 text-center'}>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.application}
                         </div>
-                        <div className="text-xs font-medium text-blue-600 text-center">{researchScore}</div>
-                        <div className={`text-xs font-medium text-center ${ipScore > 60 ? 'text-red-500' : ipScore > 30 ? 'text-amber-600' : 'text-green-600'}`}>{ipScore}</div>
-                        <div className="text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${colors.bg} ${colors.text} border ${colors.border}`}>
-                            {trlLabel}
+                        <div className="flex justify-center">
+                          <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                            <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                            <span className="text-[8px] opacity-80">{pathway.trl}</span>
                           </span>
                         </div>
                       </div>
+
                       {activeTab === 'saved' && savedPathways.has(originalIndex) && shortlistNotes[originalIndex] && (
                         <div className="px-4 pb-3 -mt-1">
                           <div className="relative rounded-md bg-muted/40 border border-border/60 pl-3 pr-3 py-2">
