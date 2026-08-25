@@ -1006,6 +1006,49 @@ const ValueChainPathways = () => {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Tag filter — ANY of the selected tags */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`flex items-center gap-1 h-7 px-2.5 rounded-md border text-[10px] font-medium transition-colors ${
+                        tagFilter.length > 0 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TagIcon className="w-3 h-3" />
+                      {tagFilter.length > 0 ? `Tags (${tagFilter.length})` : 'Tags'}
+                      <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-2">
+                    {tagCounts.length === 0 ? (
+                      <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags yet.</p>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto space-y-0.5">
+                        {tagCounts.map(({ key, label, count }) => (
+                          <button
+                            key={key}
+                            onClick={() => toggleTagFilter(key)}
+                            className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
+                          >
+                            <Checkbox checked={tagFilter.includes(key)} className="h-3 w-3 pointer-events-none" />
+                            <span className="truncate text-foreground">{label}</span>
+                            <span className="ml-auto tabular-nums text-muted-foreground">{count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {tagFilter.length > 0 && (
+                      <button
+                        onClick={() => setTagFilter([])}
+                        className="mt-1 w-full border-t border-border pt-1 text-left text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
+
                 <div className="relative w-[180px]">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                   <Input
