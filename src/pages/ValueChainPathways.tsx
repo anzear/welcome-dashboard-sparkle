@@ -1012,11 +1012,12 @@ const ValueChainPathways = () => {
               <span />
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
               {([
-                { key: 'feedstock', label: 'Feedstock' },
-                { key: 'technology', label: 'Process' },
+                { key: 'feedstock', label: 'Feedstock', green: false },
+                { key: 'technology', label: 'Process', green: false },
                 { key: 'product', label: 'Material', green: true },
-                { key: 'application', label: 'Application' },
-              ] as const).map(({ key, label, green }) => (
+                { key: 'application', label: 'Application', green: false },
+              ] as { key: SortKey; label: string; green: boolean }[]).map(({ key, label, green }) => (
+
                 <button
                   key={key}
                   onClick={() => setSortBy(key)}
