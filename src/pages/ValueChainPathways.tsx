@@ -1204,6 +1204,24 @@ const ValueChainPathways = () => {
                         <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.application}
                         </div>
+                        {/* Tags — user judgement, never computed: grey chips only */}
+                        <div className="flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <TagChips tags={tagsOf(originalIndex)} onRemove={(t) => removeTagFromMany([originalIndex], t)} />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                                title="Add tag"
+                              >
+                                + Tag
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" className="w-auto p-2">
+                              <TagPicker suggestions={allTags} onPick={(t) => addTagToMany([originalIndex], t)} />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
                         <div className="flex justify-center">
                           <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
                             <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
