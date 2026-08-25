@@ -501,18 +501,10 @@ const ValueChainPathways = () => {
       if (aDisliked && !bDisliked) return 1;
       if (!aDisliked && bDisliked) return -1;
 
-      const aVcg = Math.max(20, 95 - a.originalIndex * 3);
-      const bVcg = Math.max(20, 95 - b.originalIndex * 3);
-      const aResearch = Math.min(100, Math.round(aVcg * 0.95 + (a.originalIndex % 5) * 2));
-      const bResearch = Math.min(100, Math.round(bVcg * 0.95 + (b.originalIndex % 5) * 2));
-      const aIp = Math.max(0, Math.min(100, Math.round(100 - aVcg + (a.originalIndex % 7) * 3)));
-      const bIp = Math.max(0, Math.min(100, Math.round(100 - bVcg + (b.originalIndex % 7) * 3)));
-
-      if (sortBy === 'vcg') return bVcg - aVcg;
-      if (sortBy === 'research') return bResearch - aResearch;
-      if (sortBy === 'ip') return aIp - bIp; // lower IP = better
       if (sortBy === 'trl') return getTRLNumber(b.pathway.trl) - getTRLNumber(a.pathway.trl);
-      return 0;
+      const key = sortBy as 'feedstock' | 'technology' | 'product' | 'application';
+      return String(a.pathway[key] ?? '').localeCompare(String(b.pathway[key] ?? ''));
+
     });
 
     return filtered;
