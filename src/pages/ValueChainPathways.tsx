@@ -1476,7 +1476,43 @@ const ValueChainPathways = () => {
                           </span>
                           <span className="text-[10px] text-muted-foreground font-medium shrink-0">({rows.length} pathways)</span>
                         </div>
+                        {/* Group-level tags — apply to every pathway in the group */}
+                        {(() => {
+                          const groupIdxs = rows.map((r) => r.originalIndex);
+                          const groupTags = tagsOfMany(groupIdxs);
+                          return (
+                            <div className="ml-auto flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <TagChips
+                                tags={groupTags}
+                                onRemove={(t) => {
+                                  removeTagFromMany(groupIdxs, t);
+                                  toast({ description: `Tag "${t}" removed from all ${groupIdxs.length} pathways in ${feedstockName}.` });
+                                }}
+                              />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                                    title="Add tag to all pathways in this group"
+                                  >
+                                    + Tag
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-auto p-2">
+                                  <TagPicker
+                                    suggestions={allTags}
+                                    onPick={(t) => {
+                                      addTagToMany(groupIdxs, t);
+                                      toast({ description: `Tag "${t}" added to all ${groupIdxs.length} pathways in ${feedstockName}.` });
+                                    }}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          );
+                        })()}
                         {expanded && (
+
                           <div
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-0.5 p-0.5 rounded-md bg-muted border border-border shrink-0"
