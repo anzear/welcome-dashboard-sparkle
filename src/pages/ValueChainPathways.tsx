@@ -736,15 +736,6 @@ const ValueChainPathways = () => {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </Button>
-          <div className="flex items-center bg-muted rounded-lg p-0.5 ml-auto">
-            <button
-              onClick={() => setActiveTab(activeTab === 'saved' ? 'all' : 'saved')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${activeTab === 'saved' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <Bookmark className="w-3 h-3" />
-              Shortlisted ({savedPathways.size})
-            </button>
-          </div>
 
         </div>
 
