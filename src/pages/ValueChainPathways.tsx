@@ -1125,7 +1125,9 @@ const ValueChainPathways = () => {
                   <ChevronDown className={`w-2.5 h-2.5 ${sortBy === key ? 'opacity-100' : 'opacity-40'}`} />
                 </button>
               ))}
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Tags</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
+
             </div>
             )}
 
