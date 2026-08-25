@@ -919,7 +919,7 @@ const ValueChainPathways = () => {
               {(['Commercial', 'Pilot', 'Lab'] as const).map((level) => {
                 const colors = getViabilityColor(level);
                 const count = viabilityCounts[level];
-                const pct = scopedPathways.length > 0 ? Math.round((count / scopedPathways.length) * 100) : 0;
+                const pct = scopedTaggedPathways.length > 0 ? Math.round((count / scopedTaggedPathways.length) * 100) : 0;
                 const isActive = viabilityFilter === level;
                 return (
                   <button
