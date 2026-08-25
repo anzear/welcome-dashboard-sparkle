@@ -555,6 +555,23 @@ const ValueChainPathways = () => {
   const uniqueProcesses = useMemo(() => [...new Set(allPathways.map(p => p.technology))].sort(), [allPathways]);
   const uniqueProducts = useMemo(() => [...new Set(allPathways.map(p => p.product))].sort(), [allPathways]);
   const uniqueApplications = useMemo(() => [...new Set(allPathways.map(p => p.application))].sort(), [allPathways]);
+
+  // Page-size window over the ranked list.
+  const pagedPathways = useMemo(() => filteredPathways.slice(0, pageSize), [filteredPathways, pageSize]);
+
+  // Expand / collapse every group in the grouped and tree layouts.
+  const toggleAllGroups = () => {
+    if (expandedGroups.size > 0) {
+      setExpandedGroups(new Set());
+      return;
+    }
+    const keys = new Set<string>();
+    filteredPathways.forEach(({ pathway }) => {
+      if (pathway.product === 'Lactic Acid') keys.add(`c:${groupKeyOf(pathway)}`);
+    });
+    setExpandedGroups(keys);
+  };
+
   useEffect(() => {
     localStorage.setItem('savedPathways', JSON.stringify(Array.from(savedPathways)));
   }, [savedPathways]);
