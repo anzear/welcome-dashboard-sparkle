@@ -920,124 +920,30 @@ const ValueChainPathways = () => {
 
             {/* Table Header */}
             {viewMode !== 'compressed' && (
-            <div className="border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"></span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    VCG Score
-                    <Info className="w-2.5 h-2.5 text-muted-foreground/50" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" side="bottom" align="start">
-                  <div className="space-y-2.5">
-                    <div>
-                      <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">VCG Score Methodology</h4>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        The VCG Score evaluates pathways by blending three positive performance indicators and subtracting one negative indicator.
-                      </p>
-                    </div>
-                    <div className="space-y-1.5">
-                      {[
-                        { label: 'Research', weight: '25%', value: 65, color: 'bg-blue-500' },
-                        { label: 'TRL', weight: '40%', value: 70, color: 'bg-emerald-500' },
-                        { label: 'Market Size', weight: '35%', value: 60, color: 'bg-amber-500' },
-                        { label: 'IP Score', weight: '−20%', value: 40, color: 'bg-red-400', negative: true },
-                      ].map((w) => (
-                        <div key={w.label} className="flex items-center gap-2">
-                          <span className="text-[9px] font-medium text-foreground w-16 shrink-0">{w.label}</span>
-                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full ${w.color} rounded-full`} style={{ width: `${w.value}%` }} />
-                          </div>
-                          <span className={`text-[9px] font-semibold w-8 text-right ${w.negative ? 'text-red-500' : 'text-muted-foreground'}`}>
-                            {w.weight}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-border pt-2">
-                      <p className="text-[9px] text-muted-foreground leading-relaxed">
-                        A <span className="font-semibold text-foreground">high score</span> means strong research, high technical readiness, and a large market — with low patent saturation (more room to operate).
-                      </p>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {category === 'Feedstock' ? (
-                <span className="text-[8px] font-bold text-primary uppercase tracking-widest text-center">Feedstock</span>
-              ) : (
-                <Select value={feedstockValueFilter} onValueChange={setFeedstockValueFilter}>
-                  <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                    <SelectValue placeholder="Feedstocks" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-[10px]">Feedstocks</SelectItem>
-                    {uniqueFeedstocks.map(f => <SelectItem key={f} value={f} className="text-[10px]">{f}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={processValueFilter} onValueChange={setProcessValueFilter}>
-                <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                  <SelectValue placeholder="Processes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-[10px]">Processes</SelectItem>
-                  {uniqueProcesses.map(p => <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {isProductRoute ? (
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider text-center">Material</span>
-              ) : (
-                <Select value={productValueFilter} onValueChange={setProductValueFilter}>
-                  <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                    <SelectValue placeholder="Material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-[10px]">Materials</SelectItem>
-                    {uniqueProducts.map(p => <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={applicationValueFilter} onValueChange={setApplicationValueFilter}>
-                <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                  <SelectValue placeholder="Applications" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-[10px]">Applications</SelectItem>
-                  {uniqueApplications.map(a => <SelectItem key={a} value={a} className="text-[10px]">{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    Research
-                    <Info className="w-3 h-3 text-muted-foreground/70" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                  <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">Research Score</h4>
-                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                    Measures the volume and quality of scientific publications supporting this pathway. Based on publication count.
-                  </p>
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    IP
-                    <Info className="w-3 h-3 text-muted-foreground/70" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                  <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">IP Score</h4>
-                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                    Indicates patent saturation. A high IP score means dense patent coverage — less room to operate. A low score signals open IP space and greater freedom to innovate.
-                  </p>
-                </PopoverContent>
-              </Popover>
+            <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
+              <span />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
+              {([
+                { key: 'feedstock', label: 'Feedstock' },
+                { key: 'technology', label: 'Process' },
+                { key: 'product', label: 'Material', green: true },
+                { key: 'application', label: 'Application' },
+              ] as const).map(({ key, label, green }) => (
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-0.5 w-full transition-colors ${
+                    green ? 'text-emerald-700 hover:text-emerald-800' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                  <ChevronDown className={`w-2.5 h-2.5 ${sortBy === key ? 'opacity-100' : 'opacity-40'}`} />
+                </button>
+              ))}
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
             </div>
             )}
+
 
             {/* Table Rows */}
             <div className={viewMode === 'compressed' ? 'space-y-4' : 'border-x border-b border-border rounded-b-lg divide-y divide-border/50'}>
