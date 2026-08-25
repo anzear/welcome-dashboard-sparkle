@@ -816,9 +816,9 @@ const ValueChainPathways = () => {
               )}
 
 
-            {/* Viability Summary Cards */}
-            <div className="grid grid-cols-4 gap-1.5 mb-3">
-              {(['Commercial', 'Pilot', 'Lab', 'Research'] as const).map((level) => {
+            {/* TRL band cards */}
+            <div className="grid grid-cols-3 gap-1.5 mb-3">
+              {(['Commercial', 'Pilot', 'Lab'] as const).map((level) => {
                 const colors = getViabilityColor(level);
                 const count = viabilityCounts[level];
                 const pct = scopedPathways.length > 0 ? Math.round((count / scopedPathways.length) * 100) : 0;
@@ -833,19 +833,18 @@ const ValueChainPathways = () => {
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                      <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text}`}>{level}</span>
-                      <span className="text-[8px] text-muted-foreground ml-auto">
-                        {level === 'Commercial' ? 'TRL 8–9' : level === 'Pilot' ? 'TRL 5–7' : level === 'Lab' ? 'TRL 3–4' : 'TRL 1–2'}
-                      </span>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text}`}>{BAND_LABEL[level]}</span>
+                      <span className="text-[8px] text-muted-foreground ml-auto">{BAND_RANGE[level]}</span>
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-sm font-bold text-foreground">{count}</span>
+                      <span className="text-sm font-bold text-foreground tabular-nums">{count}</span>
                       <span className="text-[9px] text-muted-foreground">({pct}%)</span>
                     </div>
                   </button>
                 );
               })}
             </div>
+
 
             {/* Toolbar */}
             <div className="flex items-center justify-between gap-3 mb-3">
