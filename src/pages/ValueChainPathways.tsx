@@ -767,15 +767,26 @@ const ValueChainPathways = () => {
           <div className="border border-border rounded-lg bg-card p-5 shadow-sm min-w-0 overflow-y-auto h-full">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <p className="text-[10px] text-muted-foreground max-w-2xl leading-relaxed">
-                  Every pathway from <span className="font-bold text-foreground">{decodedTopic}</span> to a market application, scored for viability. Compare, shortlist, and decide which pathways deserve your attention.
+                  Every pathway from <span className="font-bold text-foreground">{decodedTopic}</span> to a market application, ranked by TRL. Compare, shortlist, and decide which pathways deserve your attention.
                 </p>
                 <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground whitespace-nowrap flex-shrink-0">
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Showing</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(parseInt(v))}>
+                    <SelectTrigger className="h-6 w-[62px] text-[10px] px-2 border-border rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[25, 50, 100, 250].map((n) => (
+                        <SelectItem key={n} value={String(n)} className="text-[10px]">{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <span>
-                    Showing <span className="font-bold text-foreground">{viewMode === 'compressed' ? compressedGroupCount : filteredPathways.length}</span> of {viewMode === 'compressed' ? scopedGroupCount : scopedPathways.length} {viewMode === 'compressed' ? 'groups' : 'pathways'}
+                    of <span className="font-bold text-foreground tabular-nums">{viewMode === 'compressed' ? scopedGroupCount : filteredPathways.length}</span> {viewMode === 'compressed' ? 'groups' : 'pathways'}
                   </span>
                 </div>
               </div>
+
 
               {/* Opportunity Map filter banner */}
               {opportunityFilterType && opportunityFilterValues.length > 0 && (
