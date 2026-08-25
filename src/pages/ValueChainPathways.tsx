@@ -170,6 +170,17 @@ const ValueChainPathways = () => {
   const [shortlistDialogNote, setShortlistDialogNote] = useState('');
   const [activeTab, setActiveTab] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'normal' | 'compressed'>('normal');
+  // Toolbar layout control: Tree / Groups / Full.
+  const [layout, setLayoutState] = useState<'tree' | 'groups' | 'full'>('full');
+  const [defaultGroupDisplay, setDefaultGroupDisplay] = useState<'list' | 'tree'>('list');
+  const setLayout = (next: 'tree' | 'groups' | 'full') => {
+    setLayoutState(next);
+    setViewMode(next === 'full' ? 'normal' : 'compressed');
+    if (next !== 'full') {
+      setDefaultGroupDisplay(next === 'tree' ? 'tree' : 'list');
+      setGroupDisplay({});
+    }
+  };
   const [compressedGroupBy, setCompressedGroupBy] = useState<'feedstock' | 'technology' | 'application'>('feedstock');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const toggleGroup = (k: string) => setExpandedGroups(prev => {
@@ -177,8 +188,10 @@ const ValueChainPathways = () => {
     if (next.has(k)) next.delete(k); else next.add(k);
     return next;
   });
+  const allGroupsExpanded = expandedGroups.size > 0;
   // Per-feedstock display mode inside the Compressed view.
   const [groupDisplay, setGroupDisplay] = useState<Record<string, 'list' | 'tree'>>({});
+
   // Tree-view: which process is expanded to show its applications (per feedstock).
   const [treeExpandedProc, setTreeExpandedProc] = useState<Record<string, string | null>>({});
   // Tree-view: 'single' shows one tech at a time, 'all' spreads every tech and its apps.
