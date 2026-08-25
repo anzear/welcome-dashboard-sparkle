@@ -239,7 +239,10 @@ const ValueChainPathways = () => {
     }
   }, [trlStageFromUrl]);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'vcg' | 'research' | 'ip' | 'trl'>('vcg');
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(100);
+  const [sortBy, setSortBy] = useState<SortKey>('trl');
+
   const [vcgMinFilter, setVcgMinFilter] = useState<string>('all');
   const [feedstockQtyMin, setFeedstockQtyMin] = useState<number>(0);
   const [seasonalityFilter, setSeasonalityFilter] = useState<string>('all');
