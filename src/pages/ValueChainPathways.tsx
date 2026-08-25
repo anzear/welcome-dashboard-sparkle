@@ -384,9 +384,10 @@ const ValueChainPathways = () => {
     });
   }, [allPathways, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Viability counts (respect opportunity scope)
+  // Band counts (respect opportunity scope)
   const viabilityCounts = useMemo(() => {
-    const counts = { Commercial: 0, Pilot: 0, Lab: 0, 'Research': 0 };
+    const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
+
     scopedPathways.forEach(p => {
       const v = getViability(p.trl);
       counts[v as keyof typeof counts]++;
