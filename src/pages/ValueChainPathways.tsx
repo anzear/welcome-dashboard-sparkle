@@ -1145,7 +1145,7 @@ const ValueChainPathways = () => {
 
                   return Array.from(groups.entries()).map(([feedstockName, rows], groupIdx) => {
                     const expanded = expandedGroups.has(`c:${feedstockName}`);
-                    const display = groupDisplay[feedstockName] ?? 'list';
+                    const display = groupDisplay[feedstockName] ?? defaultGroupDisplay;
                     const treeKey = `t:${feedstockName}`;
                     const firstMount = !treeMountedRef.current.has(treeKey);
                     if (expanded && display === 'tree') treeMountedRef.current.add(treeKey);
