@@ -10,7 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
+import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
+
+type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
+
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
@@ -170,6 +173,17 @@ const ValueChainPathways = () => {
   const [shortlistDialogNote, setShortlistDialogNote] = useState('');
   const [activeTab, setActiveTab] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'normal' | 'compressed'>('normal');
+  // Toolbar layout control: Tree / Groups / Full.
+  const [layout, setLayoutState] = useState<'tree' | 'groups' | 'full'>('full');
+  const [defaultGroupDisplay, setDefaultGroupDisplay] = useState<'list' | 'tree'>('list');
+  const setLayout = (next: 'tree' | 'groups' | 'full') => {
+    setLayoutState(next);
+    setViewMode(next === 'full' ? 'normal' : 'compressed');
+    if (next !== 'full') {
+      setDefaultGroupDisplay(next === 'tree' ? 'tree' : 'list');
+      setGroupDisplay({});
+    }
+  };
   const [compressedGroupBy, setCompressedGroupBy] = useState<'feedstock' | 'technology' | 'application'>('feedstock');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const toggleGroup = (k: string) => setExpandedGroups(prev => {
@@ -177,8 +191,10 @@ const ValueChainPathways = () => {
     if (next.has(k)) next.delete(k); else next.add(k);
     return next;
   });
+  const allGroupsExpanded = expandedGroups.size > 0;
   // Per-feedstock display mode inside the Compressed view.
   const [groupDisplay, setGroupDisplay] = useState<Record<string, 'list' | 'tree'>>({});
+
   // Tree-view: which process is expanded to show its applications (per feedstock).
   const [treeExpandedProc, setTreeExpandedProc] = useState<Record<string, string | null>>({});
   // Tree-view: 'single' shows one tech at a time, 'all' spreads every tech and its apps.
@@ -226,7 +242,10 @@ const ValueChainPathways = () => {
     }
   }, [trlStageFromUrl]);
   const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState<'vcg' | 'research' | 'ip' | 'trl'>('vcg');
+  const [showRightPanel, setShowRightPanel] = useState(false);
+  const [pageSize, setPageSize] = useState<number>(100);
+  const [sortBy, setSortBy] = useState<SortKey>('trl');
+
   const [vcgMinFilter, setVcgMinFilter] = useState<string>('all');
   const [feedstockQtyMin, setFeedstockQtyMin] = useState<number>(0);
   const [seasonalityFilter, setSeasonalityFilter] = useState<string>('all');
@@ -289,14 +308,14 @@ const ValueChainPathways = () => {
   // Helper: get TRL number
   const getTRLNumber = (trl: string) => parseInt(trl.replace('TRL ', ''));
   
-  // Helper: get viability category
+  // Helper: TRL band (three-band production definition)
   const getViability = (trl: string) => {
     const n = getTRLNumber(trl);
-    if (n >= 8) return 'Commercial';
-    if (n >= 6) return 'Pilot';
-    if (n >= 4) return 'Lab';
-    return 'Research';
+    if (n >= 9) return 'Commercial';
+    if (n >= 5) return 'Pilot';
+    return 'Lab';
   };
+
 
   const getViabilityColor = (viability: string) => {
     switch (viability) {
@@ -307,6 +326,14 @@ const ValueChainPathways = () => {
       default: return { dot: 'bg-muted-foreground', text: 'text-muted-foreground', bg: 'bg-muted', border: 'border-border', bar: 'bg-muted-foreground' };
     }
   };
+
+  // Three-band naming, used by the band cards and the TRL cell.
+  const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
+  const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
+
+  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.6fr)_minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.6fr)_110px]';
+
+
   
   // Helper function to get TRL stage label
   const getTRLStageLabel = (trl: string) => {
@@ -376,9 +403,10 @@ const ValueChainPathways = () => {
     });
   }, [allPathways, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Viability counts (respect opportunity scope)
+  // Band counts (respect opportunity scope)
   const viabilityCounts = useMemo(() => {
-    const counts = { Commercial: 0, Pilot: 0, Lab: 0, 'Research': 0 };
+    const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
+
     scopedPathways.forEach(p => {
       const v = getViability(p.trl);
       counts[v as keyof typeof counts]++;
@@ -492,18 +520,10 @@ const ValueChainPathways = () => {
       if (aDisliked && !bDisliked) return 1;
       if (!aDisliked && bDisliked) return -1;
 
-      const aVcg = Math.max(20, 95 - a.originalIndex * 3);
-      const bVcg = Math.max(20, 95 - b.originalIndex * 3);
-      const aResearch = Math.min(100, Math.round(aVcg * 0.95 + (a.originalIndex % 5) * 2));
-      const bResearch = Math.min(100, Math.round(bVcg * 0.95 + (b.originalIndex % 5) * 2));
-      const aIp = Math.max(0, Math.min(100, Math.round(100 - aVcg + (a.originalIndex % 7) * 3)));
-      const bIp = Math.max(0, Math.min(100, Math.round(100 - bVcg + (b.originalIndex % 7) * 3)));
-
-      if (sortBy === 'vcg') return bVcg - aVcg;
-      if (sortBy === 'research') return bResearch - aResearch;
-      if (sortBy === 'ip') return aIp - bIp; // lower IP = better
       if (sortBy === 'trl') return getTRLNumber(b.pathway.trl) - getTRLNumber(a.pathway.trl);
-      return 0;
+      const key = sortBy as 'feedstock' | 'technology' | 'product' | 'application';
+      return String(a.pathway[key] ?? '').localeCompare(String(b.pathway[key] ?? ''));
+
     });
 
     return filtered;
@@ -538,6 +558,23 @@ const ValueChainPathways = () => {
   const uniqueProcesses = useMemo(() => [...new Set(allPathways.map(p => p.technology))].sort(), [allPathways]);
   const uniqueProducts = useMemo(() => [...new Set(allPathways.map(p => p.product))].sort(), [allPathways]);
   const uniqueApplications = useMemo(() => [...new Set(allPathways.map(p => p.application))].sort(), [allPathways]);
+
+  // Page-size window over the ranked list.
+  const pagedPathways = useMemo(() => filteredPathways.slice(0, pageSize), [filteredPathways, pageSize]);
+
+  // Expand / collapse every group in the grouped and tree layouts.
+  const toggleAllGroups = () => {
+    if (expandedGroups.size > 0) {
+      setExpandedGroups(new Set());
+      return;
+    }
+    const keys = new Set<string>();
+    filteredPathways.forEach(({ pathway }) => {
+      if (pathway.product === 'Lactic Acid') keys.add(`c:${groupKeyOf(pathway)}`);
+    });
+    setExpandedGroups(keys);
+  };
+
   useEffect(() => {
     localStorage.setItem('savedPathways', JSON.stringify(Array.from(savedPathways)));
   }, [savedPathways]);
@@ -736,15 +773,6 @@ const ValueChainPathways = () => {
             <ArrowLeft className="w-3.5 h-3.5" />
             Back
           </Button>
-          <div className="flex items-center bg-muted rounded-lg p-0.5 ml-auto">
-            <button
-              onClick={() => setActiveTab(activeTab === 'saved' ? 'all' : 'saved')}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-medium transition-all ${activeTab === 'saved' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <Bookmark className="w-3 h-3" />
-              Shortlisted ({savedPathways.size})
-            </button>
-          </div>
 
         </div>
 
@@ -752,30 +780,59 @@ const ValueChainPathways = () => {
 
         <div className="max-w-[1400px] w-full mx-auto px-6 pb-6 flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Title row */}
-        <div className="grid gap-5 items-center mb-3 flex-shrink-0" style={{ gridTemplateColumns: '1fr 280px' }}>
-          <div>
-            <h1 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Pathway Explorer</h1>
+        <div className="grid gap-5 items-center mb-3 flex-shrink-0" style={{ gridTemplateColumns: showRightPanel ? '1fr 280px' : '1fr' }}>
+          <div className="flex items-center gap-1">
+            <h1 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              Pathway Explorer: {decodedTopic}
+            </h1>
+            <Select
+              value={decodedTopic}
+              onValueChange={(v) => navigate(`/landscape/${category}/${encodeURIComponent(v)}/value-chain/pathways`)}
+            >
+              <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent shadow-none text-muted-foreground [&>svg]:opacity-100" aria-label="Switch anchor material">
+                <span className="sr-only">Switch anchor material</span>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {uniqueProducts.map((p) => (
+                  <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Knowledge Base</h2>
-          </div>
+          {showRightPanel && (
+            <div>
+              <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Knowledge Base</h2>
+            </div>
+          )}
         </div>
 
         {/* Content grid */}
-        <div className="grid gap-5 flex-1 min-h-0" style={{ gridTemplateColumns: '1fr 280px' }}>
+        <div className="grid gap-5 flex-1 min-h-0" style={{ gridTemplateColumns: showRightPanel ? '1fr 280px' : '1fr' }}>
+
           {/* LEFT: Main page card */}
           <div className="border border-border rounded-lg bg-card p-5 shadow-sm min-w-0 overflow-y-auto h-full">
               <div className="flex items-start justify-between gap-4 mb-3">
                 <p className="text-[10px] text-muted-foreground max-w-2xl leading-relaxed">
-                  Every pathway from <span className="font-bold text-foreground">{decodedTopic}</span> to a market application, scored for viability. Compare, shortlist, and decide which pathways deserve your attention.
+                  Every pathway from <span className="font-bold text-foreground">{decodedTopic}</span> to a market application, ranked by TRL. Compare, shortlist, and decide which pathways deserve your attention.
                 </p>
                 <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground whitespace-nowrap flex-shrink-0">
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Showing</span>
+                  <Select value={String(pageSize)} onValueChange={(v) => setPageSize(parseInt(v))}>
+                    <SelectTrigger className="h-6 w-[62px] text-[10px] px-2 border-border rounded-md">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[25, 50, 100, 250].map((n) => (
+                        <SelectItem key={n} value={String(n)} className="text-[10px]">{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <span>
-                    Showing <span className="font-bold text-foreground">{viewMode === 'compressed' ? compressedGroupCount : filteredPathways.length}</span> of {viewMode === 'compressed' ? scopedGroupCount : scopedPathways.length} {viewMode === 'compressed' ? 'groups' : 'pathways'}
+                    of <span className="font-bold text-foreground tabular-nums">{viewMode === 'compressed' ? scopedGroupCount : filteredPathways.length}</span> {viewMode === 'compressed' ? 'groups' : 'pathways'}
                   </span>
                 </div>
               </div>
+
 
               {/* Opportunity Map filter banner */}
               {opportunityFilterType && opportunityFilterValues.length > 0 && (
@@ -816,9 +873,9 @@ const ValueChainPathways = () => {
               )}
 
 
-            {/* Viability Summary Cards */}
-            <div className="grid grid-cols-4 gap-1.5 mb-3">
-              {(['Commercial', 'Pilot', 'Lab', 'Research'] as const).map((level) => {
+            {/* TRL band cards */}
+            <div className="grid grid-cols-3 gap-1.5 mb-3">
+              {(['Commercial', 'Pilot', 'Lab'] as const).map((level) => {
                 const colors = getViabilityColor(level);
                 const count = viabilityCounts[level];
                 const pct = scopedPathways.length > 0 ? Math.round((count / scopedPathways.length) * 100) : 0;
@@ -833,13 +890,11 @@ const ValueChainPathways = () => {
                   >
                     <div className="flex items-center gap-1.5 mb-1">
                       <span className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
-                      <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text}`}>{level}</span>
-                      <span className="text-[8px] text-muted-foreground ml-auto">
-                        {level === 'Commercial' ? 'TRL 8–9' : level === 'Pilot' ? 'TRL 5–7' : level === 'Lab' ? 'TRL 3–4' : 'TRL 1–2'}
-                      </span>
+                      <span className={`text-[9px] font-bold uppercase tracking-wider ${colors.text}`}>{BAND_LABEL[level]}</span>
+                      <span className="text-[8px] text-muted-foreground ml-auto">{BAND_RANGE[level]}</span>
                     </div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-sm font-bold text-foreground">{count}</span>
+                      <span className="text-sm font-bold text-foreground tabular-nums">{count}</span>
                       <span className="text-[9px] text-muted-foreground">({pct}%)</span>
                     </div>
                   </button>
@@ -847,72 +902,105 @@ const ValueChainPathways = () => {
               })}
             </div>
 
-            {/* Toolbar: view mode + per-tab filter on the right */}
+
+            {/* Toolbar */}
             <div className="flex items-center justify-between gap-3 mb-3">
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-2">
+                {/* Scope tabs */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setActiveTab('all')}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${
+                      activeTab === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    All ({scopedPathways.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('saved')}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-medium transition-all ${
+                      activeTab === 'saved' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Shortlisted ({savedPathways.size})
+                  </button>
+                </div>
+
+                <span className="h-4 w-px bg-border" />
+
+                {/* View controls */}
+                <button
+                  onClick={toggleAllGroups}
+                  className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <ChevronDown className={`w-3 h-3 transition-transform ${allGroupsExpanded ? '' : '-rotate-90'}`} />
+                  {allGroupsExpanded ? 'Collapse Applications' : 'Expand Applications'}
+                </button>
                 {([
-                  { key: 'normal', label: 'Normal', Icon: Rows3, count: filteredPathways.length },
-                  { key: 'compressed', label: 'Compressed', Icon: AlignJustify, count: compressedGroupCount },
-                ] as const).map(({ key, label, Icon, count }) => (
+                  { key: 'tree', label: 'Tree', Icon: ListTree },
+                  { key: 'groups', label: 'Groups', Icon: AlignJustify },
+                  { key: 'full', label: 'Full', Icon: Rows3 },
+                ] as const).map(({ key, label, Icon }) => (
                   <button
                     key={key}
-                    onClick={() => setViewMode(key)}
-                    className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-all border ${
-                      viewMode === key
-                        ? 'bg-foreground text-background border-foreground'
-                        : 'bg-background text-muted-foreground border-border hover:text-foreground'
+                    onClick={() => setLayout(key)}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-all ${
+                      layout === key ? 'border border-foreground text-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
                     {label}
-                    <span className="ml-0.5 tabular-nums opacity-80">({count})</span>
                   </button>
                 ))}
+
+                <span className="h-4 w-px bg-border" />
+
+                <button
+                  onClick={() => toast({ title: 'New group', description: 'Custom pathway groups are coming soon.' })}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md border border-border text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <PlusSquare className="w-3 h-3" />
+                  New Group
+                </button>
               </div>
 
-              <div className="flex items-center gap-3">
-                {viewMode === 'normal' && (
-                  <>
-                    <div className="relative flex-1 max-w-[200px]">
-                      <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-                      <Input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search..."
-                        className="pl-7 h-7 !text-[10px] bg-background rounded-md"
-                      />
-                    </div>
+              <div className="flex items-center gap-2">
+                <div className="relative w-[180px]">
+                  <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search..."
+                    className="pl-7 h-7 !text-[10px] bg-background rounded-md"
+                  />
+                </div>
 
-                    <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'vcg' | 'research' | 'ip' | 'trl')}>
-                      <SelectTrigger className="h-7 w-auto text-[10px] text-muted-foreground gap-1 px-2.5 border-border rounded-md">
-                        <ArrowUpDown className="w-3 h-3 shrink-0" />
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vcg" className="text-[10px]">VCG Score</SelectItem>
-                        <SelectItem value="research" className="text-[10px]">Research Score</SelectItem>
-                        <SelectItem value="ip" className="text-[10px]">IP Score (low first)</SelectItem>
-                        <SelectItem value="trl" className="text-[10px]">TRL Level</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </>
-                )}
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
+                  <SelectTrigger className="h-7 w-auto text-[10px] text-muted-foreground gap-1 px-2.5 border-border rounded-md">
+                    <ArrowUpDown className="w-3 h-3 shrink-0" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="trl" className="text-[10px]">TRL Level</SelectItem>
+                    <SelectItem value="feedstock" className="text-[10px]">Feedstock</SelectItem>
+                    <SelectItem value="technology" className="text-[10px]">Process</SelectItem>
+                    <SelectItem value="product" className="text-[10px]">Material</SelectItem>
+                    <SelectItem value="application" className="text-[10px]">Application</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                {viewMode === 'compressed' && (
-                  <Select value={compressedGroupBy} onValueChange={(v) => setCompressedGroupBy(v as 'feedstock' | 'technology' | 'application')}>
-                    <SelectTrigger className="h-7 w-auto text-[10px] text-muted-foreground gap-1 px-2.5 border-border rounded-md">
-                      <span className="text-muted-foreground/70">Group by:</span>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="feedstock" className="text-[10px]">Feedstock</SelectItem>
-                      <SelectItem value="technology" className="text-[10px]">Technology</SelectItem>
-                      <SelectItem value="application" className="text-[10px]">Application</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
+                <button
+                  onClick={() => setShowRightPanel((v) => !v)}
+                  title="Knowledge base"
+                  className={`flex items-center justify-center h-7 w-7 rounded-md border transition-colors ${
+                    showRightPanel ? 'border-foreground text-foreground' : 'border-border text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
+
 
 
 
@@ -920,141 +1008,48 @@ const ValueChainPathways = () => {
 
             {/* Table Header */}
             {viewMode !== 'compressed' && (
-            <div className="border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider"></span>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    VCG Score
-                    <Info className="w-2.5 h-2.5 text-muted-foreground/50" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3" side="bottom" align="start">
-                  <div className="space-y-2.5">
-                    <div>
-                      <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">VCG Score Methodology</h4>
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        The VCG Score evaluates pathways by blending three positive performance indicators and subtracting one negative indicator.
-                      </p>
-                    </div>
-                    <div className="space-y-1.5">
-                      {[
-                        { label: 'Research', weight: '25%', value: 65, color: 'bg-blue-500' },
-                        { label: 'TRL', weight: '40%', value: 70, color: 'bg-emerald-500' },
-                        { label: 'Market Size', weight: '35%', value: 60, color: 'bg-amber-500' },
-                        { label: 'IP Score', weight: '−20%', value: 40, color: 'bg-red-400', negative: true },
-                      ].map((w) => (
-                        <div key={w.label} className="flex items-center gap-2">
-                          <span className="text-[9px] font-medium text-foreground w-16 shrink-0">{w.label}</span>
-                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div className={`h-full ${w.color} rounded-full`} style={{ width: `${w.value}%` }} />
-                          </div>
-                          <span className={`text-[9px] font-semibold w-8 text-right ${w.negative ? 'text-red-500' : 'text-muted-foreground'}`}>
-                            {w.weight}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="border-t border-border pt-2">
-                      <p className="text-[9px] text-muted-foreground leading-relaxed">
-                        A <span className="font-semibold text-foreground">high score</span> means strong research, high technical readiness, and a large market — with low patent saturation (more room to operate).
-                      </p>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              {category === 'Feedstock' ? (
-                <span className="text-[8px] font-bold text-primary uppercase tracking-widest text-center">Feedstock</span>
-              ) : (
-                <Select value={feedstockValueFilter} onValueChange={setFeedstockValueFilter}>
-                  <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                    <SelectValue placeholder="Feedstocks" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-[10px]">Feedstocks</SelectItem>
-                    {uniqueFeedstocks.map(f => <SelectItem key={f} value={f} className="text-[10px]">{f}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={processValueFilter} onValueChange={setProcessValueFilter}>
-                <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                  <SelectValue placeholder="Processes" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-[10px]">Processes</SelectItem>
-                  {uniqueProcesses.map(p => <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {isProductRoute ? (
-                <span className="text-[10px] font-semibold text-primary uppercase tracking-wider text-center">Material</span>
-              ) : (
-                <Select value={productValueFilter} onValueChange={setProductValueFilter}>
-                  <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                    <SelectValue placeholder="Material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="text-[10px]">Materials</SelectItem>
-                    {uniqueProducts.map(p => <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              )}
-              <Select value={applicationValueFilter} onValueChange={setApplicationValueFilter}>
-                <SelectTrigger className="h-5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider border-0 bg-transparent p-0 shadow-none gap-0.5 w-full justify-center">
-                  <SelectValue placeholder="Applications" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all" className="text-[10px]">Applications</SelectItem>
-                  {uniqueApplications.map(a => <SelectItem key={a} value={a} className="text-[10px]">{a}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    Research
-                    <Info className="w-3 h-3 text-muted-foreground/70" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                  <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">Research Score</h4>
-                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                    Measures the volume and quality of scientific publications supporting this pathway. Based on publication count.
-                  </p>
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center justify-center gap-0.5 cursor-help hover:text-foreground transition-colors w-full">
-                    IP
-                    <Info className="w-3 h-3 text-muted-foreground/70" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                  <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">IP Score</h4>
-                  <p className="text-[9px] text-muted-foreground leading-relaxed">
-                    Indicates patent saturation. A high IP score means dense patent coverage — less room to operate. A low score signals open IP space and greater freedom to innovate.
-                  </p>
-                </PopoverContent>
-              </Popover>
+            <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
+              <span />
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
+              {([
+                { key: 'feedstock', label: 'Feedstock', green: false },
+                { key: 'technology', label: 'Process', green: false },
+                { key: 'product', label: 'Material', green: true },
+                { key: 'application', label: 'Application', green: false },
+              ] as { key: SortKey; label: string; green: boolean }[]).map(({ key, label, green }) => (
+
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-0.5 w-full transition-colors ${
+                    green ? 'text-emerald-700 hover:text-emerald-800' : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                  <ChevronDown className={`w-2.5 h-2.5 ${sortBy === key ? 'opacity-100' : 'opacity-40'}`} />
+                </button>
+              ))}
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
             </div>
             )}
+
 
             {/* Table Rows */}
             <div className={viewMode === 'compressed' ? 'space-y-4' : 'border-x border-b border-border rounded-b-lg divide-y divide-border/50'}>
               {(() => {
                 const isCompressed = viewMode === 'compressed';
-                const rowPad = isCompressed ? 'px-4 py-1' : 'px-4 py-3';
+                const rowPad = isCompressed ? 'px-4 py-1' : 'px-4 py-4';
                 const chipCls = (extra: string = '') => isCompressed
                   ? `text-[10px] font-medium truncate text-center ${extra}`
-                  : `text-[10px] font-medium truncate border border-border rounded px-2 py-1.5 bg-muted/20 text-center ${extra}`;
+                  : `text-[10px] font-medium truncate border rounded-md px-2 py-2 text-center ${extra}`;
+                const rankOf = new Map<number, number>();
+                filteredPathways.forEach(({ originalIndex }, i) => rankOf.set(originalIndex, i + 1));
 
                 const renderRow = ({ pathway, originalIndex }: { pathway: any; originalIndex: number }) => {
                   const viability = getViability(pathway.trl);
                   const colors = getViabilityColor(viability);
-                  const vcgScore = Math.max(20, 95 - originalIndex * 3);
-                  const researchScore = Math.min(100, Math.round(vcgScore * 0.95 + (originalIndex % 5) * 2));
-                  const ipScore = Math.max(0, Math.min(100, Math.round(100 - vcgScore + (originalIndex % 7) * 3)));
-                  const trlLabel = getTRLStageLabel(pathway.trl);
+                  const bandLabel = BAND_LABEL[viability as keyof typeof BAND_LABEL] ?? viability;
+                  const flagged = favoritedPathways.has(originalIndex) || dislikedPathways.has(originalIndex);
                   return (
                     <div
                       key={originalIndex}
@@ -1063,35 +1058,41 @@ const ValueChainPathways = () => {
                       } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''}`}
                       onClick={() => handleCardClick(originalIndex)}
                     >
-                      <div className={`${rowPad} grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2`}>
+                      <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
-                          className="flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
+                          className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                           title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
                         >
-                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-primary text-primary' : ''}`} />
+                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
                         </button>
-                        <div className="text-xs font-bold text-foreground text-center">{vcgScore}</div>
-                        <div className={chipCls(!isProductRoute && category === 'Feedstock' ? (isCompressed ? 'text-primary' : 'border-primary/40 bg-primary/5 text-primary') : 'text-foreground')}>
+                        <div className="flex justify-center">
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums ${
+                            flagged ? 'border border-amber-400 text-amber-700 bg-amber-50' : 'bg-muted text-muted-foreground'
+                          }`}>
+                            {rankOf.get(originalIndex) ?? ''}
+                          </span>
+                        </div>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.feedstock}
                         </div>
-                        <div className={chipCls('text-foreground')}>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.technology}
                         </div>
-                        <div className={chipCls(isProductRoute ? (isCompressed ? 'text-primary' : 'border-primary/40 bg-primary/5 text-primary') : 'text-foreground')}>
+                        <div className={chipCls('border-emerald-300 bg-emerald-50 text-emerald-800')}>
                           {pathway.product}
                         </div>
-                        <div className={isCompressed ? 'text-[10px] text-muted-foreground truncate text-center' : 'text-[10px] text-muted-foreground truncate border border-border rounded px-2 py-1.5 bg-muted/20 text-center'}>
+                        <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.application}
                         </div>
-                        <div className="text-xs font-medium text-blue-600 text-center">{researchScore}</div>
-                        <div className={`text-xs font-medium text-center ${ipScore > 60 ? 'text-red-500' : ipScore > 30 ? 'text-amber-600' : 'text-green-600'}`}>{ipScore}</div>
-                        <div className="text-center">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${colors.bg} ${colors.text} border ${colors.border}`}>
-                            {trlLabel}
+                        <div className="flex justify-center">
+                          <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                            <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                            <span className="text-[8px] opacity-80">{pathway.trl}</span>
                           </span>
                         </div>
                       </div>
+
                       {activeTab === 'saved' && savedPathways.has(originalIndex) && shortlistNotes[originalIndex] && (
                         <div className="px-4 pb-3 -mt-1">
                           <div className="relative rounded-md bg-muted/40 border border-border/60 pl-3 pr-3 py-2">
@@ -1165,7 +1166,7 @@ const ValueChainPathways = () => {
 
                   return Array.from(groups.entries()).map(([feedstockName, rows], groupIdx) => {
                     const expanded = expandedGroups.has(`c:${feedstockName}`);
-                    const display = groupDisplay[feedstockName] ?? 'list';
+                    const display = groupDisplay[feedstockName] ?? defaultGroupDisplay;
                     const treeKey = `t:${feedstockName}`;
                     const firstMount = !treeMountedRef.current.has(treeKey);
                     if (expanded && display === 'tree') treeMountedRef.current.add(treeKey);
@@ -1664,7 +1665,7 @@ const ValueChainPathways = () => {
 
 
 
-                return filteredPathways.map(renderRow);
+                return pagedPathways.map(renderRow);
               })()}
             {filteredPathways.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
@@ -1679,7 +1680,9 @@ const ValueChainPathways = () => {
           </div>
 
           {/* RIGHT: Filter Sidebar */}
+          {showRightPanel && (
           <div className="flex h-full min-h-0 flex-col gap-1.5 pr-1">
+
             <div className="flex items-center gap-0 bg-muted/30 rounded-lg p-0.5">
               <button
                 onClick={() => setRightSidebarTab('filters')}
@@ -1783,16 +1786,18 @@ const ValueChainPathways = () => {
                         </div>
                         <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                           <label className="text-[10px] text-muted-foreground">Sort by</label>
-                          <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'vcg' | 'research' | 'ip' | 'trl')}>
+                          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
                             <SelectTrigger className="h-6 w-[120px] text-[10px] bg-background border-border/60"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="vcg">VCG Score</SelectItem>
-                              <SelectItem value="research">Research</SelectItem>
-                              <SelectItem value="ip">IP Score</SelectItem>
                               <SelectItem value="trl">TRL</SelectItem>
+                              <SelectItem value="feedstock">Feedstock</SelectItem>
+                              <SelectItem value="technology">Process</SelectItem>
+                              <SelectItem value="product">Material</SelectItem>
+                              <SelectItem value="application">Application</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
+
                       </div>
                     </div>
 
@@ -1920,6 +1925,8 @@ const ValueChainPathways = () => {
               )}
             </div>
           </div>
+          )}
+
         </div>
         </div>
       </div>
