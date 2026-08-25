@@ -752,17 +752,35 @@ const ValueChainPathways = () => {
 
         <div className="max-w-[1400px] w-full mx-auto px-6 pb-6 flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Title row */}
-        <div className="grid gap-5 items-center mb-3 flex-shrink-0" style={{ gridTemplateColumns: '1fr 280px' }}>
-          <div>
-            <h1 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Pathway Explorer</h1>
+        <div className="grid gap-5 items-center mb-3 flex-shrink-0" style={{ gridTemplateColumns: showRightPanel ? '1fr 280px' : '1fr' }}>
+          <div className="flex items-center gap-1">
+            <h1 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+              Pathway Explorer: {decodedTopic}
+            </h1>
+            <Select
+              value={decodedTopic}
+              onValueChange={(v) => navigate(`/landscape/${category}/${encodeURIComponent(v)}/value-chain/pathways`)}
+            >
+              <SelectTrigger className="h-4 w-4 p-0 border-0 bg-transparent shadow-none text-muted-foreground [&>svg]:opacity-100" aria-label="Switch anchor material">
+                <span className="sr-only">Switch anchor material</span>
+              </SelectTrigger>
+              <SelectContent align="start">
+                {uniqueProducts.map((p) => (
+                  <SelectItem key={p} value={p} className="text-[10px]">{p}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Knowledge Base</h2>
-          </div>
+          {showRightPanel && (
+            <div>
+              <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Knowledge Base</h2>
+            </div>
+          )}
         </div>
 
         {/* Content grid */}
-        <div className="grid gap-5 flex-1 min-h-0" style={{ gridTemplateColumns: '1fr 280px' }}>
+        <div className="grid gap-5 flex-1 min-h-0" style={{ gridTemplateColumns: showRightPanel ? '1fr 280px' : '1fr' }}>
+
           {/* LEFT: Main page card */}
           <div className="border border-border rounded-lg bg-card p-5 shadow-sm min-w-0 overflow-y-auto h-full">
               <div className="flex items-start justify-between gap-4 mb-3">
