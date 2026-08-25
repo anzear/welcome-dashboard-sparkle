@@ -422,16 +422,27 @@ const ValueChainPathways = () => {
     });
   }, [allPathways, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Band counts (respect opportunity scope)
+  // Tag predicate — a pathway matches when it carries ANY of the active tags.
+  const matchesTagFilter = (index: number) =>
+    tagFilter.length === 0 || tagsOf(index).some((t) => tagFilter.includes(t.toLowerCase()));
+
+  // Scope for the counts: opportunity pre-filter + active tag filter.
+  const scopedTaggedPathways = useMemo(() => {
+    const indexOf = new Map(allPathways.map((p, i) => [p, i] as const));
+    return scopedPathways.filter((p) => matchesTagFilter(indexOf.get(p) ?? -1));
+  }, [scopedPathways, tagFilter.join('|'), tagsOf]);
+
+  // Band counts (respect opportunity scope and the tag filter)
   const viabilityCounts = useMemo(() => {
     const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
 
-    scopedPathways.forEach(p => {
+    scopedTaggedPathways.forEach(p => {
       const v = getViability(p.trl);
       counts[v as keyof typeof counts]++;
     });
     return counts;
-  }, [scopedPathways]);
+  }, [scopedTaggedPathways]);
+
 
   // Filtered pathways
   const filteredPathways = useMemo(() => {
