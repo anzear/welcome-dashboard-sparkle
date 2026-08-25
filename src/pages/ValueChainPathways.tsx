@@ -289,14 +289,14 @@ const ValueChainPathways = () => {
   // Helper: get TRL number
   const getTRLNumber = (trl: string) => parseInt(trl.replace('TRL ', ''));
   
-  // Helper: get viability category
+  // Helper: TRL band (three-band production definition)
   const getViability = (trl: string) => {
     const n = getTRLNumber(trl);
-    if (n >= 8) return 'Commercial';
-    if (n >= 6) return 'Pilot';
-    if (n >= 4) return 'Lab';
-    return 'Research';
+    if (n >= 9) return 'Commercial';
+    if (n >= 5) return 'Pilot';
+    return 'Lab';
   };
+
 
   const getViabilityColor = (viability: string) => {
     switch (viability) {
