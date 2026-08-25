@@ -543,6 +543,11 @@ const ValueChainPathways = () => {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
     }
 
+    // Tag filter — ANY of the selected tags.
+    if (tagFilter.length > 0) {
+      filtered = filtered.filter(({ originalIndex }) => matchesTagFilter(originalIndex));
+    }
+
     // Sort: disliked at bottom, then by selected metric
     filtered.sort((a, b) => {
       const aDisliked = dislikedPathways.has(a.originalIndex);
@@ -557,7 +562,13 @@ const ValueChainPathways = () => {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(',')]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), tagFilter.join('|'), tagsOf]);
+
+  // Selection is a transient working set: it clears when the visible set changes.
+  useEffect(() => {
+    clearSelection();
+  }, [activeTab, viewMode, layout, searchQuery, viabilityFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, tagFilter.join('|')]);
+
 
   // Key extractor for compressed grouping (respects current groupBy)
   const groupKeyOf = (p: { feedstock: string; technology: string; application: string }) =>
