@@ -1785,16 +1785,18 @@ const ValueChainPathways = () => {
                         </div>
                         <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                           <label className="text-[10px] text-muted-foreground">Sort by</label>
-                          <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'vcg' | 'research' | 'ip' | 'trl')}>
+                          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
                             <SelectTrigger className="h-6 w-[120px] text-[10px] bg-background border-border/60"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="vcg">VCG Score</SelectItem>
-                              <SelectItem value="research">Research</SelectItem>
-                              <SelectItem value="ip">IP Score</SelectItem>
                               <SelectItem value="trl">TRL</SelectItem>
+                              <SelectItem value="feedstock">Feedstock</SelectItem>
+                              <SelectItem value="technology">Process</SelectItem>
+                              <SelectItem value="product">Material</SelectItem>
+                              <SelectItem value="application">Application</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
+
                       </div>
                     </div>
 
