@@ -1151,19 +1151,40 @@ const ValueChainPathways = () => {
                   return (
                     <div
                       key={originalIndex}
-                      className={`cursor-pointer hover:bg-muted/30 transition-all duration-200 ${
+                      className={`group cursor-pointer hover:bg-muted/30 transition-all duration-200 ${
                         transitioningPathway === originalIndex ? 'animate-fade-out scale-95 opacity-50' : ''
-                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''}`}
+                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''} ${
+                        selectedRows.has(originalIndex) ? 'bg-muted/40' : ''
+                      }`}
                       onClick={() => handleCardClick(originalIndex)}
                     >
                       <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
-                          className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                          title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
-                        >
-                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
-                        </button>
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          {selectionMode ? (
+                            <Checkbox
+                              className="h-3.5 w-3.5"
+                              checked={selectedRows.has(originalIndex)}
+                              onCheckedChange={() => toggleRowSelected(originalIndex)}
+                            />
+                          ) : (
+                            <>
+                              <Checkbox
+                                className="hidden group-hover:block h-3.5 w-3.5"
+                                checked={false}
+                                onCheckedChange={() => toggleRowSelected(originalIndex)}
+                                title="Select pathway"
+                              />
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
+                                className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors group-hover:hidden"
+                                title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
+                              >
+                                <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+
                         <div className="flex justify-center">
                           <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums ${
                             flagged ? 'border border-amber-400 text-amber-700 bg-amber-50' : 'bg-muted text-muted-foreground'
