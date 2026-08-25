@@ -249,6 +249,22 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
+  // ---- User-defined tags -------------------------------------------------
+  const { tagsOf, tagsOfMany, tagCounts, allTags, addTagToMany, removeTagFromMany } = usePathwayTags();
+  const [tagFilter, setTagFilter] = useState<string[]>([]); // lowercase keys
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const selectionMode = selectedRows.size > 0;
+  const toggleRowSelected = (index: number) =>
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index); else next.add(index);
+      return next;
+    });
+  const clearSelection = () => setSelectedRows(new Set());
+  const toggleTagFilter = (key: string) =>
+    setTagFilter((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+
   const [vcgMinFilter, setVcgMinFilter] = useState<string>('all');
   const [feedstockQtyMin, setFeedstockQtyMin] = useState<number>(0);
   const [seasonalityFilter, setSeasonalityFilter] = useState<string>('all');
