@@ -307,6 +307,14 @@ const ValueChainPathways = () => {
       default: return { dot: 'bg-muted-foreground', text: 'text-muted-foreground', bg: 'bg-muted', border: 'border-border', bar: 'bg-muted-foreground' };
     }
   };
+
+  // Three-band naming, used by the band cards and the TRL cell.
+  const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
+  const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
+
+  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.6fr)_minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.6fr)_110px]';
+
+
   
   // Helper function to get TRL stage label
   const getTRLStageLabel = (trl: string) => {
