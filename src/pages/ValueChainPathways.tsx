@@ -1664,7 +1664,7 @@ const ValueChainPathways = () => {
 
 
 
-                return filteredPathways.map(renderRow);
+                return pagedPathways.map(renderRow);
               })()}
             {filteredPathways.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
@@ -1679,7 +1679,9 @@ const ValueChainPathways = () => {
           </div>
 
           {/* RIGHT: Filter Sidebar */}
+          {showRightPanel && (
           <div className="flex h-full min-h-0 flex-col gap-1.5 pr-1">
+
             <div className="flex items-center gap-0 bg-muted/30 rounded-lg p-0.5">
               <button
                 onClick={() => setRightSidebarTab('filters')}
