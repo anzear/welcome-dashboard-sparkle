@@ -955,7 +955,7 @@ const ValueChainPathways = () => {
                       activeTab === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    All ({scopedPathways.length})
+                    All ({scopedTaggedPathways.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('saved')}
