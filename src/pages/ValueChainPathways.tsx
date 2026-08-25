@@ -1816,6 +1816,71 @@ const ValueChainPathways = () => {
             </div>
           </div>
 
+          {/* Bulk tag bar — appears while rows are selected */}
+          {selectionMode && (
+            <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-2 shadow-lg">
+                <span className="text-[10px] font-medium text-foreground tabular-nums">
+                  {selectedRows.size} {selectedRows.size === 1 ? 'pathway' : 'pathways'} selected
+                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-foreground hover:bg-muted">
+                      + Add tag
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-auto p-2">
+                    <TagPicker
+                      suggestions={allTags}
+                      onPick={(t) => {
+                        addTagToMany([...selectedRows], t);
+                        toast({ description: `Tag "${t}" added to ${selectedRows.size} pathways.` });
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted">
+                      Remove tag
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-52 p-2">
+                    {(() => {
+                      const present = tagsOfMany([...selectedRows]);
+                      if (present.length === 0) {
+                        return <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags on the selection.</p>;
+                      }
+                      return (
+                        <div className="max-h-48 space-y-0.5 overflow-y-auto">
+                          {present.map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => {
+                                removeTagFromMany([...selectedRows], t);
+                                toast({ description: `Tag "${t}" removed from ${selectedRows.size} pathways.` });
+                              }}
+                              className="block w-full truncate rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </PopoverContent>
+                </Popover>
+                <button
+                  onClick={clearSelection}
+                  className="text-[10px] text-muted-foreground hover:text-foreground"
+                >
+                  Clear selection
+                </button>
+              </div>
+            </div>
+          )}
+
+
           {/* RIGHT: Filter Sidebar */}
           {showRightPanel && (
           <div className="flex h-full min-h-0 flex-col gap-1.5 pr-1">
