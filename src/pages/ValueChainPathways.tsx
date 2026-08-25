@@ -10,7 +10,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
+import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree, Tag as TagIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { usePathwayTags, TagChips, TagPicker } from "@/components/pathwayTags";
+
 
 type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
 
@@ -246,6 +249,22 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
+  // ---- User-defined tags -------------------------------------------------
+  const { tagsOf, tagsOfMany, tagCounts, allTags, addTagToMany, removeTagFromMany } = usePathwayTags();
+  const [tagFilter, setTagFilter] = useState<string[]>([]); // lowercase keys
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const selectionMode = selectedRows.size > 0;
+  const toggleRowSelected = (index: number) =>
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index); else next.add(index);
+      return next;
+    });
+  const clearSelection = () => setSelectedRows(new Set());
+  const toggleTagFilter = (key: string) =>
+    setTagFilter((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+
   const [vcgMinFilter, setVcgMinFilter] = useState<string>('all');
   const [feedstockQtyMin, setFeedstockQtyMin] = useState<number>(0);
   const [seasonalityFilter, setSeasonalityFilter] = useState<string>('all');
@@ -331,7 +350,7 @@ const ValueChainPathways = () => {
   const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
   const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
 
-  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.6fr)_minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.6fr)_110px]';
+  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.5fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_110px]';
 
 
   
@@ -403,16 +422,27 @@ const ValueChainPathways = () => {
     });
   }, [allPathways, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Band counts (respect opportunity scope)
+  // Tag predicate — a pathway matches when it carries ANY of the active tags.
+  const matchesTagFilter = (index: number) =>
+    tagFilter.length === 0 || tagsOf(index).some((t) => tagFilter.includes(t.toLowerCase()));
+
+  // Scope for the counts: opportunity pre-filter + active tag filter.
+  const scopedTaggedPathways = useMemo(() => {
+    const indexOf = new Map(allPathways.map((p, i) => [p, i] as const));
+    return scopedPathways.filter((p) => matchesTagFilter(indexOf.get(p) ?? -1));
+  }, [scopedPathways, tagFilter.join('|'), tagsOf]);
+
+  // Band counts (respect opportunity scope and the tag filter)
   const viabilityCounts = useMemo(() => {
     const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
 
-    scopedPathways.forEach(p => {
+    scopedTaggedPathways.forEach(p => {
       const v = getViability(p.trl);
       counts[v as keyof typeof counts]++;
     });
     return counts;
-  }, [scopedPathways]);
+  }, [scopedTaggedPathways]);
+
 
   // Filtered pathways
   const filteredPathways = useMemo(() => {
@@ -513,6 +543,11 @@ const ValueChainPathways = () => {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
     }
 
+    // Tag filter — ANY of the selected tags.
+    if (tagFilter.length > 0) {
+      filtered = filtered.filter(({ originalIndex }) => matchesTagFilter(originalIndex));
+    }
+
     // Sort: disliked at bottom, then by selected metric
     filtered.sort((a, b) => {
       const aDisliked = dislikedPathways.has(a.originalIndex);
@@ -527,7 +562,13 @@ const ValueChainPathways = () => {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(',')]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), tagFilter.join('|'), tagsOf]);
+
+  // Selection is a transient working set: it clears when the visible set changes.
+  useEffect(() => {
+    clearSelection();
+  }, [activeTab, viewMode, layout, searchQuery, viabilityFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, tagFilter.join('|')]);
+
 
   // Key extractor for compressed grouping (respects current groupBy)
   const groupKeyOf = (p: { feedstock: string; technology: string; application: string }) =>
@@ -878,7 +919,7 @@ const ValueChainPathways = () => {
               {(['Commercial', 'Pilot', 'Lab'] as const).map((level) => {
                 const colors = getViabilityColor(level);
                 const count = viabilityCounts[level];
-                const pct = scopedPathways.length > 0 ? Math.round((count / scopedPathways.length) * 100) : 0;
+                const pct = scopedTaggedPathways.length > 0 ? Math.round((count / scopedTaggedPathways.length) * 100) : 0;
                 const isActive = viabilityFilter === level;
                 return (
                   <button
@@ -914,7 +955,7 @@ const ValueChainPathways = () => {
                       activeTab === 'all' ? 'bg-foreground text-background' : 'bg-muted text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    All ({scopedPathways.length})
+                    All ({scopedTaggedPathways.length})
                   </button>
                   <button
                     onClick={() => setActiveTab('saved')}
@@ -965,6 +1006,49 @@ const ValueChainPathways = () => {
               </div>
 
               <div className="flex items-center gap-2">
+                {/* Tag filter — ANY of the selected tags */}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={`flex items-center gap-1 h-7 px-2.5 rounded-md border text-[10px] font-medium transition-colors ${
+                        tagFilter.length > 0 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <TagIcon className="w-3 h-3" />
+                      {tagFilter.length > 0 ? `Tags (${tagFilter.length})` : 'Tags'}
+                      <ChevronDown className="w-2.5 h-2.5 opacity-60" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-56 p-2">
+                    {tagCounts.length === 0 ? (
+                      <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags yet.</p>
+                    ) : (
+                      <div className="max-h-56 overflow-y-auto space-y-0.5">
+                        {tagCounts.map(({ key, label, count }) => (
+                          <button
+                            key={key}
+                            onClick={() => toggleTagFilter(key)}
+                            className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
+                          >
+                            <Checkbox checked={tagFilter.includes(key)} className="h-3 w-3 pointer-events-none" />
+                            <span className="truncate text-foreground">{label}</span>
+                            <span className="ml-auto tabular-nums text-muted-foreground">{count}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {tagFilter.length > 0 && (
+                      <button
+                        onClick={() => setTagFilter([])}
+                        className="mt-1 w-full border-t border-border pt-1 text-left text-[10px] text-muted-foreground hover:text-foreground"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </PopoverContent>
+                </Popover>
+
+
                 <div className="relative w-[180px]">
                   <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
                   <Input
@@ -1009,7 +1093,19 @@ const ValueChainPathways = () => {
             {/* Table Header */}
             {viewMode !== 'compressed' && (
             <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
-              <span />
+              <span className="flex items-center justify-center">
+                {selectionMode && (
+                  <Checkbox
+                    className="h-3.5 w-3.5"
+                    checked={pagedPathways.length > 0 && pagedPathways.every(({ originalIndex }) => selectedRows.has(originalIndex))}
+                    onCheckedChange={(checked) =>
+                      setSelectedRows(checked ? new Set(pagedPathways.map((r) => r.originalIndex)) : new Set())
+                    }
+                    title="Select all on page"
+                  />
+                )}
+              </span>
+
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
               {([
                 { key: 'feedstock', label: 'Feedstock', green: false },
@@ -1029,7 +1125,9 @@ const ValueChainPathways = () => {
                   <ChevronDown className={`w-2.5 h-2.5 ${sortBy === key ? 'opacity-100' : 'opacity-40'}`} />
                 </button>
               ))}
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Tags</span>
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
+
             </div>
             )}
 
@@ -1053,19 +1151,40 @@ const ValueChainPathways = () => {
                   return (
                     <div
                       key={originalIndex}
-                      className={`cursor-pointer hover:bg-muted/30 transition-all duration-200 ${
+                      className={`group cursor-pointer hover:bg-muted/30 transition-all duration-200 ${
                         transitioningPathway === originalIndex ? 'animate-fade-out scale-95 opacity-50' : ''
-                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''}`}
+                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''} ${
+                        selectedRows.has(originalIndex) ? 'bg-muted/40' : ''
+                      }`}
                       onClick={() => handleCardClick(originalIndex)}
                     >
                       <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
-                          className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
-                          title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
-                        >
-                          <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
-                        </button>
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          {selectionMode ? (
+                            <Checkbox
+                              className="h-3.5 w-3.5"
+                              checked={selectedRows.has(originalIndex)}
+                              onCheckedChange={() => toggleRowSelected(originalIndex)}
+                            />
+                          ) : (
+                            <>
+                              <Checkbox
+                                className="hidden group-hover:block h-3.5 w-3.5"
+                                checked={false}
+                                onCheckedChange={() => toggleRowSelected(originalIndex)}
+                                title="Select pathway"
+                              />
+                              <button
+                                onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
+                                className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors group-hover:hidden"
+                                title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
+                              >
+                                <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+
                         <div className="flex justify-center">
                           <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums ${
                             flagged ? 'border border-amber-400 text-amber-700 bg-amber-50' : 'bg-muted text-muted-foreground'
@@ -1085,6 +1204,24 @@ const ValueChainPathways = () => {
                         <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.application}
                         </div>
+                        {/* Tags — user judgement, never computed: grey chips only */}
+                        <div className="flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <TagChips tags={tagsOf(originalIndex)} onRemove={(t) => removeTagFromMany([originalIndex], t)} />
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button
+                                className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                                title="Add tag"
+                              >
+                                + Tag
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent align="start" className="w-auto p-2">
+                              <TagPicker suggestions={allTags} onPick={(t) => addTagToMany([originalIndex], t)} />
+                            </PopoverContent>
+                          </Popover>
+                        </div>
+
                         <div className="flex justify-center">
                           <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
                             <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
@@ -1339,7 +1476,43 @@ const ValueChainPathways = () => {
                           </span>
                           <span className="text-[10px] text-muted-foreground font-medium shrink-0">({rows.length} pathways)</span>
                         </div>
+                        {/* Group-level tags — apply to every pathway in the group */}
+                        {(() => {
+                          const groupIdxs = rows.map((r) => r.originalIndex);
+                          const groupTags = tagsOfMany(groupIdxs);
+                          return (
+                            <div className="ml-auto flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                              <TagChips
+                                tags={groupTags}
+                                onRemove={(t) => {
+                                  removeTagFromMany(groupIdxs, t);
+                                  toast({ description: `Tag "${t}" removed from all ${groupIdxs.length} pathways in ${feedstockName}.` });
+                                }}
+                              />
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <button
+                                    className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                                    title="Add tag to all pathways in this group"
+                                  >
+                                    + Tag
+                                  </button>
+                                </PopoverTrigger>
+                                <PopoverContent align="end" className="w-auto p-2">
+                                  <TagPicker
+                                    suggestions={allTags}
+                                    onPick={(t) => {
+                                      addTagToMany(groupIdxs, t);
+                                      toast({ description: `Tag "${t}" added to all ${groupIdxs.length} pathways in ${feedstockName}.` });
+                                    }}
+                                  />
+                                </PopoverContent>
+                              </Popover>
+                            </div>
+                          );
+                        })()}
                         {expanded && (
+
                           <div
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center gap-0.5 p-0.5 rounded-md bg-muted border border-border shrink-0"
@@ -1678,6 +1851,71 @@ const ValueChainPathways = () => {
             )}
             </div>
           </div>
+
+          {/* Bulk tag bar — appears while rows are selected */}
+          {selectionMode && (
+            <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-2 shadow-lg">
+                <span className="text-[10px] font-medium text-foreground tabular-nums">
+                  {selectedRows.size} {selectedRows.size === 1 ? 'pathway' : 'pathways'} selected
+                </span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-foreground hover:bg-muted">
+                      + Add tag
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-auto p-2">
+                    <TagPicker
+                      suggestions={allTags}
+                      onPick={(t) => {
+                        addTagToMany([...selectedRows], t);
+                        toast({ description: `Tag "${t}" added to ${selectedRows.size} pathways.` });
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted">
+                      Remove tag
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="center" className="w-52 p-2">
+                    {(() => {
+                      const present = tagsOfMany([...selectedRows]);
+                      if (present.length === 0) {
+                        return <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags on the selection.</p>;
+                      }
+                      return (
+                        <div className="max-h-48 space-y-0.5 overflow-y-auto">
+                          {present.map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => {
+                                removeTagFromMany([...selectedRows], t);
+                                toast({ description: `Tag "${t}" removed from ${selectedRows.size} pathways.` });
+                              }}
+                              className="block w-full truncate rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </PopoverContent>
+                </Popover>
+                <button
+                  onClick={clearSelection}
+                  className="text-[10px] text-muted-foreground hover:text-foreground"
+                >
+                  Clear selection
+                </button>
+              </div>
+            </div>
+          )}
+
 
           {/* RIGHT: Filter Sidebar */}
           {showRightPanel && (
