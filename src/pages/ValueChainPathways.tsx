@@ -265,6 +265,18 @@ const ValueChainPathways = () => {
       ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
       return next;
     });
+  const removeFromGroupWithUndo = (groupId: string, pathwayIds: number[]) => {
+    const group = pathwayGroups.find((g) => g.id === groupId);
+    removeFromGroup(groupId, pathwayIds);
+    toast({
+      title: `Removed from ${group?.name ?? 'group'}`,
+      description: pathwayIds.length === 1 ? '1 pathway removed.' : `${pathwayIds.length} pathways removed.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => addToGroup(groupId, pathwayIds)}>Undo</ToastAction>
+      ),
+    });
+  };
+
 
 
 
