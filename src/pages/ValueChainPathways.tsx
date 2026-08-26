@@ -1024,12 +1024,20 @@ const ValueChainPathways = () => {
                 <span className="h-4 w-px bg-border" />
 
                 <button
-                  onClick={() => toast({ title: 'New group', description: 'Custom pathway groups are coming soon.' })}
+                  onClick={() => {
+                    if (selectedPathwayIds.size === 0) {
+                      toast({ title: 'Select pathways first', description: 'Tick pathways or collapsed rows, then create a group.' });
+                      return;
+                    }
+                    setNewGroupName('');
+                    setNewGroupOpen(true);
+                  }}
                   className="flex items-center gap-1 px-2 py-1 rounded-md border border-border text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <PlusSquare className="w-3 h-3" />
                   New Group
                 </button>
+
               </div>
 
               <div className="flex items-center gap-2">
