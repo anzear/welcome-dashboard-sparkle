@@ -1447,6 +1447,15 @@ const ValueChainPathways = () => {
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
+                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                            <Checkbox
+                              className="h-3 w-3"
+                              aria-label={`Select the ${rows.length} pathways under ${feedstockName}`}
+                              title={`Selects the ${rows.length} pathway${rows.length === 1 ? '' : 's'} under ${feedstockName} that match the current filters`}
+                              checked={rows.length > 0 && rows.every(({ originalIndex }) => selectedPathwayIds.has(originalIndex))}
+                              onCheckedChange={(v) => toggleSelection(rows.map((r) => r.originalIndex), v === true)}
+                            />
+                          </div>
                           <ChevronRight className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-90 text-primary' : 'text-muted-foreground group-hover:text-primary group-hover:rotate-90'}`} strokeWidth={2.5} />
                           <span className={`font-mono text-[9px] tracking-tighter tabular-nums ${expanded ? 'text-primary/60' : 'text-muted-foreground'}`}>
                             {String(groupIdx + 1).padStart(2, '0')}
@@ -1455,7 +1464,11 @@ const ValueChainPathways = () => {
                             {feedstockName}
                           </span>
                           <span className="text-[10px] text-muted-foreground font-medium shrink-0">({rows.length} pathways)</span>
+                          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                            <DerivedGroupChips items={derivedGroupChips(rows.map((r) => r.originalIndex))} />
+                          </div>
                         </div>
+
 
 
                         {expanded && (
