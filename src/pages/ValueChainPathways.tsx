@@ -1067,6 +1067,14 @@ const ValueChainPathways = () => {
             {/* Table Header */}
             {viewMode !== 'compressed' && (
             <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
+              <div className="flex items-center justify-center">
+                <Checkbox
+                  className="h-3 w-3"
+                  aria-label="Select all pathways on this page"
+                  checked={pagedPathways.length > 0 && pagedPathways.every(({ originalIndex }) => selectedPathwayIds.has(originalIndex))}
+                  onCheckedChange={(v) => toggleSelection(pagedPathways.map((r) => r.originalIndex), v === true)}
+                />
+              </div>
               <span />
 
 
@@ -1091,8 +1099,10 @@ const ValueChainPathways = () => {
               ))}
               
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Groups</span>
 
             </div>
+
             )}
 
 
