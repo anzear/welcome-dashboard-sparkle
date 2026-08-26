@@ -1133,6 +1133,14 @@ const ValueChainPathways = () => {
                     >
                       <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
                         <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            className="h-3 w-3"
+                            aria-label="Select pathway"
+                            checked={selectedPathwayIds.has(originalIndex)}
+                            onCheckedChange={(v) => toggleSelection([originalIndex], v === true)}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
                             className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
@@ -1171,7 +1179,15 @@ const ValueChainPathways = () => {
                             <span className="text-[8px] opacity-80">{pathway.trl}</span>
                           </span>
                         </div>
+
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <GroupChips
+                            groups={groupsOf(originalIndex)}
+                            onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                          />
+                        </div>
                       </div>
+
 
                       {activeTab === 'saved' && savedPathways.has(originalIndex) && shortlistNotes[originalIndex] && (
                         <div className="px-4 pb-3 -mt-1">
