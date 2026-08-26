@@ -27,6 +27,7 @@ import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip } from '@/components/pathwayGroups';
+import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
 interface CustomPathway {
   feedstock: string;
