@@ -1880,6 +1880,7 @@ const ValueChainPathways = () => {
                         setFeedstockQtyMin(0);
                         setSearchQuery('');
                         setViabilityFilter(null);
+                        setGroupFilter([]);
                       }}
                       className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                     >
@@ -1888,12 +1889,30 @@ const ValueChainPathways = () => {
                   </div>
 
                   <div className="space-y-2">
+                    {/* Group */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-1 h-1 rounded-full bg-foreground" />
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Group</span>
+                      </div>
+                      <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+                        <label className="text-[10px] text-muted-foreground">Belongs to</label>
+                        <MultiSelectFilter
+                          label={groupFilter.length > 0 ? 'Groups' : 'Any'}
+                          options={pathwayGroups.map((g) => ({ value: g.id, label: g.name }))}
+                          selected={groupFilter}
+                          onChange={setGroupFilter}
+                        />
+                      </div>
+                    </div>
+
                     {/* Pathway */}
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-1 h-1 rounded-full bg-foreground" />
                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Pathway</span>
                       </div>
+
                       <div className="space-y-1">
                         <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                           <label className="text-[10px] text-muted-foreground">VCG Score</label>
