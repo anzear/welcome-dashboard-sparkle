@@ -19,6 +19,7 @@ type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import VCGScoreBadge from '@/components/VCGScoreBadge';
 import PageCommentsSidebar from '@/components/PageCommentsSidebar';
 import { useTopicComments } from '@/components/TopicCommentsPopover';
