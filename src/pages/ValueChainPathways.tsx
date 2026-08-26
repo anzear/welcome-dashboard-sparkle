@@ -19,11 +19,15 @@ type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import VCGScoreBadge from '@/components/VCGScoreBadge';
 import PageCommentsSidebar from '@/components/PageCommentsSidebar';
 import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
+import { Checkbox } from "@/components/ui/checkbox";
+import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip } from '@/components/pathwayGroups';
+import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
 interface CustomPathway {
   feedstock: string;
@@ -248,6 +252,36 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
+  // ---- Custom pathway groups ----
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup } = usePathwayGroups();
+  // Membership signature — memo dependency so filters/chips recompute after a mutation.
+  const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+  const [groupFilter, setGroupFilter] = useState<string[]>([]);
+  const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const clearSelection = () => setSelectedPathwayIds(new Set());
+  const toggleSelection = (ids: number[], on: boolean) =>
+    setSelectedPathwayIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+      return next;
+    });
+  const removeFromGroupWithUndo = (groupId: string, pathwayIds: number[]) => {
+    const group = pathwayGroups.find((g) => g.id === groupId);
+    removeFromGroup(groupId, pathwayIds);
+    toast({
+      title: `Removed from ${group?.name ?? 'group'}`,
+      description: pathwayIds.length === 1 ? '1 pathway removed.' : `${pathwayIds.length} pathways removed.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => addToGroup(groupId, pathwayIds)}>Undo</ToastAction>
+      ),
+    });
+  };
+
+
+
+
 
 
 
@@ -337,7 +371,21 @@ const ValueChainPathways = () => {
   const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
   const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
 
-  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.5fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_110px]';
+  const TABLE_COLS = 'grid-cols-[24px_28px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,1fr)]';
+
+  // Derived group display for a collapsed row: filled when every pathway beneath is a member,
+  // outlined with a count when only some are. Groups with no member are omitted.
+  const derivedGroupChips = (pathwayIds: number[]): DerivedGroupChip[] => {
+    const total = pathwayIds.length;
+    if (total === 0) return [];
+    return pathwayGroups
+      .map((g) => {
+        const ids = new Set(memberIds(g.id));
+        const count = pathwayIds.filter((pid) => ids.has(pid)).length;
+        return { id: g.id, name: g.name, count, total };
+      })
+      .filter((c) => c.count > 0);
+  };
 
 
   
@@ -519,9 +567,17 @@ const ValueChainPathways = () => {
       });
     }
 
+    // Group membership — a pathway matches if it belongs to any selected group (AND with the rest).
+    if (groupFilter.length > 0) {
+      const allowed = new Set<number>();
+      groupFilter.forEach((gid) => memberIds(gid).forEach((pid) => allowed.add(pid)));
+      filtered = filtered.filter(({ originalIndex }) => allowed.has(originalIndex));
+    }
+
     if (activeTab === 'saved') {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
     }
+
 
     // Sort: disliked at bottom, then by selected metric
     filtered.sort((a, b) => {
@@ -537,7 +593,7 @@ const ValueChainPathways = () => {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(',')]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), groupFilter.join(','), membershipSignature]);
 
 
 
@@ -969,12 +1025,20 @@ const ValueChainPathways = () => {
                 <span className="h-4 w-px bg-border" />
 
                 <button
-                  onClick={() => toast({ title: 'New group', description: 'Custom pathway groups are coming soon.' })}
+                  onClick={() => {
+                    if (selectedPathwayIds.size === 0) {
+                      toast({ title: 'Select pathways first', description: 'Tick pathways or collapsed rows, then create a group.' });
+                      return;
+                    }
+                    setNewGroupName('');
+                    setNewGroupOpen(true);
+                  }}
                   className="flex items-center gap-1 px-2 py-1 rounded-md border border-border text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <PlusSquare className="w-3 h-3" />
                   New Group
                 </button>
+
               </div>
 
               <div className="flex items-center gap-2">
@@ -1025,6 +1089,14 @@ const ValueChainPathways = () => {
             {/* Table Header */}
             {viewMode !== 'compressed' && (
             <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
+              <div className="flex items-center justify-center">
+                <Checkbox
+                  className="h-3 w-3"
+                  aria-label="Select all pathways on this page"
+                  checked={pagedPathways.length > 0 && pagedPathways.every(({ originalIndex }) => selectedPathwayIds.has(originalIndex))}
+                  onCheckedChange={(v) => toggleSelection(pagedPathways.map((r) => r.originalIndex), v === true)}
+                />
+              </div>
               <span />
 
 
@@ -1049,8 +1121,10 @@ const ValueChainPathways = () => {
               ))}
               
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Groups</span>
 
             </div>
+
             )}
 
 
@@ -1080,6 +1154,14 @@ const ValueChainPathways = () => {
                       onClick={() => handleCardClick(originalIndex)}
                     >
                       <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
+                        <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            className="h-3 w-3"
+                            aria-label="Select pathway"
+                            checked={selectedPathwayIds.has(originalIndex)}
+                            onCheckedChange={(v) => toggleSelection([originalIndex], v === true)}
+                          />
+                        </div>
                         <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
                           <button
                             onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
@@ -1119,7 +1201,15 @@ const ValueChainPathways = () => {
                             <span className="text-[8px] opacity-80">{pathway.trl}</span>
                           </span>
                         </div>
+
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <GroupChips
+                            groups={groupsOf(originalIndex)}
+                            onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                          />
+                        </div>
                       </div>
+
 
                       {activeTab === 'saved' && savedPathways.has(originalIndex) && shortlistNotes[originalIndex] && (
                         <div className="px-4 pb-3 -mt-1">
@@ -1358,6 +1448,15 @@ const ValueChainPathways = () => {
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
+                          <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                            <Checkbox
+                              className="h-3 w-3"
+                              aria-label={`Select the ${rows.length} pathways under ${feedstockName}`}
+                              title={`Selects the ${rows.length} pathway${rows.length === 1 ? '' : 's'} under ${feedstockName} that match the current filters`}
+                              checked={rows.length > 0 && rows.every(({ originalIndex }) => selectedPathwayIds.has(originalIndex))}
+                              onCheckedChange={(v) => toggleSelection(rows.map((r) => r.originalIndex), v === true)}
+                            />
+                          </div>
                           <ChevronRight className={`w-3 h-3 transition-transform duration-200 ${expanded ? 'rotate-90 text-primary' : 'text-muted-foreground group-hover:text-primary group-hover:rotate-90'}`} strokeWidth={2.5} />
                           <span className={`font-mono text-[9px] tracking-tighter tabular-nums ${expanded ? 'text-primary/60' : 'text-muted-foreground'}`}>
                             {String(groupIdx + 1).padStart(2, '0')}
@@ -1366,7 +1465,11 @@ const ValueChainPathways = () => {
                             {feedstockName}
                           </span>
                           <span className="text-[10px] text-muted-foreground font-medium shrink-0">({rows.length} pathways)</span>
+                          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                            <DerivedGroupChips items={derivedGroupChips(rows.map((r) => r.originalIndex))} />
+                          </div>
                         </div>
+
 
 
                         {expanded && (
@@ -1778,6 +1881,7 @@ const ValueChainPathways = () => {
                         setFeedstockQtyMin(0);
                         setSearchQuery('');
                         setViabilityFilter(null);
+                        setGroupFilter([]);
                       }}
                       className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
                     >
@@ -1786,12 +1890,30 @@ const ValueChainPathways = () => {
                   </div>
 
                   <div className="space-y-2">
+                    {/* Group */}
+                    <div>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="w-1 h-1 rounded-full bg-foreground" />
+                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Group</span>
+                      </div>
+                      <div className="grid grid-cols-[1fr_auto] items-center gap-2">
+                        <label className="text-[10px] text-muted-foreground">Belongs to</label>
+                        <MultiSelectFilter
+                          label={groupFilter.length > 0 ? 'Groups' : 'Any'}
+                          options={pathwayGroups.map((g) => ({ value: g.id, label: g.name }))}
+                          selected={groupFilter}
+                          onChange={setGroupFilter}
+                        />
+                      </div>
+                    </div>
+
                     {/* Pathway */}
                     <div>
                       <div className="flex items-center gap-1.5 mb-1">
                         <span className="w-1 h-1 rounded-full bg-foreground" />
                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest">Pathway</span>
                       </div>
+
                       <div className="space-y-1">
                         <div className="grid grid-cols-[1fr_auto] items-center gap-2">
                           <label className="text-[10px] text-muted-foreground">VCG Score</label>
@@ -2184,7 +2306,100 @@ const ValueChainPathways = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Selection bar — counts pathways, never collapsed rows */}
+      {selectedPathwayIds.size > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg border border-border bg-background px-4 py-2 shadow-lg">
+          <span className="text-[11px] font-medium text-foreground tabular-nums">
+            {selectedPathwayIds.size} pathway{selectedPathwayIds.size === 1 ? '' : 's'} selected
+          </span>
+          <span className="h-4 w-px bg-border" />
+          <button
+            onClick={() => { setNewGroupName(''); setNewGroupOpen(true); }}
+            className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <PlusSquare className="w-3 h-3" />
+            New Group
+          </button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Save to Existing
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="w-56 p-1">
+              {pathwayGroups.length === 0 && (
+                <div className="px-2 py-1.5 text-[11px] text-muted-foreground">No groups yet</div>
+              )}
+              {pathwayGroups.map((g) => (
+                <button
+                  key={g.id}
+                  onClick={() => {
+                    const ids = [...selectedPathwayIds];
+                    const added = addToGroup(g.id, ids);
+                    toast({
+                      title: `Saved to ${g.name}`,
+                      description: `${added} of ${ids.length} selected pathway${ids.length === 1 ? '' : 's'} added; the rest were already in this group.`,
+                      action: <ToastAction altText="Undo" onClick={() => removeFromGroup(g.id, ids)}>Undo</ToastAction>,
+                    });
+                    clearSelection();
+                  }}
+                  className="flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-[11px] hover:bg-muted"
+                >
+                  <span className="truncate">{g.name}</span>
+                  <span className="tabular-nums text-[10px] text-muted-foreground">{memberIds(g.id).length}</span>
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
+          <button
+            onClick={clearSelection}
+            className="text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Clear selection
+          </button>
+        </div>
+      )}
+
+      <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">New group</DialogTitle>
+            <DialogDescription className="text-xs">
+              {selectedPathwayIds.size} selected pathway{selectedPathwayIds.size === 1 ? '' : 's'} will be added to this group.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            placeholder="Group name"
+            className="text-xs"
+            maxLength={60}
+          />
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
+              onClick={() => {
+                const ids = [...selectedPathwayIds];
+                const group = createGroup(newGroupName, ids);
+                setNewGroupOpen(false);
+                clearSelection();
+                toast({
+                  title: `Group "${group.name}" created`,
+                  description: `${ids.length} pathway${ids.length === 1 ? '' : 's'} added.`,
+                  action: <ToastAction altText="Undo" onClick={() => removeFromGroup(group.id, ids)}>Undo</ToastAction>,
+                });
+              }}
+            >
+              Create group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
+
   );
 };
 
