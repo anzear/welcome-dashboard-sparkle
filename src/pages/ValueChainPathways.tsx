@@ -250,6 +250,24 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
+  // ---- Custom pathway groups ----
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup } = usePathwayGroups();
+  // Membership signature — memo dependency so filters/chips recompute after a mutation.
+  const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+  const [groupFilter, setGroupFilter] = useState<string[]>([]);
+  const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
+  const [newGroupOpen, setNewGroupOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const clearSelection = () => setSelectedPathwayIds(new Set());
+  const toggleSelection = (ids: number[], on: boolean) =>
+    setSelectedPathwayIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+      return next;
+    });
+
+
+
 
 
 
