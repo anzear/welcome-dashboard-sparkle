@@ -10,7 +10,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree, Tag as TagIcon } from "lucide-react";
+import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
+
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePathwayTags, TagChips, TagPicker } from "@/components/pathwayTags";
 
@@ -249,20 +250,8 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
-  // ---- User-defined tags -------------------------------------------------
-  const { tagsOf, tagsOfMany, tagCounts, allTags, addTagToMany, removeTagFromMany } = usePathwayTags();
-  const [tagFilter, setTagFilter] = useState<string[]>([]); // lowercase keys
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-  const selectionMode = selectedRows.size > 0;
-  const toggleRowSelected = (index: number) =>
-    setSelectedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) next.delete(index); else next.add(index);
-      return next;
-    });
-  const clearSelection = () => setSelectedRows(new Set());
-  const toggleTagFilter = (key: string) =>
-    setTagFilter((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+
 
 
   const [vcgMinFilter, setVcgMinFilter] = useState<string>('all');
@@ -422,15 +411,8 @@ const ValueChainPathways = () => {
     });
   }, [allPathways, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Tag predicate — a pathway matches when it carries ANY of the active tags.
-  const matchesTagFilter = (index: number) =>
-    tagFilter.length === 0 || tagsOf(index).some((t) => tagFilter.includes(t.toLowerCase()));
+  const scopedTaggedPathways = scopedPathways;
 
-  // Scope for the counts: opportunity pre-filter + active tag filter.
-  const scopedTaggedPathways = useMemo(() => {
-    const indexOf = new Map(allPathways.map((p, i) => [p, i] as const));
-    return scopedPathways.filter((p) => matchesTagFilter(indexOf.get(p) ?? -1));
-  }, [scopedPathways, tagFilter.join('|'), tagsOf]);
 
   // Band counts (respect opportunity scope and the tag filter)
   const viabilityCounts = useMemo(() => {
@@ -543,11 +525,6 @@ const ValueChainPathways = () => {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
     }
 
-    // Tag filter — ANY of the selected tags.
-    if (tagFilter.length > 0) {
-      filtered = filtered.filter(({ originalIndex }) => matchesTagFilter(originalIndex));
-    }
-
     // Sort: disliked at bottom, then by selected metric
     filtered.sort((a, b) => {
       const aDisliked = dislikedPathways.has(a.originalIndex);
@@ -562,12 +539,9 @@ const ValueChainPathways = () => {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), tagFilter.join('|'), tagsOf]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(',')]);
 
-  // Selection is a transient working set: it clears when the visible set changes.
-  useEffect(() => {
-    clearSelection();
-  }, [activeTab, viewMode, layout, searchQuery, viabilityFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, tagFilter.join('|')]);
+
 
 
   // Key extractor for compressed grouping (respects current groupBy)
@@ -1006,47 +980,7 @@ const ValueChainPathways = () => {
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Tag filter — ANY of the selected tags */}
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={`flex items-center gap-1 h-7 px-2.5 rounded-md border text-[10px] font-medium transition-colors ${
-                        tagFilter.length > 0 ? 'border-foreground text-foreground' : 'border-border text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <TagIcon className="w-3 h-3" />
-                      {tagFilter.length > 0 ? `Tags (${tagFilter.length})` : 'Tags'}
-                      <ChevronDown className="w-2.5 h-2.5 opacity-60" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="end" className="w-56 p-2">
-                    {tagCounts.length === 0 ? (
-                      <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags yet.</p>
-                    ) : (
-                      <div className="max-h-56 overflow-y-auto space-y-0.5">
-                        {tagCounts.map(({ key, label, count }) => (
-                          <button
-                            key={key}
-                            onClick={() => toggleTagFilter(key)}
-                            className="flex w-full items-center gap-2 rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
-                          >
-                            <Checkbox checked={tagFilter.includes(key)} className="h-3 w-3 pointer-events-none" />
-                            <span className="truncate text-foreground">{label}</span>
-                            <span className="ml-auto tabular-nums text-muted-foreground">{count}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {tagFilter.length > 0 && (
-                      <button
-                        onClick={() => setTagFilter([])}
-                        className="mt-1 w-full border-t border-border pt-1 text-left text-[10px] text-muted-foreground hover:text-foreground"
-                      >
-                        Clear
-                      </button>
-                    )}
-                  </PopoverContent>
-                </Popover>
+
 
 
                 <div className="relative w-[180px]">
@@ -1093,18 +1027,8 @@ const ValueChainPathways = () => {
             {/* Table Header */}
             {viewMode !== 'compressed' && (
             <div className={`border border-border rounded-t-lg bg-muted/50 px-4 py-2.5 grid ${TABLE_COLS} items-center gap-2`}>
-              <span className="flex items-center justify-center">
-                {selectionMode && (
-                  <Checkbox
-                    className="h-3.5 w-3.5"
-                    checked={pagedPathways.length > 0 && pagedPathways.every(({ originalIndex }) => selectedRows.has(originalIndex))}
-                    onCheckedChange={(checked) =>
-                      setSelectedRows(checked ? new Set(pagedPathways.map((r) => r.originalIndex)) : new Set())
-                    }
-                    title="Select all on page"
-                  />
-                )}
-              </span>
+              <span />
+
 
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
               {([
@@ -1125,7 +1049,7 @@ const ValueChainPathways = () => {
                   <ChevronDown className={`w-2.5 h-2.5 ${sortBy === key ? 'opacity-100' : 'opacity-40'}`} />
                 </button>
               ))}
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Tags</span>
+              
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
 
             </div>
