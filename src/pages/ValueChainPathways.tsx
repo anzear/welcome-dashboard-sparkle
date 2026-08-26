@@ -1153,37 +1153,21 @@ const ValueChainPathways = () => {
                       key={originalIndex}
                       className={`group cursor-pointer hover:bg-muted/30 transition-all duration-200 ${
                         transitioningPathway === originalIndex ? 'animate-fade-out scale-95 opacity-50' : ''
-                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''} ${
-                        selectedRows.has(originalIndex) ? 'bg-muted/40' : ''
-                      }`}
+                      } ${dislikedPathways.has(originalIndex) ? 'opacity-40' : ''}`}
+
                       onClick={() => handleCardClick(originalIndex)}
                     >
                       <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
                         <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                          {selectionMode ? (
-                            <Checkbox
-                              className="h-3.5 w-3.5"
-                              checked={selectedRows.has(originalIndex)}
-                              onCheckedChange={() => toggleRowSelected(originalIndex)}
-                            />
-                          ) : (
-                            <>
-                              <Checkbox
-                                className="hidden group-hover:block h-3.5 w-3.5"
-                                checked={false}
-                                onCheckedChange={() => toggleRowSelected(originalIndex)}
-                                title="Select pathway"
-                              />
-                              <button
-                                onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
-                                className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors group-hover:hidden"
-                                title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
-                              >
-                                <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
-                              </button>
-                            </>
-                          )}
+                          <button
+                            onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
+                            className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                            title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
+                          >
+                            <Bookmark className={`w-4 h-4 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
+                          </button>
                         </div>
+
 
                         <div className="flex justify-center">
                           <span className={`inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums ${
@@ -1204,23 +1188,8 @@ const ValueChainPathways = () => {
                         <div className={chipCls('border-border bg-background text-foreground')}>
                           {pathway.application}
                         </div>
-                        {/* Tags — user judgement, never computed: grey chips only */}
-                        <div className="flex flex-wrap items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                          <TagChips tags={tagsOf(originalIndex)} onRemove={(t) => removeTagFromMany([originalIndex], t)} />
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <button
-                                className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-                                title="Add tag"
-                              >
-                                + Tag
-                              </button>
-                            </PopoverTrigger>
-                            <PopoverContent align="start" className="w-auto p-2">
-                              <TagPicker suggestions={allTags} onPick={(t) => addTagToMany([originalIndex], t)} />
-                            </PopoverContent>
-                          </Popover>
-                        </div>
+
+
 
                         <div className="flex justify-center">
                           <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
@@ -1476,41 +1445,8 @@ const ValueChainPathways = () => {
                           </span>
                           <span className="text-[10px] text-muted-foreground font-medium shrink-0">({rows.length} pathways)</span>
                         </div>
-                        {/* Group-level tags — apply to every pathway in the group */}
-                        {(() => {
-                          const groupIdxs = rows.map((r) => r.originalIndex);
-                          const groupTags = tagsOfMany(groupIdxs);
-                          return (
-                            <div className="ml-auto flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
-                              <TagChips
-                                tags={groupTags}
-                                onRemove={(t) => {
-                                  removeTagFromMany(groupIdxs, t);
-                                  toast({ description: `Tag "${t}" removed from all ${groupIdxs.length} pathways in ${feedstockName}.` });
-                                }}
-                              />
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <button
-                                    className="rounded border border-dashed border-border px-1 py-0.5 text-[9px] text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
-                                    title="Add tag to all pathways in this group"
-                                  >
-                                    + Tag
-                                  </button>
-                                </PopoverTrigger>
-                                <PopoverContent align="end" className="w-auto p-2">
-                                  <TagPicker
-                                    suggestions={allTags}
-                                    onPick={(t) => {
-                                      addTagToMany(groupIdxs, t);
-                                      toast({ description: `Tag "${t}" added to all ${groupIdxs.length} pathways in ${feedstockName}.` });
-                                    }}
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                            </div>
-                          );
-                        })()}
+
+
                         {expanded && (
 
                           <div
@@ -1852,69 +1788,8 @@ const ValueChainPathways = () => {
             </div>
           </div>
 
-          {/* Bulk tag bar — appears while rows are selected */}
-          {selectionMode && (
-            <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2">
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-background px-4 py-2 shadow-lg">
-                <span className="text-[10px] font-medium text-foreground tabular-nums">
-                  {selectedRows.size} {selectedRows.size === 1 ? 'pathway' : 'pathways'} selected
-                </span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-foreground hover:bg-muted">
-                      + Add tag
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-auto p-2">
-                    <TagPicker
-                      suggestions={allTags}
-                      onPick={(t) => {
-                        addTagToMany([...selectedRows], t);
-                        toast({ description: `Tag "${t}" added to ${selectedRows.size} pathways.` });
-                      }}
-                    />
-                  </PopoverContent>
-                </Popover>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button className="rounded-md border border-border px-2 py-1 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted">
-                      Remove tag
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent align="center" className="w-52 p-2">
-                    {(() => {
-                      const present = tagsOfMany([...selectedRows]);
-                      if (present.length === 0) {
-                        return <p className="px-1 py-1 text-[9px] text-muted-foreground">No tags on the selection.</p>;
-                      }
-                      return (
-                        <div className="max-h-48 space-y-0.5 overflow-y-auto">
-                          {present.map((t) => (
-                            <button
-                              key={t}
-                              onClick={() => {
-                                removeTagFromMany([...selectedRows], t);
-                                toast({ description: `Tag "${t}" removed from ${selectedRows.size} pathways.` });
-                              }}
-                              className="block w-full truncate rounded px-1.5 py-1 text-left text-[10px] hover:bg-muted"
-                            >
-                              {t}
-                            </button>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </PopoverContent>
-                </Popover>
-                <button
-                  onClick={clearSelection}
-                  className="text-[10px] text-muted-foreground hover:text-foreground"
-                >
-                  Clear selection
-                </button>
-              </div>
-            </div>
-          )}
+
+
 
 
           {/* RIGHT: Filter Sidebar */}
