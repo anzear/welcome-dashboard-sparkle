@@ -539,9 +539,17 @@ const ValueChainPathways = () => {
       });
     }
 
+    // Group membership — a pathway matches if it belongs to any selected group (AND with the rest).
+    if (groupFilter.length > 0) {
+      const allowed = new Set<number>();
+      groupFilter.forEach((gid) => memberIds(gid).forEach((pid) => allowed.add(pid)));
+      filtered = filtered.filter(({ originalIndex }) => allowed.has(originalIndex));
+    }
+
     if (activeTab === 'saved') {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
     }
+
 
     // Sort: disliked at bottom, then by selected metric
     filtered.sort((a, b) => {
