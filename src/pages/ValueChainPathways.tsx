@@ -357,7 +357,21 @@ const ValueChainPathways = () => {
   const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
   const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
 
-  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.5fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_110px]';
+  const TABLE_COLS = 'grid-cols-[24px_28px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,1fr)]';
+
+  // Derived group display for a collapsed row: filled when every pathway beneath is a member,
+  // outlined with a count when only some are. Groups with no member are omitted.
+  const derivedGroupChips = (pathwayIds: number[]): DerivedGroupChip[] => {
+    const total = pathwayIds.length;
+    if (total === 0) return [];
+    return pathwayGroups
+      .map((g) => {
+        const ids = new Set(memberIds(g.id));
+        const count = pathwayIds.filter((pid) => ids.has(pid)).length;
+        return { id: g.id, name: g.name, count, total };
+      })
+      .filter((c) => c.count > 0);
+  };
 
 
   
