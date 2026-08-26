@@ -12,7 +12,6 @@ import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
 
-import { Checkbox } from "@/components/ui/checkbox";
 
 
 type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
