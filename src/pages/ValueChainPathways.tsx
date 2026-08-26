@@ -13,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayTags, TagChips, TagPicker } from "@/components/pathwayTags";
 
 
 type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
@@ -339,7 +338,7 @@ const ValueChainPathways = () => {
   const BAND_LABEL = { Commercial: 'COMMERCIAL', Pilot: 'PILOT TO SCALE-UP', Lab: 'LAB TO PILOT' } as const;
   const BAND_RANGE = { Commercial: 'TRL 9', Pilot: 'TRL 5-8', Lab: 'TRL 1-4' } as const;
 
-  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.5fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_110px]';
+  const TABLE_COLS = 'grid-cols-[28px_36px_minmax(0,1.5fr)_minmax(0,1.7fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_110px]';
 
 
   
