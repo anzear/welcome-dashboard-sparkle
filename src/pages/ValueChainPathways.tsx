@@ -1392,9 +1392,10 @@ const ValueChainPathways = () => {
                                       type="button"
                                       onClick={() => openGroupEditor(g)}
                                       title={`Edit ${g.name}`}
-                                      className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+                                      className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                                     >
                                       <Pencil className="w-3.5 h-3.5" />
+                                      Edit
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className="text-[10px]">Edit name and description</TooltipContent>
@@ -1407,7 +1408,7 @@ const ValueChainPathways = () => {
                                       type="button"
                                       onClick={() => setGroupToDelete(g)}
                                       title={`Delete ${g.name}`}
-                                      className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
+                                      className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
                                     </button>
@@ -1417,9 +1418,31 @@ const ValueChainPathways = () => {
                               )}
                             </div>
 
-                            {g.description && !collapsed && (
-                              <div className="px-4 pb-2 pt-1 text-xs text-muted-foreground">{g.description}</div>
-                            )}
+                            {!collapsed && (g.description ? (
+                              <div className="flex items-start gap-2 px-4 pb-2 pt-1">
+                                <span className="text-xs text-muted-foreground">{g.description}</span>
+                                {!system && (
+                                  <button
+                                    type="button"
+                                    onClick={() => openGroupEditor(g)}
+                                    className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground shrink-0"
+                                  >
+                                    Edit
+                                  </button>
+                                )}
+                              </div>
+                            ) : !system ? (
+                              <div className="px-4 pb-2 pt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => openGroupEditor(g)}
+                                  className="text-[10px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                                >
+                                  + Add description
+                                </button>
+                              </div>
+                            ) : null)}
+
 
                             {collapsed ? null : ids.length === 0 ? (
                               <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
