@@ -1383,13 +1383,8 @@ const ValueChainPathways = () => {
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
                               </span>
-                              {system && (g.source || g.version) && (
-                                <span className="text-[10px] text-muted-foreground truncate">
-                                  {[g.source, g.version].filter(Boolean).join(' · ')}
-                                </span>
-                              )}
                               <span className="flex-1" />
-                              {!system && (
+                              {(
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button
@@ -1402,7 +1397,7 @@ const ValueChainPathways = () => {
                                       Edit
                                     </button>
                                   </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-[10px]">Edit name and description</TooltipContent>
+                                  <TooltipContent side="top" className="text-[10px]">{system ? 'Edit tag and description' : 'Edit name, tag and description'}</TooltipContent>
                                 </Tooltip>
                               )}
                               {!system && (
@@ -1425,7 +1420,7 @@ const ValueChainPathways = () => {
                             {!collapsed && (g.description ? (
                               <div className="flex items-start gap-2 px-4 pb-2 pt-1">
                                 <span className="text-xs text-muted-foreground">{g.description}</span>
-                                {!system && (
+                                {true && (
                                   <button
                                     type="button"
                                     onClick={() => openGroupEditor(g)}
@@ -1435,7 +1430,7 @@ const ValueChainPathways = () => {
                                   </button>
                                 )}
                               </div>
-                            ) : !system ? (
+                            ) : (
                               <div className="px-4 pb-2 pt-1">
                                 <button
                                   type="button"
@@ -1445,7 +1440,7 @@ const ValueChainPathways = () => {
                                   + Add description
                                 </button>
                               </div>
-                            ) : null)}
+                            ))}
 
 
                             {collapsed ? null : ids.length === 0 ? (

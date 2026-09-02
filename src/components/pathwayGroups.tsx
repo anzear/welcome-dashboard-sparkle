@@ -112,6 +112,17 @@ let systemOverrides: Record<string, { shortLabel?: string; description?: string 
     });
 })();
 
+/** Overrides only replace fields the user actually set. */
+const applyOverride = (g: PathwayGroup): PathwayGroup => {
+  const ov = systemOverrides[g.id];
+  if (!ov) return g;
+  return {
+    ...g,
+    ...(ov.shortLabel ? { shortLabel: ov.shortLabel } : {}),
+    ...(ov.description !== undefined ? { description: ov.description } : {}),
+  };
+};
+
 const listeners = new Set<() => void>();
 const emit = () => {
   // Only user groups are persisted. System groups always come from seed data.
@@ -144,7 +155,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     return members.filter((m) => m.group_id === groupId).map((m) => m.pathway_id);
   }, []);
 
-  const systemWithOverrides = SYSTEM_GROUPS.map((g) => ({ ...g, ...(systemOverrides[g.id] ?? {}) }));
+  const systemWithOverrides = SYSTEM_GROUPS.map((g) => applyOverride(g));
   const allGroups: PathwayGroup[] = [...systemWithOverrides, ...userGroups];
   const groups = allGroups.filter((g) => !hidden.includes(g.id));
 
@@ -152,7 +163,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     const out: PathwayGroup[] = [];
     SYSTEM_GROUPS.forEach((g) => {
       if (hidden.includes(g.id)) return;
-      if ((resolveRef.current?.(g.id) ?? []).includes(pathwayId)) out.push({ ...g, ...(systemOverrides[g.id] ?? {}) });
+      if ((resolveRef.current?.(g.id) ?? []).includes(pathwayId)) out.push(applyOverride(g));
     });
     const ids = new Set(members.filter((m) => m.pathway_id === pathwayId).map((m) => m.group_id));
     userGroups.forEach((g) => { if (ids.has(g.id) && !hidden.includes(g.id)) out.push(g); });
