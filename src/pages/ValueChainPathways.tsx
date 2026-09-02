@@ -1834,7 +1834,125 @@ const ValueChainPathways = () => {
 
 
 
+                // Collapsed applications: pathways sharing feedstock + process + material
+                // become a single row; their applications sit behind a chevron.
+                if (appCollapsed) {
+                  type Row = typeof pagedPathways[number];
+                  const clusters = new Map<string, Row[]>();
+                  pagedPathways.forEach((row) => {
+                    const k = `${row.pathway.feedstock}|${row.pathway.technology}|${row.pathway.product}`;
+                    if (!clusters.has(k)) clusters.set(k, []);
+                    clusters.get(k)!.push(row);
+                  });
+
+                  return Array.from(clusters.entries()).map(([key, rows]) => {
+                    const open = expandedAppRows.has(key);
+                    const head = rows[0];
+                    const best = rows.reduce((a, b) => (getTRLNumber(b.pathway.trl) > getTRLNumber(a.pathway.trl) ? b : a));
+                    const viability = getViability(best.pathway.trl);
+                    const colors = getViabilityColor(viability);
+                    const bandLabel = BAND_LABEL[viability as keyof typeof BAND_LABEL] ?? viability;
+                    const ids = rows.map((r) => r.originalIndex);
+
+                    return (
+                      <div key={key}>
+                        <div
+                          className="group cursor-pointer hover:bg-muted/30 transition-colors"
+                          onClick={() => toggleAppRow(key)}
+                        >
+                          <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
+                            <div className="flex items-center justify-center text-muted-foreground">
+                              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? '' : '-rotate-90'}`} />
+                            </div>
+                            <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                              <Checkbox
+                                className="h-3 w-3"
+                                aria-label="Select pathways in this row"
+                                checked={ids.every((id) => selectedPathwayIds.has(id))}
+                                onCheckedChange={(v) => toggleSelection(ids, v === true)}
+                              />
+                            </div>
+                            <div className="flex justify-center">
+                              <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground">
+                                {rankOf.get(head.originalIndex) ?? ''}
+                              </span>
+                            </div>
+                            <div className={chipCls('border-border bg-background text-foreground')}>{head.pathway.feedstock}</div>
+                            <div className={chipCls('border-border bg-background text-foreground')}>{head.pathway.technology}</div>
+                            <div className={chipCls('border-emerald-300 bg-emerald-50 text-emerald-800')}>{head.pathway.product}</div>
+                            <div className="text-[10px] font-medium text-muted-foreground truncate border border-dashed border-border rounded-md px-2 py-2 text-center">
+                              {rows.length} application{rows.length === 1 ? '' : 's'}
+                            </div>
+                            <div className="flex justify-center">
+                              <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                                <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                                <span className="text-[8px] opacity-80">{best.pathway.trl}</span>
+                              </span>
+                            </div>
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <GroupChips
+                                groups={groupsOf(head.originalIndex)}
+                                onRemove={(gid) => removeFromGroupWithUndo(gid, [head.originalIndex])}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {open && rows.map(({ pathway, originalIndex }) => {
+                          const childColors = getViabilityColor(getViability(pathway.trl));
+                          return (
+                            <div
+                              key={originalIndex}
+                              className="group cursor-pointer bg-muted/20 hover:bg-muted/40 transition-colors border-t border-border/40"
+                              onClick={() => handleCardClick(originalIndex)}
+                            >
+                              <div className={`${rowPad} grid ${TABLE_COLS} items-center gap-2`}>
+                                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); toggleSavePathway(originalIndex); }}
+                                    className="flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                                    title={savedPathways.has(originalIndex) ? 'Remove from shortlist' : 'Add to shortlist'}
+                                  >
+                                    <Bookmark className={`w-3.5 h-3.5 ${savedPathways.has(originalIndex) ? 'fill-foreground text-foreground' : ''}`} />
+                                  </button>
+                                </div>
+                                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                                  <Checkbox
+                                    className="h-3 w-3"
+                                    aria-label="Select pathway"
+                                    checked={selectedPathwayIds.has(originalIndex)}
+                                    onCheckedChange={(v) => toggleSelection([originalIndex], v === true)}
+                                  />
+                                </div>
+                                <div className="flex justify-center">
+                                  <span className="text-[10px] tabular-nums text-muted-foreground/70">{rankOf.get(originalIndex) ?? ''}</span>
+                                </div>
+                                <span />
+                                <span />
+                                <span />
+                                <div className={chipCls('border-border bg-background text-foreground')}>{pathway.application}</div>
+                                <div className="flex justify-center">
+                                  <span className={`inline-flex items-center rounded-md border px-2 py-1 text-[9px] font-bold ${childColors.border} ${childColors.text}`}>
+                                    {pathway.trl}
+                                  </span>
+                                </div>
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <GroupChips
+                                    groups={groupsOf(originalIndex)}
+                                    onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  });
+                }
+
                 return pagedPathways.map(renderRow);
+
               })()}
             {filteredPathways.length === 0 && (
               <div className="text-center py-12 text-muted-foreground">
