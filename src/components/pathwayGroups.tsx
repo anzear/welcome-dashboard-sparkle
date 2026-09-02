@@ -120,8 +120,9 @@ export function usePathwayGroups() {
     groups = [...groups, group];
     members = [
       ...members,
-      ...pathwayIds.map((pid) => ({ group_id: group.id, pathway_id: pid })),
+      ...[...new Set(pathwayIds)].map((pid) => ({ group_id: group.id, pathway_id: pid })),
     ];
+
     emit();
   }, []);
 
