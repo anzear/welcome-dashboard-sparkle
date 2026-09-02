@@ -1289,18 +1289,24 @@ const ValueChainPathways = () => {
 
 
                         <div className="flex justify-center">
-                          <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
-                            <span className="text-[8px] opacity-80">{pathway.trl}</span>
-                          </span>
+                          {viability ? (
+                            <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                              <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                              <span className="text-[8px] opacity-80">{pathway.trl}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
                         </div>
 
                         <div onClick={(e) => e.stopPropagation()}>
                           <GroupChips
                             groups={groupsOf(originalIndex)}
                             onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                            tooltips={groupTooltips(pathway.feedstock)}
                           />
                         </div>
+
                       </div>
 
 
