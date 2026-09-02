@@ -522,16 +522,17 @@ const ValueChainPathways = () => {
   const scopedTaggedPathways = scopedPathways;
 
 
-  // Band counts (respect opportunity scope and the tag filter)
+  // Band counts. Rows with no TRL sit outside all three bands.
   const viabilityCounts = useMemo(() => {
     const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
 
     scopedTaggedPathways.forEach(p => {
       const v = getViability(p.trl);
-      counts[v as keyof typeof counts]++;
+      if (v) counts[v as keyof typeof counts]++;
     });
     return counts;
   }, [scopedTaggedPathways]);
+
 
 
   // Filtered pathways
