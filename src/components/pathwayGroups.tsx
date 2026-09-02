@@ -34,16 +34,31 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 
 let groups: PathwayGroup[] = read<PathwayGroup[]>(GROUPS_KEY, []);
-let members: PathwayGroupMember[] = (() => {
-  // Drop any legacy duplicate memberships persisted before dedupe existed.
-  const seen = new Set<string>();
-  return read<PathwayGroupMember[]>(MEMBERS_KEY, []).filter((m) => {
-    const key = `${m.group_id}::${m.pathway_id}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
+let members: PathwayGroupMember[] = read<PathwayGroupMember[]>(MEMBERS_KEY, []);
+
+// Migration: merge legacy groups that share a name, then drop duplicate memberships.
+(() => {
+  const canonical = new Map<string, PathwayGroup>();
+  const remap = new Map<string, string>();
+  groups.forEach((g) => {
+    const key = g.name.trim().toLowerCase();
+    const first = canonical.get(key);
+    if (first) remap.set(g.id, first.id);
+    else canonical.set(key, g);
   });
+  groups = [...canonical.values()];
+  const seen = new Set<string>();
+  members = members
+    .map((m) => ({ ...m, group_id: remap.get(m.group_id) ?? m.group_id }))
+    .filter((m) => {
+      if (!groups.some((g) => g.id === m.group_id)) return false;
+      const key = `${m.group_id}::${m.pathway_id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 })();
+
 
 
 const listeners = new Set<() => void>();
