@@ -1295,7 +1295,7 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                         const ids = memberIds(g.id);
                         return (
                           <div key={g.id}>
-<div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
+                            <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
