@@ -2831,25 +2831,42 @@ const ValueChainPathways = () => {
           <DialogHeader>
             <DialogTitle className="text-sm">Edit group</DialogTitle>
             <DialogDescription className="text-xs">
-              Name and description are shown wherever this group appears.
+              Name, tag and description are shown wherever this group appears.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Input
-              autoFocus
-              value={editGroupName}
-              onChange={(e) => setEditGroupName(e.target.value)}
-              placeholder="Group name"
-              className="text-xs"
-              maxLength={60}
-            />
-            <Textarea
-              value={editGroupDescription}
-              onChange={(e) => setEditGroupDescription(e.target.value)}
-              placeholder="Description (optional) — what this group is for"
-              className="text-xs min-h-[64px]"
-              maxLength={400}
-            />
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
+              <Input
+                autoFocus
+                value={editGroupName}
+                onChange={(e) => setEditGroupName(e.target.value)}
+                placeholder="e.g. Annex IX Part A"
+                className="text-xs"
+                maxLength={60}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tag</label>
+              <Input
+                value={editGroupTag}
+                onChange={(e) => setEditGroupTag(e.target.value)}
+                placeholder="Short chip label, e.g. 9A"
+                className="text-xs"
+                maxLength={8}
+              />
+              <p className="text-[10px] text-muted-foreground">Shown as the chip in the pathway list. Leave empty to use the group name.</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Description</label>
+              <Textarea
+                value={editGroupDescription}
+                onChange={(e) => setEditGroupDescription(e.target.value)}
+                placeholder="What this group is for"
+                className="text-xs min-h-[64px]"
+                maxLength={400}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setGroupToEdit(null)}>Cancel</Button>
@@ -2858,7 +2875,8 @@ const ValueChainPathways = () => {
               disabled={editGroupName.trim() === ''}
               onClick={() => {
                 if (!groupToEdit) return;
-                updateGroup(groupToEdit.id, { name: editGroupName, description: editGroupDescription });
+                updateGroup(groupToEdit.id, { name: editGroupName, description: editGroupDescription, shortLabel: editGroupTag });
+
                 setGroupToEdit(null);
                 toast({ title: 'Group updated', description: `"${editGroupName.trim()}" saved.` });
               }}
