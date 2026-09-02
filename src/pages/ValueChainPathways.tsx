@@ -506,6 +506,9 @@ const ValueChainPathways = () => {
   
   // Combine predefined and custom pathways
   const allPathways = [...PREDEFINED_PATHWAYS, ...customPathways.map(p => ({...p, isCustom: true}))];
+  // Keep the system-group resolver looking at the live row set.
+  allPathwaysRef.current = allPathways;
+
 
   // Apply opportunity map pre-filter from URL params (acts as the new "scope" for counts/tabs)
   const scopedPathways = useMemo(() => {
