@@ -1263,7 +1263,44 @@ const ValueChainPathways = () => {
                   );
                 };
 
+                if (layout === 'groups') {
+                  if (pathwayGroups.length === 0) {
+                    return (
+                      <div className="px-4 py-10 text-center text-xs text-muted-foreground">
+                        No groups yet. Select pathways in Full view and use “New Group”.
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="divide-y divide-border">
+                      {pathwayGroups.map((g) => {
+                        const ids = memberIds(g.id);
+                        return (
+                          <div key={g.id}>
+                            <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
+                              <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
+                              <span className="text-[10px] tabular-nums text-muted-foreground">
+                                {ids.length} pathway{ids.length === 1 ? '' : 's'}
+                              </span>
+                            </div>
+                            {ids.length === 0 ? (
+                              <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
+                            ) : (
+                              ids.map((originalIndex) => {
+                                const pathway = allPathways[originalIndex];
+                                if (!pathway) return null;
+                                return <div key={`${g.id}-${originalIndex}`}>{renderRow({ pathway, originalIndex })}</div>;
+                              })
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
                 if (viewMode === 'compressed') {
+
                   // Group by the selected dimension — only pathways producing Lactic Acid (this analysis).
                   type Row = typeof filteredPathways[number];
                   const groups = new Map<string, Row[]>();
