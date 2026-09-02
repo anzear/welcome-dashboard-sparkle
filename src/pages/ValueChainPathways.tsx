@@ -289,6 +289,24 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
         <ToastAction altText="Undo" onClick={() => addToGroup(groupId, pathwayIds)}>Undo</ToastAction>
       ),
     });
+};
+
+  // Group deletion — confirm first, offer undo after.
+  const [groupToDelete, setGroupToDelete] = useState<PathwayGroup | null>(null);
+  const confirmDeleteGroup = () => {
+    if (!groupToDelete) return;
+    const g = groupToDelete;
+    const ids = memberIds(g.id);
+    deleteGroup(g.id);
+    setGroupFilter((prev) => prev.filter((id) => id !== g.id));
+    setGroupToDelete(null);
+    toast({
+      title: `Deleted ${g.name}`,
+      description: ids.length === 0 ? 'Group removed.' : `${ids.length} pathway${ids.length === 1 ? '' : 's'} removed from it.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => restoreGroup(g, ids)}>Undo</ToastAction>
+      ),
+    });
   };
 
 
