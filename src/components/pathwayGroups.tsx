@@ -402,11 +402,9 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
     <div className="flex items-center gap-1 flex-wrap">
       {unique.map((it) => {
         const all = it.count === it.total;
-        const base = it.system
-          ? 'bg-background text-foreground/80 border border-dashed border-foreground/40 uppercase tracking-wide'
-          : all
-            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
-            : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
+        const base = all
+          ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+          : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
         return (
           <span
             key={it.id}
