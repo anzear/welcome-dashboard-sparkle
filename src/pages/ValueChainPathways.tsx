@@ -2826,7 +2826,9 @@ const ValueChainPathways = () => {
           <DialogHeader>
             <DialogTitle className="text-sm">Edit group</DialogTitle>
             <DialogDescription className="text-xs">
-              Name, tag and description are shown wherever this group appears.
+              {groupToEdit && isSystemGroup(groupToEdit)
+                ? 'This group is system-owned — its name and membership are fixed. Tag and description are yours to edit.'
+                : 'Name, tag and description are shown wherever this group appears.'}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
@@ -2839,6 +2841,7 @@ const ValueChainPathways = () => {
                 placeholder="e.g. Annex IX Part A"
                 className="text-xs"
                 maxLength={60}
+                disabled={!!groupToEdit && isSystemGroup(groupToEdit)}
               />
             </div>
             <div className="space-y-1">
