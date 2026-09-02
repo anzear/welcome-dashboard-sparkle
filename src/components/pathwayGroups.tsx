@@ -180,7 +180,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
    * group instead of creating a second one, and pathways are never duplicated.
    * System group names are reserved.
    */
-  const createGroup = useCallback((name: string, pathwayIds: number[], description?: string) => {
+  const createGroup = useCallback((name: string, pathwayIds: number[], description?: string, shortLabel?: string) => {
     const clean = name.trim();
     const unique = [...new Set(pathwayIds)];
     const reserved = SYSTEM_NAMES.has(clean.toLowerCase());
@@ -190,13 +190,22 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
       id: newId(),
       name: finalName,
       description: description?.trim() || undefined,
+      shortLabel: shortLabel?.trim() || undefined,
       type: 'user',
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
     if (!existing) userGroups = [...userGroups, group];
-    else if (description?.trim()) {
-      userGroups = userGroups.map((g) => (g.id === group.id ? { ...g, description: description.trim() } : g));
+    else if (description?.trim() || shortLabel?.trim()) {
+      userGroups = userGroups.map((g) =>
+        g.id === group.id
+          ? {
+              ...g,
+              description: description?.trim() || g.description,
+              shortLabel: shortLabel?.trim() || g.shortLabel,
+            }
+          : g,
+      );
     }
     const fresh = unique.filter(
       (pid) => !members.some((m) => m.group_id === group.id && m.pathway_id === pid),
@@ -209,22 +218,29 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     };
   }, []);
 
-  /** Renames a user group and/or edits its description. System groups are read-only. */
-  const updateGroup = useCallback((groupId: string, patch: { name?: string; description?: string }) => {
-    if (SYSTEM_IDS.has(groupId)) return;
-    const nextName = patch.name?.trim();
-    if (nextName && SYSTEM_NAMES.has(nextName.toLowerCase())) return;
-    userGroups = userGroups.map((g) =>
-      g.id === groupId
-        ? {
-            ...g,
-            name: nextName || g.name,
-            description: patch.description === undefined ? g.description : patch.description.trim() || undefined,
-          }
-        : g,
-    );
-    emit();
-  }, []);
+  /** Renames a user group and/or edits its tag and description. System groups are read-only. */
+  const updateGroup = useCallback(
+    (groupId: string, patch: { name?: string; description?: string; shortLabel?: string }) => {
+      if (SYSTEM_IDS.has(groupId)) return;
+      const nextName = patch.name?.trim();
+      if (nextName && SYSTEM_NAMES.has(nextName.toLowerCase())) return;
+      const nextLabel = patch.shortLabel?.trim();
+      if (nextLabel && SYSTEM_NAMES.has(nextLabel.toLowerCase())) return;
+      userGroups = userGroups.map((g) =>
+        g.id === groupId
+          ? {
+              ...g,
+              name: nextName || g.name,
+              description: patch.description === undefined ? g.description : patch.description.trim() || undefined,
+              shortLabel: patch.shortLabel === undefined ? g.shortLabel : nextLabel || undefined,
+            }
+          : g,
+      );
+      emit();
+    },
+    [],
+  );
+
 
   /** Deletes a user group and all of its memberships. System groups cannot be deleted. */
   const deleteGroup = useCallback((groupId: string) => {
