@@ -1002,11 +1002,12 @@ const ValueChainPathways = () => {
                 {/* View controls */}
                 <button
                   onClick={toggleAllGroups}
-                  className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-border bg-background text-[10px] font-medium text-foreground hover:bg-muted/60 transition-colors"
                 >
-                  <ChevronDown className={`w-3 h-3 transition-transform ${allGroupsExpanded ? '' : '-rotate-90'}`} />
-                  {allGroupsExpanded ? 'Collapse Applications' : 'Expand Applications'}
+                  <ListTree className="w-3 h-3 text-muted-foreground" />
+                  Collapse/Expand Applications
                 </button>
+
                 {([
                   { key: 'tree', label: 'Tree', Icon: ListTree },
                   { key: 'groups', label: 'Groups', Icon: AlignJustify },
