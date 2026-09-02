@@ -291,6 +291,7 @@ const ValueChainPathways = () => {
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [newGroupTag, setNewGroupTag] = useState('');
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
   const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
     const next = new Set(prev);
@@ -300,11 +301,14 @@ const ValueChainPathways = () => {
   const [groupToEdit, setGroupToEdit] = useState<PathwayGroup | null>(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupDescription, setEditGroupDescription] = useState('');
+  const [editGroupTag, setEditGroupTag] = useState('');
   const openGroupEditor = (g: PathwayGroup) => {
     setGroupToEdit(g);
     setEditGroupName(g.name);
     setEditGroupDescription(g.description ?? '');
+    setEditGroupTag(g.shortLabel ?? '');
   };
+
   const clearSelection = () => setSelectedPathwayIds(new Set());
   const toggleSelection = (ids: number[], on: boolean) =>
     setSelectedPathwayIds((prev) => {
@@ -2701,7 +2705,7 @@ const ValueChainPathways = () => {
           </span>
           <span className="h-4 w-px bg-border" />
           <button
-            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupOpen(true); }}
+            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupTag(''); setNewGroupOpen(true); }}
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <PlusSquare className="w-3 h-3" />
@@ -2756,21 +2760,38 @@ const ValueChainPathways = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Input
-              autoFocus
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Group name"
-              className="text-xs"
-              maxLength={60}
-            />
-            <Textarea
-              value={newGroupDescription}
-              onChange={(e) => setNewGroupDescription(e.target.value)}
-              placeholder="Description (optional) — what this group is for"
-              className="text-xs min-h-[64px]"
-              maxLength={400}
-            />
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
+              <Input
+                autoFocus
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="e.g. Annex IX Part A"
+                className="text-xs"
+                maxLength={60}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tag (optional)</label>
+              <Input
+                value={newGroupTag}
+                onChange={(e) => setNewGroupTag(e.target.value)}
+                placeholder="Short chip label, e.g. 9A"
+                className="text-xs"
+                maxLength={8}
+              />
+              <p className="text-[10px] text-muted-foreground">Shown as the chip in the pathway list. Defaults to the group name.</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Description (optional)</label>
+              <Textarea
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                placeholder="What this group is for"
+                className="text-xs min-h-[64px]"
+                maxLength={400}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
@@ -2779,10 +2800,12 @@ const ValueChainPathways = () => {
               disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
               onClick={() => {
                 const ids = [...selectedPathwayIds];
-                const group = createGroup(newGroupName, ids, newGroupDescription);
+                const group = createGroup(newGroupName, ids, newGroupDescription, newGroupTag);
                 setNewGroupOpen(false);
                 setNewGroupDescription('');
+                setNewGroupTag('');
                 clearSelection();
+
                 const skipped = ids.length - group.added;
                 toast({
                   title: group.existed ? `Added to "${group.name}"` : `Group "${group.name}" created`,
@@ -2808,25 +2831,42 @@ const ValueChainPathways = () => {
           <DialogHeader>
             <DialogTitle className="text-sm">Edit group</DialogTitle>
             <DialogDescription className="text-xs">
-              Name and description are shown wherever this group appears.
+              Name, tag and description are shown wherever this group appears.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Input
-              autoFocus
-              value={editGroupName}
-              onChange={(e) => setEditGroupName(e.target.value)}
-              placeholder="Group name"
-              className="text-xs"
-              maxLength={60}
-            />
-            <Textarea
-              value={editGroupDescription}
-              onChange={(e) => setEditGroupDescription(e.target.value)}
-              placeholder="Description (optional) — what this group is for"
-              className="text-xs min-h-[64px]"
-              maxLength={400}
-            />
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
+              <Input
+                autoFocus
+                value={editGroupName}
+                onChange={(e) => setEditGroupName(e.target.value)}
+                placeholder="e.g. Annex IX Part A"
+                className="text-xs"
+                maxLength={60}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tag</label>
+              <Input
+                value={editGroupTag}
+                onChange={(e) => setEditGroupTag(e.target.value)}
+                placeholder="Short chip label, e.g. 9A"
+                className="text-xs"
+                maxLength={8}
+              />
+              <p className="text-[10px] text-muted-foreground">Shown as the chip in the pathway list. Leave empty to use the group name.</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Description</label>
+              <Textarea
+                value={editGroupDescription}
+                onChange={(e) => setEditGroupDescription(e.target.value)}
+                placeholder="What this group is for"
+                className="text-xs min-h-[64px]"
+                maxLength={400}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setGroupToEdit(null)}>Cancel</Button>
@@ -2835,7 +2875,8 @@ const ValueChainPathways = () => {
               disabled={editGroupName.trim() === ''}
               onClick={() => {
                 if (!groupToEdit) return;
-                updateGroup(groupToEdit.id, { name: editGroupName, description: editGroupDescription });
+                updateGroup(groupToEdit.id, { name: editGroupName, description: editGroupDescription, shortLabel: editGroupTag });
+
                 setGroupToEdit(null);
                 toast({ title: 'Group updated', description: `"${editGroupName.trim()}" saved.` });
               }}
