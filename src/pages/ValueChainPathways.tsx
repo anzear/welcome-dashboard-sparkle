@@ -652,7 +652,11 @@ const ValueChainPathways = () => {
       if (aDisliked && !bDisliked) return 1;
       if (!aDisliked && bDisliked) return -1;
 
-      if (sortBy === 'trl') return getTRLNumber(b.pathway.trl) - getTRLNumber(a.pathway.trl);
+      if (sortBy === 'trl') {
+        const n = (t: string) => (hasTRL(t) ? getTRLNumber(t) : -1);
+        return n(b.pathway.trl) - n(a.pathway.trl);
+      }
+
       const key = sortBy as 'feedstock' | 'technology' | 'product' | 'application';
       return String(a.pathway[key] ?? '').localeCompare(String(b.pathway[key] ?? ''));
 
