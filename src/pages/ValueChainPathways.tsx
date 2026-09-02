@@ -193,6 +193,16 @@ const ValueChainPathways = () => {
     }
   };
   const [compressedGroupBy, setCompressedGroupBy] = useState<'feedstock' | 'technology' | 'application'>('feedstock');
+  // Full table: collapse pathways that share feedstock + process + material into one row,
+  // with their applications behind a per-row chevron.
+  const [appCollapsed, setAppCollapsed] = useState(false);
+  const [expandedAppRows, setExpandedAppRows] = useState<Set<string>>(new Set());
+  const toggleAppRow = (k: string) => setExpandedAppRows((prev) => {
+    const next = new Set(prev);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    return next;
+  });
+
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const toggleGroup = (k: string) => setExpandedGroups(prev => {
     const next = new Set(prev);
