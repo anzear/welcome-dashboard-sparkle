@@ -1011,11 +1011,17 @@ const ValueChainPathways = () => {
 
                 {/* View controls */}
                 <button
-                  onClick={toggleAllGroups}
+                  onClick={() => {
+                    if (layout === 'full') { setAppCollapsed((v) => !v); setExpandedAppRows(new Set()); }
+                    else toggleAllGroups();
+                  }}
                   className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  <ChevronDown className={`w-3 h-3 transition-transform ${allGroupsExpanded ? '' : '-rotate-90'}`} />
-                  {allGroupsExpanded ? 'Collapse Applications' : 'Expand Applications'}
+                  <ChevronDown className={`w-3 h-3 transition-transform ${(layout === 'full' ? !appCollapsed : allGroupsExpanded) ? '' : '-rotate-90'}`} />
+                  {layout === 'full'
+                    ? (appCollapsed ? 'Expand Applications' : 'Collapse Applications')
+                    : (allGroupsExpanded ? 'Collapse Applications' : 'Expand Applications')}
+
                 </button>
                 {([
                   { key: 'tree', label: 'Tree', Icon: ListTree },
