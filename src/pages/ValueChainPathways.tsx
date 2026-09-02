@@ -28,7 +28,10 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
+import { Lock } from 'lucide-react';
+
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
 interface CustomPathway {
