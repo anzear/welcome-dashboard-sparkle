@@ -434,10 +434,20 @@ const ValueChainPathways = () => {
       .map((g) => {
         const ids = new Set(memberIds(g.id));
         const count = pathwayIds.filter((pid) => ids.has(pid)).length;
-        return { id: g.id, name: g.name, count, total };
+        return { id: g.id, name: g.name, label: g.shortLabel ?? g.name, system: isSystemGroup(g), count, total };
       })
       .filter((c) => c.count > 0);
   };
+
+  /** Annex IX chip tooltip for a row — feedstock eligibility only. */
+  const groupTooltips = (feedstock: string): Record<string, string> => {
+    const info = annexIxInfo(feedstock);
+    if (!info.annexIxPartA || !info.annexIxPoint) return {};
+    return {
+      [ANNEX_IX_A_GROUP_ID]: `Feedstock listed in RED II Annex IX Part A, point (${info.annexIxPoint}). Feedstock eligibility only. Does not imply the pathway is compliant.`,
+    };
+  };
+
 
 
   
