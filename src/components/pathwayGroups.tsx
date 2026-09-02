@@ -80,21 +80,32 @@ export function usePathwayGroups() {
     emit();
   }, []);
 
+  /**
+   * Creates a group. A name that already exists (case-insensitive) reuses that
+   * group instead of creating a second one, and pathways are never duplicated.
+   */
   const createGroup = useCallback((name: string, pathwayIds: number[]) => {
-    const group: PathwayGroup = {
+    const clean = name.trim();
+    const unique = [...new Set(pathwayIds)];
+    const existing = groups.find((g) => g.name.toLowerCase() === clean.toLowerCase());
+    const group: PathwayGroup = existing ?? {
       id: newId(),
-      name: name.trim(),
+      name: clean,
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
-    groups = [...groups, group];
-    members = [
-      ...members,
-      ...pathwayIds.map((pid) => ({ group_id: group.id, pathway_id: pid })),
-    ];
+    if (!existing) groups = [...groups, group];
+    const fresh = unique.filter(
+      (pid) => !members.some((m) => m.group_id === group.id && m.pathway_id === pid),
+    );
+    members = [...members, ...fresh.map((pid) => ({ group_id: group.id, pathway_id: pid }))];
     emit();
-    return group;
+    return { ...group, existed: !!existing, added: fresh.length } as PathwayGroup & {
+      existed: boolean;
+      added: number;
+    };
   }, []);
+
 
 /** Deletes a group and all of its memberships. */
   const deleteGroup = useCallback((groupId: string) => {
