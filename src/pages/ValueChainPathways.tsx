@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Pencil } from 'lucide-react';
 import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree, Trash2 } from "lucide-react";
 
 
@@ -28,7 +29,7 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
 import { Lock } from 'lucide-react';
 
@@ -281,7 +282,7 @@ const ValueChainPathways = () => {
     });
     return out;
   }, []);
-  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, updateGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
 
@@ -289,6 +290,21 @@ const ValueChainPathways = () => {
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
+  const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const [groupToEdit, setGroupToEdit] = useState<PathwayGroup | null>(null);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupDescription, setEditGroupDescription] = useState('');
+  const openGroupEditor = (g: PathwayGroup) => {
+    setGroupToEdit(g);
+    setEditGroupName(g.name);
+    setEditGroupDescription(g.description ?? '');
+  };
   const clearSelection = () => setSelectedPathwayIds(new Set());
   const toggleSelection = (ids: number[], on: boolean) =>
     setSelectedPathwayIds((prev) => {
