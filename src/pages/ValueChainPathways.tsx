@@ -15,7 +15,7 @@ import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, Ar
 
 
 
-type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
+type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application' | 'groups';
 import { PathwayUnifiedTree } from "@/components/PathwayUnifiedTree";
 
 
@@ -672,9 +672,24 @@ const ValueChainPathways = () => {
       if (aDisliked && !bDisliked) return 1;
       if (!aDisliked && bDisliked) return -1;
 
-      if (sortBy === 'trl') {
+if (sortBy === 'trl') {
         const n = (t: string) => (hasTRL(t) ? getTRLNumber(t) : -1);
         return n(b.pathway.trl) - n(a.pathway.trl);
+      }
+
+      // Groups: alphabetical by group label; pathways in no group sink to the bottom.
+      if (sortBy === 'groups') {
+        const groupKey = (idx: number) =>
+          groupsOf(idx)
+            .map((g) => groupChipLabel(g).toLowerCase())
+            .sort()
+            .join(' | ');
+        const aKey = groupKey(a.originalIndex);
+        const bKey = groupKey(b.originalIndex);
+        if (!aKey && !bKey) return 0;
+        if (!aKey) return 1;
+        if (!bKey) return -1;
+        return aKey.localeCompare(bKey);
       }
 
       const key = sortBy as 'feedstock' | 'technology' | 'product' | 'application';
@@ -1157,11 +1172,12 @@ const ValueChainPathways = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="trl" className="text-[10px]">TRL Level</SelectItem>
+<SelectItem value="trl" className="text-[10px]">TRL Level</SelectItem>
                     <SelectItem value="feedstock" className="text-[10px]">Feedstock</SelectItem>
                     <SelectItem value="technology" className="text-[10px]">Process</SelectItem>
                     <SelectItem value="product" className="text-[10px]">Material</SelectItem>
                     <SelectItem value="application" className="text-[10px]">Application</SelectItem>
+                    <SelectItem value="groups" className="text-[10px]">Groups</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -1216,8 +1232,16 @@ const ValueChainPathways = () => {
                 </button>
               ))}
               
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">Groups</span>
+<span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">TRL</span>
+              <button
+                onClick={() => setSortBy('groups')}
+                className={`text-[10px] font-semibold uppercase tracking-wider flex items-center justify-center gap-0.5 w-full transition-colors ${
+                  sortBy === 'groups' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                Groups
+                <ChevronDown className={`w-2.5 h-2.5 ${sortBy === 'groups' ? 'opacity-100' : 'opacity-40'}`} />
+              </button>
 
             </div>
 
@@ -2312,11 +2336,12 @@ const ValueChainPathways = () => {
                           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortKey)}>
                             <SelectTrigger className="h-6 w-[120px] text-[10px] bg-background border-border/60"><SelectValue /></SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="trl">TRL</SelectItem>
+<SelectItem value="trl">TRL</SelectItem>
                               <SelectItem value="feedstock">Feedstock</SelectItem>
                               <SelectItem value="technology">Process</SelectItem>
                               <SelectItem value="product">Material</SelectItem>
                               <SelectItem value="application">Application</SelectItem>
+                              <SelectItem value="groups">Groups</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
