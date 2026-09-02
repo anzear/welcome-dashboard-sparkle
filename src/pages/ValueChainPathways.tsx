@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Pencil } from 'lucide-react';
 import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree, Trash2 } from "lucide-react";
 
 
@@ -28,7 +29,7 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
 import { Lock } from 'lucide-react';
 
@@ -281,7 +282,7 @@ const ValueChainPathways = () => {
     });
     return out;
   }, []);
-  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, updateGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
 
@@ -289,6 +290,21 @@ const ValueChainPathways = () => {
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
+  const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const [groupToEdit, setGroupToEdit] = useState<PathwayGroup | null>(null);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupDescription, setEditGroupDescription] = useState('');
+  const openGroupEditor = (g: PathwayGroup) => {
+    setGroupToEdit(g);
+    setEditGroupName(g.name);
+    setEditGroupDescription(g.description ?? '');
+  };
   const clearSelection = () => setSelectedPathwayIds(new Set());
   const toggleSelection = (ids: number[], on: boolean) =>
     setSelectedPathwayIds((prev) => {
@@ -1340,11 +1356,26 @@ const ValueChainPathways = () => {
                       {pathwayGroups.map((g) => {
                         const ids = memberIds(g.id);
                         const system = isSystemGroup(g);
+                        const collapsed = collapsedGroupIds.has(g.id);
+                        const chip = groupChipLabel(g);
                         return (
                           <div key={g.id}>
                             <div className="group flex items-center gap-2 bg-muted/40 px-4 py-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleGroupCollapsed(g.id)}
+                                title={collapsed ? 'Expand group' : 'Collapse group'}
+                                className="rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground shrink-0"
+                              >
+                                {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                              </button>
                               {system && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
+                              {chip !== g.name && (
+                                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${system ? 'border border-dashed border-foreground/40 bg-background text-foreground/80 uppercase tracking-wide' : 'bg-muted text-foreground/70'}`}>
+                                  {chip}
+                                </span>
+                              )}
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
                               </span>
@@ -1354,6 +1385,21 @@ const ValueChainPathways = () => {
                                 </span>
                               )}
                               <span className="flex-1" />
+                              {!system && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => openGroupEditor(g)}
+                                      title={`Edit ${g.name}`}
+                                      className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100 focus:opacity-100"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-[10px]">Edit name and description</TooltipContent>
+                                </Tooltip>
+                              )}
                               {!system && (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
@@ -1371,7 +1417,11 @@ const ValueChainPathways = () => {
                               )}
                             </div>
 
-                            {ids.length === 0 ? (
+                            {g.description && !collapsed && (
+                              <div className="px-4 pb-2 pt-1 text-xs text-muted-foreground">{g.description}</div>
+                            )}
+
+                            {collapsed ? null : ids.length === 0 ? (
                               <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
                             ) : (
                               ids.map((originalIndex) => {
@@ -2628,7 +2678,7 @@ const ValueChainPathways = () => {
           </span>
           <span className="h-4 w-px bg-border" />
           <button
-            onClick={() => { setNewGroupName(''); setNewGroupOpen(true); }}
+            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupOpen(true); }}
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <PlusSquare className="w-3 h-3" />
@@ -2682,14 +2732,23 @@ const ValueChainPathways = () => {
               {selectedPathwayIds.size} selected pathway{selectedPathwayIds.size === 1 ? '' : 's'} will be added to this group.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            autoFocus
-            value={newGroupName}
-            onChange={(e) => setNewGroupName(e.target.value)}
-            placeholder="Group name"
-            className="text-xs"
-            maxLength={60}
-          />
+          <div className="space-y-2">
+            <Input
+              autoFocus
+              value={newGroupName}
+              onChange={(e) => setNewGroupName(e.target.value)}
+              placeholder="Group name"
+              className="text-xs"
+              maxLength={60}
+            />
+            <Textarea
+              value={newGroupDescription}
+              onChange={(e) => setNewGroupDescription(e.target.value)}
+              placeholder="Description (optional) — what this group is for"
+              className="text-xs min-h-[64px]"
+              maxLength={400}
+            />
+          </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
             <Button
@@ -2697,8 +2756,9 @@ const ValueChainPathways = () => {
               disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
               onClick={() => {
                 const ids = [...selectedPathwayIds];
-                const group = createGroup(newGroupName, ids);
+                const group = createGroup(newGroupName, ids, newGroupDescription);
                 setNewGroupOpen(false);
+                setNewGroupDescription('');
                 clearSelection();
                 const skipped = ids.length - group.added;
                 toast({
@@ -2716,6 +2776,48 @@ const ValueChainPathways = () => {
 
             >
               Create group
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={groupToEdit !== null} onOpenChange={(open) => { if (!open) setGroupToEdit(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Edit group</DialogTitle>
+            <DialogDescription className="text-xs">
+              Name and description are shown wherever this group appears.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Input
+              autoFocus
+              value={editGroupName}
+              onChange={(e) => setEditGroupName(e.target.value)}
+              placeholder="Group name"
+              className="text-xs"
+              maxLength={60}
+            />
+            <Textarea
+              value={editGroupDescription}
+              onChange={(e) => setEditGroupDescription(e.target.value)}
+              placeholder="Description (optional) — what this group is for"
+              className="text-xs min-h-[64px]"
+              maxLength={400}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setGroupToEdit(null)}>Cancel</Button>
+            <Button
+              size="sm"
+              disabled={editGroupName.trim() === ''}
+              onClick={() => {
+                if (!groupToEdit) return;
+                updateGroup(groupToEdit.id, { name: editGroupName, description: editGroupDescription });
+                setGroupToEdit(null);
+                toast({ title: 'Group updated', description: `"${editGroupName.trim()}" saved.` });
+              }}
+            >
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>

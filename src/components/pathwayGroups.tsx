@@ -22,6 +22,8 @@ export interface PathwayGroup {
   type?: 'system' | 'user';
   /** Compact chip label, e.g. "9A". Falls back to the name. */
   shortLabel?: string;
+  /** Free-text description of what the group is for. */
+  description?: string;
   source?: string;
   version?: string;
   membershipRule?: string;
@@ -45,6 +47,8 @@ export const SYSTEM_GROUPS: PathwayGroup[] = [
     source: 'RED II Directive (EU) 2018/2001, Annex IX Part A',
     version: '2018 consolidated list, points (a) to (q)',
     membershipRule: 'feedstock.annexIxPartA === true',
+    description:
+      'Feedstocks listed in RED II Annex IX Part A. Feedstock eligibility only — it does not imply the pathway is compliant.',
     created_by: 'System',
     created_at: '2018-12-11T00:00:00.000Z',
   },
@@ -176,7 +180,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
    * group instead of creating a second one, and pathways are never duplicated.
    * System group names are reserved.
    */
-  const createGroup = useCallback((name: string, pathwayIds: number[]) => {
+  const createGroup = useCallback((name: string, pathwayIds: number[], description?: string) => {
     const clean = name.trim();
     const unique = [...new Set(pathwayIds)];
     const reserved = SYSTEM_NAMES.has(clean.toLowerCase());
@@ -185,11 +189,15 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     const group: PathwayGroup = existing ?? {
       id: newId(),
       name: finalName,
+      description: description?.trim() || undefined,
       type: 'user',
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
     if (!existing) userGroups = [...userGroups, group];
+    else if (description?.trim()) {
+      userGroups = userGroups.map((g) => (g.id === group.id ? { ...g, description: description.trim() } : g));
+    }
     const fresh = unique.filter(
       (pid) => !members.some((m) => m.group_id === group.id && m.pathway_id === pid),
     );
@@ -199,6 +207,23 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
       existed: boolean;
       added: number;
     };
+  }, []);
+
+  /** Renames a user group and/or edits its description. System groups are read-only. */
+  const updateGroup = useCallback((groupId: string, patch: { name?: string; description?: string }) => {
+    if (SYSTEM_IDS.has(groupId)) return;
+    const nextName = patch.name?.trim();
+    if (nextName && SYSTEM_NAMES.has(nextName.toLowerCase())) return;
+    userGroups = userGroups.map((g) =>
+      g.id === groupId
+        ? {
+            ...g,
+            name: nextName || g.name,
+            description: patch.description === undefined ? g.description : patch.description.trim() || undefined,
+          }
+        : g,
+    );
+    emit();
   }, []);
 
   /** Deletes a user group and all of its memberships. System groups cannot be deleted. */
@@ -235,6 +260,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     addToGroup,
     removeFromGroup,
     createGroup,
+    updateGroup,
     deleteGroup,
     restoreGroup,
     setGroupHidden,
@@ -246,7 +272,8 @@ const USER_CHIP = 'bg-muted text-foreground/70';
 /** System chips read differently from user chips without reading the label. */
 const SYSTEM_CHIP = 'bg-background text-foreground/80 border border-foreground/40 border-dashed uppercase tracking-wide';
 
-const chipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
+export const groupChipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
+const chipLabel = groupChipLabel;
 
 /** Per-pathway chips: de-duplicated, max 2, then a +N overflow chip. */
 export const GroupChips: React.FC<{
