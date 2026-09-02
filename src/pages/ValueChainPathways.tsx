@@ -28,7 +28,10 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
+import { Lock } from 'lucide-react';
+
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
 interface CustomPathway {
@@ -139,7 +142,10 @@ export const PREDEFINED_PATHWAYS: CustomPathway[] = [
   { feedstock: "Fructose", technology: "Continuous Fermentation (CSTR)", product: "Lactic Acid", application: "Green Solvents", trl: "TRL 7", patents: "12 Patents", category1: "Intermediates/precursors", category2: "Fermentation", category3: "Chemicals", category4: "Chemical Industry" },
   { feedstock: "Fructose", technology: "Engineered Yeast Fermentation", product: "D-Lactic Acid", application: "Stereocomplex PLA", trl: "TRL 5", patents: "8 Patents", category1: "Intermediates/precursors", category2: "Fermentation", category3: "Chemicals", category4: "Advanced Manufacturing" },
   { feedstock: "Fructose", technology: "Membrane Separation", product: "Purified Lactic Acid", application: "Pharmaceutical Excipient", trl: "TRL 8", patents: "18 Patents", category1: "Intermediates/precursors", category2: "Purification", category3: "Chemicals", category4: "Pharma & Healthcare" },
+  // Annex IX Part A qualifying feedstock routes (RED II).
+  ...ANNEX_IX_PATHWAYS,
 ];
+
 
 const ValueChainPathways = () => {
   const { category, topic } = useParams<{ category: string; topic: string }>();
@@ -264,10 +270,21 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
-  // ---- Custom pathway groups ----
-const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups();
+  // ---- Pathway groups (user groups + permanent system groups) ----
+  // System membership is derived from feedstock reference data at render time.
+  const allPathwaysRef = useRef<CustomPathway[]>(PREDEFINED_PATHWAYS);
+  const systemResolve = React.useCallback((groupId: string): number[] => {
+    if (groupId !== ANNEX_IX_A_GROUP_ID) return [];
+    const out: number[] = [];
+    allPathwaysRef.current.forEach((p, i) => {
+      if (annexIxInfo(p.feedstock).annexIxPartA) out.push(i);
+    });
+    return out;
+  }, []);
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
@@ -377,14 +394,19 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
   
   // Helper: get TRL number
   const getTRLNumber = (trl: string) => parseInt(trl.replace('TRL ', ''));
-  
-  // Helper: TRL band (three-band production definition)
+  /** A row with no TRL is unknown — never 0 and never a band. */
+  const hasTRL = (trl?: string) => !!trl && !Number.isNaN(getTRLNumber(trl));
+  const trlText = (trl?: string) => (hasTRL(trl) ? (trl as string) : '—');
+
+  // Helper: TRL band (three-band production definition). null when TRL is unknown.
   const getViability = (trl: string) => {
+    if (!hasTRL(trl)) return null;
     const n = getTRLNumber(trl);
     if (n >= 9) return 'Commercial';
     if (n >= 5) return 'Pilot';
     return 'Lab';
   };
+
 
 
   const getViabilityColor = (viability: string) => {
@@ -412,10 +434,20 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
       .map((g) => {
         const ids = new Set(memberIds(g.id));
         const count = pathwayIds.filter((pid) => ids.has(pid)).length;
-        return { id: g.id, name: g.name, count, total };
+        return { id: g.id, name: g.name, label: g.shortLabel ?? g.name, system: isSystemGroup(g), count, total };
       })
       .filter((c) => c.count > 0);
   };
+
+  /** Annex IX chip tooltip for a row — feedstock eligibility only. */
+  const groupTooltips = (feedstock: string): Record<string, string> => {
+    const info = annexIxInfo(feedstock);
+    if (!info.annexIxPartA || !info.annexIxPoint) return {};
+    return {
+      [ANNEX_IX_A_GROUP_ID]: `Feedstock listed in RED II Annex IX Part A, point (${info.annexIxPoint}). Feedstock eligibility only. Does not imply the pathway is compliant.`,
+    };
+  };
+
 
 
   
@@ -474,6 +506,9 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
   
   // Combine predefined and custom pathways
   const allPathways = [...PREDEFINED_PATHWAYS, ...customPathways.map(p => ({...p, isCustom: true}))];
+  // Keep the system-group resolver looking at the live row set.
+  allPathwaysRef.current = allPathways;
+
 
   // Apply opportunity map pre-filter from URL params (acts as the new "scope" for counts/tabs)
   const scopedPathways = useMemo(() => {
@@ -490,16 +525,17 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
   const scopedTaggedPathways = scopedPathways;
 
 
-  // Band counts (respect opportunity scope and the tag filter)
+  // Band counts. Rows with no TRL sit outside all three bands.
   const viabilityCounts = useMemo(() => {
     const counts = { Commercial: 0, Pilot: 0, Lab: 0 };
 
     scopedTaggedPathways.forEach(p => {
       const v = getViability(p.trl);
-      counts[v as keyof typeof counts]++;
+      if (v) counts[v as keyof typeof counts]++;
     });
     return counts;
   }, [scopedTaggedPathways]);
+
 
 
   // Filtered pathways
@@ -616,7 +652,11 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
       if (aDisliked && !bDisliked) return 1;
       if (!aDisliked && bDisliked) return -1;
 
-      if (sortBy === 'trl') return getTRLNumber(b.pathway.trl) - getTRLNumber(a.pathway.trl);
+      if (sortBy === 'trl') {
+        const n = (t: string) => (hasTRL(t) ? getTRLNumber(t) : -1);
+        return n(b.pathway.trl) - n(a.pathway.trl);
+      }
+
       const key = sortBy as 'feedstock' | 'technology' | 'product' | 'application';
       return String(a.pathway[key] ?? '').localeCompare(String(b.pathway[key] ?? ''));
 
@@ -1249,18 +1289,24 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
 
 
                         <div className="flex justify-center">
-                          <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
-                            <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
-                            <span className="text-[8px] opacity-80">{pathway.trl}</span>
-                          </span>
+                          {viability ? (
+                            <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                              <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                              <span className="text-[8px] opacity-80">{pathway.trl}</span>
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground">—</span>
+                          )}
                         </div>
 
                         <div onClick={(e) => e.stopPropagation()}>
                           <GroupChips
                             groups={groupsOf(originalIndex)}
                             onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                            tooltips={groupTooltips(pathway.feedstock)}
                           />
                         </div>
+
                       </div>
 
 
@@ -1293,28 +1339,38 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                     <div className="divide-y divide-border">
                       {pathwayGroups.map((g) => {
                         const ids = memberIds(g.id);
+                        const system = isSystemGroup(g);
                         return (
                           <div key={g.id}>
                             <div className="group flex items-center gap-2 bg-muted/40 px-4 py-2">
+                              {system && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
                               </span>
+                              {system && (g.source || g.version) && (
+                                <span className="text-[10px] text-muted-foreground truncate">
+                                  {[g.source, g.version].filter(Boolean).join(' · ')}
+                                </span>
+                              )}
                               <span className="flex-1" />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => setGroupToDelete(g)}
-                                    title={`Delete ${g.name}`}
-                                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-[10px]">Delete group</TooltipContent>
-                              </Tooltip>
+                              {!system && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => setGroupToDelete(g)}
+                                      title={`Delete ${g.name}`}
+                                      className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-[10px]">Delete group</TooltipContent>
+                                </Tooltip>
+                              )}
                             </div>
+
                             {ids.length === 0 ? (
                               <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
                             ) : (
@@ -1917,7 +1973,9 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                   return Array.from(clusters.entries()).map(([key, rows]) => {
                     const open = expandedAppRows.has(key);
                     const head = rows[0];
-                    const best = rows.reduce((a, b) => (getTRLNumber(b.pathway.trl) > getTRLNumber(a.pathway.trl) ? b : a));
+                    const trlNumOf = (t: string) => (hasTRL(t) ? getTRLNumber(t) : -1);
+                    const best = rows.reduce((a, b) => (trlNumOf(b.pathway.trl) > trlNumOf(a.pathway.trl) ? b : a));
+
                     const viability = getViability(best.pathway.trl);
                     const colors = getViabilityColor(viability);
                     const bandLabel = BAND_LABEL[viability as keyof typeof BAND_LABEL] ?? viability;
@@ -1953,15 +2011,21 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                               {rows.length} application{rows.length === 1 ? '' : 's'}
                             </div>
                             <div className="flex justify-center">
-                              <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
-                                <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
-                                <span className="text-[8px] opacity-80">{best.pathway.trl}</span>
-                              </span>
+                              {viability ? (
+                                <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+                                  <span className="text-[9px] font-bold uppercase tracking-wider">{bandLabel}</span>
+                                  <span className="text-[8px] opacity-80">{best.pathway.trl}</span>
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-muted-foreground">—</span>
+                              )}
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
                               <GroupChips
                                 groups={groupsOf(head.originalIndex)}
                                 onRemove={(gid) => removeFromGroupWithUndo(gid, [head.originalIndex])}
+                                tooltips={groupTooltips(head.pathway.feedstock)}
+
                               />
                             </div>
                           </div>
@@ -2001,15 +2065,21 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                                 <span />
                                 <div className={chipCls('border-border bg-background text-foreground')}>{pathway.application}</div>
                                 <div className="flex justify-center">
-                                  <span className={`inline-flex items-center rounded-md border px-2 py-1 text-[9px] font-bold ${childColors.border} ${childColors.text}`}>
-                                    {pathway.trl}
-                                  </span>
+                                  {hasTRL(pathway.trl) ? (
+                                    <span className={`inline-flex items-center rounded-md border px-2 py-1 text-[9px] font-bold ${childColors.border} ${childColors.text}`}>
+                                      {pathway.trl}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground">—</span>
+                                  )}
                                 </div>
                                 <div onClick={(e) => e.stopPropagation()}>
                                   <GroupChips
                                     groups={groupsOf(originalIndex)}
                                     onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                                    tooltips={groupTooltips(pathway.feedstock)}
                                   />
+
                                 </div>
                               </div>
                             </div>
