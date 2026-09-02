@@ -264,10 +264,21 @@ const ValueChainPathways = () => {
   const [pageSize, setPageSize] = useState<number>(100);
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
-  // ---- Custom pathway groups ----
-const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups();
+  // ---- Pathway groups (user groups + permanent system groups) ----
+  // System membership is derived from feedstock reference data at render time.
+  const allPathwaysRef = useRef<CustomPathway[]>(PREDEFINED_PATHWAYS);
+  const systemResolve = React.useCallback((groupId: string): number[] => {
+    if (groupId !== ANNEX_IX_A_GROUP_ID) return [];
+    const out: number[] = [];
+    allPathwaysRef.current.forEach((p, i) => {
+      if (annexIxInfo(p.feedstock).annexIxPartA) out.push(i);
+    });
+    return out;
+  }, []);
+  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
