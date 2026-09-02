@@ -34,7 +34,17 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 
 let groups: PathwayGroup[] = read<PathwayGroup[]>(GROUPS_KEY, []);
-let members: PathwayGroupMember[] = read<PathwayGroupMember[]>(MEMBERS_KEY, []);
+let members: PathwayGroupMember[] = (() => {
+  // Drop any legacy duplicate memberships persisted before dedupe existed.
+  const seen = new Set<string>();
+  return read<PathwayGroupMember[]>(MEMBERS_KEY, []).filter((m) => {
+    const key = `${m.group_id}::${m.pathway_id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+})();
+
 
 const listeners = new Set<() => void>();
 const emit = () => {
