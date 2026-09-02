@@ -139,7 +139,10 @@ export const PREDEFINED_PATHWAYS: CustomPathway[] = [
   { feedstock: "Fructose", technology: "Continuous Fermentation (CSTR)", product: "Lactic Acid", application: "Green Solvents", trl: "TRL 7", patents: "12 Patents", category1: "Intermediates/precursors", category2: "Fermentation", category3: "Chemicals", category4: "Chemical Industry" },
   { feedstock: "Fructose", technology: "Engineered Yeast Fermentation", product: "D-Lactic Acid", application: "Stereocomplex PLA", trl: "TRL 5", patents: "8 Patents", category1: "Intermediates/precursors", category2: "Fermentation", category3: "Chemicals", category4: "Advanced Manufacturing" },
   { feedstock: "Fructose", technology: "Membrane Separation", product: "Purified Lactic Acid", application: "Pharmaceutical Excipient", trl: "TRL 8", patents: "18 Patents", category1: "Intermediates/precursors", category2: "Purification", category3: "Chemicals", category4: "Pharma & Healthcare" },
+  // Annex IX Part A qualifying feedstock routes (RED II).
+  ...ANNEX_IX_PATHWAYS,
 ];
+
 
 const ValueChainPathways = () => {
   const { category, topic } = useParams<{ category: string; topic: string }>();
