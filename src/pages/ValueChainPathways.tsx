@@ -1963,7 +1963,9 @@ const ValueChainPathways = () => {
                   return Array.from(clusters.entries()).map(([key, rows]) => {
                     const open = expandedAppRows.has(key);
                     const head = rows[0];
-                    const best = rows.reduce((a, b) => (getTRLNumber(b.pathway.trl) > getTRLNumber(a.pathway.trl) ? b : a));
+                    const trlNumOf = (t: string) => (hasTRL(t) ? getTRLNumber(t) : -1);
+                    const best = rows.reduce((a, b) => (trlNumOf(b.pathway.trl) > trlNumOf(a.pathway.trl) ? b : a));
+
                     const viability = getViability(best.pathway.trl);
                     const colors = getViabilityColor(viability);
                     const bandLabel = BAND_LABEL[viability as keyof typeof BAND_LABEL] ?? viability;
