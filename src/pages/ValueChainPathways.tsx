@@ -15,6 +15,8 @@ import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, Ar
 
 
 type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
+import { PathwayUnifiedTree } from "@/components/PathwayUnifiedTree";
+
 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
