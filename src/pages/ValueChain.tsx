@@ -959,7 +959,7 @@ const FeedstockSnapshotSection: React.FC<{
                           {annexIxInfo(r.name).annexIxPartA ? (
                             <span
                               title={`Listed in RED II Annex IX Part A, point (${annexIxInfo(r.name).annexIxPoint}). Feedstock eligibility only — it does not imply the pathway is compliant.`}
-                              className="inline-flex items-center rounded border border-dashed border-foreground/40 bg-background px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-foreground/80"
+                              className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground/70"
                             >
                               9A
                             </span>
