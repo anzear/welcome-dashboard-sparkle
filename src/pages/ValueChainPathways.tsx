@@ -1339,28 +1339,38 @@ const ValueChainPathways = () => {
                     <div className="divide-y divide-border">
                       {pathwayGroups.map((g) => {
                         const ids = memberIds(g.id);
+                        const system = isSystemGroup(g);
                         return (
                           <div key={g.id}>
                             <div className="group flex items-center gap-2 bg-muted/40 px-4 py-2">
+                              {system && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
                               </span>
+                              {system && (g.source || g.version) && (
+                                <span className="text-[10px] text-muted-foreground truncate">
+                                  {[g.source, g.version].filter(Boolean).join(' · ')}
+                                </span>
+                              )}
                               <span className="flex-1" />
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <button
-                                    type="button"
-                                    onClick={() => setGroupToDelete(g)}
-                                    title={`Delete ${g.name}`}
-                                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </TooltipTrigger>
-                                <TooltipContent side="top" className="text-[10px]">Delete group</TooltipContent>
-                              </Tooltip>
+                              {!system && (
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={() => setGroupToDelete(g)}
+                                      title={`Delete ${g.name}`}
+                                      className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="text-[10px]">Delete group</TooltipContent>
+                                </Tooltip>
+                              )}
                             </div>
+
                             {ids.length === 0 ? (
                               <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
                             ) : (
