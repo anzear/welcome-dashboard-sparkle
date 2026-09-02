@@ -15,6 +15,8 @@ import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, Ar
 
 
 type SortKey = 'trl' | 'feedstock' | 'technology' | 'product' | 'application';
+import { PathwayUnifiedTree } from "@/components/PathwayUnifiedTree";
+
 
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1128,10 +1130,27 @@ const ValueChainPathways = () => {
             )}
 
 
+            {/* Tree layout: every pathway in one deduplicated, paged tree. */}
+            {layout === 'tree' && (
+              <PathwayUnifiedTree
+                rows={filteredPathways.map(({ pathway, originalIndex }) => ({
+                  originalIndex,
+                  feedstock: pathway.feedstock,
+                  technology: pathway.technology,
+                  product: pathway.product,
+                  application: pathway.application,
+                  trl: pathway.trl,
+                }))}
+                onOpenPathway={(idx) => navigate(`/landscape/${category}/${topic}/value-chain/pathways/${idx}`)}
+              />
+            )}
+
             {/* Table Rows */}
+            {layout !== 'tree' && (
             <div className={viewMode === 'compressed' ? 'space-y-4' : 'border-x border-b border-border rounded-b-lg divide-y divide-border/50'}>
               {(() => {
                 const isCompressed = viewMode === 'compressed';
+
                 const rowPad = isCompressed ? 'px-4 py-1' : 'px-4 py-4';
                 const chipCls = (extra: string = '') => isCompressed
                   ? `text-[10px] font-medium truncate text-center ${extra}`
@@ -1811,6 +1830,8 @@ const ValueChainPathways = () => {
               </div>
             )}
             </div>
+            )}
+
           </div>
 
 
