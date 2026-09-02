@@ -291,6 +291,7 @@ const ValueChainPathways = () => {
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
+  const [newGroupTag, setNewGroupTag] = useState('');
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
   const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
     const next = new Set(prev);
@@ -300,11 +301,14 @@ const ValueChainPathways = () => {
   const [groupToEdit, setGroupToEdit] = useState<PathwayGroup | null>(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupDescription, setEditGroupDescription] = useState('');
+  const [editGroupTag, setEditGroupTag] = useState('');
   const openGroupEditor = (g: PathwayGroup) => {
     setGroupToEdit(g);
     setEditGroupName(g.name);
     setEditGroupDescription(g.description ?? '');
+    setEditGroupTag(g.shortLabel ?? '');
   };
+
   const clearSelection = () => setSelectedPathwayIds(new Set());
   const toggleSelection = (ids: number[], on: boolean) =>
     setSelectedPathwayIds((prev) => {
