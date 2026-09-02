@@ -728,7 +728,7 @@ const FeedstockSnapshotSection: React.FC<{
   const [stageFilter, setStageFilter] = useState<'all' | TrlStage>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [sortKey, setSortKey] = useState<keyof Feedstock | 'stage' | 'rank'>('rank');
+  const [sortKey, setSortKey] = useState<keyof Feedstock | 'stage' | 'rank' | 'groups'>('rank');
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 8;
   const feedstockCategories = useMemo(() => Array.from(new Set(data.map((d) => d.category))).sort(), [data]);
@@ -784,6 +784,15 @@ const FeedstockSnapshotSection: React.FC<{
         return STAGE_WEIGHT[dominantStage(b)] - STAGE_WEIGHT[dominantStage(a)];
       }
       if (sortKey === 'name') return a.name.localeCompare(b.name);
+      if (sortKey === 'groups') {
+        const label = (f: Feedstock) => (annexIxInfo(f.name).annexIxPartA ? '9A' : '');
+        const la = label(a);
+        const lb = label(b);
+        if (!la && !lb) return a.name.localeCompare(b.name);
+        if (!la) return 1;
+        if (!lb) return -1;
+        return la.localeCompare(lb, undefined, { numeric: true }) || a.name.localeCompare(b.name);
+      }
       return (a[sortKey as keyof Feedstock] as number) - (b[sortKey as keyof Feedstock] as number);
     });
     return rows;
@@ -909,7 +918,7 @@ const FeedstockSnapshotSection: React.FC<{
                     ['volume', 'Volume EU (M t/yr)', 'center'],
                     ['pathways', 'Pathways', 'center'],
                     ['stage', 'Maturity', 'left'],
-                    ['name', 'Groups', 'left'],
+                    ['groups', 'Groups', 'left'],
                   ] as [typeof sortKey, string, 'left' | 'right' | 'center'][]).map(([key, label, align], i) => (
                     <th
                       key={`${key}-${i}`}
