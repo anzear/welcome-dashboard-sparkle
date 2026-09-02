@@ -62,6 +62,7 @@ export const isSystemGroup = (g: PathwayGroup) => g.type === 'system' || SYSTEM_
 const GROUPS_KEY = 'pathwayGroups';
 const MEMBERS_KEY = 'pathwayGroupMembers';
 const HIDDEN_KEY = 'pathwayGroupsHidden';
+const SYS_OVERRIDE_KEY = 'pathwayGroupSystemOverrides';
 
 const read = <T,>(key: string, fallback: T): T => {
   try {
@@ -75,6 +76,8 @@ const read = <T,>(key: string, fallback: T): T => {
 let userGroups: PathwayGroup[] = read<PathwayGroup[]>(GROUPS_KEY, []);
 let members: PathwayGroupMember[] = read<PathwayGroupMember[]>(MEMBERS_KEY, []);
 let hidden: string[] = read<string[]>(HIDDEN_KEY, []);
+/** Editable presentation fields for system groups. Membership stays derived. */
+let systemOverrides: Record<string, { shortLabel?: string; description?: string }> = read(SYS_OVERRIDE_KEY, {});
 
 // Migration: drop any stored copy of a system group (including the legacy hand-made
 // "9A" groups), merge legacy user groups that share a name, then drop duplicates.
@@ -115,6 +118,7 @@ const emit = () => {
   localStorage.setItem(GROUPS_KEY, JSON.stringify(userGroups));
   localStorage.setItem(MEMBERS_KEY, JSON.stringify(members));
   localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
+  localStorage.setItem(SYS_OVERRIDE_KEY, JSON.stringify(systemOverrides));
   listeners.forEach((l) => l());
 };
 
@@ -140,14 +144,15 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
     return members.filter((m) => m.group_id === groupId).map((m) => m.pathway_id);
   }, []);
 
-  const allGroups: PathwayGroup[] = [...SYSTEM_GROUPS, ...userGroups];
+  const systemWithOverrides = SYSTEM_GROUPS.map((g) => ({ ...g, ...(systemOverrides[g.id] ?? {}) }));
+  const allGroups: PathwayGroup[] = [...systemWithOverrides, ...userGroups];
   const groups = allGroups.filter((g) => !hidden.includes(g.id));
 
   const groupsOf = useCallback((pathwayId: number): PathwayGroup[] => {
     const out: PathwayGroup[] = [];
     SYSTEM_GROUPS.forEach((g) => {
       if (hidden.includes(g.id)) return;
-      if ((resolveRef.current?.(g.id) ?? []).includes(pathwayId)) out.push(g);
+      if ((resolveRef.current?.(g.id) ?? []).includes(pathwayId)) out.push({ ...g, ...(systemOverrides[g.id] ?? {}) });
     });
     const ids = new Set(members.filter((m) => m.pathway_id === pathwayId).map((m) => m.group_id));
     userGroups.forEach((g) => { if (ids.has(g.id) && !hidden.includes(g.id)) out.push(g); });
@@ -221,7 +226,19 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
   /** Renames a user group and/or edits its tag and description. System groups are read-only. */
   const updateGroup = useCallback(
     (groupId: string, patch: { name?: string; description?: string; shortLabel?: string }) => {
-      if (SYSTEM_IDS.has(groupId)) return;
+      if (SYSTEM_IDS.has(groupId)) {
+        // System groups keep their official name and membership; only the chip
+        // label and description are editable.
+        systemOverrides = {
+          ...systemOverrides,
+          [groupId]: {
+            shortLabel: patch.shortLabel?.trim() || undefined,
+            description: patch.description?.trim() || undefined,
+          },
+        };
+        emit();
+        return;
+      }
       const nextName = patch.name?.trim();
       if (nextName && SYSTEM_NAMES.has(nextName.toLowerCase())) return;
       const nextLabel = patch.shortLabel?.trim();
