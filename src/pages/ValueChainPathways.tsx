@@ -2494,6 +2494,26 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
+</AlertDialog>
+
+      <AlertDialog open={groupToDelete !== null} onOpenChange={(open) => { if (!open) setGroupToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {groupToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {groupToDelete && (() => {
+                const n = memberIds(groupToDelete.id).length;
+                return n === 0
+                  ? 'The group will be removed. This cannot be undone.'
+                  : `${n} pathway${n === 1 ? '' : 's'} will be removed from the group. This cannot be undone.`;
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteGroup} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
 
       {/* Shortlist Note Dialog */}
