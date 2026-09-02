@@ -17,6 +17,7 @@ import ProductTable from '@/components/ProductTable';
 import { PREDEFINED_PATHWAYS } from '@/pages/ValueChainPathways';
 import PathwayChat from '@/components/PathwayChat';
 import feedstockAnalysisChart from '@/assets/feedstock-analysis-chart.png';
+import { annexIxInfo } from '@/data/annexIx';
 import marketApplicationsChart from '@/assets/market-applications-chart.png';
 import xyloseMolecule from '@/assets/xylose-molecule.png';
 import sampleEuropeMap from '@/assets/sample-europe-map.png.asset.json';
@@ -894,8 +895,9 @@ const FeedstockSnapshotSection: React.FC<{
                 <col style={{ width: '18%' }} />
                 <col style={{ width: '14%' }} />
                 <col style={{ width: '16%' }} />
-                <col style={{ width: '10%' }} />
-                <col style={{ width: '16%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '8%' }} />
               </colgroup>
               <thead className="bg-muted/40 border-b border-border/60 text-slate-500 uppercase tracking-widest text-[10px]">
                 <tr>
@@ -907,6 +909,7 @@ const FeedstockSnapshotSection: React.FC<{
                     ['volume', 'Volume EU (M t/yr)', 'center'],
                     ['pathways', 'Pathways', 'center'],
                     ['stage', 'Maturity', 'left'],
+                    ['name', 'Groups', 'left'],
                   ] as [typeof sortKey, string, 'left' | 'right' | 'center'][]).map(([key, label, align], i) => (
                     <th
                       key={`${key}-${i}`}
@@ -921,7 +924,7 @@ const FeedstockSnapshotSection: React.FC<{
               <tbody className="bg-card">
                 {pagedRows.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-6 text-slate-500">No feedstocks match these filters.</td>
+                    <td colSpan={8} className="text-center py-6 text-slate-500">No feedstocks match these filters.</td>
                   </tr>
                 ) : (
                   pagedRows.map((r, idx) => {
@@ -943,6 +946,18 @@ const FeedstockSnapshotSection: React.FC<{
                         <td className="px-4 py-2.5 tabular-nums text-center whitespace-nowrap text-slate-700 font-medium">{volLow(r.volume).toFixed(1)}–{volHigh(r.volume).toFixed(1)}</td>
                         <td className="px-4 py-2.5 tabular-nums text-center text-slate-700 font-medium">{r.pathways}</td>
                         <td className="px-4 py-2.5 whitespace-nowrap"><StagePill stage={stage} /></td>
+                        <td className="px-4 py-2.5 whitespace-nowrap">
+                          {annexIxInfo(r.name).annexIxPartA ? (
+                            <span
+                              title={`Listed in RED II Annex IX Part A, point (${annexIxInfo(r.name).annexIxPoint}). Feedstock eligibility only — it does not imply the pathway is compliant.`}
+                              className="inline-flex items-center rounded border border-dashed border-foreground/40 bg-background px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-foreground/80"
+                            >
+                              9A
+                            </span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </td>
                       </tr>
                     );
                   })
