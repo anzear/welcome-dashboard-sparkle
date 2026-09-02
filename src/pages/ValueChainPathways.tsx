@@ -2760,21 +2760,38 @@ const ValueChainPathways = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Input
-              autoFocus
-              value={newGroupName}
-              onChange={(e) => setNewGroupName(e.target.value)}
-              placeholder="Group name"
-              className="text-xs"
-              maxLength={60}
-            />
-            <Textarea
-              value={newGroupDescription}
-              onChange={(e) => setNewGroupDescription(e.target.value)}
-              placeholder="Description (optional) — what this group is for"
-              className="text-xs min-h-[64px]"
-              maxLength={400}
-            />
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
+              <Input
+                autoFocus
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="e.g. Annex IX Part A"
+                className="text-xs"
+                maxLength={60}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Tag (optional)</label>
+              <Input
+                value={newGroupTag}
+                onChange={(e) => setNewGroupTag(e.target.value)}
+                placeholder="Short chip label, e.g. 9A"
+                className="text-xs"
+                maxLength={8}
+              />
+              <p className="text-[10px] text-muted-foreground">Shown as the chip in the pathway list. Defaults to the group name.</p>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Description (optional)</label>
+              <Textarea
+                value={newGroupDescription}
+                onChange={(e) => setNewGroupDescription(e.target.value)}
+                placeholder="What this group is for"
+                className="text-xs min-h-[64px]"
+                maxLength={400}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
@@ -2783,10 +2800,12 @@ const ValueChainPathways = () => {
               disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
               onClick={() => {
                 const ids = [...selectedPathwayIds];
-                const group = createGroup(newGroupName, ids, newGroupDescription);
+                const group = createGroup(newGroupName, ids, newGroupDescription, newGroupTag);
                 setNewGroupOpen(false);
                 setNewGroupDescription('');
+                setNewGroupTag('');
                 clearSelection();
+
                 const skipped = ids.length - group.added;
                 toast({
                   title: group.existed ? `Added to "${group.name}"` : `Group "${group.name}" created`,
