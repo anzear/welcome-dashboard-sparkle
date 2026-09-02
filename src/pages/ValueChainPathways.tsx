@@ -2705,7 +2705,7 @@ const ValueChainPathways = () => {
           </span>
           <span className="h-4 w-px bg-border" />
           <button
-            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupOpen(true); }}
+            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupTag(''); setNewGroupOpen(true); }}
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <PlusSquare className="w-3 h-3" />
