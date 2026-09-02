@@ -1828,6 +1828,8 @@ const ValueChainPathways = () => {
               </div>
             )}
             </div>
+            )}
+
           </div>
 
 
