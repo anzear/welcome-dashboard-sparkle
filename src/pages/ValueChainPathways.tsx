@@ -1400,7 +1400,7 @@ if (sortBy === 'trl') {
                               {system && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               {chip !== g.name && (
-                                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${system ? 'border border-dashed border-foreground/40 bg-background text-foreground/80 uppercase tracking-wide' : 'bg-muted text-foreground/70'}`}>
+                                <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground/70">
                                   {chip}
                                 </span>
                               )}
