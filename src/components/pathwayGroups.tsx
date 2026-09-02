@@ -96,7 +96,25 @@ export function usePathwayGroups() {
     return group;
   }, []);
 
-  return { groups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup };
+/** Deletes a group and all of its memberships. */
+  const deleteGroup = useCallback((groupId: string) => {
+    groups = groups.filter((g) => g.id !== groupId);
+    members = members.filter((m) => m.group_id !== groupId);
+    emit();
+  }, []);
+
+  /** Re-creates a previously deleted group with its memberships (used for undo). */
+  const restoreGroup = useCallback((group: PathwayGroup, pathwayIds: number[]) => {
+    if (groups.some((g) => g.id === group.id)) return;
+    groups = [...groups, group];
+    members = [
+      ...members,
+      ...pathwayIds.map((pid) => ({ group_id: group.id, pathway_id: pid })),
+    ];
+    emit();
+  }, []);
+
+  return { groups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup };
 }
 
 const CHIP = 'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-medium max-w-[86px]';
