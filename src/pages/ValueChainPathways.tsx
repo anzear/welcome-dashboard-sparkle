@@ -2055,15 +2055,21 @@ const ValueChainPathways = () => {
                                 <span />
                                 <div className={chipCls('border-border bg-background text-foreground')}>{pathway.application}</div>
                                 <div className="flex justify-center">
-                                  <span className={`inline-flex items-center rounded-md border px-2 py-1 text-[9px] font-bold ${childColors.border} ${childColors.text}`}>
-                                    {pathway.trl}
-                                  </span>
+                                  {hasTRL(pathway.trl) ? (
+                                    <span className={`inline-flex items-center rounded-md border px-2 py-1 text-[9px] font-bold ${childColors.border} ${childColors.text}`}>
+                                      {pathway.trl}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[10px] text-muted-foreground">—</span>
+                                  )}
                                 </div>
                                 <div onClick={(e) => e.stopPropagation()}>
                                   <GroupChips
                                     groups={groupsOf(originalIndex)}
                                     onRemove={(gid) => removeFromGroupWithUndo(gid, [originalIndex])}
+                                    tooltips={groupTooltips(pathway.feedstock)}
                                   />
+
                                 </div>
                               </div>
                             </div>
