@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree } from "lucide-react";
+import { ArrowLeft, GitBranch, Zap, Factory, Leaf, ChevronRight, ChevronDown, ArrowRight, Star, Bookmark, ThumbsDown, Package, Target, Plus, PlusSquare, Download, ArrowRight as ArrowRightIcon, Clock, Network, FolderKanban, Search, SlidersHorizontal, ArrowUpDown, ExternalLink, Info, MessageSquare, Rows3, AlignJustify, ListTree, Trash2 } from "lucide-react";
 
 
 
@@ -28,7 +28,7 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip } from '@/components/pathwayGroups';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
 interface CustomPathway {
@@ -265,7 +265,7 @@ const ValueChainPathways = () => {
   const [sortBy, setSortBy] = useState<SortKey>('trl');
 
   // ---- Custom pathway groups ----
-  const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup } = usePathwayGroups();
+const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, deleteGroup, restoreGroup } = usePathwayGroups();
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
@@ -287,6 +287,24 @@ const ValueChainPathways = () => {
       description: pathwayIds.length === 1 ? '1 pathway removed.' : `${pathwayIds.length} pathways removed.`,
       action: (
         <ToastAction altText="Undo" onClick={() => addToGroup(groupId, pathwayIds)}>Undo</ToastAction>
+      ),
+    });
+};
+
+  // Group deletion — confirm first, offer undo after.
+  const [groupToDelete, setGroupToDelete] = useState<PathwayGroup | null>(null);
+  const confirmDeleteGroup = () => {
+    if (!groupToDelete) return;
+    const g = groupToDelete;
+    const ids = memberIds(g.id);
+    deleteGroup(g.id);
+    setGroupFilter((prev) => prev.filter((id) => id !== g.id));
+    setGroupToDelete(null);
+    toast({
+      title: `Deleted ${g.name}`,
+      description: ids.length === 0 ? 'Group removed.' : `${ids.length} pathway${ids.length === 1 ? '' : 's'} removed from it.`,
+      action: (
+        <ToastAction altText="Undo" onClick={() => restoreGroup(g, ids)}>Undo</ToastAction>
       ),
     });
   };
@@ -1277,11 +1295,25 @@ const ValueChainPathways = () => {
                         const ids = memberIds(g.id);
                         return (
                           <div key={g.id}>
-                            <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
+                            <div className="group flex items-center gap-2 bg-muted/40 px-4 py-2">
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               <span className="text-[10px] tabular-nums text-muted-foreground">
                                 {ids.length} pathway{ids.length === 1 ? '' : 's'}
                               </span>
+                              <span className="flex-1" />
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    onClick={() => setGroupToDelete(g)}
+                                    title={`Delete ${g.name}`}
+                                    className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus:opacity-100"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="text-[10px]">Delete group</TooltipContent>
+                              </Tooltip>
                             </div>
                             {ids.length === 0 ? (
                               <div className="px-4 py-4 text-[10px] text-muted-foreground">No pathways in this group.</div>
@@ -2460,6 +2492,26 @@ const ValueChainPathways = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+</AlertDialog>
+
+      <AlertDialog open={groupToDelete !== null} onOpenChange={(open) => { if (!open) setGroupToDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {groupToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {groupToDelete && (() => {
+                const n = memberIds(groupToDelete.id).length;
+                return n === 0
+                  ? 'The group will be removed. This cannot be undone.'
+                  : `${n} pathway${n === 1 ? '' : 's'} will be removed from the group. This cannot be undone.`;
+              })()}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteGroup} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
