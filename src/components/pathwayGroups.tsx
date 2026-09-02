@@ -313,8 +313,8 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
 
 const CHIP = 'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-medium max-w-[86px]';
 const USER_CHIP = 'bg-muted text-foreground/70';
-/** System chips read differently from user chips without reading the label. */
-const SYSTEM_CHIP = 'bg-background text-foreground/80 border border-foreground/40 border-dashed uppercase tracking-wide';
+/** System chips use the same neutral style as user chips; the lock/tooltip carries the distinction. */
+const SYSTEM_CHIP = USER_CHIP;
 
 export const groupChipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
 const chipLabel = groupChipLabel;
@@ -402,11 +402,9 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
     <div className="flex items-center gap-1 flex-wrap">
       {unique.map((it) => {
         const all = it.count === it.total;
-        const base = it.system
-          ? 'bg-background text-foreground/80 border border-dashed border-foreground/40 uppercase tracking-wide'
-          : all
-            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
-            : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
+        const base = all
+          ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+          : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
         return (
           <span
             key={it.id}
