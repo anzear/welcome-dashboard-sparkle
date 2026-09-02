@@ -34,7 +34,17 @@ const read = <T,>(key: string, fallback: T): T => {
 };
 
 let groups: PathwayGroup[] = read<PathwayGroup[]>(GROUPS_KEY, []);
-let members: PathwayGroupMember[] = read<PathwayGroupMember[]>(MEMBERS_KEY, []);
+let members: PathwayGroupMember[] = (() => {
+  // Drop any legacy duplicate memberships persisted before dedupe existed.
+  const seen = new Set<string>();
+  return read<PathwayGroupMember[]>(MEMBERS_KEY, []).filter((m) => {
+    const key = `${m.group_id}::${m.pathway_id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+})();
+
 
 const listeners = new Set<() => void>();
 const emit = () => {
@@ -80,21 +90,32 @@ export function usePathwayGroups() {
     emit();
   }, []);
 
+  /**
+   * Creates a group. A name that already exists (case-insensitive) reuses that
+   * group instead of creating a second one, and pathways are never duplicated.
+   */
   const createGroup = useCallback((name: string, pathwayIds: number[]) => {
-    const group: PathwayGroup = {
+    const clean = name.trim();
+    const unique = [...new Set(pathwayIds)];
+    const existing = groups.find((g) => g.name.toLowerCase() === clean.toLowerCase());
+    const group: PathwayGroup = existing ?? {
       id: newId(),
-      name: name.trim(),
+      name: clean,
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
-    groups = [...groups, group];
-    members = [
-      ...members,
-      ...pathwayIds.map((pid) => ({ group_id: group.id, pathway_id: pid })),
-    ];
+    if (!existing) groups = [...groups, group];
+    const fresh = unique.filter(
+      (pid) => !members.some((m) => m.group_id === group.id && m.pathway_id === pid),
+    );
+    members = [...members, ...fresh.map((pid) => ({ group_id: group.id, pathway_id: pid }))];
     emit();
-    return group;
+    return { ...group, existed: !!existing, added: fresh.length } as PathwayGroup & {
+      existed: boolean;
+      added: number;
+    };
   }, []);
+
 
 /** Deletes a group and all of its memberships. */
   const deleteGroup = useCallback((groupId: string) => {
@@ -109,8 +130,9 @@ export function usePathwayGroups() {
     groups = [...groups, group];
     members = [
       ...members,
-      ...pathwayIds.map((pid) => ({ group_id: group.id, pathway_id: pid })),
+      ...[...new Set(pathwayIds)].map((pid) => ({ group_id: group.id, pathway_id: pid })),
     ];
+
     emit();
   }, []);
 

@@ -2630,12 +2630,20 @@ const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup,
                 const group = createGroup(newGroupName, ids);
                 setNewGroupOpen(false);
                 clearSelection();
+                const skipped = ids.length - group.added;
                 toast({
-                  title: `Group "${group.name}" created`,
-                  description: `${ids.length} pathway${ids.length === 1 ? '' : 's'} added.`,
-                  action: <ToastAction altText="Undo" onClick={() => removeFromGroup(group.id, ids)}>Undo</ToastAction>,
+                  title: group.existed ? `Added to "${group.name}"` : `Group "${group.name}" created`,
+                  description:
+                    group.added === 0
+                      ? 'Already in this group — nothing added.'
+                      : `${group.added} pathway${group.added === 1 ? '' : 's'} added${skipped > 0 ? `, ${skipped} already in the group` : ''}.`,
+                  action:
+                    group.added > 0 ? (
+                      <ToastAction altText="Undo" onClick={() => removeFromGroup(group.id, ids)}>Undo</ToastAction>
+                    ) : undefined,
                 });
               }}
+
             >
               Create group
             </Button>
