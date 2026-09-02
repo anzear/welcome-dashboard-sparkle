@@ -784,6 +784,15 @@ const FeedstockSnapshotSection: React.FC<{
         return STAGE_WEIGHT[dominantStage(b)] - STAGE_WEIGHT[dominantStage(a)];
       }
       if (sortKey === 'name') return a.name.localeCompare(b.name);
+      if (sortKey === 'groups') {
+        const label = (f: Feedstock) => (annexIxInfo(f.name).annexIxPartA ? '9A' : '');
+        const la = label(a);
+        const lb = label(b);
+        if (!la && !lb) return a.name.localeCompare(b.name);
+        if (!la) return 1;
+        if (!lb) return -1;
+        return la.localeCompare(lb, undefined, { numeric: true }) || a.name.localeCompare(b.name);
+      }
       return (a[sortKey as keyof Feedstock] as number) - (b[sortKey as keyof Feedstock] as number);
     });
     return rows;
