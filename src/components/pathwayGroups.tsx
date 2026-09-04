@@ -135,7 +135,7 @@ let systemOverrides: Record<string, { shortLabel?: string; description?: string 
   });
   userGroups = userGroups.map((g) => {
     if (g.color) return g;
-    let best = GROUP_COLORS[0];
+    let best: GroupColor = GROUP_COLORS[0];
     GROUP_COLORS.forEach((c) => {
       if ((used.get(c) ?? 0) < (used.get(best) ?? 0)) best = c;
     });
