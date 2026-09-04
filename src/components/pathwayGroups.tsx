@@ -181,6 +181,9 @@ const nextGroupColor = (): GroupColor => {
   return best;
 };
 
+/** Colour the next created group would get — for dialog previews only. */
+export const peekNextGroupColor = (): GroupColor => nextGroupColor();
+
 const newId = () => `g_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
 const SEED_KEY = 'pathwayGroupSeed_v1';
