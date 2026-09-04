@@ -721,7 +721,7 @@ if (sortBy === 'trl') {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), groupFilter.join(','), membershipSignature]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), groupFilter.join(','), groupMatchMode, membershipSignature]);
 
 
 
