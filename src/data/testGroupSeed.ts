@@ -50,15 +50,14 @@ export function testGroupMemberIds(pathways: Triple[]): number[] {
 
   const out = new Set<number>();
 
-  // Four collapsed rows on qualifying feedstocks with only some children in the
-  // group → filled "9A" next to an outlined "test n/m".
+  // Collapsed rows on qualifying feedstocks with only some children in the group → filled "9A" next to an outlined "test n/m".
   const partialAnnex = annexKeys.filter((k) => (triples.get(k)?.length ?? 0) >= 3).slice(0, 6);
   partialAnnex.forEach((k) => {
     const ids = triples.get(k)!;
     ids.slice(0, Math.max(1, Math.floor(ids.length / 2))).forEach((id) => out.add(id));
   });
 
-  // Two collapsed rows where every child is a member → filled "test".
+  // Collapsed rows where every child is a member → filled "test".
   const fullAnnex = annexKeys
     .filter((k) => !partialAnnex.includes(k) && (triples.get(k)?.length ?? 0) >= 2)
     .slice(0, 4);
