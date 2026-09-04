@@ -1048,6 +1048,31 @@ if (sortBy === 'trl') {
                 </div>
               )}
 
+              {/* Active group filter */}
+              {groupFilter.length > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-foreground/80 border border-border">
+                    Groups:{' '}
+                    {groupFilter
+                      .map((gid) => {
+                        const g = pathwayGroups.find((x) => x.id === gid);
+                        return g ? groupChipLabel(g) : gid;
+                      })
+                      .join(' + ')}
+                    {groupFilter.length >= 2 && ` (${groupMatchMode.toUpperCase()})`}
+                    <button
+                      onClick={() => setGroupFilter([])}
+                      title="Clear group filter"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </span>
+                </div>
+              )}
+
+
+
               {/* Feedstock chip filter (e.g., from Feedstock Snapshot) */}
               {feedstockValueFilter !== 'all' && (
                 <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/5 border border-primary/20 mb-2">
