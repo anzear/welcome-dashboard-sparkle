@@ -2165,13 +2165,10 @@ if (sortBy === 'trl') {
                               )}
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
-                              <GroupChips
-                                groups={groupsOf(head.originalIndex)}
-                                onRemove={(gid) => removeFromGroupWithUndo(gid, [head.originalIndex])}
-                                tooltips={groupTooltips(head.pathway.feedstock)}
-
-                              />
+                              {/* Collapsed row: membership derived from the pathways beneath. */}
+                              <DerivedGroupChips items={derivedGroupChips(ids)} />
                             </div>
+
                           </div>
                         </div>
 
