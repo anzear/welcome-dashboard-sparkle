@@ -312,9 +312,11 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
 }
 
 const CHIP = 'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-medium max-w-[86px]';
-const USER_CHIP = 'bg-muted text-foreground/70';
-/** System chips use the same neutral style as user chips; the lock/tooltip carries the distinction. */
-const SYSTEM_CHIP = USER_CHIP;
+/** User groups: outlined neutral grey. */
+const USER_CHIP = 'bg-transparent text-foreground/70 border border-border';
+/** System groups: solid neutral grey. Never teal — teal marks VCG-computed values. */
+const SYSTEM_CHIP = 'bg-muted text-foreground/70 border border-transparent';
+
 
 export const groupChipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
 const chipLabel = groupChipLabel;
