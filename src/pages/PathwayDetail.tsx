@@ -201,59 +201,59 @@ const PathwayDetail = () => {
     // Default / original
     _default: {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.92 g/g sugar', ghg: '1.4 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
     },
     // Feedstock alternatives
     'Sugarcane Molasses': {
       radar: { feedstockPrice: 70, supplyVolume: 75, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 84, ghgScore: 80 },
-      metrics: { feedstockPrice: '€80-130/t', feedstockQty: '12.5M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.88 g/g sugar', ghg: '1.1 t CO₂e/t' },
+      metrics: { feedstockPrice: '€80-130/t', feedstockQty: '12.5M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '88%', ghg: '1.1 t CO₂e/t' },
     },
     'Wheat Bran': {
       radar: { feedstockPrice: 78, supplyVolume: 65, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 76, ghgScore: 78 },
-      metrics: { feedstockPrice: '€90-140/t', feedstockQty: '5.8M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.79 g/g sugar', ghg: '1.2 t CO₂e/t' },
+      metrics: { feedstockPrice: '€90-140/t', feedstockQty: '5.8M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '79%', ghg: '1.2 t CO₂e/t' },
     },
     'Cassava Starch': {
       radar: { feedstockPrice: 82, supplyVolume: 70, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 86, ghgScore: 70 },
-      metrics: { feedstockPrice: '€100-160/t', feedstockQty: '6.4M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.90 g/g sugar', ghg: '1.6 t CO₂e/t' },
+      metrics: { feedstockPrice: '€100-160/t', feedstockQty: '6.4M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '90%', ghg: '1.6 t CO₂e/t' },
     },
     // Technology alternatives
     'Heterofermentation': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 65, yield: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 78, yieldScore: 68, ghgScore: 66 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€20-35M', trl: 'TRL 7', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.71 g/g sugar', ghg: '1.9 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€20-35M', trl: 'TRL 7', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '71%', ghg: '1.9 t CO₂e/t' },
     },
     'Enzymatic Hydrolysis + Fermentation': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 58, yield: 80, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 67, yieldScore: 80, ghgScore: 72 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€25-40M', trl: 'TRL 6', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.84 g/g sugar', ghg: '1.5 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€25-40M', trl: 'TRL 6', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '84%', ghg: '1.5 t CO₂e/t' },
     },
     'Continuous Fermentation (CSTR)': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 68, yield: 82, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 89, yieldScore: 82, ghgScore: 76 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€18-30M', trl: 'TRL 8', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '0.86 g/g sugar', ghg: '1.3 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€18-30M', trl: 'TRL 8', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '86%', ghg: '1.3 t CO₂e/t' },
     },
     // Product alternatives
     'D-Lactic Acid': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 82, sizeGlobal: 68, sizeEU: 60, growthGlobal: 92, growthEU: 88, appPrice: 82, trlScore: 100, yieldScore: 85, ghgScore: 73 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$1.2B', marketEU: '€480M', growthGlobal: '12.1% CAGR', growthEU: '13.5% CAGR', appPrice: '€2,800-3,500/t', yield: '0.89 g/g sugar', ghg: '1.45 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$1.2B', marketEU: '€480M', growthGlobal: '12.1% CAGR', growthEU: '13.5% CAGR', appPrice: '€2,800-3,500/t', yield: '89%', ghg: '1.45 t CO₂e/t' },
     },
     'Lactide': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 75, sizeGlobal: 72, sizeEU: 65, growthGlobal: 85, growthEU: 82, appPrice: 82, trlScore: 100, yieldScore: 78, ghgScore: 68 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$2.1B', marketEU: '€850M', growthGlobal: '10.2% CAGR', growthEU: '11.0% CAGR', appPrice: '€2,800-3,500/t', yield: '0.81 g/g sugar', ghg: '1.8 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$2.1B', marketEU: '€850M', growthGlobal: '10.2% CAGR', growthEU: '11.0% CAGR', appPrice: '€2,800-3,500/t', yield: '81%', ghg: '1.8 t CO₂e/t' },
     },
     // Application alternatives
     'Food Preservatives': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 70, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,200-1,800/t', yield: '0.92 g/g sugar', ghg: '1.4 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,200-1,800/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
     },
     'PLA Fiber': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 88, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€3,200-4,200/t', yield: '0.92 g/g sugar', ghg: '1.4 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€3,200-4,200/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
     },
     'Green Solvents': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 75, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,800-2,500/t', yield: '0.92 g/g sugar', ghg: '1.4 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,800-2,500/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
     },
     '3D Printing Filament': {
       radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 92, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€4,500-6,000/t', yield: '0.92 g/g sugar', ghg: '1.4 t CO₂e/t' },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€4,500-6,000/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
     },
   };
 
