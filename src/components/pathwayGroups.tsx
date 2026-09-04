@@ -13,6 +13,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+/** The five group colours. Group chips may use no other colour. */
+export const GROUP_COLORS = [
+  'group-violet',
+  'group-fuchsia',
+  'group-rose',
+  'group-indigo',
+  'group-bronze',
+] as const;
+export type GroupColor = (typeof GROUP_COLORS)[number];
+
 export interface PathwayGroup {
   id: string;
   name: string;
@@ -24,10 +34,13 @@ export interface PathwayGroup {
   shortLabel?: string;
   /** Free-text description of what the group is for. */
   description?: string;
+  /** Highlight colour, assigned once at creation and never derived from order. */
+  color?: GroupColor;
   source?: string;
   version?: string;
   membershipRule?: string;
 }
+
 
 /** pathway_group_member — unique on (pathway_id, group_id). */
 export interface PathwayGroupMember {
