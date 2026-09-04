@@ -542,10 +542,7 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
       })}
     </div>
   );
-
-      })}
-    </div>
-  );
 };
+
 
 export { Lock as GroupLockIcon };
