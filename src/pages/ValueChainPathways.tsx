@@ -29,7 +29,7 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, seedUserGroup, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, seedUserGroup, GroupChips, DerivedGroupChips, GroupColorDot, groupChipClass, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
 import { Lock, X } from 'lucide-react';
@@ -292,6 +292,7 @@ const ValueChainPathways = () => {
         name: 'test',
         shortLabel: 'test',
         type: 'user',
+        color: 'group-fuchsia',
         created_by: 'You',
         created_at: new Date().toISOString(),
       },
@@ -472,7 +473,7 @@ const ValueChainPathways = () => {
       .map((g) => {
         const ids = new Set(memberIds(g.id));
         const count = pathwayIds.filter((pid) => ids.has(pid)).length;
-        return { id: g.id, name: g.name, label: g.shortLabel ?? g.name, system: isSystemGroup(g), count, total };
+        return { id: g.id, name: g.name, label: g.shortLabel ?? g.name, system: isSystemGroup(g), color: g.color, count, total };
       })
       .filter((c) => c.count > 0);
   };
@@ -1052,13 +1053,17 @@ if (sortBy === 'trl') {
               {groupFilter.length > 0 && (
                 <div className="flex items-center gap-2 mb-2">
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-foreground/80 border border-border">
-                    Groups:{' '}
-                    {groupFilter
-                      .map((gid) => {
-                        const g = pathwayGroups.find((x) => x.id === gid);
-                        return g ? groupChipLabel(g) : gid;
-                      })
-                      .join(' + ')}
+                    Groups:
+                    {groupFilter.map((gid, i) => {
+                      const g = pathwayGroups.find((x) => x.id === gid);
+                      return (
+                        <span key={gid} className="inline-flex items-center gap-1">
+                          {i > 0 && <span className="text-muted-foreground">+</span>}
+                          <GroupColorDot color={g?.color} />
+                          {g ? groupChipLabel(g) : gid}
+                        </span>
+                      );
+                    })}
                     {groupFilter.length >= 2 && ` (${groupMatchMode.toUpperCase()})`}
                     <button
                       onClick={() => setGroupFilter([])}
@@ -1448,7 +1453,7 @@ if (sortBy === 'trl') {
                               {system && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
                               <span className="text-[10px] font-semibold uppercase tracking-widest text-foreground">{g.name}</span>
                               {chip !== g.name && (
-                                <span className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground/70">
+                                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${groupChipClass(g.color, 'fill')}`}>
                                   {chip}
                                 </span>
                               )}
@@ -2335,7 +2340,11 @@ if (sortBy === 'trl') {
                         <label className="text-[10px] text-muted-foreground">Belongs to</label>
                         <MultiSelectFilter
                           label={groupFilter.length > 0 ? 'Groups' : 'Any'}
-                          options={pathwayGroups.map((g) => ({ value: g.id, label: g.name }))}
+                          options={pathwayGroups.map((g) => ({
+                            value: g.id,
+                            label: g.name,
+                            dot: <GroupColorDot color={g.color} />,
+                          }))}
                           selected={groupFilter}
                           onChange={setGroupFilter}
                         />
