@@ -547,13 +547,13 @@ const PathwayDetail = () => {
                           <RadarChart data={[
                             { param: 'Feedstock Price', value: activeMetrics.radar.feedstockPrice, fullMark: 100, metricType: 'feedstock' },
                             { param: 'Feedstock Qty', value: activeMetrics.radar.supplyVolume, fullMark: 100, metricType: 'feedstock' },
-                            { param: 'Process CAPEX', value: activeMetrics.radar.capex, fullMark: 100, metricType: 'technology' },
-                            { param: 'Process TRL', value: activeMetrics.radar.yield, fullMark: 100, metricType: 'technology' },
+                            { param: 'Pathway TRL', value: activeMetrics.radar.trlScore, fullMark: 100, metricType: 'technology' },
+                            { param: 'Yield', value: activeMetrics.radar.yieldScore, fullMark: 100, metricType: 'technology' },
+                            { param: 'GHG Emissions', value: activeMetrics.radar.ghgScore, fullMark: 100, metricType: 'technology' },
                             { param: 'Market Size (Global)', value: activeMetrics.radar.sizeGlobal, fullMark: 100, metricType: 'product' },
                             { param: 'Market Size (EU)', value: activeMetrics.radar.sizeEU, fullMark: 100, metricType: 'product' },
                             { param: 'Growth (Global)', value: activeMetrics.radar.growthGlobal, fullMark: 100, metricType: 'product' },
                             { param: 'Growth (EU)', value: activeMetrics.radar.growthEU, fullMark: 100, metricType: 'product' },
-                            { param: 'App. Price', value: activeMetrics.radar.appPrice, fullMark: 100, metricType: 'application' },
                           ]}
                           onMouseLeave={() => setHoveredFlowType(null)}
                           >
@@ -563,10 +563,9 @@ const PathwayDetail = () => {
                               tick={({ x, y, payload, index }: any) => {
                                 const radarTypes = [
                                   'feedstock', 'feedstock',
-                                  'technology', 'technology',
+                                  'technology', 'technology', 'technology',
                                   'product', 'product',
                                   'product', 'product',
-                                  'application',
                                 ];
                                 const metricType = radarTypes[index];
                                 return (
@@ -599,9 +598,9 @@ const PathwayDetail = () => {
                           <div className="mt-1.5 text-[8px] text-muted-foreground leading-relaxed space-y-1">
                             <p>Each axis represents a normalized score (0–100) derived from publicly available data sources. Higher values indicate more favorable conditions for pathway viability.</p>
                             <p><strong className="text-foreground">Feedstock Price</strong> — Inverse of raw material cost. <strong className="text-foreground">Feedstock Qty</strong> — Supply volume availability relative to demand.</p>
-                            <p><strong className="text-foreground">Process CAPEX</strong> — Inverse of capital expenditure. <strong className="text-foreground">Process TRL</strong> — Technology Readiness Level mapped linearly.</p>
+                            <p><strong className="text-foreground">Pathway TRL</strong> — Technology Readiness Level mapped linearly. <strong className="text-foreground">Yield</strong> — Product output per unit of feedstock sugar.</p>
+                            <p><strong className="text-foreground">GHG Emissions</strong> — Inverse of cradle-to-gate emissions per tonne of product; higher is lower emitting.</p>
                             <p><strong className="text-foreground">Market Size</strong> — Addressable market value normalized against benchmarks. <strong className="text-foreground">Growth</strong> — CAGR scaled to sector averages.</p>
-                            <p><strong className="text-foreground">App. Price</strong> — Selling price relative to production cost, indicating margin potential.</p>
                           </div>
                         </details>
                       </div>
@@ -614,13 +613,13 @@ const PathwayDetail = () => {
                     {[
                       { label: 'Feedstock Price (EU)', value: activeMetrics.metrics.feedstockPrice, url: 'https://www.indexmundi.com/commodities/?commodity=corn', sources: 4, type: 'feedstock' },
                       { label: 'Feedstock Quantity (EU)', value: activeMetrics.metrics.feedstockQty, url: 'https://ec.europa.eu/eurostat', sources: 3, type: 'feedstock' },
-                      { label: 'Process CAPEX Investment', value: activeMetrics.metrics.capex, url: 'https://www.grandviewresearch.com', sources: 2, type: 'technology' },
-                      { label: 'Process TRL', value: activeMetrics.metrics.trl, url: 'https://www.sciencedirect.com', sources: 5, type: 'technology' },
+                      { label: 'Pathway TRL', value: activeMetrics.metrics.trl, url: 'https://www.sciencedirect.com', sources: 5, type: 'technology' },
+                      { label: 'Yield', value: activeMetrics.metrics.yield, url: 'https://www.sciencedirect.com', sources: 3, type: 'technology' },
+                      { label: 'GHG Emissions (cradle-to-gate)', value: activeMetrics.metrics.ghg, url: 'https://www.sciencedirect.com', sources: 4, type: 'technology' },
                       { label: 'Material Market Size (Global)', value: activeMetrics.metrics.marketGlobal, url: 'https://www.marketsandmarkets.com', sources: 6, type: 'product' },
                       { label: 'Material Market Size (EU)', value: activeMetrics.metrics.marketEU, url: 'https://www.marketsandmarkets.com', sources: 4, type: 'product' },
                       { label: 'Material Market Growth (Global)', value: activeMetrics.metrics.growthGlobal, url: 'https://www.grandviewresearch.com', sources: 5, type: 'product' },
                       { label: 'Material Market Growth (EU)', value: activeMetrics.metrics.growthEU, url: 'https://www.grandviewresearch.com', sources: 3, type: 'product' },
-                      { label: 'Application Material Price', value: activeMetrics.metrics.appPrice, url: 'https://www.plasticsinsight.com', sources: 2, type: 'application' },
                     ].map((item, i) => {
                       const isHighlighted = hoveredFlowType === item.type;
                       return (
