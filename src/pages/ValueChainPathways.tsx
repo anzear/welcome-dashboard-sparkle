@@ -671,12 +671,17 @@ const ValueChainPathways = () => {
       });
     }
 
-    // Group membership — a pathway matches if it belongs to any selected group (AND with the rest).
+    // Group membership — ANY: in at least one selected group. ALL: in every one.
     if (groupFilter.length > 0) {
-      const allowed = new Set<number>();
-      groupFilter.forEach((gid) => memberIds(gid).forEach((pid) => allowed.add(pid)));
-      filtered = filtered.filter(({ originalIndex }) => allowed.has(originalIndex));
+      const sets = groupFilter.map((gid) => new Set(memberIds(gid)));
+      const effectiveMode = groupFilter.length < 2 ? 'any' : groupMatchMode;
+      filtered = filtered.filter(({ originalIndex }) =>
+        effectiveMode === 'all'
+          ? sets.every((s) => s.has(originalIndex))
+          : sets.some((s) => s.has(originalIndex)),
+      );
     }
+
 
     if (activeTab === 'saved') {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
