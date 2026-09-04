@@ -283,10 +283,27 @@ const ValueChainPathways = () => {
     return out;
   }, []);
   const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, updateGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
+  // Demo user group "test" — seeded once, then editable like any user group.
+  useEffect(() => {
+    seedUserGroup(
+      {
+        id: TEST_GROUP_ID,
+        name: 'test',
+        shortLabel: 'test',
+        type: 'user',
+        created_by: 'You',
+        created_at: new Date().toISOString(),
+      },
+      testGroupMemberIds(PREDEFINED_PATHWAYS),
+    );
+  }, []);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
 
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
+  /** ANY: in at least one selected group. ALL: in every selected group. */
+  const [groupMatchMode, setGroupMatchMode] = useState<'any' | 'all'>('any');
+
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
