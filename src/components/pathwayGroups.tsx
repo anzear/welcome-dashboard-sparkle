@@ -135,6 +135,36 @@ const emit = () => {
 
 const newId = () => `g_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
+const SEED_KEY = 'pathwayGroupSeed_v1';
+
+/**
+ * One-time demo seed for an ordinary user group with a stored membership list.
+ * Runs once per browser; afterwards the group behaves like any hand-made group
+ * (renameable, editable, deletable) and is never re-seeded.
+ */
+export function seedUserGroup(group: PathwayGroup, pathwayIds: number[]) {
+  try {
+    if (localStorage.getItem(SEED_KEY)) return;
+  } catch {
+    return;
+  }
+  const nameKey = group.name.trim().toLowerCase();
+  const drop = userGroups.filter((g) => g.id === group.id || g.name.trim().toLowerCase() === nameKey);
+  const dropIds = new Set(drop.map((g) => g.id));
+  userGroups = userGroups.filter((g) => !dropIds.has(g.id));
+  members = members.filter((m) => !dropIds.has(m.group_id));
+  hidden = hidden.filter((id) => id !== group.id);
+  userGroups = [...userGroups, group];
+  members = [...members, ...[...new Set(pathwayIds)].map((pid) => ({ group_id: group.id, pathway_id: pid }))];
+  try {
+    localStorage.setItem(SEED_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+  emit();
+}
+
+
 /**
  * @param systemResolve maps a system group id to the pathway ids that satisfy its
  * rule. Called at render time — system membership is never stored.
