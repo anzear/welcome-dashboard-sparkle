@@ -435,8 +435,11 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
       {unique.map((it) => {
         const all = it.count === it.total;
         const base = all
-          ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+          ? it.system
+            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+            : 'bg-muted text-foreground/80 border border-border'
           : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
+
         return (
           <span
             key={it.id}
