@@ -131,6 +131,27 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 145 65% 42%;
+
+    /* Pathway group chip palette. Exactly five colours, used ONLY on group
+       chips (list chips, filter dots, dialog dots). Deliberately avoids
+       teal/green (VCG + Commercial band), blue (Pilot band), amber/orange
+       (Lab band) and red (destructive). group-indigo is a dark slate-purple so
+       it can never be mistaken for the TRL Pilot blue. */
+    --group-violet-fill: 265 85% 95%;
+    --group-violet-text: 265 55% 35%;
+    --group-violet-line: 265 60% 52%;
+    --group-fuchsia-fill: 302 78% 95%;
+    --group-fuchsia-text: 302 52% 33%;
+    --group-fuchsia-line: 302 55% 50%;
+    --group-rose-fill: 340 85% 95%;
+    --group-rose-text: 340 52% 35%;
+    --group-rose-line: 340 58% 52%;
+    --group-indigo-fill: 245 42% 93%;
+    --group-indigo-text: 245 48% 34%;
+    --group-indigo-line: 245 45% 44%;
+    --group-bronze-fill: 28 40% 92%;
+    --group-bronze-text: 25 48% 28%;
+    --group-bronze-line: 25 38% 40%;
   }
 
   .dark {
@@ -202,6 +223,23 @@ All colors MUST be HSL.
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 222 40% 16%;
     --sidebar-ring: 145 65% 42%;
+
+    /* Pathway group chip palette (dark). Fills stay visible, text stays legible. */
+    --group-violet-fill: 265 45% 22%;
+    --group-violet-text: 265 75% 85%;
+    --group-violet-line: 265 60% 62%;
+    --group-fuchsia-fill: 302 42% 22%;
+    --group-fuchsia-text: 302 70% 85%;
+    --group-fuchsia-line: 302 55% 62%;
+    --group-rose-fill: 340 42% 22%;
+    --group-rose-text: 340 72% 86%;
+    --group-rose-line: 340 58% 62%;
+    --group-indigo-fill: 245 40% 24%;
+    --group-indigo-text: 245 65% 86%;
+    --group-indigo-line: 245 50% 62%;
+    --group-bronze-fill: 28 35% 20%;
+    --group-bronze-text: 30 55% 82%;
+    --group-bronze-line: 28 40% 58%;
   }
 }
 
