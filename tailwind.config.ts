@@ -44,6 +44,13 @@ export default {
 					DEFAULT: 'hsl(var(--destructive))',
 					foreground: 'hsl(var(--destructive-foreground))'
 				},
+				group: {
+					violet: { fill: 'hsl(var(--group-violet-fill))', text: 'hsl(var(--group-violet-text))', line: 'hsl(var(--group-violet-line))' },
+					fuchsia: { fill: 'hsl(var(--group-fuchsia-fill))', text: 'hsl(var(--group-fuchsia-text))', line: 'hsl(var(--group-fuchsia-line))' },
+					rose: { fill: 'hsl(var(--group-rose-fill))', text: 'hsl(var(--group-rose-text))', line: 'hsl(var(--group-rose-line))' },
+					indigo: { fill: 'hsl(var(--group-indigo-fill))', text: 'hsl(var(--group-indigo-text))', line: 'hsl(var(--group-indigo-line))' },
+					bronze: { fill: 'hsl(var(--group-bronze-fill))', text: 'hsl(var(--group-bronze-text))', line: 'hsl(var(--group-bronze-line))' }
+				},
 				provenance: {
 					company: 'hsl(var(--provenance-company))',
 					vcg: 'hsl(var(--provenance-vcg))',

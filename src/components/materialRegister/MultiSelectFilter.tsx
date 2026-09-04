@@ -7,6 +7,8 @@ import { ChevronDown } from "lucide-react";
 export interface Option {
   value: string;
   label: string;
+  /** Optional leading marker, e.g. a group colour dot. */
+  dot?: React.ReactNode;
 }
 
 interface Props {
@@ -57,6 +59,7 @@ export const MultiSelectFilter: React.FC<Props> = ({ label, options, selected, o
               onCheckedChange={() => toggle(o.value)}
               className="h-3.5 w-3.5"
             />
+            {o.dot}
             <span className="truncate">{o.label}</span>
           </label>
         ))}

@@ -13,6 +13,16 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Lock, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+/** The five group colours. Group chips may use no other colour. */
+export const GROUP_COLORS = [
+  'group-violet',
+  'group-fuchsia',
+  'group-rose',
+  'group-indigo',
+  'group-bronze',
+] as const;
+export type GroupColor = (typeof GROUP_COLORS)[number];
+
 export interface PathwayGroup {
   id: string;
   name: string;
@@ -24,10 +34,13 @@ export interface PathwayGroup {
   shortLabel?: string;
   /** Free-text description of what the group is for. */
   description?: string;
+  /** Highlight colour, assigned once at creation and never derived from order. */
+  color?: GroupColor;
   source?: string;
   version?: string;
   membershipRule?: string;
 }
+
 
 /** pathway_group_member — unique on (pathway_id, group_id). */
 export interface PathwayGroupMember {
@@ -44,6 +57,7 @@ export const SYSTEM_GROUPS: PathwayGroup[] = [
     name: 'Annex IX Part A',
     shortLabel: '9A',
     type: 'system',
+    color: 'group-violet',
     source: 'RED II Directive (EU) 2018/2001, Annex IX Part A',
     version: '2018 consolidated list, points (a) to (q)',
     membershipRule: 'feedstock.annexIxPartA === true',
@@ -112,6 +126,24 @@ let systemOverrides: Record<string, { shortLabel?: string; description?: string 
     });
 })();
 
+// Legacy stored groups predate colours — assign once, deterministically by
+// least use, so an existing group keeps its colour from then on.
+(() => {
+  const used = new Map<string, number>();
+  [...SYSTEM_GROUPS, ...userGroups].forEach((g) => {
+    if (g.color) used.set(g.color, (used.get(g.color) ?? 0) + 1);
+  });
+  userGroups = userGroups.map((g) => {
+    if (g.color) return g;
+    let best: GroupColor = GROUP_COLORS[0];
+    GROUP_COLORS.forEach((c) => {
+      if ((used.get(c) ?? 0) < (used.get(best) ?? 0)) best = c;
+    });
+    used.set(best, (used.get(best) ?? 0) + 1);
+    return { ...g, color: best };
+  });
+})();
+
 /** Overrides only replace fields the user actually set. */
 const applyOverride = (g: PathwayGroup): PathwayGroup => {
   const ov = systemOverrides[g.id];
@@ -132,6 +164,25 @@ const emit = () => {
   localStorage.setItem(SYS_OVERRIDE_KEY, JSON.stringify(systemOverrides));
   listeners.forEach((l) => l());
 };
+
+/**
+ * Least-used palette colour wins; ties break by palette order. Never derived
+ * from list position, so deleting or reordering groups changes nothing.
+ */
+const nextGroupColor = (): GroupColor => {
+  const used = new Map<GroupColor, number>(GROUP_COLORS.map((c) => [c, 0]));
+  [...SYSTEM_GROUPS, ...userGroups].forEach((g) => {
+    if (g.color && used.has(g.color)) used.set(g.color, (used.get(g.color) ?? 0) + 1);
+  });
+  let best: GroupColor = GROUP_COLORS[0];
+  GROUP_COLORS.forEach((c) => {
+    if ((used.get(c) ?? 0) < (used.get(best) ?? 0)) best = c;
+  });
+  return best;
+};
+
+/** Colour the next created group would get — for dialog previews only. */
+export const peekNextGroupColor = (): GroupColor => nextGroupColor();
 
 const newId = () => `g_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
@@ -238,6 +289,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
       description: description?.trim() || undefined,
       shortLabel: shortLabel?.trim() || undefined,
       type: 'user',
+      color: nextGroupColor(),
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
@@ -342,11 +394,50 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
 }
 
 const CHIP = 'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-medium max-w-[86px]';
-/** User groups: outlined neutral grey. */
-const USER_CHIP = 'bg-transparent text-foreground/70 border border-border';
-/** System groups: solid neutral grey. Never teal — teal marks VCG-computed values. */
-const SYSTEM_CHIP = 'bg-muted text-foreground/70 border border-transparent';
 
+/**
+ * Chip classes per group colour. Filled = solid tint + darker text of the same
+ * hue, no border. Outlined = transparent + 1.5px coloured border + coloured
+ * text. The border weight plus the missing fill keeps the two states apart at a
+ * glance, without reading the fraction.
+ */
+const COLOR_CLASSES: Record<GroupColor, { fill: string; outline: string; dot: string }> = {
+  'group-violet': {
+    fill: 'bg-group-violet-fill text-group-violet-text border border-transparent',
+    outline: 'bg-transparent text-group-violet-text border-[1.5px] border-group-violet-line',
+    dot: 'bg-group-violet-line',
+  },
+  'group-fuchsia': {
+    fill: 'bg-group-fuchsia-fill text-group-fuchsia-text border border-transparent',
+    outline: 'bg-transparent text-group-fuchsia-text border-[1.5px] border-group-fuchsia-line',
+    dot: 'bg-group-fuchsia-line',
+  },
+  'group-rose': {
+    fill: 'bg-group-rose-fill text-group-rose-text border border-transparent',
+    outline: 'bg-transparent text-group-rose-text border-[1.5px] border-group-rose-line',
+    dot: 'bg-group-rose-line',
+  },
+  'group-indigo': {
+    fill: 'bg-group-indigo-fill text-group-indigo-text border border-transparent',
+    outline: 'bg-transparent text-group-indigo-text border-[1.5px] border-group-indigo-line',
+    dot: 'bg-group-indigo-line',
+  },
+  'group-bronze': {
+    fill: 'bg-group-bronze-fill text-group-bronze-text border border-transparent',
+    outline: 'bg-transparent text-group-bronze-text border-[1.5px] border-group-bronze-line',
+    dot: 'bg-group-bronze-line',
+  },
+};
+
+const colorOf = (c?: GroupColor): GroupColor => (c && COLOR_CLASSES[c] ? c : GROUP_COLORS[0]);
+
+export const groupChipClass = (color: GroupColor | undefined, state: 'fill' | 'outline' = 'fill') =>
+  COLOR_CLASSES[colorOf(color)][state];
+
+/** Colour dot used in filter lists and dialogs. */
+export const GroupColorDot: React.FC<{ color?: GroupColor; className?: string }> = ({ color, className }) => (
+  <span className={`inline-block h-2 w-2 shrink-0 rounded-full ${COLOR_CLASSES[colorOf(color)].dot} ${className ?? ''}`} />
+);
 
 export const groupChipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
 const chipLabel = groupChipLabel;
@@ -373,7 +464,9 @@ export const GroupChips: React.FC<{
         const system = isSystemGroup(g);
         const tip = tooltips?.[g.id];
         const chip = (
-          <span className={`${CHIP} group/chip ${system ? SYSTEM_CHIP : USER_CHIP}`}>
+          <span className={`${CHIP} group/chip ${groupChipClass(g.color, 'fill')}`}>
+            {/* The lock is the only structural difference between system and user chips. */}
+            {system && <Lock className="w-2 h-2 shrink-0 opacity-80" />}
             <span className="truncate">{chipLabel(g)}</span>
             {!system && onRemove && (
               <button
@@ -398,7 +491,7 @@ export const GroupChips: React.FC<{
       {rest.length > 0 && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className={`${CHIP} ${USER_CHIP} tabular-nums cursor-default`}>+{rest.length}</span>
+            <span className={`${CHIP} bg-muted text-foreground/70 border border-transparent tabular-nums cursor-default`}>+{rest.length}</span>
           </TooltipTrigger>
           <TooltipContent side="top" className="text-[10px]">
             {rest.map((g) => <div key={g.id}>{g.name}</div>)}
@@ -414,6 +507,7 @@ export interface DerivedGroupChip {
   name: string;
   label?: string;
   system?: boolean;
+  color?: GroupColor;
   count: number;
   total: number;
 }
@@ -434,18 +528,13 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
     <div className="flex items-center gap-1 flex-wrap">
       {unique.map((it) => {
         const all = it.count === it.total;
-        const base = all
-          ? it.system
-            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
-            : 'bg-muted text-foreground/80 border border-border'
-          : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
-
         return (
           <span
             key={it.id}
-            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium ${base}`}
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium ${groupChipClass(it.color, all ? 'fill' : 'outline')}`}
             title={all ? `Every pathway in this row is in ${it.name}` : `${it.count} of ${it.total} pathways in this row are in ${it.name}`}
           >
+            {it.system && <Lock className="w-2 h-2 shrink-0 opacity-80" />}
             <span className="truncate max-w-[100px]">{it.label ?? it.name}</span>
             {!all && <span className="tabular-nums opacity-80">{it.count}/{it.total}</span>}
           </span>
@@ -454,5 +543,6 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
     </div>
   );
 };
+
 
 export { Lock as GroupLockIcon };
