@@ -504,6 +504,7 @@ export interface DerivedGroupChip {
   name: string;
   label?: string;
   system?: boolean;
+  color?: GroupColor;
   count: number;
   total: number;
 }
@@ -524,22 +525,21 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
     <div className="flex items-center gap-1 flex-wrap">
       {unique.map((it) => {
         const all = it.count === it.total;
-        const base = all
-          ? it.system
-            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
-            : 'bg-muted text-foreground/80 border border-border'
-          : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
-
         return (
           <span
             key={it.id}
-            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium ${base}`}
+            className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-medium ${groupChipClass(it.color, all ? 'fill' : 'outline')}`}
             title={all ? `Every pathway in this row is in ${it.name}` : `${it.count} of ${it.total} pathways in this row are in ${it.name}`}
           >
+            {it.system && <Lock className="w-2 h-2 shrink-0 opacity-80" />}
             <span className="truncate max-w-[100px]">{it.label ?? it.name}</span>
             {!all && <span className="tabular-nums opacity-80">{it.count}/{it.total}</span>}
           </span>
         );
+      })}
+    </div>
+  );
+
       })}
     </div>
   );
