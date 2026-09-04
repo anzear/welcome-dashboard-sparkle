@@ -2318,6 +2318,29 @@ if (sortBy === 'trl') {
                           onChange={setGroupFilter}
                         />
                       </div>
+                      {/* Match mode — only meaningful with two or more groups selected. */}
+                      {groupFilter.length >= 2 && (
+                        <div className="grid grid-cols-[1fr_auto] items-center gap-2 mt-1">
+                          <label className="text-[10px] text-muted-foreground">Match</label>
+                          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+                            {(['any', 'all'] as const).map((m) => (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => setGroupMatchMode(m)}
+                                className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest transition-colors ${
+                                  groupMatchMode === m
+                                    ? 'bg-foreground text-background shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                     </div>
 
                     {/* Pathway */}
