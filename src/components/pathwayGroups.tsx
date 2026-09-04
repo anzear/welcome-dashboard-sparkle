@@ -135,6 +135,36 @@ const emit = () => {
 
 const newId = () => `g_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
+const SEED_KEY = 'pathwayGroupSeed_v1';
+
+/**
+ * One-time demo seed for an ordinary user group with a stored membership list.
+ * Runs once per browser; afterwards the group behaves like any hand-made group
+ * (renameable, editable, deletable) and is never re-seeded.
+ */
+export function seedUserGroup(group: PathwayGroup, pathwayIds: number[]) {
+  try {
+    if (localStorage.getItem(SEED_KEY)) return;
+  } catch {
+    return;
+  }
+  const nameKey = group.name.trim().toLowerCase();
+  const drop = userGroups.filter((g) => g.id === group.id || g.name.trim().toLowerCase() === nameKey);
+  const dropIds = new Set(drop.map((g) => g.id));
+  userGroups = userGroups.filter((g) => !dropIds.has(g.id));
+  members = members.filter((m) => !dropIds.has(m.group_id));
+  hidden = hidden.filter((id) => id !== group.id);
+  userGroups = [...userGroups, group];
+  members = [...members, ...[...new Set(pathwayIds)].map((pid) => ({ group_id: group.id, pathway_id: pid }))];
+  try {
+    localStorage.setItem(SEED_KEY, '1');
+  } catch {
+    /* ignore */
+  }
+  emit();
+}
+
+
 /**
  * @param systemResolve maps a system group id to the pathway ids that satisfy its
  * rule. Called at render time — system membership is never stored.
@@ -312,9 +342,11 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
 }
 
 const CHIP = 'inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[9px] font-medium max-w-[86px]';
-const USER_CHIP = 'bg-muted text-foreground/70';
-/** System chips use the same neutral style as user chips; the lock/tooltip carries the distinction. */
-const SYSTEM_CHIP = USER_CHIP;
+/** User groups: outlined neutral grey. */
+const USER_CHIP = 'bg-transparent text-foreground/70 border border-border';
+/** System groups: solid neutral grey. Never teal — teal marks VCG-computed values. */
+const SYSTEM_CHIP = 'bg-muted text-foreground/70 border border-transparent';
+
 
 export const groupChipLabel = (g: PathwayGroup) => g.shortLabel ?? g.name;
 const chipLabel = groupChipLabel;
@@ -403,8 +435,11 @@ export const DerivedGroupChips: React.FC<{ items: DerivedGroupChip[] }> = ({ ite
       {unique.map((it) => {
         const all = it.count === it.total;
         const base = all
-          ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+          ? it.system
+            ? 'bg-muted-foreground/25 text-foreground/80 border border-transparent'
+            : 'bg-muted text-foreground/80 border border-border'
           : 'bg-transparent text-muted-foreground border border-dashed border-muted-foreground/50';
+
         return (
           <span
             key={it.id}

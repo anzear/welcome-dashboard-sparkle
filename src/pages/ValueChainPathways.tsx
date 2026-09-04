@@ -29,9 +29,10 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { usePathwayGroups, seedUserGroup, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
+import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
-import { Lock } from 'lucide-react';
+import { Lock, X } from 'lucide-react';
 
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
@@ -283,10 +284,27 @@ const ValueChainPathways = () => {
     return out;
   }, []);
   const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, updateGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
+  // Demo user group "test" — seeded once, then editable like any user group.
+  useEffect(() => {
+    seedUserGroup(
+      {
+        id: TEST_GROUP_ID,
+        name: 'test',
+        shortLabel: 'test',
+        type: 'user',
+        created_by: 'You',
+        created_at: new Date().toISOString(),
+      },
+      testGroupMemberIds(PREDEFINED_PATHWAYS),
+    );
+  }, []);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
 
   const [groupFilter, setGroupFilter] = useState<string[]>([]);
+  /** ANY: in at least one selected group. ALL: in every selected group. */
+  const [groupMatchMode, setGroupMatchMode] = useState<'any' | 'all'>('any');
+
   const [selectedPathwayIds, setSelectedPathwayIds] = useState<Set<number>>(new Set());
   const [newGroupOpen, setNewGroupOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
@@ -653,12 +671,17 @@ const ValueChainPathways = () => {
       });
     }
 
-    // Group membership — a pathway matches if it belongs to any selected group (AND with the rest).
+    // Group membership — ANY: in at least one selected group. ALL: in every one.
     if (groupFilter.length > 0) {
-      const allowed = new Set<number>();
-      groupFilter.forEach((gid) => memberIds(gid).forEach((pid) => allowed.add(pid)));
-      filtered = filtered.filter(({ originalIndex }) => allowed.has(originalIndex));
+      const sets = groupFilter.map((gid) => new Set(memberIds(gid)));
+      const effectiveMode = groupFilter.length < 2 ? 'any' : groupMatchMode;
+      filtered = filtered.filter(({ originalIndex }) =>
+        effectiveMode === 'all'
+          ? sets.every((s) => s.has(originalIndex))
+          : sets.some((s) => s.has(originalIndex)),
+      );
     }
+
 
     if (activeTab === 'saved') {
       filtered = filtered.filter(({ originalIndex }) => savedPathways.has(originalIndex));
@@ -698,7 +721,7 @@ if (sortBy === 'trl') {
     });
 
     return filtered;
-  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), groupFilter.join(','), membershipSignature]);
+  }, [allPathways.length, searchQuery, viabilityFilter, feedstockFilter, technologyFilter, applicationFilter, feedstockValueFilter, processValueFilter, productValueFilter, applicationValueFilter, vcgMinFilter, feedstockQtyMin, seasonalityFilter, productCategoryFilter, maturityFilter, activeTab, savedPathways, dislikedPathways, sortBy, opportunityFilterType, opportunityFilterValues.join(','), groupFilter.join(','), groupMatchMode, membershipSignature]);
 
 
 
@@ -1024,6 +1047,31 @@ if (sortBy === 'trl') {
                   </button>
                 </div>
               )}
+
+              {/* Active group filter */}
+              {groupFilter.length > 0 && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-medium bg-muted text-foreground/80 border border-border">
+                    Groups:{' '}
+                    {groupFilter
+                      .map((gid) => {
+                        const g = pathwayGroups.find((x) => x.id === gid);
+                        return g ? groupChipLabel(g) : gid;
+                      })
+                      .join(' + ')}
+                    {groupFilter.length >= 2 && ` (${groupMatchMode.toUpperCase()})`}
+                    <button
+                      onClick={() => setGroupFilter([])}
+                      title="Clear group filter"
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-2.5 h-2.5" />
+                    </button>
+                  </span>
+                </div>
+              )}
+
+
 
               {/* Feedstock chip filter (e.g., from Feedstock Snapshot) */}
               {feedstockValueFilter !== 'all' && (
@@ -2117,13 +2165,10 @@ if (sortBy === 'trl') {
                               )}
                             </div>
                             <div onClick={(e) => e.stopPropagation()}>
-                              <GroupChips
-                                groups={groupsOf(head.originalIndex)}
-                                onRemove={(gid) => removeFromGroupWithUndo(gid, [head.originalIndex])}
-                                tooltips={groupTooltips(head.pathway.feedstock)}
-
-                              />
+                              {/* Collapsed row: membership derived from the pathways beneath. */}
+                              <DerivedGroupChips items={derivedGroupChips(ids)} />
                             </div>
+
                           </div>
                         </div>
 
@@ -2295,6 +2340,29 @@ if (sortBy === 'trl') {
                           onChange={setGroupFilter}
                         />
                       </div>
+                      {/* Match mode — only meaningful with two or more groups selected. */}
+                      {groupFilter.length >= 2 && (
+                        <div className="grid grid-cols-[1fr_auto] items-center gap-2 mt-1">
+                          <label className="text-[10px] text-muted-foreground">Match</label>
+                          <div className="inline-flex items-center rounded-md bg-muted p-0.5">
+                            {(['any', 'all'] as const).map((m) => (
+                              <button
+                                key={m}
+                                type="button"
+                                onClick={() => setGroupMatchMode(m)}
+                                className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest transition-colors ${
+                                  groupMatchMode === m
+                                    ? 'bg-foreground text-background shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                              >
+                                {m}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                     </div>
 
                     {/* Pathway */}
