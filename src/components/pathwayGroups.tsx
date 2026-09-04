@@ -57,6 +57,7 @@ export const SYSTEM_GROUPS: PathwayGroup[] = [
     name: 'Annex IX Part A',
     shortLabel: '9A',
     type: 'system',
+    color: 'group-violet',
     source: 'RED II Directive (EU) 2018/2001, Annex IX Part A',
     version: '2018 consolidated list, points (a) to (q)',
     membershipRule: 'feedstock.annexIxPartA === true',
@@ -144,6 +145,22 @@ const emit = () => {
   localStorage.setItem(HIDDEN_KEY, JSON.stringify(hidden));
   localStorage.setItem(SYS_OVERRIDE_KEY, JSON.stringify(systemOverrides));
   listeners.forEach((l) => l());
+};
+
+/**
+ * Least-used palette colour wins; ties break by palette order. Never derived
+ * from list position, so deleting or reordering groups changes nothing.
+ */
+const nextGroupColor = (): GroupColor => {
+  const used = new Map<GroupColor, number>(GROUP_COLORS.map((c) => [c, 0]));
+  [...SYSTEM_GROUPS, ...userGroups].forEach((g) => {
+    if (g.color && used.has(g.color)) used.set(g.color, (used.get(g.color) ?? 0) + 1);
+  });
+  let best: GroupColor = GROUP_COLORS[0];
+  GROUP_COLORS.forEach((c) => {
+    if ((used.get(c) ?? 0) < (used.get(best) ?? 0)) best = c;
+  });
+  return best;
 };
 
 const newId = () => `g_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
@@ -251,6 +268,7 @@ export function usePathwayGroups(systemResolve?: (groupId: string) => number[]) 
       description: description?.trim() || undefined,
       shortLabel: shortLabel?.trim() || undefined,
       type: 'user',
+      color: nextGroupColor(),
       created_by: 'You',
       created_at: new Date().toISOString(),
     };
