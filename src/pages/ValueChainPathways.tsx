@@ -2833,7 +2833,11 @@ if (sortBy === 'trl') {
                   }}
                   className="flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-[11px] hover:bg-muted"
                 >
-                  <span className="truncate">{g.name}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <GroupColorDot color={g.color} />
+                    {isSystemGroup(g) && <Lock className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />}
+                    <span className="truncate">{g.name}</span>
+                  </span>
                   <span className="tabular-nums text-[10px] text-muted-foreground">{memberIds(g.id).length}</span>
                 </button>
               ))}
@@ -2877,6 +2881,12 @@ if (sortBy === 'trl') {
                 className="text-xs"
                 maxLength={8}
               />
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-muted-foreground">Chip preview</span>
+                <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[9px] font-medium ${groupChipClass(nextGroupColorPreview, 'fill')}`}>
+                  {newGroupTag.trim() || newGroupName.trim() || 'Group'}
+                </span>
+              </div>
               <p className="text-[10px] text-muted-foreground">Shown as the chip in the pathway list. Defaults to the group name.</p>
             </div>
             <div className="space-y-1">
