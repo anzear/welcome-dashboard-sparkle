@@ -598,7 +598,7 @@ const PathwayDetail = () => {
                           <div className="mt-1.5 text-[8px] text-muted-foreground leading-relaxed space-y-1">
                             <p>Each axis represents a normalized score (0–100) derived from publicly available data sources. Higher values indicate more favorable conditions for pathway viability.</p>
                             <p><strong className="text-foreground">Feedstock Price</strong> — Inverse of raw material cost. <strong className="text-foreground">Feedstock Qty</strong> — Supply volume availability relative to demand.</p>
-                            <p><strong className="text-foreground">Pathway TRL</strong> — Technology Readiness Level mapped linearly. <strong className="text-foreground">Yield</strong> — Product output per unit of feedstock sugar.</p>
+                            <p><strong className="text-foreground">Pathway TRL</strong> — Technology Readiness Level mapped linearly. <strong className="text-foreground">Yield</strong> — Theoretical yield as a percentage.</p>
                             <p><strong className="text-foreground">GHG Emissions</strong> — Inverse of cradle-to-gate emissions per tonne of product; higher is lower emitting.</p>
                             <p><strong className="text-foreground">Market Size</strong> — Addressable market value normalized against benchmarks. <strong className="text-foreground">Growth</strong> — CAGR scaled to sector averages.</p>
                           </div>
