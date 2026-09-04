@@ -407,26 +407,22 @@ const PathwayDetail = () => {
               <PathwayProfileGroups pathwayIndex={pathwayIndex} feedstock={currentFeedstock} />
               <div className="border border-border rounded-lg bg-card shadow-sm">
                 {/* Header row */}
-                <div className="px-3 py-1.5 border-b border-border bg-muted/50 rounded-t-lg grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2">
+                <div className="px-3 py-1.5 border-b border-border bg-muted/50 rounded-t-lg grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_75px] items-center gap-2">
                   <span></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">VCG Score <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Feedstock</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Process</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Material</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Application</span>
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">Research <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">IP <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">TRL</span>
                 </div>
                 {/* Single row matching table format */}
                 {(() => {
                   const score = Math.max(20, 95 - (parseInt(pathwayId || "0")) * 3);
-                  const researchScore = Math.min(100, Math.round(score * 0.95 + (parseInt(pathwayId || "0") % 5) * 2));
-                  const ipScore = Math.max(0, Math.min(100, Math.round(100 - score + (parseInt(pathwayId || "0") % 7) * 3)));
                   const trlLabel = getTRLStageLabel(pathway.trl);
                   const trlNum = parseInt(pathway.trl.replace('TRL ', ''));
                   return (
-                    <div className="px-3 py-2 grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2">
+                    <div className="px-3 py-2 grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_75px] items-center gap-2">
                       <button
                         onClick={toggleSave}
                         className="flex items-center justify-center text-muted-foreground hover:text-primary transition-colors"
@@ -493,28 +489,6 @@ const PathwayDetail = () => {
                           </PathwayFlowPopover>
                         </div>
                       ))}
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className="text-[11px] font-medium text-blue-600 text-center cursor-help hover:underline">{researchScore}</button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                          <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">Research Score</h4>
-                          <p className="text-[9px] text-muted-foreground leading-relaxed">
-                            Measures the volume and quality of scientific publications supporting this pathway. Based on publication count.
-                          </p>
-                        </PopoverContent>
-                      </Popover>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button className={`text-[11px] font-medium text-center cursor-help hover:underline ${ipScore > 60 ? 'text-red-500' : ipScore > 30 ? 'text-amber-600' : 'text-green-600'}`}>{ipScore}</button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-2.5" side="bottom" align="start">
-                          <h4 className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1">IP Score</h4>
-                          <p className="text-[9px] text-muted-foreground leading-relaxed">
-                            Indicates patent saturation. A high IP score means dense patent coverage — less room to operate. A low score signals open IP space and greater freedom to innovate.
-                          </p>
-                        </PopoverContent>
-                      </Popover>
                       <div className="text-center">
                         <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold ${
                           trlNum >= 8 ? 'bg-green-100 text-green-800 border border-green-200' :
