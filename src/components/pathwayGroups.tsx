@@ -448,7 +448,9 @@ export const GroupChips: React.FC<{
   onRemove?: (groupId: string) => void;
   /** groupId → tooltip text. */
   tooltips?: Record<string, string>;
-}> = ({ groups: gs, onRemove, tooltips }) => {
+  /** Chips shown before the "+N" overflow chip. Infinity shows them all. */
+  maxVisible?: number;
+}> = ({ groups: gs, onRemove, tooltips, maxVisible = 2 }) => {
   const seen = new Set<string>();
   const unique = gs.filter((g) => {
     if (seen.has(g.id)) return false;
@@ -456,8 +458,8 @@ export const GroupChips: React.FC<{
     return true;
   });
   if (unique.length === 0) return <span />;
-  const shown = unique.slice(0, 2);
-  const rest = unique.slice(2);
+  const shown = Number.isFinite(maxVisible) ? unique.slice(0, maxVisible) : unique;
+  const rest = Number.isFinite(maxVisible) ? unique.slice(maxVisible) : [];
   return (
     <div className="flex items-center justify-center gap-1 flex-wrap">
       {shown.map((g) => {
@@ -483,7 +485,10 @@ export const GroupChips: React.FC<{
         if (!tip) return <React.Fragment key={g.id}>{chip}</React.Fragment>;
         return (
           <Tooltip key={g.id}>
-            <TooltipTrigger asChild>{chip}</TooltipTrigger>
+            {/* tabIndex keeps the tooltip reachable by keyboard. */}
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-flex rounded outline-none focus-visible:ring-1 focus-visible:ring-ring">{chip}</span>
+            </TooltipTrigger>
             <TooltipContent side="top" className="max-w-[240px] text-[10px]">{tip}</TooltipContent>
           </Tooltip>
         );
