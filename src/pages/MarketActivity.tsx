@@ -810,10 +810,6 @@ const MarketActivity = () => {
                     <TabsTrigger value="uptakers" className="h-7 px-3 text-[10px] font-medium flex items-center justify-center gap-1 rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">
                       Market Off-takers ({filterCompaniesByType('market_uptaker').length})
                     </TabsTrigger>
-                    <TabsTrigger value="projects" className="h-7 px-3 text-[10px] font-medium flex items-center justify-center gap-1 rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">
-                      <FolderKanban className="h-3 w-3" />
-                      Projects ({filterCompaniesByType('projects').length})
-                    </TabsTrigger>
                   </TabsList>
                 </div>
                 <p className="text-[10px] text-muted-foreground mb-2 flex-shrink-0">
@@ -902,25 +898,6 @@ const MarketActivity = () => {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="projects" className="absolute inset-0 flex flex-col mt-0 data-[state=inactive]:hidden" style={{ top: '60px' }}>
-                  <div className="mb-3 flex-shrink-0">
-                    <div className="flex items-center gap-2">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-                        <Input placeholder="Search projects..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-7 pr-7 h-7 !text-[10px] border-border w-full" />
-                        {searchTerm && <Button variant="ghost" size="sm" onClick={() => setSearchTerm('')} className="absolute right-0.5 top-1/2 -translate-y-1/2 h-5 w-5 p-0 hover:bg-muted"><X className="h-2.5 w-2.5" /></Button>}
-                      </div>
-                      <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-                        <SelectTrigger className="w-[120px] h-7 text-[8px] border-border"><SelectValue placeholder="All Countries" /></SelectTrigger>
-                        <SelectContent>{[['all', 'All Countries'], ...uniqueCountries.map(c => [c, c])].map(([v, l]) => <SelectItem key={v} value={v} className="text-[9px]">{l}</SelectItem>)}</SelectContent>
-                      </Select>
-                      {(searchTerm || selectedCountry !== 'all') && <Button variant="ghost" size="sm" onClick={() => { setSearchTerm(''); setSelectedCountry('all'); setSelectedSize('all'); }} className="h-7 text-[8px] px-2 text-muted-foreground hover:text-foreground hover:bg-muted">Clear</Button>}
-                    </div>
-                  </div>
-                  <div className="flex-1 min-h-0">
-                    {renderCompanyTable('projects')}
-                  </div>
-                </TabsContent>
               </Tabs>
             </div>
 
@@ -929,9 +906,9 @@ const MarketActivity = () => {
 
         {/* Shortlisted Companies Section - filtered by active tab */}
         {(() => {
-          const tabTypeMap: Record<string, string> = { suppliers: 'feedstock', producers: 'product', uptakers: 'market_uptaker', projects: 'projects' };
+          const tabTypeMap: Record<string, string> = { suppliers: 'feedstock', producers: 'product', uptakers: 'market_uptaker'  };
           const currentType = tabTypeMap[activeTab] || 'feedstock';
-          const tabLabelMap: Record<string, string> = { suppliers: 'Feedstock Suppliers', producers: 'Product Producers', uptakers: 'Market Off-takers', projects: 'Projects' };
+          const tabLabelMap: Record<string, string> = { suppliers: 'Feedstock Suppliers', producers: 'Product Producers', uptakers: 'Market Off-takers' };
           const filteredSavedCount = getAllSavedCompanies(currentType).length;
           if (filteredSavedCount === 0) return null;
           return (
