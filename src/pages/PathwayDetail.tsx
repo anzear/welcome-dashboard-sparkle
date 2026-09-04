@@ -15,6 +15,7 @@ import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import VCGScoreBadge from '@/components/VCGScoreBadge';
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
+import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 
 
 const PathwayDetail = () => {
@@ -403,6 +404,7 @@ const PathwayDetail = () => {
                   : 'min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-y-contain'
               }`}>
               <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">Detailed breakdown of this pathway's value chain, scoring, and key metrics. Click on any node to explore alternatives.</p>
+              <PathwayProfileGroups pathwayIndex={pathwayIndex} feedstock={currentFeedstock} />
               <div className="border border-border rounded-lg bg-card shadow-sm">
                 {/* Header row */}
                 <div className="px-3 py-1.5 border-b border-border bg-muted/50 rounded-t-lg grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_65px_55px_75px] items-center gap-2">
