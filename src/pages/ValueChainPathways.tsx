@@ -32,7 +32,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { usePathwayGroups, seedUserGroup, GroupChips, DerivedGroupChips, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
-import { Lock } from 'lucide-react';
+import { Lock, X } from 'lucide-react';
 
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
 
