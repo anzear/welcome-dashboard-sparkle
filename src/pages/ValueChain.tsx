@@ -1001,17 +1001,13 @@ const FeedstockSnapshotSection: React.FC<{
                         <td className="px-2 py-2.5 tabular-nums text-center text-slate-700 font-medium">{r.pathways}</td>
                         <td className="px-2 py-2.5 whitespace-nowrap"><StagePill stage={stage} /></td>
                         <td className="px-2 py-2.5 whitespace-nowrap">
-                          {annexIxInfo(r.name).annexIxPartA ? (
-                            <span
-                              title={`Listed in RED II Annex IX Part A, point (${annexIxInfo(r.name).annexIxPoint}). Feedstock eligibility only — it does not imply the pathway is compliant.`}
-                              className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground/70"
-                            >
-                              9A
-                            </span>
+                          {(feedstockGroupChips.get(r.name) ?? []).length > 0 ? (
+                            <DerivedGroupChips items={feedstockGroupChips.get(r.name)!} />
                           ) : (
                             <span className="text-slate-300">—</span>
                           )}
                         </td>
+
                       </tr>
                     );
                   })
