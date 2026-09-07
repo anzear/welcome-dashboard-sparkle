@@ -829,7 +829,12 @@ const FeedstockSnapshotSection: React.FC<{
       }
       if (sortKey === 'name') return a.name.localeCompare(b.name);
       if (sortKey === 'groups') {
-        const label = (f: Feedstock) => (annexIxInfo(f.name).annexIxPartA ? '9A' : '');
+        // Alphabetical by group label; feedstocks with no group go to the bottom.
+        const label = (f: Feedstock) =>
+          (feedstockGroupChips.get(f.name) ?? [])
+            .map((c) => c.label ?? c.name)
+            .sort((x, y) => x.localeCompare(y))
+            .join(', ');
         const la = label(a);
         const lb = label(b);
         if (!la && !lb) return a.name.localeCompare(b.name);
@@ -837,6 +842,7 @@ const FeedstockSnapshotSection: React.FC<{
         if (!lb) return -1;
         return la.localeCompare(lb, undefined, { numeric: true }) || a.name.localeCompare(b.name);
       }
+
       return (a[sortKey as keyof Feedstock] as number) - (b[sortKey as keyof Feedstock] as number);
     });
     return rows;
