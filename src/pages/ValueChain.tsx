@@ -846,7 +846,7 @@ const FeedstockSnapshotSection: React.FC<{
       return (a[sortKey as keyof Feedstock] as number) - (b[sortKey as keyof Feedstock] as number);
     });
     return rows;
-  }, [filtered, sortKey]);
+  }, [filtered, sortKey, feedstockGroupChips]);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
