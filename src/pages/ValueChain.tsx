@@ -733,6 +733,49 @@ const FeedstockSnapshotSection: React.FC<{
   const PAGE_SIZE = 8;
   const feedstockCategories = useMemo(() => Array.from(new Set(data.map((d) => d.category))).sort(), [data]);
 
+  // ---- Groups shown here are the SAME groups as in Pathway Explorer ----
+  // Groups live on pathways; a feedstock's chips are derived from the pathways
+  // that use it. Full membership → filled chip, partial → outlined with count.
+  const systemResolve = React.useCallback((groupId: string): number[] => {
+    if (groupId !== ANNEX_IX_A_GROUP_ID) return [];
+    const out: number[] = [];
+    PREDEFINED_PATHWAYS.forEach((p, i) => {
+      if (annexIxInfo(p.feedstock).annexIxPartA) out.push(i);
+    });
+    return out;
+  }, []);
+  const { groups: pathwayGroups, memberIds } = usePathwayGroups(systemResolve);
+  const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+
+  const feedstockGroupChips = useMemo(() => {
+    const map = new Map<string, DerivedGroupChip[]>();
+    const totals = new Map<string, number>();
+    PREDEFINED_PATHWAYS.forEach((p) => totals.set(p.feedstock, (totals.get(p.feedstock) ?? 0) + 1));
+    pathwayGroups.forEach((g) => {
+      const counts = new Map<string, number>();
+      memberIds(g.id).forEach((pid) => {
+        const fs = PREDEFINED_PATHWAYS[pid]?.feedstock;
+        if (fs) counts.set(fs, (counts.get(fs) ?? 0) + 1);
+      });
+      counts.forEach((count, fs) => {
+        const list = map.get(fs) ?? [];
+        list.push({
+          id: g.id,
+          name: g.name,
+          label: groupChipLabel(g),
+          system: isSystemGroup(g),
+          color: g.color,
+          count,
+          total: totals.get(fs) ?? count,
+        });
+        map.set(fs, list);
+      });
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membershipSignature, pathwayGroups.length]);
+
+
 
 
   const STAGE_WEIGHT: Record<TrlStage, number> = { commercial: 1, pilot: 0.6, lab: 0.3 };
