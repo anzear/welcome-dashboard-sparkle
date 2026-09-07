@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ArrowRight, FileText, BookOpen, FolderKanban, Scale, BarChart3, ChevronRight, Search, ChevronDown, ChevronUp, MessageSquare, Bookmark, ThumbsDown, Download, List, ExternalLink, Info, Bell, BellOff, FlaskConical, ScrollText, Rocket, Factory, TrendingUp } from "lucide-react";
+import { ArrowLeft, FileText, Bookmark, ExternalLink, Info, Bell, BellOff, FlaskConical, ScrollText, Rocket, Factory, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import PathwayResourcesTab from "@/components/PathwayResourcesTab";
 import PathwayFlowPopover from "@/components/PathwayFlowPopover";
 import PathwayOpinionsTab from "@/components/PathwayOpinionsTab";
 import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import VCGScoreBadge from '@/components/VCGScoreBadge';
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 
@@ -22,7 +17,6 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [showMethodology, setShowMethodology] = useState(false);
   const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'updates' | 'company'>('evaluation');
 
   // State for favorites and saves
@@ -302,7 +296,64 @@ const PathwayDetail = () => {
   };
 
   const activeMetrics = getActiveMetrics();
-  const activeScore = Math.round(Object.values(activeMetrics.radar).reduce((a, b) => a + b, 0) / Object.values(activeMetrics.radar).length);
+
+  const displayMetric = (value?: string | null) => value && value.trim() ? value : '—';
+  const metricGrowthValue = (value: string) => displayMetric(value.replace('CAGR', 'YoY'));
+  const evaluationGroups: Array<{
+    category: string;
+    type: 'feedstock' | 'technology' | 'product' | 'application';
+    rows: Array<{ label: string; value: string; percentile: number; mutedDetail?: string }>;
+  }> = [
+    {
+      category: 'Feedstock',
+      type: 'feedstock',
+      rows: [
+        { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
+        { label: 'Feedstock supply potential (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
+        { label: 'Feedstock competition (Europe)', value: '38%', percentile: 47 },
+      ],
+    },
+    {
+      category: 'Process',
+      type: 'technology',
+      rows: [
+        { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
+        { label: 'Yield', value: displayMetric(activeMetrics.metrics.yield), percentile: activeMetrics.radar.yieldScore },
+      ],
+    },
+    {
+      category: 'Material',
+      type: 'product',
+      rows: [
+        { label: 'Material price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
+        { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
+        { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
+        { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
+        { label: 'Market growth (Global)', value: metricGrowthValue(activeMetrics.metrics.growthGlobal), percentile: activeMetrics.radar.growthGlobal },
+        { label: 'Market concentration', value: '34', mutedDetail: 'producers in 12 countries', percentile: 38 },
+      ],
+    },
+    {
+      category: 'Production',
+      type: 'technology',
+      rows: [
+        { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
+        { label: 'GHG emissions', value: displayMetric(activeMetrics.metrics.ghg), percentile: activeMetrics.radar.ghgScore },
+        { label: 'Production IP count', value: '412', percentile: 20 },
+        { label: 'Production research count', value: '1,268', percentile: 12 },
+      ],
+    },
+    {
+      category: 'Application',
+      type: 'application',
+      rows: [
+        { label: 'Application TRL', value: 'TRL 7', percentile: 76 },
+        { label: 'Application IP count', value: '96', percentile: 26 },
+        { label: 'Application research count', value: '743', percentile: 24 },
+        { label: 'Demand', value: '18', mutedDetail: 'offtakers in 7 countries', percentile: 29 },
+      ],
+    },
+  ];
 
   // Popover data for each flow item
   const flowPopoverData = {
