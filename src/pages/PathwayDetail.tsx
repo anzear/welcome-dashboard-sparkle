@@ -348,8 +348,7 @@ const PathwayDetail = () => {
       type: 'feedstock',
       rows: [
         { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
-        { label: 'Feedstock supply potential (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
-        { label: 'Feedstock competition (Europe)', value: '38%', percentile: 47 },
+        { label: 'Feedstock availability (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
       ],
     },
     {
