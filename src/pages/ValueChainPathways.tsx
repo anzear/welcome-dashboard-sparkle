@@ -2982,6 +2982,8 @@ if (sortBy === 'trl') {
             >
               Create group
             </Button>
+            )}
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
