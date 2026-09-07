@@ -631,9 +631,13 @@ const PathwayDetail = () => {
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className={`border-l-[3px] px-2 py-2 ${isHighlighted ? 'border-l-primary' : 'border-l-primary/60'}`}>
-                            <span className="text-[8px] uppercase tracking-widest text-muted-foreground/70">{group.category}</span>
+                          <div
+                            className="border-l-[3px] px-2 py-2"
+                            style={categoryStyle(group.category, isHighlighted)}
+                          >
+                            <span className="text-[8px] uppercase tracking-widest">{group.category}</span>
                           </div>
+
                           <div className="bg-background">
                             {group.rows.map((row) => (
                               <div
