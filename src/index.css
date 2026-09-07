@@ -152,7 +152,15 @@ All colors MUST be HSL.
     --group-bronze-fill: 28 40% 92%;
     --group-bronze-text: 25 48% 28%;
     --group-bronze-line: 25 38% 40%;
+
+    /* Pathway evaluation category tints. Shades of primary green. */
+    --cat-feedstock: 145 75% 26%;
+    --cat-process: 145 70% 35%;
+    --cat-material: 145 62% 44%;
+    --cat-production: 145 54% 52%;
+    --cat-application: 145 48% 60%;
   }
+
 
   .dark {
     --background: 222 47% 6%;
@@ -240,8 +248,16 @@ All colors MUST be HSL.
     --group-bronze-fill: 28 35% 20%;
     --group-bronze-text: 30 55% 82%;
     --group-bronze-line: 28 40% 58%;
+
+    /* Pathway evaluation category tints. Dark mode — lighter shades stay legible. */
+    --cat-feedstock: 145 75% 60%;
+    --cat-process: 145 70% 62%;
+    --cat-material: 145 62% 64%;
+    --cat-production: 145 54% 66%;
+    --cat-application: 145 48% 68%;
   }
 }
+
 
 /* Page transition animations */
 .page-transition-enter {
