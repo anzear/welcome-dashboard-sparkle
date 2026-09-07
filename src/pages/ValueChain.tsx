@@ -896,19 +896,19 @@ const FeedstockSnapshotSection: React.FC<{
           </div>
 
           <div className="rounded-lg border border-border/60 bg-card overflow-hidden">
-
-            <table className="w-full text-[12px] table-fixed border-collapse">
+            <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[780px] text-[12px] table-fixed border-collapse">
               <colgroup>
-                <col style={{ width: '48px' }} />
-                <col style={{ width: '22%' }} />
-                <col style={{ width: '18%' }} />
-                <col style={{ width: '14%' }} />
-                <col style={{ width: '16%' }} />
-                <col style={{ width: '9%' }} />
+                <col style={{ width: '44px' }} />
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '15%' }} />
                 <col style={{ width: '13%' }} />
-                <col style={{ width: '8%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '9%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '9%' }} />
               </colgroup>
-              <thead className="bg-muted/40 border-b border-border/60 text-slate-500 uppercase tracking-widest text-[10px]">
+              <thead className="bg-muted/40 border-b border-border/60 text-slate-500 uppercase tracking-wider text-[10px]">
                 <tr>
                   {([
                     ['rank', '#', 'center'],
@@ -923,13 +923,14 @@ const FeedstockSnapshotSection: React.FC<{
                     <th
                       key={`${key}-${i}`}
                       onClick={() => setSortKey(key)}
-                      className={`px-4 py-2.5 cursor-pointer select-none hover:text-slate-900 whitespace-nowrap font-semibold ${align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'} ${sortKey === key ? 'text-slate-900' : ''}`}
+                      className={`px-2 py-2.5 cursor-pointer select-none hover:text-slate-900 leading-tight font-semibold ${align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'} ${sortKey === key ? 'text-slate-900' : ''}`}
                     >
                       {label}
                     </th>
                   ))}
                 </tr>
               </thead>
+
               <tbody className="bg-card">
                 {pagedRows.length === 0 ? (
                   <tr>
