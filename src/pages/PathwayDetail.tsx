@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, ArrowRight, FileText, BookOpen, FolderKanban, Scale, BarChart3, ChevronRight, Search, ChevronDown, ChevronUp, MessageSquare, Bookmark, ThumbsDown, Download, List, ExternalLink, Info, Bell, BellOff, FlaskConical, ScrollText, Rocket, Factory, TrendingUp } from "lucide-react";
+import { ArrowLeft, FileText, Bookmark, ExternalLink, Info, Bell, BellOff, FlaskConical, ScrollText, Rocket, Factory, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import PathwayResourcesTab from "@/components/PathwayResourcesTab";
 import PathwayFlowPopover from "@/components/PathwayFlowPopover";
 import PathwayOpinionsTab from "@/components/PathwayOpinionsTab";
 import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import VCGScoreBadge from '@/components/VCGScoreBadge';
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 
@@ -22,7 +17,6 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [showMethodology, setShowMethodology] = useState(false);
   const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'updates' | 'company'>('evaluation');
 
   // State for favorites and saves
@@ -275,8 +269,13 @@ const PathwayDetail = () => {
       const alt = alternativeMetrics[swaps.technology];
       radar.capex = alt.radar.capex;
       radar.yield = alt.radar.yield;
+      radar.trlScore = alt.radar.trlScore;
+      radar.yieldScore = alt.radar.yieldScore;
+      radar.ghgScore = alt.radar.ghgScore;
       metrics.capex = alt.metrics.capex;
       metrics.trl = alt.metrics.trl;
+      metrics.yield = alt.metrics.yield;
+      metrics.ghg = alt.metrics.ghg;
     }
     // Apply product swap
     if (swaps.product && alternativeMetrics[swaps.product]) {
@@ -286,6 +285,7 @@ const PathwayDetail = () => {
       radar.sizeEU = alt.radar.sizeEU;
       radar.growthGlobal = alt.radar.growthGlobal;
       radar.growthEU = alt.radar.growthEU;
+      metrics.appPrice = alt.metrics.appPrice;
       metrics.marketGlobal = alt.metrics.marketGlobal;
       metrics.marketEU = alt.metrics.marketEU;
       metrics.growthGlobal = alt.metrics.growthGlobal;
@@ -302,7 +302,64 @@ const PathwayDetail = () => {
   };
 
   const activeMetrics = getActiveMetrics();
-  const activeScore = Math.round(Object.values(activeMetrics.radar).reduce((a, b) => a + b, 0) / Object.values(activeMetrics.radar).length);
+
+  const displayMetric = (value?: string | null) => value && value.trim() ? value : '—';
+  const metricGrowthValue = (value: string) => displayMetric(value.replace('CAGR', 'YoY'));
+  const evaluationGroups: Array<{
+    category: string;
+    type: 'feedstock' | 'technology' | 'product' | 'application';
+    rows: Array<{ label: string; value: string; percentile: number; mutedDetail?: string }>;
+  }> = [
+    {
+      category: 'Feedstock',
+      type: 'feedstock',
+      rows: [
+        { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
+        { label: 'Feedstock supply potential (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
+        { label: 'Feedstock competition (Europe)', value: '38%', percentile: 47 },
+      ],
+    },
+    {
+      category: 'Process',
+      type: 'technology',
+      rows: [
+        { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
+        { label: 'Yield', value: displayMetric(activeMetrics.metrics.yield), percentile: activeMetrics.radar.yieldScore },
+      ],
+    },
+    {
+      category: 'Material',
+      type: 'product',
+      rows: [
+        { label: 'Material price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
+        { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
+        { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
+        { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
+        { label: 'Market growth (Global)', value: metricGrowthValue(activeMetrics.metrics.growthGlobal), percentile: activeMetrics.radar.growthGlobal },
+        { label: 'Market concentration', value: '34', mutedDetail: 'producers in 12 countries', percentile: 38 },
+      ],
+    },
+    {
+      category: 'Production',
+      type: 'technology',
+      rows: [
+        { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
+        { label: 'GHG emissions', value: displayMetric(activeMetrics.metrics.ghg), percentile: activeMetrics.radar.ghgScore },
+        { label: 'Production IP count', value: '412', percentile: 20 },
+        { label: 'Production research count', value: '1,268', percentile: 12 },
+      ],
+    },
+    {
+      category: 'Application',
+      type: 'application',
+      rows: [
+        { label: 'Application TRL', value: 'TRL 7', percentile: 76 },
+        { label: 'Application IP count', value: '96', percentile: 26 },
+        { label: 'Application research count', value: '743', percentile: 24 },
+        { label: 'Demand', value: '18', mutedDetail: 'offtakers in 7 countries', percentile: 29 },
+      ],
+    },
+  ];
 
   // Popover data for each flow item
   const flowPopoverData = {
@@ -535,106 +592,72 @@ const PathwayDetail = () => {
 
                 {evaluationTab === 'evaluation' ? (
                   <>
-                <p className="text-[10px] text-muted-foreground leading-relaxed mb-1.5 max-w-[550px]">
-                  This evaluation scores the pathway across key economic and technical dimensions. Higher scores indicate stronger commercial viability and lower investment risk.
-                </p>
-                <div className="flex gap-3 flex-1">
-                  {/* Radar Chart */}
-                  <div className="flex-shrink-0 w-[340px] border border-border rounded-lg bg-muted/50 p-1 flex flex-col">
-                    <div className="flex flex-col items-center flex-1 justify-center">
-                       <div className="relative">
-                         <ResponsiveContainer width={380} height={220}>
-                          <RadarChart data={[
-                            { param: 'Feedstock Price', value: activeMetrics.radar.feedstockPrice, fullMark: 100, metricType: 'feedstock' },
-                            { param: 'Feedstock Qty', value: activeMetrics.radar.supplyVolume, fullMark: 100, metricType: 'feedstock' },
-                            { param: 'Pathway TRL', value: activeMetrics.radar.trlScore, fullMark: 100, metricType: 'technology' },
-                            { param: 'Yield', value: activeMetrics.radar.yieldScore, fullMark: 100, metricType: 'technology' },
-                            { param: 'GHG Emissions', value: activeMetrics.radar.ghgScore, fullMark: 100, metricType: 'technology' },
-                            { param: 'Market Size (Global)', value: activeMetrics.radar.sizeGlobal, fullMark: 100, metricType: 'product' },
-                            { param: 'Market Size (EU)', value: activeMetrics.radar.sizeEU, fullMark: 100, metricType: 'product' },
-                            { param: 'Growth (Global)', value: activeMetrics.radar.growthGlobal, fullMark: 100, metricType: 'product' },
-                            { param: 'Growth (EU)', value: activeMetrics.radar.growthEU, fullMark: 100, metricType: 'product' },
-                          ]}
-                          onMouseLeave={() => setHoveredFlowType(null)}
-                          >
-                            <PolarGrid stroke="hsl(var(--border))" />
-                            <PolarAngleAxis 
-                              dataKey="param" 
-                              tick={({ x, y, payload, index }: any) => {
-                                const radarTypes = [
-                                  'feedstock', 'feedstock',
-                                  'technology', 'technology', 'technology',
-                                  'product', 'product',
-                                  'product', 'product',
-                                ];
-                                const metricType = radarTypes[index];
-                                return (
-                                  <text
-                                    x={x} y={y}
-                                    fontSize={7}
-                                    fill={hoveredFlowType === metricType ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}
-                                    fontWeight={hoveredFlowType === metricType ? 600 : 400}
-                                    textAnchor="middle"
-                                    dominantBaseline="central"
-                                    style={{ cursor: 'pointer', transition: 'fill 0.2s' }}
-                                    onMouseEnter={() => setHoveredFlowType(metricType || null)}
-                                  >
-                                    {payload.value}
-                                  </text>
-                                );
-                              }}
-                            />
-                            <PolarRadiusAxis angle={90} domain={[0, 100]} tick={false} axisLine={false} />
-                            <Radar name="VCG Score" dataKey="value" stroke="hsl(var(--primary))" fill="hsl(var(--primary))" fillOpacity={0.15} strokeWidth={1.5} dot={{ r: 2, fill: 'hsl(var(--primary))' }} />
-                          </RadarChart>
-                        </ResponsiveContainer>
-                      </div>
-                      <div className="mt-2 px-2">
-                        <details className="group">
-                          <summary className="text-[8px] font-semibold text-muted-foreground uppercase tracking-wider cursor-pointer hover:text-foreground transition-colors flex items-center gap-1">
-                            <Info className="w-2.5 h-2.5" />
-                            Methodology
-                          </summary>
-                          <div className="mt-1.5 text-[8px] text-muted-foreground leading-relaxed space-y-1">
-                            <p>Each axis represents a normalized score (0–100) derived from publicly available data sources. Higher values indicate more favorable conditions for pathway viability.</p>
-                            <p><strong className="text-foreground">Feedstock Price</strong> — Inverse of raw material cost. <strong className="text-foreground">Feedstock Qty</strong> — Supply volume availability relative to demand.</p>
-                            <p><strong className="text-foreground">Pathway TRL</strong> — Technology Readiness Level mapped linearly. <strong className="text-foreground">Yield</strong> — Theoretical yield as a percentage.</p>
-                            <p><strong className="text-foreground">GHG Emissions</strong> — Inverse of cradle-to-gate emissions per tonne of product; higher is lower emitting.</p>
-                            <p><strong className="text-foreground">Market Size</strong> — Addressable market value normalized against benchmarks. <strong className="text-foreground">Growth</strong> — CAGR scaled to sector averages.</p>
-                          </div>
-                        </details>
-                      </div>
-                    </div>
+                <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
+                  <div className="grid grid-cols-[66px_minmax(190px,1fr)_110px_42px_minmax(170px,0.8fr)_42px] items-center border-b border-border bg-muted/30 px-2 py-2">
+                    <span className="text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Indicator</span>
+                    <span></span>
+                    <span className="text-right text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Value</span>
+                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Low</span>
+                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Percentile</span>
+                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">High</span>
                   </div>
-
-                  {/* Data breakdown */}
-                  <div className="flex-1 space-y-0">
-                    <h4 className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest mb-0.5 bg-muted/50 rounded-md -mx-1.5 px-1.5 py-1.5">Key Pathway Metrics</h4>
-                    {[
-                      { label: 'Feedstock Price (EU)', value: activeMetrics.metrics.feedstockPrice, url: 'https://www.indexmundi.com/commodities/?commodity=corn', sources: 4, type: 'feedstock' },
-                      { label: 'Feedstock Quantity (EU)', value: activeMetrics.metrics.feedstockQty, url: 'https://ec.europa.eu/eurostat', sources: 3, type: 'feedstock' },
-                      { label: 'Pathway TRL', value: activeMetrics.metrics.trl, url: 'https://www.sciencedirect.com', sources: 5, type: 'technology' },
-                      { label: 'Yield', value: activeMetrics.metrics.yield, url: 'https://www.sciencedirect.com', sources: 3, type: 'technology' },
-                      { label: 'GHG Emissions (cradle-to-gate)', value: activeMetrics.metrics.ghg, url: 'https://www.sciencedirect.com', sources: 4, type: 'technology' },
-                      { label: 'Material Market Size (Global)', value: activeMetrics.metrics.marketGlobal, url: 'https://www.marketsandmarkets.com', sources: 6, type: 'product' },
-                      { label: 'Material Market Size (EU)', value: activeMetrics.metrics.marketEU, url: 'https://www.marketsandmarkets.com', sources: 4, type: 'product' },
-                      { label: 'Material Market Growth (Global)', value: activeMetrics.metrics.growthGlobal, url: 'https://www.grandviewresearch.com', sources: 5, type: 'product' },
-                      { label: 'Material Market Growth (EU)', value: activeMetrics.metrics.growthEU, url: 'https://www.grandviewresearch.com', sources: 3, type: 'product' },
-                    ].map((item, i) => {
-                      const isHighlighted = hoveredFlowType === item.type;
+                  <div className="overflow-y-auto">
+                    {evaluationGroups.map((group) => {
+                      const isHighlighted = hoveredFlowType === group.type;
                       return (
-                        <div key={i} onMouseEnter={() => setHoveredFlowType(item.type)} onMouseLeave={() => setHoveredFlowType(null)} className={`flex justify-between items-center border-b border-border/30 py-[3px] transition-all duration-200 cursor-default ${isHighlighted ? 'bg-primary/8 -mx-1.5 px-1.5 rounded-sm border-l-2 border-l-primary' : i % 2 === 1 ? 'bg-muted/40 -mx-1.5 px-1.5 rounded-sm' : ''}`}>
-                          <span className={`text-[9px] transition-colors duration-200 ${isHighlighted ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{item.label}</span>
-                          <div className="flex items-center gap-1.5">
-                            <span key={String(item.value)} className={`text-[10px] font-semibold transition-colors duration-200 inline-block animate-value-pop ${isHighlighted ? 'text-primary' : 'text-foreground'}`}>{item.value}</span>
-                            <a href={item.url} target="_blank" rel="noopener noreferrer" title="View source">
-                              <ExternalLink className="w-2.5 h-2.5 text-muted-foreground hover:text-primary transition-colors" />
-                            </a>
+                        <div
+                          key={group.category}
+                          className={`grid grid-cols-[66px_1fr] border-b border-border/50 transition-colors ${isHighlighted ? 'bg-primary/5' : 'bg-muted/20'}`}
+                          onMouseEnter={() => setHoveredFlowType(group.type)}
+                          onMouseLeave={() => setHoveredFlowType(null)}
+                        >
+                          <div className={`border-l-[3px] px-2 py-2 ${isHighlighted ? 'border-l-primary' : 'border-l-primary/60'}`}>
+                            <span className="text-[8px] uppercase tracking-widest text-muted-foreground/70">{group.category}</span>
+                          </div>
+                          <div className="bg-background">
+                            {group.rows.map((row) => (
+                              <div
+                                key={`${group.category}-${row.label}`}
+                                className="grid min-h-[30px] grid-cols-[minmax(190px,1fr)_110px_42px_minmax(170px,0.8fr)_42px] items-center gap-0 px-2"
+                              >
+                                <span className="truncate text-[10px] font-medium text-foreground" title={row.label}>{row.label}</span>
+                                <div className="flex items-center justify-end gap-1.5 min-w-0">
+                                  <span className={`truncate text-right text-[10px] font-semibold tabular-nums ${row.value === '—' ? 'text-muted-foreground' : 'text-foreground'}`}>
+                                    {row.value}
+                                    {row.mutedDetail && <span className="ml-1 text-[8px] font-normal text-muted-foreground">{row.mutedDetail}</span>}
+                                  </span>
+                                  {row.value !== '—' && <ExternalLink className="h-2.5 w-2.5 shrink-0 text-muted-foreground/60" />}
+                                </div>
+                                <span></span>
+                                <div className="relative h-4">
+                                  <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
+                                  <div
+                                    className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-primary"
+                                    style={{ width: `${Math.max(0, Math.min(100, row.percentile))}%` }}
+                                  />
+                                  <div
+                                    className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+                                    style={{ left: `${Math.max(0, Math.min(100, row.percentile))}%` }}
+                                  />
+                                </div>
+                                <span></span>
+                              </div>
+                            ))}
                           </div>
                         </div>
                       );
                     })}
                   </div>
+                  <details className="group border-t border-border bg-muted/20 px-2 py-2">
+                    <summary className="flex cursor-pointer items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground">
+                      <Info className="h-3 w-3" />
+                      Methodology
+                    </summary>
+                    <div className="mt-2 grid gap-1 text-[9px] leading-relaxed text-muted-foreground md:grid-cols-2">
+                      <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position.</p>
+                      <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of material.</p>
+                    </div>
+                  </details>
                 </div>
                   </>
                 ) : evaluationTab === 'updates' ? (
