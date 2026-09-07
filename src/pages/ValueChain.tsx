@@ -748,6 +748,21 @@ const FeedstockSnapshotSection: React.FC<{
   }, []);
   const { groups: pathwayGroups, memberIds } = usePathwayGroups(systemResolve);
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+  // Same one-time demo seed as Pathway Explorer, so both screens list the same groups.
+  useEffect(() => {
+    seedUserGroup(
+      {
+        id: TEST_GROUP_ID,
+        name: 'test',
+        shortLabel: 'test',
+        type: 'user',
+        color: 'group-fuchsia',
+        created_by: 'You',
+        created_at: new Date().toISOString(),
+      },
+      testGroupMemberIds(PREDEFINED_PATHWAYS),
+    );
+  }, []);
 
   const feedstockGroupChips = useMemo(() => {
     const map = new Map<string, DerivedGroupChip[]>();
