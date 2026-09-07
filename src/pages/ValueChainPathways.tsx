@@ -2843,13 +2843,49 @@ if (sortBy === 'trl') {
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-sm">New group</DialogTitle>
+            <DialogTitle className="text-sm">{groupDialogMode === 'new' ? 'New group' : 'Add to existing group'}</DialogTitle>
             <DialogDescription className="text-xs">
               {selectedPathwayIds.size} selected pathway{selectedPathwayIds.size === 1 ? '' : 's'} will be added to this group.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-2">
+          <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+            {(['new', 'existing'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setGroupDialogMode(m)}
+                className={`flex-1 rounded px-2 py-1 text-[10px] font-medium transition-colors ${groupDialogMode === m ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {m === 'new' ? 'New group' : 'Existing group'}
+              </button>
+            ))}
+          </div>
+          {groupDialogMode === 'existing' ? (
             <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group</label>
+              {pathwayGroups.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No groups yet — create one instead.</p>
+              ) : (
+                <div className="max-h-56 space-y-0.5 overflow-y-auto">
+                  {pathwayGroups.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setGroupDialogTargetId(g.id)}
+                      className={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[11px] transition-colors ${groupDialogTargetId === g.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/60'}`}
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <GroupColorDot color={g.color} />
+                        {isSystemGroup(g) && <Lock className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />}
+                        <span className="truncate">{g.name}</span>
+                      </span>
+                      <span className="tabular-nums text-[10px] text-muted-foreground">{memberIds(g.id).length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
+          <div className="space-y-2">
+
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
               <Input
                 autoFocus
