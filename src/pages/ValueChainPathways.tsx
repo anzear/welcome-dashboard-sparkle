@@ -295,6 +295,9 @@ const ValueChainPathways = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [newGroupTag, setNewGroupTag] = useState('');
+  const [groupDialogMode, setGroupDialogMode] = useState<'new' | 'existing'>('new');
+  const [groupDialogTargetId, setGroupDialogTargetId] = useState<string>('');
+
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
   const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
     const next = new Set(prev);
@@ -1180,6 +1183,8 @@ if (sortBy === 'trl') {
                       return;
                     }
                     setNewGroupName('');
+                    setGroupDialogMode('new');
+                    setGroupDialogTargetId('');
                     setNewGroupOpen(true);
                   }}
                   className="flex items-center gap-1 px-2 py-1 rounded-md border border-border text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors"
@@ -2787,7 +2792,7 @@ if (sortBy === 'trl') {
           </span>
           <span className="h-4 w-px bg-border" />
           <button
-            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupTag(''); setNewGroupOpen(true); }}
+            onClick={() => { setNewGroupName(''); setNewGroupDescription(''); setNewGroupTag(''); setGroupDialogMode('new'); setGroupDialogTargetId(''); setNewGroupOpen(true); }}
             className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             <PlusSquare className="w-3 h-3" />
@@ -2840,13 +2845,51 @@ if (sortBy === 'trl') {
       <Dialog open={newGroupOpen} onOpenChange={setNewGroupOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-sm">New group</DialogTitle>
+            <DialogTitle className="text-sm">{groupDialogMode === 'new' ? 'New group' : 'Add to existing group'}</DialogTitle>
             <DialogDescription className="text-xs">
               {selectedPathwayIds.size} selected pathway{selectedPathwayIds.size === 1 ? '' : 's'} will be added to this group.
             </DialogDescription>
           </DialogHeader>
+          <div className="flex items-center gap-1 rounded-md bg-muted p-0.5">
+            {(['new', 'existing'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setGroupDialogMode(m)}
+                className={`flex-1 rounded px-2 py-1 text-[10px] font-medium transition-colors ${groupDialogMode === m ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                {m === 'new' ? 'New group' : 'Existing group'}
+              </button>
+            ))}
+          </div>
+          {groupDialogMode === 'existing' ? (
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group</label>
+              {pathwayGroups.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No groups yet — create one instead.</p>
+              ) : (
+                <div className="max-h-56 space-y-0.5 overflow-y-auto">
+                  {pathwayGroups.map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => setGroupDialogTargetId(g.id)}
+                      className={`flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[11px] transition-colors ${groupDialogTargetId === g.id ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/60'}`}
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <GroupColorDot color={g.color} />
+                        {isSystemGroup(g) && <Lock className="w-2.5 h-2.5 shrink-0 text-muted-foreground" />}
+                        <span className="truncate">{g.name}</span>
+                      </span>
+                      <span className="tabular-nums text-[10px] text-muted-foreground">{memberIds(g.id).length}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="space-y-2">
             <div className="space-y-1">
+
+
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
               <Input
                 autoFocus
@@ -2885,8 +2928,33 @@ if (sortBy === 'trl') {
               />
             </div>
           </div>
+          )}
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
+            {groupDialogMode === 'existing' ? (
+              <Button
+                size="sm"
+                disabled={groupDialogTargetId === '' || selectedPathwayIds.size === 0}
+                onClick={() => {
+                  const g = pathwayGroups.find((x) => x.id === groupDialogTargetId);
+                  if (!g) return;
+                  const ids = [...selectedPathwayIds];
+                  const added = addToGroup(g.id, ids);
+                  setNewGroupOpen(false);
+                  clearSelection();
+                  toast({
+                    title: `Saved to ${g.name}`,
+                    description:
+                      added === 0
+                        ? 'Already in this group — nothing added.'
+                        : `${added} of ${ids.length} selected pathway${ids.length === 1 ? '' : 's'} added${added < ids.length ? '; the rest were already in this group' : ''}.`,
+                    action: added > 0 ? <ToastAction altText="Undo" onClick={() => removeFromGroup(g.id, ids)}>Undo</ToastAction> : undefined,
+                  });
+                }}
+              >
+                Add to group
+              </Button>
+            ) : (
             <Button
               size="sm"
               disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
@@ -2912,9 +2980,12 @@ if (sortBy === 'trl') {
                 });
               }}
 
+
             >
               Create group
             </Button>
+            )}
+
           </DialogFooter>
         </DialogContent>
       </Dialog>
