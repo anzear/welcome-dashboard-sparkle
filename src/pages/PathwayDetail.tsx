@@ -305,6 +305,25 @@ const PathwayDetail = () => {
 
   const displayMetric = (value?: string | null) => value && value.trim() ? value : '—';
   const metricGrowthValue = (value: string) => displayMetric(value.replace('CAGR', 'YoY'));
+
+  const categoryPalette: Record<string, string> = {
+    Feedstock: '--cat-feedstock',
+    Process: '--cat-process',
+    Material: '--cat-material',
+    Production: '--cat-production',
+    Application: '--cat-application',
+  };
+
+  const categoryStyle = (category: string, highlighted = false): React.CSSProperties => {
+    const v = categoryPalette[category];
+    if (!v) return {};
+    return {
+      borderLeftColor: `hsl(var(${v})${highlighted ? '' : ' / 0.85'})`,
+      backgroundColor: `hsl(var(${v})${highlighted ? ' / 0.14' : ' / 0.08'})`,
+      color: `hsl(var(${v})${highlighted ? '' : ' / 0.85'})`,
+    };
+  };
+
   const evaluationGroups: Array<{
     category: string;
     type: 'feedstock' | 'technology' | 'product' | 'application';
@@ -360,6 +379,7 @@ const PathwayDetail = () => {
       ],
     },
   ];
+
 
   // Popover data for each flow item
   const flowPopoverData = {
