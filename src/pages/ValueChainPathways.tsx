@@ -2833,6 +2833,40 @@ if (sortBy === 'trl') {
               ))}
             </PopoverContent>
           </Popover>
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="rounded-md border border-border px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground">
+                Remove from Group
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="center" className="w-56 p-1">
+              {(() => {
+                const removable = pathwayGroups.filter((g) => !isSystemGroup(g) && memberIds(g.id).some((id) => selectedPathwayIds.has(id)));
+                if (removable.length === 0) {
+                  return <div className="px-2 py-1.5 text-[11px] text-muted-foreground">Selected pathways are not in any editable group</div>;
+                }
+                return removable.map((g) => {
+                  const ids = memberIds(g.id).filter((id) => selectedPathwayIds.has(id));
+                  return (
+                    <button
+                      key={g.id}
+                      onClick={() => {
+                        removeFromGroupWithUndo(g.id, ids);
+                        clearSelection();
+                      }}
+                      className="flex w-full items-center justify-between rounded-sm px-2 py-1 text-left text-[11px] hover:bg-muted"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <GroupColorDot color={g.color} />
+                        <span className="truncate">{g.name}</span>
+                      </span>
+                      <span className="tabular-nums text-[10px] text-muted-foreground">−{ids.length}</span>
+                    </button>
+                  );
+                });
+              })()}
+            </PopoverContent>
+          </Popover>
           <button
             onClick={clearSelection}
             className="text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
