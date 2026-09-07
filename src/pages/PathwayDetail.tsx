@@ -613,65 +613,98 @@ const PathwayDetail = () => {
                 {evaluationTab === 'evaluation' ? (
                   <>
                 <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
-                  <div className="grid grid-cols-[66px_minmax(190px,1fr)_110px_42px_minmax(170px,0.8fr)_42px] items-center border-b border-border bg-muted/30 px-2 py-2">
-                    <span className="text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Indicator</span>
-                    <span></span>
-                    <span className="text-right text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Value</span>
-                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Low</span>
-                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">Percentile</span>
-                    <span className="text-center text-[8px] font-semibold uppercase tracking-widest text-muted-foreground">High</span>
-                  </div>
-                  <div className="overflow-y-auto">
-                    {evaluationGroups.map((group) => {
+                  <div className="h-full overflow-y-auto">
+                    <div className="sticky top-0 z-10 grid grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
+                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
+                      <span className="text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <div className="relative flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                        <span>Low</span>
+                        <span className="absolute left-1/2 -translate-x-1/2">Percentile</span>
+                        <span>High</span>
+                      </div>
+                    </div>
+                    {evaluationGroups.map((group, groupIndex) => {
                       const isHighlighted = hoveredFlowType === group.type;
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[66px_1fr] border-b border-border/50 transition-colors mb-1 last:mb-0 ${isHighlighted ? 'bg-primary/5' : 'bg-muted/20'}`}
+                          className={groupIndex > 0 ? 'border-t border-foreground/10' : ''}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div
-                            className="border-l-[3px] px-2 py-2"
-                            style={categoryStyle(group.category, isHighlighted)}
-                          >
-                            <span className="text-[8px] uppercase tracking-widest">{group.category}</span>
+                          <div className="mt-3 flex items-center px-3 py-1.5">
+                            <span
+                              className="mr-2 h-4 w-[3px] rounded-full"
+                              style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
+                            />
+                            <span className={`text-[11px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
+                              {group.category}
+                            </span>
                           </div>
 
-                          <div className="bg-background">
-                            {group.rows.map((row) => (
-                              <div
-                                key={`${group.category}-${row.label}`}
-                                className="grid min-h-[30px] grid-cols-[minmax(190px,1fr)_110px_42px_minmax(170px,0.8fr)_42px] items-center gap-0 px-2"
-                              >
-                                <span className="truncate text-[10px] font-medium text-foreground" title={row.label}>{row.label}</span>
-                                <div className="flex items-center justify-end gap-1.5 min-w-0">
-                                  <span className={`truncate text-right text-[10px] font-semibold tabular-nums ${row.value === '—' ? 'text-muted-foreground' : 'text-foreground'}`}>
-                                    {row.value}
-                                    {row.mutedDetail && <span className="ml-1 text-[8px] font-normal text-muted-foreground">{row.mutedDetail}</span>}
-                                  </span>
-                                  {row.value !== '—' && <ExternalLink className="h-2.5 w-2.5 shrink-0 text-muted-foreground/60" />}
+                          <div>
+                            {group.rows.map((row) => {
+                              const isNull = !row.value || row.value === '—';
+                              const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
+                              const { number, unit } = splitValueUnit(row.value);
+                              return (
+                                <div
+                                  key={`${group.category}-${row.label}`}
+                                  tabIndex={0}
+                                  className="group/row grid h-12 grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center px-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                >
+                                  <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
+
+                                  <div className="flex items-start justify-end gap-1.5 min-w-0">
+                                    <div className="min-w-0 text-right">
+                                      {isNull ? (
+                                        <span className="text-[11px] tabular-nums text-muted-foreground">—</span>
+                                      ) : (
+                                        <span className="text-[11px] tabular-nums whitespace-nowrap">
+                                          <span className="font-medium text-foreground">{number}</span>
+                                          {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
+                                        </span>
+                                      )}
+                                      {row.mutedDetail && (
+                                        <div className="text-[11px] font-normal leading-tight text-muted-foreground">{row.mutedDetail}</div>
+                                      )}
+                                    </div>
+                                    <ExternalLink className="mt-[3px] h-2.5 w-2.5 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                  </div>
+
+                                  <div className="relative h-4">
+                                    {isNull ? (
+                                      <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                    ) : (
+                                      <>
+                                        <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                        <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
+                                        <div
+                                          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
+                                          style={{ width: `${pct}%` }}
+                                        />
+                                        <div
+                                          className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                          style={{ left: `${pct}%` }}
+                                        />
+                                        <span
+                                          className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[10px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
+                                          style={{ left: `calc(${pct}% + 6px)` }}
+                                        >
+                                          {Math.round(row.percentile)}
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                                <span></span>
-                                <div className="relative h-4">
-                                  <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-muted" />
-                                  <div
-                                    className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
-                                    style={{ width: `${Math.max(0, Math.min(100, row.percentile))}%` }}
-                                  />
-                                  <div
-                                    className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-sm ring-2 ring-background"
-                                    style={{ left: `${Math.max(0, Math.min(100, row.percentile))}%` }}
-                                  />
-                                </div>
-                                <span></span>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                         </div>
                       );
                     })}
                   </div>
+
                   <details className="group border-t border-border bg-muted/20 px-2 py-2">
                     <summary className="flex cursor-pointer items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground">
                       <Info className="h-3 w-3" />
