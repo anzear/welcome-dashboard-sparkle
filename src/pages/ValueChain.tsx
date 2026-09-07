@@ -949,14 +949,14 @@ const FeedstockSnapshotSection: React.FC<{
                         className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
                         onClick={() => navigate(`/landscape/${category}/${encodeURIComponent(decodedTopic)}/value-chain/pathways?filterType=feedstock&filterValues=${encodeURIComponent(r.name)}`)}
                       >
-                        <td className="px-4 py-2.5 tabular-nums font-medium text-slate-400 text-center">{rank}</td>
-                        <td className="px-4 py-2.5 font-semibold text-slate-900 truncate">{r.name}</td>
-                        <td className="px-4 py-2.5 text-slate-500 truncate">{r.category}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-center whitespace-nowrap text-slate-700 font-medium">{priceLow(r.price)}–{priceHigh(r.price)}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-center whitespace-nowrap text-slate-700 font-medium">{volLow(r.volume).toFixed(1)}–{volHigh(r.volume).toFixed(1)}</td>
-                        <td className="px-4 py-2.5 tabular-nums text-center text-slate-700 font-medium">{r.pathways}</td>
-                        <td className="px-4 py-2.5 whitespace-nowrap"><StagePill stage={stage} /></td>
-                        <td className="px-4 py-2.5 whitespace-nowrap">
+                        <td className="px-2 py-2.5 tabular-nums font-medium text-slate-400 text-center">{rank}</td>
+                        <td className="px-2 py-2.5 font-semibold text-slate-900 truncate">{r.name}</td>
+                        <td className="px-2 py-2.5 text-slate-500 truncate">{r.category}</td>
+                        <td className="px-2 py-2.5 tabular-nums text-center whitespace-nowrap text-slate-700 font-medium">{priceLow(r.price)}–{priceHigh(r.price)}</td>
+                        <td className="px-2 py-2.5 tabular-nums text-center whitespace-nowrap text-slate-700 font-medium">{volLow(r.volume).toFixed(1)}–{volHigh(r.volume).toFixed(1)}</td>
+                        <td className="px-2 py-2.5 tabular-nums text-center text-slate-700 font-medium">{r.pathways}</td>
+                        <td className="px-2 py-2.5 whitespace-nowrap"><StagePill stage={stage} /></td>
+                        <td className="px-2 py-2.5 whitespace-nowrap">
                           {annexIxInfo(r.name).annexIxPartA ? (
                             <span
                               title={`Listed in RED II Annex IX Part A, point (${annexIxInfo(r.name).annexIxPoint}). Feedstock eligibility only — it does not imply the pathway is compliant.`}
@@ -974,6 +974,8 @@ const FeedstockSnapshotSection: React.FC<{
                 )}
               </tbody>
             </table>
+            </div>
+
 
             {sortedRows.length > 0 && (
               <div className="flex items-center justify-between gap-2 px-3 py-2 border-t border-slate-100 bg-slate-50/60 text-[11px]">
