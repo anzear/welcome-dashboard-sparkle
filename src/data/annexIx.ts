@@ -23,24 +23,27 @@ export const FEEDSTOCK_ANNEX_IX: Record<string, FeedstockAnnexInfo> = {
   'Fructose': { annexIxPartA: false, annexIxPoint: null },
   'Sorghum Grain': { annexIxPartA: false, annexIxPoint: null },
 
-  // Qualifying feedstocks.
-  'Wheat Straw': { annexIxPartA: true, annexIxPoint: 'e' },
-  'Corn Stover': { annexIxPartA: true, annexIxPoint: 'q' },
+  // Qualifying feedstocks — only these three carry the 9A group.
   'Corn Cobs': { annexIxPartA: true, annexIxPoint: 'n' },
   'Sugarcane Bagasse': { annexIxPartA: true, annexIxPoint: 'j' },
-  'Rice Husk': { annexIxPartA: true, annexIxPoint: 'm' },
-  'Nut Shells': { annexIxPartA: true, annexIxPoint: 'l' },
-  'Household Biowaste': { annexIxPartA: true, annexIxPoint: 'c' },
-  'Biomass Fraction of Mixed Municipal Waste': { annexIxPartA: true, annexIxPoint: 'b' },
-  'Industrial Food Processing Waste': { annexIxPartA: true, annexIxPoint: 'd' },
-  'Grape Marc and Wine Lees': { annexIxPartA: true, annexIxPoint: 'k' },
-  'Crude Glycerine': { annexIxPartA: true, annexIxPoint: 'i' },
-  'Softwood Sawdust': { annexIxPartA: true, annexIxPoint: 'o' },
-  'Waste Paper and Cardboard Reject': { annexIxPartA: true, annexIxPoint: 'p' },
-  'Empty Palm Fruit Bunches': { annexIxPartA: true, annexIxPoint: 'g' },
-  'Sewage Sludge': { annexIxPartA: true, annexIxPoint: 'f' },
-  'Cultivated Microalgae (ponds/photobioreactors)': { annexIxPartA: true, annexIxPoint: 'a' },
+  'Wheat Straw': { annexIxPartA: true, annexIxPoint: 'e' },
+
+  // Non-qualifying.
+  'Corn Stover': { annexIxPartA: false, annexIxPoint: null },
+  'Rice Husk': { annexIxPartA: false, annexIxPoint: null },
+  'Nut Shells': { annexIxPartA: false, annexIxPoint: null },
+  'Household Biowaste': { annexIxPartA: false, annexIxPoint: null },
+  'Biomass Fraction of Mixed Municipal Waste': { annexIxPartA: false, annexIxPoint: null },
+  'Industrial Food Processing Waste': { annexIxPartA: false, annexIxPoint: null },
+  'Grape Marc and Wine Lees': { annexIxPartA: false, annexIxPoint: null },
+  'Crude Glycerine': { annexIxPartA: false, annexIxPoint: null },
+  'Softwood Sawdust': { annexIxPartA: false, annexIxPoint: null },
+  'Waste Paper and Cardboard Reject': { annexIxPartA: false, annexIxPoint: null },
+  'Empty Palm Fruit Bunches': { annexIxPartA: false, annexIxPoint: null },
+  'Sewage Sludge': { annexIxPartA: false, annexIxPoint: null },
+  'Cultivated Microalgae (ponds/photobioreactors)': { annexIxPartA: false, annexIxPoint: null },
 };
+
 
 export const annexIxInfo = (feedstock: string): FeedstockAnnexInfo =>
   FEEDSTOCK_ANNEX_IX[feedstock] ?? { annexIxPartA: false, annexIxPoint: null };
