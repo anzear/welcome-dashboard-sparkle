@@ -630,13 +630,13 @@ const PathwayDetail = () => {
                                 </div>
                                 <span></span>
                                 <div className="relative h-4">
-                                  <div className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2 bg-border" />
+                                  <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-muted" />
                                   <div
-                                    className="absolute left-0 top-1/2 h-px -translate-y-1/2 bg-primary"
+                                    className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
                                     style={{ width: `${Math.max(0, Math.min(100, row.percentile))}%` }}
                                   />
                                   <div
-                                    className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+                                    className="absolute top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary shadow-sm ring-2 ring-background"
                                     style={{ left: `${Math.max(0, Math.min(100, row.percentile))}%` }}
                                   />
                                 </div>
