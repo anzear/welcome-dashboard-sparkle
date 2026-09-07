@@ -29,8 +29,7 @@ import { useTopicComments } from '@/components/TopicCommentsPopover';
 import { usePageCommentsUnread } from '@/hooks/usePageCommentsUnread';
 import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
-import { usePathwayGroups, seedUserGroup, GroupChips, DerivedGroupChips, GroupColorDot, groupChipClass, peekNextGroupColor, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
-import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
+import { usePathwayGroups, GroupChips, DerivedGroupChips, GroupColorDot, groupChipClass, peekNextGroupColor, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
 import { Lock, X } from 'lucide-react';
 
@@ -284,21 +283,6 @@ const ValueChainPathways = () => {
     return out;
   }, []);
   const { groups: pathwayGroups, groupsOf, memberIds, addToGroup, removeFromGroup, createGroup, updateGroup, deleteGroup, restoreGroup } = usePathwayGroups(systemResolve);
-  // Demo user group "test" — seeded once, then editable like any user group.
-  useEffect(() => {
-    seedUserGroup(
-      {
-        id: TEST_GROUP_ID,
-        name: 'test',
-        shortLabel: 'test',
-        type: 'user',
-        color: 'group-fuchsia',
-        created_by: 'You',
-        created_at: new Date().toISOString(),
-      },
-      testGroupMemberIds(PREDEFINED_PATHWAYS),
-    );
-  }, []);
   // Membership signature — memo dependency so filters/chips recompute after a mutation.
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
 

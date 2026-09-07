@@ -18,8 +18,7 @@ import { PREDEFINED_PATHWAYS } from '@/pages/ValueChainPathways';
 import PathwayChat from '@/components/PathwayChat';
 import feedstockAnalysisChart from '@/assets/feedstock-analysis-chart.png';
 import { annexIxInfo } from '@/data/annexIx';
-import { usePathwayGroups, seedUserGroup, DerivedGroupChips, groupChipLabel, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip } from '@/components/pathwayGroups';
-import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
+import { usePathwayGroups, DerivedGroupChips, groupChipLabel, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip } from '@/components/pathwayGroups';
 import marketApplicationsChart from '@/assets/market-applications-chart.png';
 import xyloseMolecule from '@/assets/xylose-molecule.png';
 import sampleEuropeMap from '@/assets/sample-europe-map.png.asset.json';
@@ -748,21 +747,6 @@ const FeedstockSnapshotSection: React.FC<{
   }, []);
   const { groups: pathwayGroups, memberIds } = usePathwayGroups(systemResolve);
   const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
-  // Same one-time demo seed as Pathway Explorer, so both screens list the same groups.
-  useEffect(() => {
-    seedUserGroup(
-      {
-        id: TEST_GROUP_ID,
-        name: 'test',
-        shortLabel: 'test',
-        type: 'user',
-        color: 'group-fuchsia',
-        created_by: 'You',
-        created_at: new Date().toISOString(),
-      },
-      testGroupMemberIds(PREDEFINED_PATHWAYS),
-    );
-  }, []);
 
   const feedstockGroupChips = useMemo(() => {
     const map = new Map<string, DerivedGroupChip[]>();

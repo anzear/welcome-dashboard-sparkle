@@ -98,7 +98,8 @@ let systemOverrides: Record<string, { shortLabel?: string; description?: string 
 (() => {
   const dropped = new Set<string>();
   userGroups = userGroups.filter((g) => {
-    const isSys = SYSTEM_IDS.has(g.id) || SYSTEM_NAMES.has(g.name.trim().toLowerCase());
+    // Purge removed demo group and any stored system copies.
+    const isSys = SYSTEM_IDS.has(g.id) || SYSTEM_NAMES.has(g.name.trim().toLowerCase()) || g.id === 'grp-test';
     if (isSys) dropped.add(g.id);
     return !isSys;
   });
