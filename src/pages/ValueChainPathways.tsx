@@ -295,6 +295,9 @@ const ValueChainPathways = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDescription, setNewGroupDescription] = useState('');
   const [newGroupTag, setNewGroupTag] = useState('');
+  const [groupDialogMode, setGroupDialogMode] = useState<'new' | 'existing'>('new');
+  const [groupDialogTargetId, setGroupDialogTargetId] = useState<string>('');
+
   const [collapsedGroupIds, setCollapsedGroupIds] = useState<Set<string>>(new Set());
   const toggleGroupCollapsed = (id: string) => setCollapsedGroupIds((prev) => {
     const next = new Set(prev);
