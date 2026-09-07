@@ -2885,6 +2885,8 @@ if (sortBy === 'trl') {
             </div>
           ) : (
           <div className="space-y-2">
+            <div className="space-y-1">
+
 
               <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Group name</label>
               <Input
