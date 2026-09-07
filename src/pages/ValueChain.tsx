@@ -18,6 +18,8 @@ import { PREDEFINED_PATHWAYS } from '@/pages/ValueChainPathways';
 import PathwayChat from '@/components/PathwayChat';
 import feedstockAnalysisChart from '@/assets/feedstock-analysis-chart.png';
 import { annexIxInfo } from '@/data/annexIx';
+import { usePathwayGroups, seedUserGroup, DerivedGroupChips, groupChipLabel, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip } from '@/components/pathwayGroups';
+import { TEST_GROUP_ID, testGroupMemberIds } from '@/data/testGroupSeed';
 import marketApplicationsChart from '@/assets/market-applications-chart.png';
 import xyloseMolecule from '@/assets/xylose-molecule.png';
 import sampleEuropeMap from '@/assets/sample-europe-map.png.asset.json';
@@ -733,6 +735,64 @@ const FeedstockSnapshotSection: React.FC<{
   const PAGE_SIZE = 8;
   const feedstockCategories = useMemo(() => Array.from(new Set(data.map((d) => d.category))).sort(), [data]);
 
+  // ---- Groups shown here are the SAME groups as in Pathway Explorer ----
+  // Groups live on pathways; a feedstock's chips are derived from the pathways
+  // that use it. Full membership → filled chip, partial → outlined with count.
+  const systemResolve = React.useCallback((groupId: string): number[] => {
+    if (groupId !== ANNEX_IX_A_GROUP_ID) return [];
+    const out: number[] = [];
+    PREDEFINED_PATHWAYS.forEach((p, i) => {
+      if (annexIxInfo(p.feedstock).annexIxPartA) out.push(i);
+    });
+    return out;
+  }, []);
+  const { groups: pathwayGroups, memberIds } = usePathwayGroups(systemResolve);
+  const membershipSignature = pathwayGroups.map((g) => `${g.id}:${memberIds(g.id).sort().join('.')}`).join('|');
+  // Same one-time demo seed as Pathway Explorer, so both screens list the same groups.
+  useEffect(() => {
+    seedUserGroup(
+      {
+        id: TEST_GROUP_ID,
+        name: 'test',
+        shortLabel: 'test',
+        type: 'user',
+        color: 'group-fuchsia',
+        created_by: 'You',
+        created_at: new Date().toISOString(),
+      },
+      testGroupMemberIds(PREDEFINED_PATHWAYS),
+    );
+  }, []);
+
+  const feedstockGroupChips = useMemo(() => {
+    const map = new Map<string, DerivedGroupChip[]>();
+    const totals = new Map<string, number>();
+    PREDEFINED_PATHWAYS.forEach((p) => totals.set(p.feedstock, (totals.get(p.feedstock) ?? 0) + 1));
+    pathwayGroups.forEach((g) => {
+      const counts = new Map<string, number>();
+      memberIds(g.id).forEach((pid) => {
+        const fs = PREDEFINED_PATHWAYS[pid]?.feedstock;
+        if (fs) counts.set(fs, (counts.get(fs) ?? 0) + 1);
+      });
+      counts.forEach((count, fs) => {
+        const list = map.get(fs) ?? [];
+        list.push({
+          id: g.id,
+          name: g.name,
+          label: groupChipLabel(g),
+          system: isSystemGroup(g),
+          color: g.color,
+          count,
+          total: totals.get(fs) ?? count,
+        });
+        map.set(fs, list);
+      });
+    });
+    return map;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membershipSignature, pathwayGroups.length]);
+
+
 
 
   const STAGE_WEIGHT: Record<TrlStage, number> = { commercial: 1, pilot: 0.6, lab: 0.3 };
@@ -785,7 +845,12 @@ const FeedstockSnapshotSection: React.FC<{
       }
       if (sortKey === 'name') return a.name.localeCompare(b.name);
       if (sortKey === 'groups') {
-        const label = (f: Feedstock) => (annexIxInfo(f.name).annexIxPartA ? '9A' : '');
+        // Alphabetical by group label; feedstocks with no group go to the bottom.
+        const label = (f: Feedstock) =>
+          (feedstockGroupChips.get(f.name) ?? [])
+            .map((c) => c.label ?? c.name)
+            .sort((x, y) => x.localeCompare(y))
+            .join(', ');
         const la = label(a);
         const lb = label(b);
         if (!la && !lb) return a.name.localeCompare(b.name);
@@ -793,10 +858,11 @@ const FeedstockSnapshotSection: React.FC<{
         if (!lb) return -1;
         return la.localeCompare(lb, undefined, { numeric: true }) || a.name.localeCompare(b.name);
       }
+
       return (a[sortKey as keyof Feedstock] as number) - (b[sortKey as keyof Feedstock] as number);
     });
     return rows;
-  }, [filtered, sortKey]);
+  }, [filtered, sortKey, feedstockGroupChips]);
 
   const totalPages = Math.max(1, Math.ceil(sortedRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
@@ -957,17 +1023,13 @@ const FeedstockSnapshotSection: React.FC<{
                         <td className="px-2 py-2.5 tabular-nums text-center text-slate-700 font-medium">{r.pathways}</td>
                         <td className="px-2 py-2.5 whitespace-nowrap"><StagePill stage={stage} /></td>
                         <td className="px-2 py-2.5 whitespace-nowrap">
-                          {annexIxInfo(r.name).annexIxPartA ? (
-                            <span
-                              title={`Listed in RED II Annex IX Part A, point (${annexIxInfo(r.name).annexIxPoint}). Feedstock eligibility only — it does not imply the pathway is compliant.`}
-                              className="inline-flex items-center rounded bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground/70"
-                            >
-                              9A
-                            </span>
+                          {(feedstockGroupChips.get(r.name) ?? []).length > 0 ? (
+                            <DerivedGroupChips items={feedstockGroupChips.get(r.name)!} />
                           ) : (
                             <span className="text-slate-300">—</span>
                           )}
                         </td>
+
                       </tr>
                     );
                   })
