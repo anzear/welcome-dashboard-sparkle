@@ -630,7 +630,7 @@ const PathwayDetail = () => {
                   <div className="flex-1 min-h-0 overflow-y-auto">
                     <div className="sticky top-0 z-10 grid grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
-                      <span className="text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span className="absolute left-1/2 -translate-x-1/2">Percentile</span>
@@ -669,7 +669,7 @@ const PathwayDetail = () => {
                                 >
                                   <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
-                                  <div className="flex items-start justify-end gap-1.5 min-w-0">
+                                  <div className="flex items-start justify-end gap-1.5 min-w-0 pr-4">
                                     <div className="min-w-0 text-right">
                                       {isNull ? (
                                         <span className="text-[11px] tabular-nums text-muted-foreground">—</span>
