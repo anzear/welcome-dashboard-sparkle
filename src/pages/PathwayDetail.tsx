@@ -306,6 +306,20 @@ const PathwayDetail = () => {
   const displayMetric = (value?: string | null) => value && value.trim() ? value : '—';
   const metricGrowthValue = (value: string) => displayMetric(value.replace('CAGR', 'YoY'));
 
+  const splitValueUnit = (raw: string): { number: string; unit: string } => {
+    const value = raw
+      .replace(/(\d)\s*[-\u2013]\s*(\d)/g, '$1\u2013$2')
+      .replace(/\s/g, '\u00A0');
+    const units = ['kg\u00A0CO\u2082e/t', 'CO\u2082e/t', 'kt/yr', 't/yr', 'YoY', '/t'];
+    for (const u of units) {
+      const idx = value.lastIndexOf(u);
+      if (idx > 0 && idx + u.length === value.length) {
+        return { number: value.slice(0, idx), unit: value.slice(idx) };
+      }
+    }
+    return { number: value, unit: '' };
+  };
+
   const categoryPalette: Record<string, string> = {
     Feedstock: '--cat-feedstock',
     Process: '--cat-process',
@@ -612,8 +626,8 @@ const PathwayDetail = () => {
 
                 {evaluationTab === 'evaluation' ? (
                   <>
-                <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-border bg-background">
-                  <div className="h-full overflow-y-auto">
+                <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
+                  <div className="flex-1 min-h-0 overflow-y-auto">
                     <div className="sticky top-0 z-10 grid grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
                       <span className="text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
