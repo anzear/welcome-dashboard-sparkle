@@ -2926,8 +2926,33 @@ if (sortBy === 'trl') {
               />
             </div>
           </div>
+          )}
           <DialogFooter>
             <Button variant="outline" size="sm" onClick={() => setNewGroupOpen(false)}>Cancel</Button>
+            {groupDialogMode === 'existing' ? (
+              <Button
+                size="sm"
+                disabled={groupDialogTargetId === '' || selectedPathwayIds.size === 0}
+                onClick={() => {
+                  const g = pathwayGroups.find((x) => x.id === groupDialogTargetId);
+                  if (!g) return;
+                  const ids = [...selectedPathwayIds];
+                  const added = addToGroup(g.id, ids);
+                  setNewGroupOpen(false);
+                  clearSelection();
+                  toast({
+                    title: `Saved to ${g.name}`,
+                    description:
+                      added === 0
+                        ? 'Already in this group — nothing added.'
+                        : `${added} of ${ids.length} selected pathway${ids.length === 1 ? '' : 's'} added${added < ids.length ? '; the rest were already in this group' : ''}.`,
+                    action: added > 0 ? <ToastAction altText="Undo" onClick={() => removeFromGroup(g.id, ids)}>Undo</ToastAction> : undefined,
+                  });
+                }}
+              >
+                Add to group
+              </Button>
+            ) : (
             <Button
               size="sm"
               disabled={newGroupName.trim() === '' || selectedPathwayIds.size === 0}
@@ -2952,6 +2977,7 @@ if (sortBy === 'trl') {
                     ) : undefined,
                 });
               }}
+
 
             >
               Create group
