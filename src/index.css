@@ -152,7 +152,15 @@ All colors MUST be HSL.
     --group-bronze-fill: 28 40% 92%;
     --group-bronze-text: 25 48% 28%;
     --group-bronze-line: 25 38% 40%;
+
+    /* Pathway evaluation category tints. Shades of primary green. */
+    --cat-feedstock: 145 75% 26%;
+    --cat-process: 145 70% 35%;
+    --cat-material: 145 62% 44%;
+    --cat-production: 145 54% 52%;
+    --cat-application: 145 48% 60%;
   }
+
 
   .dark {
     --background: 222 47% 6%;
