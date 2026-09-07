@@ -18,6 +18,7 @@ import { PREDEFINED_PATHWAYS } from '@/pages/ValueChainPathways';
 import PathwayChat from '@/components/PathwayChat';
 import feedstockAnalysisChart from '@/assets/feedstock-analysis-chart.png';
 import { annexIxInfo } from '@/data/annexIx';
+import { usePathwayGroups, DerivedGroupChips, groupChipLabel, isSystemGroup, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip } from '@/components/pathwayGroups';
 import marketApplicationsChart from '@/assets/market-applications-chart.png';
 import xyloseMolecule from '@/assets/xylose-molecule.png';
 import sampleEuropeMap from '@/assets/sample-europe-map.png.asset.json';
