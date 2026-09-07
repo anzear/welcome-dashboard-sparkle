@@ -627,7 +627,7 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[66px_1fr] border-b border-border/50 transition-colors ${isHighlighted ? 'bg-primary/5' : 'bg-muted/20'}`}
+                          className={`grid grid-cols-[66px_1fr] border-b border-border/50 transition-colors mb-1 last:mb-0 ${isHighlighted ? 'bg-primary/5' : 'bg-muted/20'}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
