@@ -680,7 +680,7 @@ const PathwayDetail = () => {
                                         </span>
                                       )}
                                       {row.mutedDetail && (
-                                        <div className="text-[11px] font-normal leading-tight text-muted-foreground">{row.mutedDetail}</div>
+                                        <div className="text-[11px] font-normal leading-tight text-muted-foreground whitespace-nowrap truncate">{row.mutedDetail}</div>
                                       )}
                                     </div>
                                     <ExternalLink className="mt-[3px] h-2.5 w-2.5 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
