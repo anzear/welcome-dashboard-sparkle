@@ -629,8 +629,7 @@ const PathwayDetail = () => {
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-[760px]">
                     <div className="sticky top-0 z-10 grid grid-cols-[120px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
-                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category</span>
-                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
+                      <span className="col-span-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
