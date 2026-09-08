@@ -628,10 +628,10 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[90px_minmax(120px,1fr)_120px_minmax(120px,1fr)] items-center border-b border-border bg-background px-3 py-1">
-                      <span className="col-span-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
-                      <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
-                      <div className="relative flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(120px,1fr)_110px_minmax(120px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
+                      <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
+                      <span className="pr-3 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <div className="relative flex items-center justify-between text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
                       </div>
@@ -641,16 +641,16 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[90px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
+                          className={`grid grid-cols-[80px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="flex items-start px-2 pt-1">
+                          <div className="flex items-start px-1.5 pt-0.5">
                             <span
-                              className="mr-1.5 h-4 w-[2px] shrink-0 rounded-full"
+                              className="mr-1 h-3.5 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
                             />
-                            <span className={`text-[10px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            <span className={`text-[9px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
                               {group.category}
                             </span>
                           </div>
@@ -668,16 +668,16 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-7 grid-cols-[minmax(120px,1fr)_120px_minmax(120px,1fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-6 grid-cols-[minmax(120px,1fr)_110px_minmax(120px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
-                                  <span className="truncate pl-1.5 text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
+                                  <span className="truncate pl-1 text-[10px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
-                                  <div className="flex items-start justify-end gap-1.5 min-w-0 pr-4">
+                                  <div className="flex items-start justify-end gap-1 min-w-0 pr-3">
                                     <div className="min-w-0 overflow-hidden text-right">
                                       {isNull ? (
-                                        <span className="text-[11px] tabular-nums text-muted-foreground">—</span>
+                                        <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
                                       ) : (
-                                        <span className="block truncate text-[11px] tabular-nums whitespace-nowrap">
+                                        <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
                                           <span className="font-medium text-foreground">{number}</span>
                                           {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
                                           {row.mutedDetail && (
@@ -686,38 +686,38 @@ const PathwayDetail = () => {
                                         </span>
                                       )}
                                     </div>
-                                    <ExternalLink className="mt-[3px] h-2.5 w-2.5 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                    <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
                                   </div>
 
-                                  <div className="relative h-4">
+                                  <div className="relative h-3.5">
                                     {isNull ? (
-                                      <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                      <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                     ) : (
                                       <>
-                                         <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
-                                         <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
+                                         <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                         <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
                                          <div
-                                           className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
+                                           className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
                                            style={{ width: `${pct}%` }}
                                          />
                                          <div
-                                           className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                           className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
                                            style={{ left: `${pct}%` }}
                                          />
                                           <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
-                                            <div className="relative h-4 w-4 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
-                                              <div className="absolute left-1/2 top-1/2 h-[14px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
-                                              <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1.5 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
+                                            <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
+                                              <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
+                                              <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
                                                 Average: {avg}
                                               </span>
                                             </div>
                                           </div>
-                                        <span
-                                          className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[10px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
-                                          style={{ left: `calc(${pct}% + 6px)` }}
-                                        >
-                                          {Math.round(row.percentile)}
-                                        </span>
+                                         <span
+                                           className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
+                                           style={{ left: `calc(${pct}% + 6px)` }}
+                                         >
+                                           {Math.round(row.percentile)}
+                                         </span>
                                       </>
                                     )}
                                   </div>
