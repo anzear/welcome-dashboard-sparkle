@@ -633,7 +633,6 @@ const PathwayDetail = () => {
                       <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
-                        <span className="absolute left-1/2 -translate-x-1/2">Pct</span>
                         <span>High</span>
                       </div>
                     </div>
