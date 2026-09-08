@@ -628,7 +628,7 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-[760px]">
-                    <div className="sticky top-0 z-10 grid grid-cols-[120px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
+                    <div className="sticky top-0 z-10 grid grid-cols-[120px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-1.5">
                       <span className="col-span-2 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
@@ -646,7 +646,7 @@ const PathwayDetail = () => {
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="flex items-start px-3 pt-4">
+                          <div className="flex items-start px-3 pt-2.5">
                             <span
                               className="mr-2 h-4 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
@@ -665,7 +665,7 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-12 grid-cols-[minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-9 grid-cols-[minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
                                   <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
