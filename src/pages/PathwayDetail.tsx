@@ -627,8 +627,8 @@ const PathwayDetail = () => {
                   <>
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
-                    <div className="min-w-[720px]">
-                    <div className="sticky top-0 z-10 grid grid-cols-[96px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
+                    <div className="min-w-[760px]">
+                    <div className="sticky top-0 z-10 grid grid-cols-[120px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category</span>
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
                       <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
@@ -643,7 +643,7 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[96px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
+                          className={`grid grid-cols-[120px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
