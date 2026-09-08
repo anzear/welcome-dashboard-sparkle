@@ -626,8 +626,10 @@ const PathwayDetail = () => {
                 {evaluationTab === 'evaluation' ? (
                   <>
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
-                  <div className="flex-1 min-h-0 overflow-y-auto">
-                    <div className="sticky top-0 z-10 grid grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
+                  <div className="flex-1 min-h-0 overflow-auto">
+                    <div className="min-w-[720px]">
+                    <div className="sticky top-0 z-10 grid grid-cols-[96px_minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center border-b border-border bg-muted/30 px-3 py-2">
+                      <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Category</span>
                       <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Indicator</span>
                       <span className="pr-4 text-right text-[11px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
@@ -641,16 +643,16 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={groupIndex > 0 ? 'border-t border-foreground/10' : ''}
+                          className={`grid grid-cols-[96px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="mt-3 flex items-center px-3 py-1.5">
+                          <div className="flex items-start px-3 pt-4">
                             <span
-                              className="mr-2 h-4 w-[3px] rounded-full"
+                              className="mr-2 h-4 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
                             />
-                            <span className={`text-[11px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            <span className={`text-[10px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
                               {group.category}
                             </span>
                           </div>
@@ -664,7 +666,7 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-12 grid-cols-[minmax(190px,1fr)_140px_minmax(190px,0.9fr)] items-center px-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-12 grid-cols-[minmax(170px,1fr)_140px_minmax(190px,0.9fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
                                   <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
@@ -716,6 +718,7 @@ const PathwayDetail = () => {
                         </div>
                       );
                     })}
+                    </div>
                   </div>
 
                   <details className="group border-t border-border bg-muted/20 px-2 py-2">
