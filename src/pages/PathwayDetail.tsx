@@ -669,17 +669,17 @@ const PathwayDetail = () => {
                                   <span className="truncate pl-1.5 text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
                                   <div className="flex items-start justify-end gap-1.5 min-w-0 pr-4">
-                                    <div className="min-w-0 text-right">
+                                    <div className="min-w-0 overflow-hidden text-right">
                                       {isNull ? (
                                         <span className="text-[11px] tabular-nums text-muted-foreground">—</span>
                                       ) : (
-                                        <span className="text-[11px] tabular-nums whitespace-nowrap">
+                                        <span className="block truncate text-[11px] tabular-nums whitespace-nowrap">
                                           <span className="font-medium text-foreground">{number}</span>
                                           {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
+                                          {row.mutedDetail && (
+                                            <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
+                                          )}
                                         </span>
-                                      )}
-                                      {row.mutedDetail && (
-                                        <div className="text-[11px] font-normal leading-tight text-muted-foreground whitespace-nowrap truncate">{row.mutedDetail}</div>
                                       )}
                                     </div>
                                     <ExternalLink className="mt-[3px] h-2.5 w-2.5 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
