@@ -670,15 +670,15 @@ const PathwayDetail = () => {
                                   tabIndex={0}
                                   className="group/row grid h-6 grid-cols-[minmax(120px,1fr)_110px_minmax(120px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
-                                  <span className="truncate pl-1 text-[10px] font-medium text-foreground" title={row.label}>{row.label}</span>
+                                  <span className="truncate pl-1 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
                                   <div className="flex items-start justify-end gap-1 min-w-0 pr-3">
                                     <div className="min-w-0 overflow-hidden text-right">
                                       {isNull ? (
                                         <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
                                       ) : (
-                                        <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
-                                          <span className="font-medium text-foreground">{number}</span>
+                                          <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
+                                          <span className="font-semibold text-foreground">{number}</span>
                                           {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
                                           {row.mutedDetail && (
                                             <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
