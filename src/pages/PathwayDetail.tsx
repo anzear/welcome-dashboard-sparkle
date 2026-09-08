@@ -642,13 +642,13 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[120px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
+                          className={`grid grid-cols-[90px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="flex items-start px-3 pt-2.5">
+                          <div className="flex items-start px-2 pt-2.5">
                             <span
-                              className="mr-2 h-4 w-[2px] shrink-0 rounded-full"
+                              className="mr-1.5 h-4 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
                             />
                             <span className={`text-[10px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -665,7 +665,7 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-9 grid-cols-[minmax(170px,1fr)_180px_minmax(190px,0.9fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-9 grid-cols-[minmax(120px,1fr)_120px_minmax(120px,1fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
                                   <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
