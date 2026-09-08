@@ -694,16 +694,21 @@ const PathwayDetail = () => {
                                       <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                     ) : (
                                       <>
-                                        <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
-                                        <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
-                                        <div
-                                          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
-                                          style={{ width: `${pct}%` }}
-                                        />
-                                        <div
-                                          className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
-                                          style={{ left: `${pct}%` }}
-                                        />
+                                         <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                         <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
+                                         <div
+                                           className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
+                                           style={{ width: `${pct}%` }}
+                                         />
+                                         <div
+                                           className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                           style={{ left: `${pct}%` }}
+                                         />
+                                         <div
+                                           title={`Average of all pathways: ${avg}`}
+                                           className="absolute top-1/2 h-[14px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50"
+                                           style={{ left: `${avg}%` }}
+                                         />
                                         <span
                                           className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[10px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
                                           style={{ left: `calc(${pct}% + 6px)` }}
