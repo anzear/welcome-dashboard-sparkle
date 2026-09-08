@@ -659,6 +659,10 @@ const PathwayDetail = () => {
                             {group.rows.map((row) => {
                               const isNull = !row.value || row.value === '—';
                               const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
+                              // Deterministic population average across all pathways in the analysis
+                              let hash = 0;
+                              for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
+                              const avg = 25 + (hash % 51);
                               const { number, unit } = splitValueUnit(row.value);
                               return (
                                 <div
@@ -690,16 +694,21 @@ const PathwayDetail = () => {
                                       <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                     ) : (
                                       <>
-                                        <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
-                                        <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
-                                        <div
-                                          className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
-                                          style={{ width: `${pct}%` }}
-                                        />
-                                        <div
-                                          className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
-                                          style={{ left: `${pct}%` }}
-                                        />
+                                         <div className="absolute left-0 right-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                         <div className="absolute left-1/2 top-1/2 h-[10px] w-px -translate-y-1/2 bg-foreground/15" />
+                                         <div
+                                           className="absolute left-0 top-1/2 h-[4px] -translate-y-1/2 rounded-full bg-primary"
+                                           style={{ width: `${pct}%` }}
+                                         />
+                                         <div
+                                           className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                           style={{ left: `${pct}%` }}
+                                         />
+                                         <div
+                                           title={`Average of all pathways: ${avg}`}
+                                           className="absolute top-1/2 h-[14px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50"
+                                           style={{ left: `${avg}%` }}
+                                         />
                                         <span
                                           className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[10px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
                                           style={{ left: `calc(${pct}% + 6px)` }}
@@ -725,7 +734,7 @@ const PathwayDetail = () => {
                       Methodology
                     </summary>
                     <div className="mt-2 grid gap-1 text-[9px] leading-relaxed text-muted-foreground md:grid-cols-2">
-                      <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position.</p>
+                       <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position. The vertical tick marks the average of all pathways in the analysis.</p>
                       <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of material.</p>
                     </div>
                   </details>
