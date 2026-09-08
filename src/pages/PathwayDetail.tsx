@@ -667,7 +667,7 @@ const PathwayDetail = () => {
                                   tabIndex={0}
                                   className="group/row grid h-9 grid-cols-[minmax(120px,1fr)_120px_minmax(120px,1fr)] items-center pr-3 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
-                                  <span className="truncate text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
+                                  <span className="truncate pl-1.5 text-[11px] font-medium text-foreground" title={row.label}>{row.label}</span>
 
                                   <div className="flex items-start justify-end gap-1.5 min-w-0 pr-4">
                                     <div className="min-w-0 text-right">
