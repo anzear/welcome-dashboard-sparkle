@@ -704,11 +704,14 @@ const PathwayDetail = () => {
                                            className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
                                            style={{ left: `${pct}%` }}
                                          />
-                                         <div
-                                           title={`Average of all pathways: ${avg}`}
-                                           className="absolute top-1/2 h-[14px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50"
-                                           style={{ left: `${avg}%` }}
-                                         />
+                                          <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
+                                            <div className="relative h-4 w-4 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
+                                              <div className="absolute left-1/2 top-1/2 h-[14px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
+                                              <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1.5 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
+                                                Average: {avg}
+                                              </span>
+                                            </div>
+                                          </div>
                                         <span
                                           className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[10px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
                                           style={{ left: `calc(${pct}% + 6px)` }}
