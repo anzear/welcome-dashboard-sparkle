@@ -689,12 +689,12 @@ const PathwayDetail = () => {
                                     <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
                                   </div>
 
-                                  <div className="relative h-3.5 pr-2">
+                                  <div className="relative h-3.5">
                                     {isNull ? (
-                                      <div className="absolute left-0 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                      <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                     ) : (
                                       <>
-                                         <div className="absolute left-0 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                         <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
                                          <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
                                          <div
                                             className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
