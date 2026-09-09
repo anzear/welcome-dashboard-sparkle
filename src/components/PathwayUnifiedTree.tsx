@@ -1,6 +1,6 @@
 // One tree for every pathway in scope.
 //
-// Five columns — Feedstock, Process, Material, Application, TRL — each deduplicated
+// Five columns — Feedstock, Process, Product, Application, TRL — each deduplicated
 // on its own and paged from its own header. Edges only join nodes that are both on a
 // visible page. Hover traces, click pins and filters the other columns.
 
@@ -21,7 +21,7 @@ type ColKey = 'feedstock' | 'technology' | 'product' | 'application' | 'trl';
 const COLUMNS: { key: ColKey; label: string; green?: boolean }[] = [
   { key: 'feedstock', label: 'Feedstock' },
   { key: 'technology', label: 'Process' },
-  { key: 'product', label: 'Material', green: true },
+  { key: 'product', label: 'Product', green: true },
   { key: 'application', label: 'Application' },
   { key: 'trl', label: 'TRL' },
 ];
