@@ -689,35 +689,35 @@ const PathwayDetail = () => {
                                     <ExternalLink className="mt-[1px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
                                   </div>
 
-                                  <div className="relative h-3.5">
+                                  <div className="relative h-3.5 pr-2">
                                     {isNull ? (
-                                      <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                      <div className="absolute left-0 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                     ) : (
                                       <>
-                                         <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                         <div className="absolute left-0 right-2 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
                                          <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
                                          <div
-                                           className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
-                                           style={{ width: `${pct}%` }}
-                                         />
-                                         <div
-                                           className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
-                                           style={{ left: `${pct}%` }}
-                                         />
-                                          <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
-                                            <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
-                                              <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
-                                              <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
-                                                Average: {avg}
-                                              </span>
-                                            </div>
-                                          </div>
-                                         <span
-                                           className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
-                                           style={{ left: `calc(${pct}% + 6px)` }}
-                                         >
-                                           {Math.round(row.percentile)}
-                                         </span>
+                                            className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
+                                            style={{ width: `${pct}%` }}
+                                          />
+                                          <div
+                                            className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                            style={{ left: `${pct}%` }}
+                                          />
+                                           <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
+                                             <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
+                                               <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
+                                               <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
+                                                 Average: {avg}
+                                               </span>
+                                             </div>
+                                           </div>
+                                          <span
+                                            className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
+                                            style={{ left: `calc(${pct}% + 6px)` }}
+                                          >
+                                            {Math.round(row.percentile)}
+                                          </span>
                                       </>
                                     )}
                                   </div>
