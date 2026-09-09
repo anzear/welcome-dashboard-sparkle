@@ -672,8 +672,8 @@ const PathwayDetail = () => {
                                 >
                                   <span className="truncate pl-1 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
-                                  <div className="flex items-start justify-end gap-1 min-w-0 pr-3">
-                                    <div className="min-w-0 overflow-hidden text-right">
+                                  <div className="flex items-start justify-end gap-1 min-w-0">
+                                    <div className="min-w-0 overflow-hidden pr-3 text-right">
                                       {isNull ? (
                                         <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
                                       ) : (
