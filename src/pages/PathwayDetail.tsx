@@ -323,7 +323,7 @@ const PathwayDetail = () => {
   const categoryPalette: Record<string, string> = {
     Feedstock: '--cat-feedstock',
     Process: '--cat-process',
-    Material: '--cat-material',
+    Product: '--cat-material',
     Production: '--cat-production',
     Application: '--cat-application',
   };
@@ -360,10 +360,10 @@ const PathwayDetail = () => {
       ],
     },
     {
-      category: 'Material',
+      category: 'Product',
       type: 'product',
       rows: [
-        { label: 'Material price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
+        { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
         { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
         { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
         { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
@@ -432,7 +432,7 @@ const PathwayDetail = () => {
       name: currentApplication,
       category1: pathway.category4 || 'Packaging',
       category2: 'Bioplastics',
-      description: 'Polylactic acid (PLA) based packaging materials offering compostability and reduced carbon footprint compared to conventional plastics.',
+      description: 'Polylactic acid (PLA) based packaging products offering compostability and reduced carbon footprint compared to conventional plastics.',
       alternatives: [
         { name: 'Food Preservatives' },
         { name: 'PLA Fiber' },
@@ -502,7 +502,7 @@ const PathwayDetail = () => {
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">VCG Score <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Feedstock</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Process</span>
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Material</span>
+                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Product</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Application</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">TRL</span>
                 </div>
@@ -738,7 +738,7 @@ const PathwayDetail = () => {
                     </summary>
                     <div className="mt-2 grid gap-1 text-[9px] leading-relaxed text-muted-foreground md:grid-cols-2">
                        <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position. The vertical tick marks the average of all pathways in the analysis.</p>
-                      <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of material.</p>
+                      <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of product.</p>
                     </div>
                   </details>
                 </div>
