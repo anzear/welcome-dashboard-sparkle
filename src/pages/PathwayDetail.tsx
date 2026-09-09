@@ -668,7 +668,7 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-6 grid-cols-[1fr_220px_120px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
                                   <span className="truncate pl-1 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
