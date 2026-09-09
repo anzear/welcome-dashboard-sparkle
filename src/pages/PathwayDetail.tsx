@@ -630,7 +630,7 @@ const PathwayDetail = () => {
                     <div className="min-w-0">
                     <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
-                      <span className="pr-3 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
