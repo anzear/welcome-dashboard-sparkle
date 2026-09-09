@@ -364,6 +364,7 @@ const PathwayDetail = () => {
       type: 'product',
       rows: [
         { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
+        { label: 'Product availability (Europe)', value: '1.4M t/yr', percentile: 46 },
         { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
         { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
         { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
