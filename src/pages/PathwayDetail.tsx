@@ -645,9 +645,9 @@ const PathwayDetail = () => {
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="flex items-start px-1.5 pt-0.5">
+                          <div className="flex items-center px-1.5 h-6">
                             <span
-                              className="mr-1 h-3.5 w-[2px] shrink-0 rounded-full"
+                              className="mr-1 h-3 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
                             />
                             <span className={`text-[9px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
