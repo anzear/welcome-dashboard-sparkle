@@ -628,9 +628,9 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_1fr_220px_120px] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
-                      <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <span className="pr-3 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
@@ -641,7 +641,7 @@ const PathwayDetail = () => {
                       return (
                         <div
                           key={group.category}
-                          className={`grid grid-cols-[80px_minmax(0,1fr)] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
+                          className={`grid grid-cols-[80px_1fr] ${groupIndex > 0 ? 'border-t border-foreground/10' : ''}`}
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
@@ -668,7 +668,7 @@ const PathwayDetail = () => {
                                 <div
                                   key={`${group.category}-${row.label}`}
                                   tabIndex={0}
-                                  className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  className="group/row grid h-6 grid-cols-[1fr_220px_120px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                 >
                                   <span className="truncate pl-1 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
