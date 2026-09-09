@@ -502,7 +502,7 @@ const PathwayDetail = () => {
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">VCG Score <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Feedstock</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Process</span>
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Material</span>
+                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Product</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Application</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">TRL</span>
                 </div>
