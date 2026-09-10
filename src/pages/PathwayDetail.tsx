@@ -819,9 +819,31 @@ const PathwayDetail = () => {
                                                   {asOf}
                                                 </button>
                                               </PopoverTrigger>
-                                              <PopoverContent className="w-64 p-3" side="right" align="end">
+                                              <PopoverContent className="w-72 p-3" side="right" align="end">
                                                 <p className="text-[10px] font-semibold text-foreground">{row.label}</p>
                                                 <p className="mt-0.5 text-[9px] text-muted-foreground">Historical readings — newest first</p>
+                                                <div className="mt-2 h-28 w-full">
+                                                  <ResponsiveContainer width="100%" height="100%">
+                                                    <LineChart data={[...history].reverse()} margin={{ top: 4, right: 8, bottom: 4, left: -18 }}>
+                                                      <XAxis dataKey="date" tick={false} axisLine={false} />
+                                                      <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={30} />
+                                                      <Tooltip
+                                                        content={({ active, payload }) => {
+                                                          if (!active || !payload?.length) return null;
+                                                          const p = payload[0].payload as { date: string; value: string; percentile: number };
+                                                          return (
+                                                            <div className="rounded border border-border bg-background p-1.5 text-[9px] shadow-sm">
+                                                              <p className="text-muted-foreground">{p.date}</p>
+                                                              <p className="font-medium text-foreground">{p.value}</p>
+                                                              <p className="text-muted-foreground">Pct {p.percentile}</p>
+                                                            </div>
+                                                          );
+                                                        }}
+                                                      />
+                                                      <Line type="monotone" dataKey="percentile" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--primary))', strokeWidth: 0 }} activeDot={{ r: 4 }} />
+                                                    </LineChart>
+                                                  </ResponsiveContainer>
+                                                </div>
                                                 <div className="mt-2 space-y-1">
                                                   {history.map((h, i) => (
                                                     <div key={h.date} className="flex items-center gap-2 text-[9px]">
