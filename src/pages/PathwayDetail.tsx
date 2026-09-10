@@ -268,14 +268,9 @@ const PathwayDetail = () => {
     if (swaps.technology && alternativeMetrics[swaps.technology]) {
       const alt = alternativeMetrics[swaps.technology];
       radar.capex = alt.radar.capex;
-      radar.yield = alt.radar.yield;
       radar.trlScore = alt.radar.trlScore;
-      radar.yieldScore = alt.radar.yieldScore;
-      radar.ghgScore = alt.radar.ghgScore;
       metrics.capex = alt.metrics.capex;
       metrics.trl = alt.metrics.trl;
-      metrics.yield = alt.metrics.yield;
-      metrics.ghg = alt.metrics.ghg;
     }
     // Apply product swap
     if (swaps.product && alternativeMetrics[swaps.product]) {
