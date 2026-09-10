@@ -723,19 +723,20 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                    <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
-                                      <div className="flex items-center gap-1 pl-1">
-                                        <span
-                                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                          style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
-                                        />
-                                        <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
-                                          {section.name}
-                                        </span>
-                                      </div>
-                                      <div />
-                                      <div />
-                                    </div>
+                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_82px_minmax(100px,1fr)] items-center pr-2">
+                                       <div className="flex items-center gap-1 pl-1">
+                                         <span
+                                           className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                           style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
+                                         />
+                                         <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
+                                           {section.name}
+                                         </span>
+                                       </div>
+                                       <div />
+                                       <div />
+                                       <div />
+                                     </div>
                                   )}
 
                                   {section.rows.map((row) => {
