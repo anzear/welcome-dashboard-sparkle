@@ -732,8 +732,7 @@ const PathwayDetail = () => {
                     </summary>
                     <div className="mt-2 grid gap-1 text-[9px] leading-relaxed text-muted-foreground md:grid-cols-2">
                        <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position. The vertical tick marks the average of all pathways in the analysis.</p>
-                      <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of product.</p>
-                    </div>
+                     </div>
                   </details>
                 </div>
                   </>
