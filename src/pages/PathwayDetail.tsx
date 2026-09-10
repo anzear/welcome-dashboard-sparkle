@@ -199,16 +199,16 @@ const PathwayDetail = () => {
     },
     // Feedstock alternatives
     'Sugarcane Molasses': {
-      radar: { feedstockPrice: 70, supplyVolume: 75, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 84, ghgScore: 80 },
-      metrics: { feedstockPrice: '€80-130/t', feedstockQty: '12.5M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '88%', ghg: '1.1 t CO₂e/t' },
+      radar: { feedstockPrice: 70, supplyVolume: 75, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€80-130/t', feedstockQty: '12.5M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t' },
     },
     'Wheat Bran': {
-      radar: { feedstockPrice: 78, supplyVolume: 65, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 76, ghgScore: 78 },
-      metrics: { feedstockPrice: '€90-140/t', feedstockQty: '5.8M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '79%', ghg: '1.2 t CO₂e/t' },
+      radar: { feedstockPrice: 78, supplyVolume: 65, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€90-140/t', feedstockQty: '5.8M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t' },
     },
     'Cassava Starch': {
-      radar: { feedstockPrice: 82, supplyVolume: 70, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 86, ghgScore: 70 },
-      metrics: { feedstockPrice: '€100-160/t', feedstockQty: '6.4M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '90%', ghg: '1.6 t CO₂e/t' },
+      radar: { feedstockPrice: 82, supplyVolume: 70, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€100-160/t', feedstockQty: '6.4M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t' },
     },
     // Technology alternatives
     'Heterofermentation': {
