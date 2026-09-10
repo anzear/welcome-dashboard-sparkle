@@ -385,6 +385,22 @@ const PathwayDetail = () => {
         },
       ],
     },
+    {
+      category: 'Application',
+      type: 'application',
+      sections: [
+        {
+          name: 'Application',
+          type: 'application',
+          rows: [
+            { label: 'Application TRL', value: 'TRL 7', percentile: 76 },
+            { label: 'Application IP count', value: '96', percentile: 26 },
+            { label: 'Application research count', value: '743', percentile: 24 },
+            { label: 'Demand', value: '18', mutedDetail: 'offtakers in 7 countries', percentile: 29 },
+          ],
+        },
+      ],
+    },
   ];
 
 
