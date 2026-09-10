@@ -750,96 +750,95 @@ const PathwayDetail = () => {
                                      const asOf = shortDate(observedAt(row.label));
                                      const history = indicatorHistory(row.label, row.value, pct);
                                      return (
-                                       <div
-                                         key={`${group.category}-${section.name}-${row.label}`}
-                                         tabIndex={0}
-                                         className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_82px_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
-                                       >
-                                         <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
+                                        <div
+                                          key={`${group.category}-${section.name}-${row.label}`}
+                                          tabIndex={0}
+                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_82px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                        >
+                                          <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
-                                         <div className="flex items-start justify-end gap-1 min-w-0">
-                                           <div className="min-w-0 overflow-hidden pr-3 text-right">
-                                             {isNull ? (
-                                               <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
-                                             ) : (
-                                                 <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
-                                                 <span className="font-semibold text-foreground">{number}</span>
-                                                 {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
-                                                 {row.mutedDetail && (
-                                                   <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
-                                                 )}
-                                               </span>
-                                             )}
-                                           </div>
-                                           <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
-                                         </div>
-
-                                         <div className="pr-2 text-right">
-                                           <Popover>
-                                             <PopoverTrigger asChild>
-                                               <button
-                                                 type="button"
-                                                 className="rounded px-0.5 text-[9px] tabular-nums text-muted-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
-                                                 title={`Observed ${asOf} — show history`}
-                                               >
-                                                 {asOf}
-                                               </button>
-                                             </PopoverTrigger>
-                                             <PopoverContent className="w-64 p-3" side="left" align="start">
-                                               <p className="text-[10px] font-semibold text-foreground">{row.label}</p>
-                                               <p className="mt-0.5 text-[9px] text-muted-foreground">Historical readings — newest first</p>
-                                               <div className="mt-2 space-y-1">
-                                                 {history.map((h, i) => (
-                                                   <div key={h.date} className="flex items-center gap-2 text-[9px]">
-                                                     <span className="w-[62px] shrink-0 tabular-nums text-muted-foreground">{h.date}</span>
-                                                     <span className={`w-[74px] shrink-0 truncate text-right tabular-nums ${i === 0 ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
-                                                       {h.value}
-                                                     </span>
-                                                     <div className="relative h-[3px] flex-1 rounded-full bg-foreground/[0.08]">
-                                                       <div className="absolute left-0 top-0 h-full rounded-full bg-primary" style={{ width: `${h.percentile}%`, opacity: i === 0 ? 1 : 0.45 }} />
-                                                     </div>
-                                                     <span className="w-4 shrink-0 text-right tabular-nums text-muted-foreground">{h.percentile}</span>
-                                                   </div>
-                                                 ))}
-                                               </div>
-                                             </PopoverContent>
-                                           </Popover>
-                                         </div>
-
-
-                                        <div className="relative h-3.5">
-                                          {isNull ? (
-                                            <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
-                                          ) : (
-                                            <>
-                                               <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
-                                               <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
-                                               <div
-                                                  className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
-                                                  style={{ width: `${pct}%` }}
-                                                />
-                                                <div
-                                                  className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
-                                                  style={{ left: `${pct}%` }}
-                                                />
-                                                 <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
-                                                   <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
-                                                     <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
-                                                     <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
-                                                       Average: {avg}
-                                                     </span>
-                                                   </div>
-                                                 </div>
-                                                <span
-                                                  className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
-                                                  style={{ left: `calc(${pct}% + 6px)` }}
-                                                >
-                                                  {Math.round(row.percentile)}
+                                          <div className="flex items-start justify-end gap-1 min-w-0">
+                                            <div className="min-w-0 overflow-hidden pr-3 text-right">
+                                              {isNull ? (
+                                                <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
+                                              ) : (
+                                                  <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
+                                                  <span className="font-semibold text-foreground">{number}</span>
+                                                  {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
+                                                  {row.mutedDetail && (
+                                                    <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
+                                                  )}
                                                 </span>
-                                            </>
-                                          )}
-                                        </div>
-                                      </div>
+                                              )}
+                                            </div>
+                                            <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                          </div>
+
+                                         <div className="relative h-3.5">
+                                           {isNull ? (
+                                             <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                           ) : (
+                                             <>
+                                                <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                                <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
+                                                <div
+                                                   className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
+                                                   style={{ width: `${pct}%` }}
+                                                 />
+                                                <div
+                                                   className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                                   style={{ left: `${pct}%` }}
+                                                 />
+                                                  <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
+                                                    <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
+                                                      <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
+                                                      <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
+                                                        Average: {avg}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                 <span
+                                                   className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
+                                                   style={{ left: `calc(${pct}% + 6px)` }}
+                                                 >
+                                                   {Math.round(row.percentile)}
+                                                 </span>
+                                             </>
+                                           )}
+                                         </div>
+
+                                          <div className="pl-2 text-right">
+                                            <Popover>
+                                              <PopoverTrigger asChild>
+                                                <button
+                                                  type="button"
+                                                  className="rounded px-0.5 text-[9px] tabular-nums text-muted-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
+                                                  title={`Observed ${asOf} — show history`}
+                                                >
+                                                  {asOf}
+                                                </button>
+                                              </PopoverTrigger>
+                                              <PopoverContent className="w-64 p-3" side="right" align="end">
+                                                <p className="text-[10px] font-semibold text-foreground">{row.label}</p>
+                                                <p className="mt-0.5 text-[9px] text-muted-foreground">Historical readings — newest first</p>
+                                                <div className="mt-2 space-y-1">
+                                                  {history.map((h, i) => (
+                                                    <div key={h.date} className="flex items-center gap-2 text-[9px]">
+                                                      <span className="w-[62px] shrink-0 tabular-nums text-muted-foreground">{h.date}</span>
+                                                      <span className={`w-[74px] shrink-0 truncate text-right tabular-nums ${i === 0 ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
+                                                        {h.value}
+                                                      </span>
+                                                      <div className="relative h-[3px] flex-1 rounded-full bg-foreground/[0.08]">
+                                                        <div className="absolute left-0 top-0 h-full rounded-full bg-primary" style={{ width: `${h.percentile}%`, opacity: i === 0 ? 1 : 0.45 }} />
+                                                      </div>
+                                                      <span className="w-4 shrink-0 text-right tabular-nums text-muted-foreground">{h.percentile}</span>
+                                                    </div>
+                                                  ))}
+                                                </div>
+                                              </PopoverContent>
+                                            </Popover>
+                                          </div>
+                                       </div>
                                     );
                                   })}
                                 </div>
