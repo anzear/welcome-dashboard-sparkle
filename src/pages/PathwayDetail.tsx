@@ -668,26 +668,29 @@ const PathwayDetail = () => {
                           <div>
                             {group.sections.map((section, sectionIndex) => {
                               const sectionHighlighted = hoveredFlowType === section.type;
+                              const hideSectionLabel = section.name === group.category;
                               return (
                                 <div
                                   key={`${group.category}-${section.name}`}
-                                  className={`${sectionIndex > 0 ? 'border-t border-dashed border-foreground/10' : ''}`}
+                                  className={`${sectionIndex > 0 && !hideSectionLabel ? 'border-t border-dashed border-foreground/10' : ''}`}
                                   onMouseEnter={() => setHoveredFlowType(section.type)}
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
-                                  <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
-                                    <div className="flex items-center gap-1 pl-1">
-                                      <span
-                                        className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                        style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
-                                      />
-                                      <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
-                                        {section.name}
-                                      </span>
+                                  {!hideSectionLabel && (
+                                    <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
+                                      <div className="flex items-center gap-1 pl-1">
+                                        <span
+                                          className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                          style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
+                                        />
+                                        <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
+                                          {section.name}
+                                        </span>
+                                      </div>
+                                      <div />
+                                      <div />
                                     </div>
-                                    <div />
-                                    <div />
-                                  </div>
+                                  )}
 
                                   {section.rows.map((row) => {
                                     const isNull = !row.value || row.value === '—';
