@@ -225,29 +225,29 @@ const PathwayDetail = () => {
     },
     // Product alternatives
     'D-Lactic Acid': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 82, sizeGlobal: 68, sizeEU: 60, growthGlobal: 92, growthEU: 88, appPrice: 82, trlScore: 100, yieldScore: 85, ghgScore: 73 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$1.2B', marketEU: '€480M', growthGlobal: '12.1% CAGR', growthEU: '13.5% CAGR', appPrice: '€2,800-3,500/t', yield: '89%', ghg: '1.45 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 82, sizeGlobal: 68, sizeEU: 60, growthGlobal: 92, growthEU: 88, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$1.2B', marketEU: '€480M', growthGlobal: '12.1% CAGR', growthEU: '13.5% CAGR', appPrice: '€2,800-3,500/t' },
     },
     'Lactide': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 75, sizeGlobal: 72, sizeEU: 65, growthGlobal: 85, growthEU: 82, appPrice: 82, trlScore: 100, yieldScore: 78, ghgScore: 68 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$2.1B', marketEU: '€850M', growthGlobal: '10.2% CAGR', growthEU: '11.0% CAGR', appPrice: '€2,800-3,500/t', yield: '81%', ghg: '1.8 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 75, sizeGlobal: 72, sizeEU: 65, growthGlobal: 85, growthEU: 82, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$2.1B', marketEU: '€850M', growthGlobal: '10.2% CAGR', growthEU: '11.0% CAGR', appPrice: '€2,800-3,500/t' },
     },
     // Application alternatives
     'Food Preservatives': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 70, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,200-1,800/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 70, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,200-1,800/t' },
     },
     'PLA Fiber': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 88, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€3,200-4,200/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 88, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€3,200-4,200/t' },
     },
     'Green Solvents': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 75, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,800-2,500/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 75, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€1,800-2,500/t' },
     },
     '3D Printing Filament': {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 92, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€4,500-6,000/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 92, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€4,500-6,000/t' },
     },
   };
 
