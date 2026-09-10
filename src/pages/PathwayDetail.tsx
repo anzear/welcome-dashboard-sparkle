@@ -333,6 +333,51 @@ const PathwayDetail = () => {
     };
   };
 
+  // --- Indicator observation dates + deterministic history (mock data layer) ---
+  const labelHash = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h;
+  };
+
+  const shortDate = (d: Date) =>
+    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  /** Latest observation date for an indicator: deterministic, within the last ~5 months. */
+  const observedAt = (label: string) => {
+    const h = labelHash(label);
+    const d = new Date(2026, 8, 1);
+    d.setDate(d.getDate() - (h % 150));
+    return d;
+  };
+
+  /** Past readings, newest first, quarterly steps back from the observation date. */
+  const indicatorHistory = (label: string, value: string, percentile: number) => {
+    const h = labelHash(label);
+    const base = observedAt(label);
+    const { number, unit } = splitValueUnit(value);
+    const isRange = /[\u2013-]\s*\d/.test(number.slice(1));
+    const digits = number.match(/[\d.,]+/)?.[0]?.replace(/,/g, '') ?? '';
+    const numeric = isRange ? NaN : parseFloat(digits);
+    const prefix = number.match(/^[^\d]*/)?.[0] ?? '';
+    const out: Array<{ date: string; value: string; percentile: number }> = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(base);
+      d.setMonth(d.getMonth() - i * 3);
+      const drift = i === 0 ? 0 : ((h >> (i * 3)) % 13) - 6;
+      const pct = Math.max(1, Math.min(99, Math.round(percentile - drift)));
+      let shown = i === 0 ? value : '—';
+      if (i > 0 && Number.isFinite(numeric)) {
+        const factor = 1 - i * (((h >> i) % 5) + 2) / 100;
+        const scaled = numeric * factor;
+        const decimals = String(number).includes('.') ? 1 : 0;
+        shown = `${prefix}${scaled.toFixed(decimals)}${unit ?? ''}`;
+      }
+      out.push({ date: shortDate(d), value: shown, percentile: pct });
+    }
+    return out;
+  };
+
   const evaluationGroups: Array<{
     category: string;
     type: 'feedstock' | 'technology' | 'product' | 'application';
@@ -638,10 +683,11 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_82px_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
-                      <div className="relative flex items-center justify-between text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
+                      <span className="text-right text-[9px] uppercase tracking-[0.08em] text-muted-foreground">As of</span>
+                      <div className="relative flex items-center justify-between pl-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
                       </div>
@@ -677,53 +723,89 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                    <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
-                                      <div className="flex items-center gap-1 pl-1">
-                                        <span
-                                          className="h-1.5 w-1.5 shrink-0 rounded-full"
-                                          style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
-                                        />
-                                        <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
-                                          {section.name}
-                                        </span>
-                                      </div>
-                                      <div />
-                                      <div />
-                                    </div>
+                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_82px_minmax(100px,1fr)] items-center pr-2">
+                                       <div className="flex items-center gap-1 pl-1">
+                                         <span
+                                           className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                           style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
+                                         />
+                                         <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
+                                           {section.name}
+                                         </span>
+                                       </div>
+                                       <div />
+                                       <div />
+                                       <div />
+                                     </div>
                                   )}
 
                                   {section.rows.map((row) => {
-                                    const isNull = !row.value || row.value === '—';
-                                    const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
-                                    // Deterministic population average across all pathways in the analysis
-                                    let hash = 0;
-                                    for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
-                                    const avg = 25 + (hash % 51);
-                                    const { number, unit } = splitValueUnit(row.value);
-                                    return (
-                                      <div
-                                        key={`${group.category}-${section.name}-${row.label}`}
-                                        tabIndex={0}
-                                        className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
-                                      >
-                                        <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
+                                     const isNull = !row.value || row.value === '—';
+                                     const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
+                                     // Deterministic population average across all pathways in the analysis
+                                     let hash = 0;
+                                     for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
+                                     const avg = 25 + (hash % 51);
+                                     const { number, unit } = splitValueUnit(row.value);
+                                     const asOf = shortDate(observedAt(row.label));
+                                     const history = indicatorHistory(row.label, row.value, pct);
+                                     return (
+                                       <div
+                                         key={`${group.category}-${section.name}-${row.label}`}
+                                         tabIndex={0}
+                                         className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_82px_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                       >
+                                         <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
-                                        <div className="flex items-start justify-end gap-1 min-w-0">
-                                          <div className="min-w-0 overflow-hidden pr-3 text-right">
-                                            {isNull ? (
-                                              <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
-                                            ) : (
-                                                <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
-                                                <span className="font-semibold text-foreground">{number}</span>
-                                                {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
-                                                {row.mutedDetail && (
-                                                  <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
-                                                )}
-                                              </span>
-                                            )}
-                                          </div>
-                                          <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
-                                        </div>
+                                         <div className="flex items-start justify-end gap-1 min-w-0">
+                                           <div className="min-w-0 overflow-hidden pr-3 text-right">
+                                             {isNull ? (
+                                               <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
+                                             ) : (
+                                                 <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
+                                                 <span className="font-semibold text-foreground">{number}</span>
+                                                 {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
+                                                 {row.mutedDetail && (
+                                                   <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
+                                                 )}
+                                               </span>
+                                             )}
+                                           </div>
+                                           <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                         </div>
+
+                                         <div className="pr-2 text-right">
+                                           <Popover>
+                                             <PopoverTrigger asChild>
+                                               <button
+                                                 type="button"
+                                                 className="rounded px-0.5 text-[9px] tabular-nums text-muted-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
+                                                 title={`Observed ${asOf} — show history`}
+                                               >
+                                                 {asOf}
+                                               </button>
+                                             </PopoverTrigger>
+                                             <PopoverContent className="w-64 p-3" side="left" align="start">
+                                               <p className="text-[10px] font-semibold text-foreground">{row.label}</p>
+                                               <p className="mt-0.5 text-[9px] text-muted-foreground">Historical readings — newest first</p>
+                                               <div className="mt-2 space-y-1">
+                                                 {history.map((h, i) => (
+                                                   <div key={h.date} className="flex items-center gap-2 text-[9px]">
+                                                     <span className="w-[62px] shrink-0 tabular-nums text-muted-foreground">{h.date}</span>
+                                                     <span className={`w-[74px] shrink-0 truncate text-right tabular-nums ${i === 0 ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
+                                                       {h.value}
+                                                     </span>
+                                                     <div className="relative h-[3px] flex-1 rounded-full bg-foreground/[0.08]">
+                                                       <div className="absolute left-0 top-0 h-full rounded-full bg-primary" style={{ width: `${h.percentile}%`, opacity: i === 0 ? 1 : 0.45 }} />
+                                                     </div>
+                                                     <span className="w-4 shrink-0 text-right tabular-nums text-muted-foreground">{h.percentile}</span>
+                                                   </div>
+                                                 ))}
+                                               </div>
+                                             </PopoverContent>
+                                           </Popover>
+                                         </div>
+
 
                                         <div className="relative h-3.5">
                                           {isNull ? (
