@@ -668,7 +668,7 @@ const PathwayDetail = () => {
                           <div>
                             {group.sections.map((section, sectionIndex) => {
                               const sectionHighlighted = hoveredFlowType === section.type;
-                              const hideSectionLabel = section.name === group.category;
+                              const hideSectionLabel = group.category === 'Application' && section.name === group.category;
                               return (
                                 <div
                                   key={`${group.category}-${section.name}`}
