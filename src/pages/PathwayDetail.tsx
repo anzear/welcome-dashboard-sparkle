@@ -356,8 +356,10 @@ const PathwayDetail = () => {
     const h = labelHash(label);
     const base = observedAt(label);
     const { number, unit } = splitValueUnit(value);
-    const numeric = parseFloat(String(number).replace(/[^0-9.\-]/g, ''));
-    const prefix = String(number).match(/^[^0-9.\-]*/)?.[0] ?? '';
+    const isRange = /[\u2013-]\s*\d/.test(number.slice(1));
+    const digits = number.match(/[\d.,]+/)?.[0]?.replace(/,/g, '') ?? '';
+    const numeric = isRange ? NaN : parseFloat(digits);
+    const prefix = number.match(/^[^\d]*/)?.[0] ?? '';
     const out: Array<{ date: string; value: string; percentile: number }> = [];
     for (let i = 0; i < 5; i++) {
       const d = new Date(base);
