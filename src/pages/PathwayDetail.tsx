@@ -355,7 +355,6 @@ const PathwayDetail = () => {
       category: 'Process',
       type: 'technology',
       rows: [
-        { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
         { label: 'Yield', value: displayMetric(activeMetrics.metrics.yield), percentile: activeMetrics.radar.yieldScore },
       ],
     },
@@ -376,8 +375,6 @@ const PathwayDetail = () => {
       category: 'Production',
       type: 'technology',
       rows: [
-        { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
-        { label: 'GHG emissions', value: displayMetric(activeMetrics.metrics.ghg), percentile: activeMetrics.radar.ghgScore },
         { label: 'Production IP count', value: '412', percentile: 20 },
         { label: 'Production research count', value: '1,268', percentile: 12 },
       ],
@@ -739,7 +736,7 @@ const PathwayDetail = () => {
                     </summary>
                     <div className="mt-2 grid gap-1 text-[9px] leading-relaxed text-muted-foreground md:grid-cols-2">
                        <p>Percentiles normalize each indicator against comparable pathways. Higher values indicate stronger pathway position. The vertical tick marks the average of all pathways in the analysis.</p>
-                      <p>Yield is shown as a percentage. GHG emissions are cradle-to-gate emissions per tonne of product.</p>
+                      <p>Yield is shown as a percentage.</p>
                     </div>
                   </details>
                 </div>
