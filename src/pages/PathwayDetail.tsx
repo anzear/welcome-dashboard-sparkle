@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText, Bookmark, ExternalLink, Info, Bell, BellOff, FlaskConical, ScrollText, Rocket, Factory, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import PathwayResourcesTab from "@/components/PathwayResourcesTab";
 import PathwayFlowPopover from "@/components/PathwayFlowPopover";
 import PathwayOpinionsTab from "@/components/PathwayOpinionsTab";
