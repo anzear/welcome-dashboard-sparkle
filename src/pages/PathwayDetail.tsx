@@ -189,13 +189,13 @@ const PathwayDetail = () => {
 
   // Alternative metrics data - keyed by name
   const alternativeMetrics: Record<string, {
-    radar: { feedstockPrice: number; supplyVolume: number; capex: number; yield: number; marketPrice: number; sizeGlobal: number; sizeEU: number; growthGlobal: number; growthEU: number; appPrice: number; trlScore: number; yieldScore: number; ghgScore: number };
-    metrics: { feedstockPrice: string; feedstockQty: string; capex: string; trl: string; marketGlobal: string; marketEU: string; growthGlobal: string; growthEU: string; appPrice: string; yield: string; ghg: string };
+    radar: { feedstockPrice: number; supplyVolume: number; capex: number; marketPrice: number; sizeGlobal: number; sizeEU: number; growthGlobal: number; growthEU: number; appPrice: number; trlScore: number };
+    metrics: { feedstockPrice: string; feedstockQty: string; capex: string; trl: string; marketGlobal: string; marketEU: string; growthGlobal: string; growthEU: string; appPrice: string };
   }> = {
     // Default / original
     _default: {
-      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, yield: 88, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100, yieldScore: 88, ghgScore: 74 },
-      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t', yield: '92%', ghg: '1.4 t CO₂e/t' },
+      radar: { feedstockPrice: 85, supplyVolume: 90, capex: 72, marketPrice: 78, sizeGlobal: 92, sizeEU: 85, growthGlobal: 80, growthEU: 83, appPrice: 82, trlScore: 100 },
+      metrics: { feedstockPrice: '€120-180/t', feedstockQty: '8.2M t/yr', capex: '€15-25M', trl: 'TRL 9', marketGlobal: '$3.9B', marketEU: '€1.4B', growthGlobal: '8.5% CAGR', growthEU: '9.2% CAGR', appPrice: '€2,800-3,500/t' },
     },
     // Feedstock alternatives
     'Sugarcane Molasses': {
