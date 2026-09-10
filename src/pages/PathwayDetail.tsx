@@ -333,6 +333,49 @@ const PathwayDetail = () => {
     };
   };
 
+  // --- Indicator observation dates + deterministic history (mock data layer) ---
+  const labelHash = (s: string) => {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+    return h;
+  };
+
+  const shortDate = (d: Date) =>
+    d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+  /** Latest observation date for an indicator: deterministic, within the last ~5 months. */
+  const observedAt = (label: string) => {
+    const h = labelHash(label);
+    const d = new Date(2026, 8, 1);
+    d.setDate(d.getDate() - (h % 150));
+    return d;
+  };
+
+  /** Past readings, newest first, quarterly steps back from the observation date. */
+  const indicatorHistory = (label: string, value: string, percentile: number) => {
+    const h = labelHash(label);
+    const base = observedAt(label);
+    const { number, unit } = splitValueUnit(value);
+    const numeric = parseFloat(String(number).replace(/[^0-9.\-]/g, ''));
+    const prefix = String(number).match(/^[^0-9.\-]*/)?.[0] ?? '';
+    const out: Array<{ date: string; value: string; percentile: number }> = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(base);
+      d.setMonth(d.getMonth() - i * 3);
+      const drift = i === 0 ? 0 : ((h >> (i * 3)) % 13) - 6;
+      const pct = Math.max(1, Math.min(99, Math.round(percentile - drift)));
+      let shown = i === 0 ? value : '—';
+      if (i > 0 && Number.isFinite(numeric)) {
+        const factor = 1 - i * (((h >> i) % 5) + 2) / 100;
+        const scaled = numeric * factor;
+        const decimals = String(number).includes('.') ? 1 : 0;
+        shown = `${prefix}${scaled.toFixed(decimals)}${unit ?? ''}`;
+      }
+      out.push({ date: shortDate(d), value: shown, percentile: pct });
+    }
+    return out;
+  };
+
   const evaluationGroups: Array<{
     category: string;
     type: 'feedstock' | 'technology' | 'product' | 'application';
