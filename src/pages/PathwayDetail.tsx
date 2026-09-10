@@ -336,53 +336,69 @@ const PathwayDetail = () => {
   const evaluationGroups: Array<{
     category: string;
     type: 'feedstock' | 'technology' | 'product' | 'application';
-    rows: Array<{ label: string; value: string; percentile: number; mutedDetail?: string }>;
+    sections: Array<{
+      name: string;
+      type: 'feedstock' | 'technology' | 'product' | 'application';
+      rows: Array<{ label: string; value: string; percentile: number; mutedDetail?: string }>;
+    }>;
   }> = [
-    {
-      category: 'Feedstock',
-      type: 'feedstock',
-      rows: [
-        { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
-        { label: 'Feedstock availability (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
-      ],
-    },
-    {
-      category: 'Process',
-      type: 'technology',
-      rows: [
-        { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
-      ],
-    },
-    {
-      category: 'Product',
-      type: 'product',
-      rows: [
-        { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
-        { label: 'Product availability (Europe)', value: '1.4M t/yr', percentile: 46 },
-        { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
-        { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
-        { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
-        { label: 'Market growth (Global)', value: metricGrowthValue(activeMetrics.metrics.growthGlobal), percentile: activeMetrics.radar.growthGlobal },
-        { label: 'Market concentration', value: '34', mutedDetail: 'producers in 12 countries', percentile: 38 },
-      ],
-    },
     {
       category: 'Production',
       type: 'technology',
-      rows: [
-        { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
-        { label: 'Production IP count', value: '412', percentile: 20 },
-        { label: 'Production research count', value: '1,268', percentile: 12 },
+      sections: [
+        {
+          name: 'Feedstock',
+          type: 'feedstock',
+          rows: [
+            { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
+            { label: 'Feedstock availability (Europe)', value: displayMetric(activeMetrics.metrics.feedstockQty), percentile: activeMetrics.radar.supplyVolume },
+          ],
+        },
+        {
+          name: 'Process',
+          type: 'technology',
+          rows: [
+            { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
+          ],
+        },
+        {
+          name: 'Product',
+          type: 'product',
+          rows: [
+            { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
+            { label: 'Product availability (Europe)', value: '1.4M t/yr', percentile: 46 },
+            { label: 'Market size (EU)', value: displayMetric(activeMetrics.metrics.marketEU), percentile: activeMetrics.radar.sizeEU },
+            { label: 'Market size (Global)', value: displayMetric(activeMetrics.metrics.marketGlobal), percentile: activeMetrics.radar.sizeGlobal },
+            { label: 'Market growth (EU)', value: metricGrowthValue(activeMetrics.metrics.growthEU), percentile: activeMetrics.radar.growthEU },
+            { label: 'Market growth (Global)', value: metricGrowthValue(activeMetrics.metrics.growthGlobal), percentile: activeMetrics.radar.growthGlobal },
+            { label: 'Market concentration', value: '34', mutedDetail: 'producers in 12 countries', percentile: 38 },
+          ],
+        },
+        {
+          name: 'Production',
+          type: 'technology',
+          rows: [
+            { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
+            { label: 'Production IP count', value: '412', percentile: 20 },
+            { label: 'Production research count', value: '1,268', percentile: 12 },
+          ],
+        },
       ],
     },
     {
       category: 'Application',
       type: 'application',
-      rows: [
-        { label: 'Application TRL', value: 'TRL 7', percentile: 76 },
-        { label: 'Application IP count', value: '96', percentile: 26 },
-        { label: 'Application research count', value: '743', percentile: 24 },
-        { label: 'Demand', value: '18', mutedDetail: 'offtakers in 7 countries', percentile: 29 },
+      sections: [
+        {
+          name: 'Application',
+          type: 'application',
+          rows: [
+            { label: 'Application TRL', value: 'TRL 7', percentile: 76 },
+            { label: 'Application IP count', value: '96', percentile: 26 },
+            { label: 'Application research count', value: '743', percentile: 24 },
+            { label: 'Demand', value: '18', mutedDetail: 'offtakers in 7 countries', percentile: 29 },
+          ],
+        },
       ],
     },
   ];
