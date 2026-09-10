@@ -351,7 +351,6 @@ const PathwayDetail = () => {
       type: 'technology',
       rows: [
         { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
-        { label: 'Yield', value: displayMetric(activeMetrics.metrics.yield), percentile: activeMetrics.radar.yieldScore },
       ],
     },
     {
@@ -372,7 +371,6 @@ const PathwayDetail = () => {
       type: 'technology',
       rows: [
         { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
-        { label: 'GHG emissions', value: displayMetric(activeMetrics.metrics.ghg), percentile: activeMetrics.radar.ghgScore },
         { label: 'Production IP count', value: '412', percentile: 20 },
         { label: 'Production research count', value: '1,268', percentile: 12 },
       ],
