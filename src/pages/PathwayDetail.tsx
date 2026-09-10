@@ -647,7 +647,7 @@ const PathwayDetail = () => {
                       </div>
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
-                      const isHighlighted = hoveredFlowType === group.type;
+                      const groupHighlighted = hoveredFlowType === group.type;
                       return (
                         <div
                           key={group.category}
@@ -655,82 +655,108 @@ const PathwayDetail = () => {
                           onMouseEnter={() => setHoveredFlowType(group.type)}
                           onMouseLeave={() => setHoveredFlowType(null)}
                         >
-                          <div className="flex items-center px-1.5 h-6">
+                          <div className="flex items-start px-1.5 pt-1.5">
                             <span
-                              className="mr-1 h-3 w-[2px] shrink-0 rounded-full"
+                              className="mr-1 mt-0.5 h-3 w-[2px] shrink-0 rounded-full"
                               style={{ backgroundColor: `hsl(var(${categoryPalette[group.category]}))` }}
                             />
-                            <span className={`text-[9px] uppercase tracking-[0.08em] ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
+                            <span className={`text-[9px] uppercase tracking-[0.08em] ${groupHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
                               {group.category}
                             </span>
                           </div>
 
                           <div>
-                            {group.rows.map((row) => {
-                              const isNull = !row.value || row.value === '—';
-                              const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
-                              // Deterministic population average across all pathways in the analysis
-                              let hash = 0;
-                              for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
-                              const avg = 25 + (hash % 51);
-                              const { number, unit } = splitValueUnit(row.value);
+                            {group.sections.map((section, sectionIndex) => {
+                              const sectionHighlighted = hoveredFlowType === section.type;
                               return (
                                 <div
-                                  key={`${group.category}-${row.label}`}
-                                  tabIndex={0}
-                                  className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                  key={`${group.category}-${section.name}`}
+                                  className={`${sectionIndex > 0 ? 'border-t border-dashed border-foreground/10' : ''}`}
+                                  onMouseEnter={() => setHoveredFlowType(section.type)}
+                                  onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
-                                  <span className="truncate pl-1 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
-
-                                  <div className="flex items-start justify-end gap-1 min-w-0">
-                                    <div className="min-w-0 overflow-hidden pr-3 text-right">
-                                      {isNull ? (
-                                        <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
-                                      ) : (
-                                          <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
-                                          <span className="font-semibold text-foreground">{number}</span>
-                                          {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
-                                          {row.mutedDetail && (
-                                            <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
-                                          )}
-                                        </span>
-                                      )}
+                                  <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
+                                    <div className="flex items-center gap-1 pl-1">
+                                      <span
+                                        className="h-1.5 w-1.5 shrink-0 rounded-full"
+                                        style={{ backgroundColor: `hsl(var(${categoryPalette[section.name] || categoryPalette[group.category]}))` }}
+                                      />
+                                      <span className={`text-[9px] uppercase tracking-[0.08em] ${sectionHighlighted ? 'text-foreground' : 'text-muted-foreground/80'}`}>
+                                        {section.name}
+                                      </span>
                                     </div>
-                                    <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                    <div />
+                                    <div />
                                   </div>
 
-                                  <div className="relative h-3.5">
-                                    {isNull ? (
-                                      <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
-                                    ) : (
-                                      <>
-                                         <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
-                                         <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
-                                         <div
-                                            className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
-                                            style={{ width: `${pct}%` }}
-                                          />
-                                          <div
-                                            className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
-                                            style={{ left: `${pct}%` }}
-                                          />
-                                           <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
-                                             <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
-                                               <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
-                                               <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
-                                                 Average: {avg}
-                                               </span>
-                                             </div>
-                                           </div>
-                                          <span
-                                            className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
-                                            style={{ left: `calc(${pct}% + 6px)` }}
-                                          >
-                                            {Math.round(row.percentile)}
-                                          </span>
-                                      </>
-                                    )}
-                                  </div>
+                                  {section.rows.map((row) => {
+                                    const isNull = !row.value || row.value === '—';
+                                    const pct = Math.max(0, Math.min(100, row.percentile ?? 0));
+                                    // Deterministic population average across all pathways in the analysis
+                                    let hash = 0;
+                                    for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
+                                    const avg = 25 + (hash % 51);
+                                    const { number, unit } = splitValueUnit(row.value);
+                                    return (
+                                      <div
+                                        key={`${group.category}-${section.name}-${row.label}`}
+                                        tabIndex={0}
+                                        className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                      >
+                                        <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
+
+                                        <div className="flex items-start justify-end gap-1 min-w-0">
+                                          <div className="min-w-0 overflow-hidden pr-3 text-right">
+                                            {isNull ? (
+                                              <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
+                                            ) : (
+                                                <span className="block truncate text-[10px] tabular-nums whitespace-nowrap">
+                                                <span className="font-semibold text-foreground">{number}</span>
+                                                {unit && <span className="font-normal text-muted-foreground">{unit}</span>}
+                                                {row.mutedDetail && (
+                                                  <span className="font-normal text-muted-foreground"> {row.mutedDetail}</span>
+                                                )}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                        </div>
+
+                                        <div className="relative h-3.5">
+                                          {isNull ? (
+                                            <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                          ) : (
+                                            <>
+                                               <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                               <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
+                                               <div
+                                                  className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
+                                                  style={{ width: `${pct}%` }}
+                                                />
+                                                <div
+                                                  className="absolute top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-background"
+                                                  style={{ left: `${pct}%` }}
+                                                />
+                                                 <div className="group/marker absolute top-0 bottom-0 flex items-center justify-center" style={{ left: `${avg}%` }}>
+                                                   <div className="relative h-3.5 w-3.5 -translate-x-1/2 cursor-help" title={`Average of all pathways: ${avg}`}>
+                                                     <div className="absolute left-1/2 top-1/2 h-[12px] w-[2px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground/50" />
+                                                     <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded border border-border bg-background px-1 py-0.5 text-[9px] tabular-nums text-foreground opacity-0 shadow-sm transition-opacity group-hover/marker:opacity-100">
+                                                       Average: {avg}
+                                                     </span>
+                                                   </div>
+                                                 </div>
+                                                <span
+                                                  className="pointer-events-none absolute -top-[2px] -translate-x-full -translate-y-full text-[9px] tabular-nums text-muted-foreground opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100"
+                                                  style={{ left: `calc(${pct}% + 6px)` }}
+                                                >
+                                                  {Math.round(row.percentile)}
+                                                </span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
                               );
                             })}
