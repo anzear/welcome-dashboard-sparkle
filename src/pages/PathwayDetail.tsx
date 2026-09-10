@@ -375,8 +375,6 @@ const PathwayDetail = () => {
       category: 'Production',
       type: 'technology',
       rows: [
-        { label: 'Production TRL', value: 'TRL 8', percentile: 88 },
-        { label: 'GHG emissions', value: displayMetric(activeMetrics.metrics.ghg), percentile: activeMetrics.radar.ghgScore },
         { label: 'Production IP count', value: '412', percentile: 20 },
         { label: 'Production research count', value: '1,268', percentile: 12 },
       ],
