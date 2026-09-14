@@ -9,3 +9,4 @@ export { DerivedPathwayList, DerivedPathwaysForRecord, NodeChips, NodeFields, Pa
 export { CompanyDerivedPathwayList, CompanyRoleChip, DerivedPathwaysForCompany, FitChip, RoleNodeLine, SecondaryNodes } from "./CompanyFitPrimitives";
 export { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 export { GroupChip } from "./GroupChip";
+export { SplitAddButton, type SplitAddButtonItem } from "./SplitAddButton";
