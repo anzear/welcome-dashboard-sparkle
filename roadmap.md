@@ -105,3 +105,11 @@
 - [x] Add per-row and apply-all role/node assignment with validation
 - [x] Create audited company records with shared batch IDs and result export
 - [x] Verify table ordering, search, queue counts, links, upload, and console
+
+## Prompt 23 — Papers and Patents position fields
+- [ ] Replace free matched node arrays with four position-keyed fields and migrate seed data
+- [ ] Add shared position-aware node chips, fields, derivation, scope, and audit rendering
+- [ ] Update paper and patent tables, filters, sheets, edit, and single-add flows
+- [ ] Update bulk paste, template validation, per-position apply controls, linking, and results
+- [ ] Verify derivation, zero-node records, audit history, filters, and all add flows
+
