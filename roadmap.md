@@ -107,11 +107,11 @@
 - [x] Verify table ordering, search, queue counts, links, upload, and console
 
 ## Prompt 23 — Papers and Patents position fields
-- [ ] Replace free matched node arrays with four position-keyed fields and migrate seed data
-- [ ] Add shared position-aware node chips, fields, derivation, scope, and audit rendering
-- [ ] Update paper and patent tables, filters, sheets, edit, and single-add flows
-- [ ] Update bulk paste, template validation, per-position apply controls, linking, and results
-- [ ] Verify derivation, zero-node records, audit history, filters, and all add flows
+- [x] Replace free matched node arrays with four position-keyed fields and migrate seed data
+- [x] Add shared position-aware node chips, fields, derivation, scope, and audit rendering
+- [x] Update paper and patent tables, filters, sheets, edit, and single-add flows
+- [x] Update bulk paste, template validation, per-position apply controls, linking, and results
+- [x] Verify derivation, zero-node records, audit history, filters, and all add flows
 
 
 ## Prompt 24 — Standalone pathway visibility
