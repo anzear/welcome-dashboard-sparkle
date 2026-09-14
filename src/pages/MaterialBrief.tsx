@@ -508,7 +508,7 @@ const MaterialBrief: React.FC = () => {
     if (p.urgency >= 4) return 'Rapid opportunity scan';
     if (attachments.some(a => a.category === 'sustainability') || p.primaryDriver === 'Decarbonisation') return 'Feedstock and sustainability route comparison';
     if (extracted.some(e => /supplier|MOQ|sourcing/i.test(e.text))) return 'Supplier and scale-up intelligence';
-    if (p.currentStatus === 'New opportunity' || p.currentStatus === 'Strategic exploration') return 'BioLinks production route mapping';
+    if (p.currentStatus === 'New opportunity' || p.currentStatus === 'Strategic exploration') return 'Pathway Nodes production route mapping';
     if (p.primaryDriver === 'Innovation roadmap') return 'Patent and R&D activity analysis';
     if (p.urgency <= 2) return 'Market monitoring workflow';
     return 'Commercial project and scale-up intelligence';

@@ -2154,7 +2154,7 @@ const MaterialSnapshotSection: React.FC<{
         <div className="rounded-lg border border-border/60 bg-muted/40 p-3">
 
           <div className="flex items-center justify-between gap-3 mb-2">
-            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Material Producers per Region Worldwide</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Product Manufacturers per Region Worldwide</h4>
             <div className="flex items-center gap-2 text-[9px] uppercase tracking-widest text-muted-foreground">
               <Users size={12} />
               <span className="flex h-2 w-20 overflow-hidden rounded-sm">

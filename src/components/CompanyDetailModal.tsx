@@ -103,7 +103,7 @@ export const CompanyDetailModal = ({
       case 'product':
         return 'Product Producer';
       case 'market_uptaker':
-        return 'Market Off-taker';
+        return 'Off-taker';
       default:
         return 'Company';
     }
