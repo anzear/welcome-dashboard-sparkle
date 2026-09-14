@@ -17,6 +17,11 @@ export const NODE_LABELS = {
   product: "Product",
   application_market: "Application",
 } as const satisfies Record<keyof EvidenceNodes, string>;
+export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
+  if (role === "feedstock_supplier") return [];
+  if (role === "product_manufacturer") return ["feedstock", "process_technology"];
+  return ["feedstock", "process_technology", "product"];
+}
 
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
 export type IndicatorValueType = "trl" | "count" | "decimal";
@@ -198,7 +203,9 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   const assignment = companyAssignments[index];
   const pathway = seedPathways[assignment.pathway];
   const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], hq_city: row[3], country: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18, founded: 2008 + index }, role: assignment.role, role_node: pathway[position], secondary_nodes: assignment.secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  const allowed = new Set(allowedSecondaryPositions(assignment.role));
+  const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => [key, allowed.has(key) ? assignment.secondary_nodes[key] : null])) as unknown as EvidenceNodes;
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], hq_city: row[3], country: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18, founded: 2008 + index }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
@@ -268,11 +275,6 @@ const rolePositions = {
   application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
-export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
-  if (role === "feedstock_supplier") return [];
-  if (role === "product_manufacturer") return ["feedstock", "process_technology"];
-  return ["feedstock", "process_technology", "product"];
-}
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
   return pathways.filter(pathway => pathway.status !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
