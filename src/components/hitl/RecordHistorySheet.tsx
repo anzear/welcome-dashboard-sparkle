@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ActorStamp, OperationChip, TraceId, ValueDiff } from "./ReviewPrimitives";
 import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { PathwayRef } from "./PathwayRef";
-import { DerivedPathwaysForRecord, NodeValueChips, ScopeSummary } from "./EvidenceMatchPrimitives";
+import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
 import { groupById, indicatorLabel, useHitlStore, type AuditEntityType, type AuditEntry, type Company, type Group, type HitlRecord, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { GroupChip } from "./GroupChip";
@@ -82,7 +82,7 @@ export function RecordHistorySheet() {
   const { target, closeHistory } = useHistorySheet();
   const store = useHitlStore();
   const record = target ? store.getRecord(target.entity_type, target.entity_id) : null;
-  const isEvidence = Boolean(target && (target.entity_type === "paper_match" || target.entity_type === "patent_match") && record && "matched_nodes" in record);
+  const isEvidence = Boolean(target && (target.entity_type === "paper_match" || target.entity_type === "patent_match") && record && "nodes" in record);
   const evidence = isEvidence ? record as PaperPatentMatch : null;
   const company = target?.entity_type === "company" && record && "role_node" in record ? record as Company : null;
   const indicatorValue = target?.entity_type === "indicator_value" && record && "indicator_key" in record ? record as IndicatorValue : null;

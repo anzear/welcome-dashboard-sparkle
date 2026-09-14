@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DerivedPathwaysForRecord, NodeFilterEmpty, NodeValueChips, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, TargetRef, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { DerivedPathwaysForRecord, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, TargetRef, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import { affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, indicatorLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +35,7 @@ export function AuditLogSection() {
     if (!nodeFilter.isActive) return true;
     if (item.entity_type === "pathway") return nodeFilter.matchingPathwayIds.has(item.entity_id);
     if (item.entity_type === "company") { const company = store.companies.find(row => row.id === item.entity_id); if (!company) return false; const position = rolePosition(company.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.feedstock.trim().toLocaleLowerCase())) && (!nodeFilter.product || (position === "product" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.product.trim().toLocaleLowerCase())); return direct || derivedCompanyPathwayIds(company, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
-    if (item.entity_type === "paper_match" || item.entity_type === "patent_match") { const match = store.paperPatentMatches.find(row => row.id === item.entity_id); if (!match) return false; const values = new Set(match.matched_nodes.map(value => value.trim().toLocaleLowerCase())); const direct = (!nodeFilter.feedstock || values.has(nodeFilter.feedstock.trim().toLocaleLowerCase())) && (!nodeFilter.product || values.has(nodeFilter.product.trim().toLocaleLowerCase())); return direct || derivedPathwayIds(match, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
+    if (item.entity_type === "paper_match" || item.entity_type === "patent_match") { const match = store.paperPatentMatches.find(row => row.id === item.entity_id); if (!match) return false; const normalize = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || normalize(match.nodes.feedstock) === normalize(nodeFilter.feedstock)) && (!nodeFilter.product || normalize(match.nodes.product) === normalize(nodeFilter.product)); return direct || derivedPathwayIds(match, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
     if (item.entity_type === "group") return store.pathways.some(pathway => pathway.group_id === item.entity_id && nodeFilter.matchingPathwayIds.has(pathway.id));
     const indicatorValue = store.indicatorValues.find(value => value.id === item.entity_id);
     if (!indicatorValue) return false;

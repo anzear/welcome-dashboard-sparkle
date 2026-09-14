@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MATCH_NODE_LABELS, allNodeValues, derivedPathwayIds, filledPositions, hasNoNodes, matchNodePositions, matchToPathwayPosition, pathwayScope, scopeSummary, useHitlStore, type MatchNodes, type MatchNodePosition, type PaperPatentMatch, type PathwayScope } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
-import { PathwayRef, type PathwayNodeKey } from "./PathwayRef";
+import { PathwayRef } from "./PathwayRef";
 
 export const evidenceNodeLabels = MATCH_NODE_LABELS;
 

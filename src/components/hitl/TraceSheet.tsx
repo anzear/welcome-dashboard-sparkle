@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ActorStamp, OperationChip, PathwayStatusChip, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
 import { PathwayRef } from "./PathwayRef";
-import { DerivedPathwaysForRecord, NodeValueChips, ScopeSummary } from "./EvidenceMatchPrimitives";
+import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
 import { useHistorySheet } from "./RecordHistorySheet";
