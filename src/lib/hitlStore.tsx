@@ -268,14 +268,19 @@ const rolePositions = {
   application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
+export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
+  if (role === "feedstock_supplier") return [];
+  if (role === "product_manufacturer") return ["feedstock", "process_technology"];
+  return ["feedstock", "process_technology", "product"];
+}
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
   return pathways.filter(pathway => pathway.status !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
-export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit {
-  const roleKey = rolePosition(company.role).positionKey;
-  const positions = (Object.keys(company.secondary_nodes) as (keyof EvidenceNodes)[]).filter(key => key !== roleKey);
+export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
+  const positions = allowedSecondaryPositions(company.role);
+  if (!positions.length) return null;
   const matched = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) === normalizedNode(pathway[key]));
   const differing = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) !== normalizedNode(pathway[key]));
   const unknown = positions.filter(key => normalizedNode(company.secondary_nodes[key]) === null);
