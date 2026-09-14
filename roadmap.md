@@ -41,3 +41,10 @@
 - [x] Update Papers, Patents, Indicators, Audit, History, Trace
 - [x] Update pathway selectors and consequences comparison
 - [x] Expand node-value search and verify UI/build
+## Prompt 12 — Papers and Patents node-level matching
+- [x] Extend evidence records with nodes, scope and derived Pathways
+- [ ] Add shared scope, node and derived Pathway displays
+- [ ] Rebuild tables, detail sheets and filters
+- [ ] Replace reassignment and add flows with node selection
+- [ ] Update audit, history and trace summaries
+- [ ] Verify interactions and build
