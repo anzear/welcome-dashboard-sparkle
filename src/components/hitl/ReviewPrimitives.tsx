@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { AuditOperation, PathwayStatus, ReviewStatus } from "@/lib/hitlStore";
+import { useTraceSheet } from "./TraceSheetContext";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
   accepted: { label: "Accepted", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
@@ -68,11 +69,12 @@ export function ValueDiff({ prior_value, new_value }: { prior_value: unknown; ne
 }
 
 export function TraceId({ value }: { value: string | null | undefined }) {
-  if (value === null || value === undefined) return <ValueCell value={null} />;
+  const { openTrace } = useTraceSheet();
+  if (value === null || value === undefined) return <Tooltip><TooltipTrigger asChild><span className="whitespace-nowrap text-[10px] text-muted-foreground">no trace · human-created</span></TooltipTrigger><TooltipContent>This record was created or edited manually and has no originating LLM call.</TooltipContent></Tooltip>;
   const short = `${value.slice(0, 8)}…`;
   return (
     <span className="group/trace inline-flex min-w-0 items-center gap-1 font-mono text-[10px]">
-      <Tooltip><TooltipTrigger asChild><span className="max-w-28 truncate">{short}</span></TooltipTrigger><TooltipContent className="font-mono text-xs">{value}</TooltipContent></Tooltip>
+       <Tooltip><TooltipTrigger asChild><Button type="button" variant="link" className="h-auto max-w-28 truncate p-0 font-mono text-[10px]" onClick={() => openTrace(value)}>{short}</Button></TooltipTrigger><TooltipContent className="font-mono text-xs">Open trace · {value}</TooltipContent></Tooltip>
       <Tooltip><TooltipTrigger asChild><Button type="button" variant="ghost" size="icon" className="h-5 w-5 opacity-0 group-hover/trace:opacity-100 focus:opacity-100" onClick={() => void navigator.clipboard.writeText(value)} aria-label="Copy trace ID"><Copy className="h-3 w-3" /></Button></TooltipTrigger><TooltipContent>Copy trace ID</TooltipContent></Tooltip>
     </span>
   );

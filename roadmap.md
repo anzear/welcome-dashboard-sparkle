@@ -17,7 +17,7 @@
 - [x] Prompt 6: Flat and grouped indicator review tables
 - [x] Prompt 6: Audited accept, reject, correct and clear workflows
 - [x] Prompt 6: Validate history, queue updates and null/zero behavior
-- [ ] Prompt 7: Mock LLM trace registry with deterministic fallback
-- [ ] Prompt 7: Global clickable Trace sheet and cross-linked records
-- [ ] Prompt 7: Audit Trace filter and complete trace surfaces
-- [ ] Prompt 7: Validate known, unknown and human-created traces
+- [x] Prompt 7: Mock LLM trace registry with deterministic fallback
+- [x] Prompt 7: Global clickable Trace sheet and cross-linked records
+- [x] Prompt 7: Audit Trace filter and complete trace surfaces
+- [x] Prompt 7: Validate known, unknown and human-created traces
