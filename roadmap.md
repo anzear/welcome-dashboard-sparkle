@@ -78,3 +78,9 @@
 - [x] Add per-row and apply-to-all node and note assignment
 - [x] Add audited batch linking, result export, sorting, queue, and batch search
 - [x] Verify mixed paste, template upload, audit entries, links, and queue updates
+
+## Prompt 19 — Pathway status menus
+- [x] Limit row menus to relevant status verbs
+- [x] Keep group assignment in Edit and the bulk bar only
+- [x] Align bulk verbs and status dialog titles
+- [ ] Verify row, bulk, and dialog behavior
