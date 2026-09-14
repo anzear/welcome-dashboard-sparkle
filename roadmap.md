@@ -13,7 +13,7 @@
 - [x] Prompt 5: Reassignment, mock lookup and linking
 - [x] Prompt 5: Detail sheet with actions and history
 - [x] Prompt 5: Validate live interactions and queue updates
-- [ ] Prompt 6: Indicator display rules, staleness and seed corrections
-- [ ] Prompt 6: Flat and grouped indicator review tables
-- [ ] Prompt 6: Audited accept, reject, correct and clear workflows
-- [ ] Prompt 6: Validate history, queue updates and null/zero behavior
+- [x] Prompt 6: Indicator display rules, staleness and seed corrections
+- [x] Prompt 6: Flat and grouped indicator review tables
+- [x] Prompt 6: Audited accept, reject, correct and clear workflows
+- [x] Prompt 6: Validate history, queue updates and null/zero behavior
