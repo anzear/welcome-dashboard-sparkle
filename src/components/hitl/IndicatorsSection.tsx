@@ -52,7 +52,7 @@ function FilterSelect({ value, onChange, label, children, className }: { value: 
 function StalenessCell({ item }: { item: IndicatorValue }) {
   if (!isStale(item) || item.corrected_at === null) return <ValueCell value={null} />;
   const days = Math.floor((Date.now() - new Date(item.corrected_at).getTime()) / 86_400_000);
-  return <Tooltip><TooltipTrigger asChild><span className="inline-flex"><Badge variant="outline" className="h-5 whitespace-nowrap border-warning/40 bg-warning/10 px-1.5 text-[9px] text-warning-foreground">Stale · {days} d</Badge></span></TooltipTrigger><TooltipContent>Correction may be refreshed by the next pipeline run</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild><span className="inline-flex"><Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap border-warning/40 bg-warning/10 px-2 text-xs text-warning-foreground">Stale · {days} d</Badge></span></TooltipTrigger><TooltipContent>Correction may be refreshed by the next pipeline run</TooltipContent></Tooltip>;
 }
 
 function NodeCombobox({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
@@ -64,7 +64,7 @@ function NodeCombobox({ label, value, options, onChange }: { label: string; valu
   return <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</Label>
     <div className="relative">
       <Input value={value} onFocus={() => setFocused(true)} onChange={event => { onChange(event.target.value); setFocused(true); }} onBlur={() => window.setTimeout(() => setFocused(false), 120)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); onChange(exact ?? normalized); setFocused(false); } }} placeholder={`Enter ${label}…`} className="h-9 pr-20 text-xs" />
-      {isNew && <Badge variant="outline" className="pointer-events-none absolute right-2 top-1/2 h-4 -translate-y-1/2 px-1 text-[8px] text-muted-foreground">New node</Badge>}
+      {isNew && <Badge variant="outline" className="pointer-events-none absolute right-2 top-1/2 inline-flex h-6 -translate-y-1/2 items-center gap-1 whitespace-nowrap px-2 text-xs text-muted-foreground">New node</Badge>}
       {focused && suggestions.length > 0 && <div className="absolute z-[110] mt-1 max-h-44 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">{suggestions.map(option => <Button key={option} type="button" variant="ghost" className="h-auto w-full justify-start px-2 py-1.5 text-left text-xs" onMouseDown={event => event.preventDefault()} onClick={() => { onChange(option); setFocused(false); }}><Check className={cn("mr-2 h-3 w-3", exact === option ? "opacity-100" : "opacity-0")} />{option}</Button>)}</div>}
     </div>
   </div>;
@@ -72,32 +72,32 @@ function NodeCombobox({ label, value, options, onChange }: { label: string; valu
 
 function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat" | "grouped"; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
   return <TableHeader><TableRow>
-    <TableHead className="w-9"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
-    {variant === "flat" && <><TableHead>Scope</TableHead><TableHead>Target</TableHead></>}
+    <TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
+    {variant === "flat" && <><TableHead className="min-w-36 whitespace-nowrap">Scope</TableHead><TableHead>Target</TableHead></>}
     <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead>
-    <TableHead>Value date</TableHead><TableHead>Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
+    <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
-    <TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="text-right">Actions</TableHead>
+    <TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
 }
 
 function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: () => void; onClear: () => void }) {
   const { openHistory } = useHistorySheet();
   return <TableRow id={`indicator-row-${item.id}`}>
-    <TableCell><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
-    {variant === "flat" && <><TableCell><ScopeChip scope={item.scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={item} /></TableCell></>}
+    <TableCell className="sticky left-0 z-10 bg-background"><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
+    {variant === "flat" && <><TableCell className="min-w-36 whitespace-nowrap"><ScopeChip scope={item.scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={item} /></TableCell></>}
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{indicatorLabel(item.indicator_key)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
-    <TableCell><ReviewStatusChip status={item.status} /></TableCell>
+    <TableCell className="min-w-[9.5rem] whitespace-nowrap"><ReviewStatusChip status={item.status} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]">{formatDate(item.status_changed_at)}</TableCell>
     <TableCell><StalenessCell item={item} /></TableCell>
     {variant === "flat" && <TableCell><AffectedPathways iv={item} /></TableCell>}
     <TableCell><Tooltip><TooltipTrigger asChild><span className="block max-w-44 truncate text-[10px]"><ValueCell value={item.correction_note} /></span></TooltipTrigger>{item.correction_note && <TooltipContent className="max-w-sm text-xs">{item.correction_note}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><TraceId value={item.trace_id} /></TableCell>
-    <TableCell><div className="flex justify-end gap-1">
+    <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end gap-1">
       {item.status !== "accepted" && <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" aria-label={`Accept ${item.id}`} onClick={() => onDecision("accepted")}><Check className="h-3.5 w-3.5" /></Button>}
       {item.status !== "rejected" && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label={`Reject ${item.id}`} onClick={() => onDecision("rejected")}><X className="h-3.5 w-3.5" /></Button>}
       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Correct ${item.id}`} onClick={onCorrect}><Pencil className="h-3.5 w-3.5" /></Button>
@@ -108,12 +108,12 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
 
 function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) {
   return <TableRow className="text-muted-foreground">
-    <TableCell />
+    <TableCell className="sticky left-0 z-10 bg-background" />
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{label}</TableCell>
     {Array.from({ length: 4 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap text-[10px] italic">not computed</TableCell>
     {Array.from({ length: 4 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
-    <TableCell><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
+    <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
   </TableRow>;
 }
 
@@ -186,8 +186,8 @@ function ScopeGroup({ scope, rows, targets, selected, onSelect, onDecision, onCo
     <div className="flex items-center gap-3 bg-muted/40 px-4 py-3">
       <CollapsibleTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`${open ? "Collapse" : "Expand"} ${SCOPE_LABELS[scope]} scope`}>{open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button></CollapsibleTrigger>
       <ScopeChip scope={scope} /><span className="text-[10px] text-muted-foreground">{SCOPE_DESCRIPTIONS[scope]}</span>
-      <Badge variant="outline" className="ml-auto h-5 text-[9px] font-normal">{rows.length} value{rows.length === 1 ? "" : "s"}</Badge>
-      <Badge variant="outline" className="h-5 text-[9px] font-normal">{pending} review pending</Badge>
+      <Badge variant="outline" className="ml-auto inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal">{rows.length} value{rows.length === 1 ? "" : "s"}</Badge>
+      <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal">{pending} review pending</Badge>
     </div>
     <CollapsibleContent>
       <div className="divide-y">{targets.map(entry => <TargetGroup key={entry.key} scope={scope} target={entry.target} rows={entry.rows} selected={selected} onSelect={onSelect} onDecision={onDecision} onCorrect={onCorrect} onClear={onClear} onAdd={onAdd} />)}</div>
