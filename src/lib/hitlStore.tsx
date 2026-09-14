@@ -87,6 +87,20 @@ export interface RecordChangeInput {
   reverts_entry_id?: string | null;
 }
 
+const readField = (record: HitlRecord, field: string): unknown => {
+  const [root, nested] = field.split(".");
+  if (root === "profile_fields" && nested && "profile_fields" in record) return record.profile_fields[nested] ?? null;
+  return root in record ? record[root as keyof HitlRecord] : null;
+};
+
+const writeField = <T extends HitlRecord>(record: T, field: string, value: unknown): T => {
+  const [root, nested] = field.split(".");
+  if (root === "profile_fields" && nested && "profile_fields" in record) {
+    return { ...record, profile_fields: { ...record.profile_fields, [nested]: value } } as T;
+  }
+  return { ...record, [field]: value } as T;
+};
+
 const iso = (day: number, hour = 9) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00:00.000Z`;
 const common = (id: string, day: number, actor: string | null = "Anže", trace: string | null = `trace-${id}-8f4a91c2`) => ({
   id, created_at: iso(Math.max(1, day - 3)), updated_at: iso(day), status_changed_at: iso(day), last_actor: actor, trace_id: trace,
@@ -208,14 +222,13 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       reverts_entry_id: input.reverts_entry_id ?? null,
     };
     const apply = <T extends HitlRecord>(items: T[]): T[] => {
-      if (input.operation === "create" && input.field === null) {
+      if ((input.operation === "create" || input.operation === "link_add") && input.field === null) {
         return [...items, input.new_value as T];
       }
       return items.map(item => {
         if (item.id !== input.entity_id || input.field === null) return item;
         return {
-          ...item,
-          [input.field]: input.new_value,
+          ...writeField(item, input.field, input.new_value),
           updated_at: now,
           last_actor: currentUser.name,
           ...(input.field === "status" ? { status_changed_at: now } : {}),
@@ -250,7 +263,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     }
     const field = target.operation === "link_remove" ? "status" : target.field;
     if (!field) return null;
-    const currentValue = field in record ? record[field as keyof HitlRecord] : null;
+    const currentValue = readField(record, field);
     return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: currentValue, new_value: target.prior_value, operation: "revert", reverts_entry_id: target.id, trace_id: target.trace_id, note: `Reverted entry ${target.id}` });
   }, [auditEntries, getRecord, recordChange]);
 
