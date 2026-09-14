@@ -100,8 +100,8 @@
 - [x] Verify role switching, no-fit suppliers, table layout, build, and console output
 
 ## Prompt 22 — Bulk add companies
-- [ ] Add four-step bulk company dialog and entry point
-- [ ] Support paste/upload parsing, deduplication, templates, and resolution
-- [ ] Add per-row and apply-all role/node assignment with validation
-- [ ] Create audited company records with shared batch IDs and result export
-- [ ] Verify table ordering, search, queue counts, links, upload, and console
+- [x] Add four-step bulk company dialog and entry point
+- [x] Support paste/upload parsing, deduplication, templates, and resolution
+- [x] Add per-row and apply-all role/node assignment with validation
+- [x] Create audited company records with shared batch IDs and result export
+- [x] Verify table ordering, search, queue counts, links, upload, and console
