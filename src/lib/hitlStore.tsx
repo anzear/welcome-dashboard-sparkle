@@ -61,8 +61,7 @@ export interface IndicatorValue extends CommonRecord {
   corrected_value: number | null;
   correction_note: string | null;
 }
-export interface AuditEntry {
-  id: string;
+export interface AuditEntry extends CommonRecord {
   timestamp: string;
   actor: string;
   entity_type: AuditEntityType;
@@ -73,7 +72,6 @@ export interface AuditEntry {
   operation: AuditOperation;
   note: string | null;
   reverts_entry_id: string | null;
-  trace_id: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
 
@@ -131,7 +129,7 @@ const seedIndicatorValues: IndicatorValue[] = Array.from({ length: 20 }, (_, ind
 const operations: AuditOperation[] = ["create", "update", "accept", "reject", "link_add", "link_remove", "deactivate", "revert"];
 const entityTypes: AuditEntityType[] = ["pathway", "company", "company_match", "paper_patent_match", "indicator_value"];
 const seedAuditEntries: AuditEntry[] = Array.from({ length: 15 }, (_, index) => ({
-  id: `audit-${String(index + 1).padStart(3, "0")}`, timestamp: iso(14 - (index % 10), 8 + (index % 7)), actor: index % 2 === 0 ? "Jon Goriup" : "Anže", entity_type: entityTypes[index % entityTypes.length], entity_id: index % 5 === 0 ? seedPathways[index % seedPathways.length].id : `entity-${index + 1}`, field: index % 3 === 0 ? "status" : null, prior_value: index % 3 === 0 ? "review_pending" : null, new_value: index % 3 === 0 ? "accepted" : null, operation: operations[index % operations.length], note: index % 4 === 0 ? "Reviewed against primary evidence" : null, reverts_entry_id: index === 7 ? "audit-003" : null, trace_id: index % 6 === 0 ? null : `trace-audit-${index + 1}-91de7c40`,
+  ...common(`audit-${String(index + 1).padStart(3, "0")}`, 14 - (index % 10), index % 2 === 0 ? "Jon Goriup" : "Anže", index % 6 === 0 ? null : `trace-audit-${index + 1}-91de7c40`), timestamp: iso(14 - (index % 10), 8 + (index % 7)), actor: index % 2 === 0 ? "Jon Goriup" : "Anže", entity_type: entityTypes[index % entityTypes.length], entity_id: index % 5 === 0 ? seedPathways[index % seedPathways.length].id : `entity-${index + 1}`, field: index % 3 === 0 ? "status" : null, prior_value: index % 3 === 0 ? "review_pending" : null, new_value: index % 3 === 0 ? "accepted" : null, operation: operations[index % operations.length], note: index % 4 === 0 ? "Reviewed against primary evidence" : null, reverts_entry_id: index === 7 ? "audit-003" : null,
 }));
 
 interface HitlStoreValue {

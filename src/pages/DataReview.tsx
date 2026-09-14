@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Archive, Building2, Clock, FileSearch, Gauge, Link2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,10 @@ export default function DataReview() {
   const requested = searchParams.get("section") as Section | null;
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
   const active = sections.find(section => section.value === activeSection) ?? sections[0];
+
+  useEffect(() => {
+    if (!requested || !validSections.has(requested)) setSearchParams({ section: "pathways" }, { replace: true });
+  }, [requested, setSearchParams]);
   const queue = useMemo(() => [
     { label: "Pathways needing approval", count: store.pathways.filter(item => item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
     { label: "Company matches pending", count: store.companyMatches.filter(item => item.status === "review_pending").length, sub: "Company–pathway links to verify", section: "companies" as Section, icon: Building2 },
