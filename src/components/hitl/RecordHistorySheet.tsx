@@ -6,7 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, OperationChip, TraceId, ValueDiff } from "./ReviewPrimitives";
-import { RoleNodeLine } from "./CompanyMatchPrimitives";
+import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { PathwayRef } from "./PathwayRef";
 import { DerivedPathways, NodeChips, ScopeChip } from "./EvidenceMatchPrimitives";
 import { useHitlStore, type AuditEntityType, type AuditEntry, type Company, type HitlRecord, type PaperPatentMatch } from "@/lib/hitlStore";

@@ -6,7 +6,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { ActorStamp, OperationChip, PathwayStatusChip, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
 import { PathwayRef } from "./PathwayRef";
 import { DerivedPathways, NodeChips, ScopeChip } from "./EvidenceMatchPrimitives";
-import { RoleNodeLine } from "./CompanyMatchPrimitives";
+import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { useHistorySheet } from "./RecordHistorySheet";
 import { useTraceSheet } from "./TraceSheetContext";
 import { displayedValue, useHitlStore, type AuditEntry, type AuditEntityType, type HitlRecord } from "@/lib/hitlStore";
