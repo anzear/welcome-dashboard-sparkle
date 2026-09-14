@@ -5,7 +5,7 @@ export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" 
 export type VisibilityScope = "all" | string[];
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
 export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
-export type AuditEntityType = "pathway" | "company" | "company_match" | "paper_patent_match" | "indicator_value";
+export type AuditEntityType = "pathway" | "company" | "company_match" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
@@ -201,15 +201,15 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 12.5, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 12.5, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company_match", "cm-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
-  auditSeed("audit-007", iso(8, 13), "Anže", "paper_patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
+  auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
   auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 47.3, null, "update", { note: "Source no longer reports this value" }),
   auditSeed("audit-011", iso(10, 14), "Anže", "company_match", "cm-004", "status", "review_pending", "rejected", "reject"),
-  auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_patent_match", "pp-001", "note", null, "Check pathway specificity", "update"),
+  auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 61.4, "update", { note: "Updated against source table" }),
-  auditSeed("audit-015", iso(14, 10), "Anže", "paper_patent_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
+  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 24.1, "update", { note: "Corrected from verified source appendix" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 39.8, "update", { note: "Aligned with published regional dataset" }),
 ];
@@ -220,6 +220,8 @@ interface HitlStoreValue {
   companies: Company[];
   companyMatches: CompanyMatch[];
   paperPatentMatches: PaperPatentMatch[];
+  paperMatches: () => PaperPatentMatch[];
+  patentMatches: () => PaperPatentMatch[];
   indicatorValues: IndicatorValue[];
   auditEntries: AuditEntry[];
   recordChange: (input: RecordChangeInput) => AuditEntry;
@@ -243,7 +245,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, company: companies, company_match: companyMatches,
-      paper_patent_match: paperPatentMatches, indicator_value: indicatorValues,
+      paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
   }, [pathways, companies, companyMatches, paperPatentMatches, indicatorValues]);
@@ -276,7 +278,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     if (input.entity_type === "pathway") setPathways(apply);
     if (input.entity_type === "company") setCompanies(apply);
     if (input.entity_type === "company_match") setCompanyMatches(apply);
-    if (input.entity_type === "paper_patent_match") setPaperPatentMatches(apply);
+    if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
     setAuditEntries(items => [...items, entry]);
     return entry;
@@ -305,10 +307,12 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: currentValue, new_value: target.prior_value, operation: "revert", reverts_entry_id: target.id, trace_id: target.trace_id, note: `Reverted entry ${target.id}` });
   }, [auditEntries, getRecord, recordChange]);
 
+  const paperMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "paper"), [paperPatentMatches]);
+  const patentMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "patent"), [paperPatentMatches]);
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries,
-    recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
-  }), [currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
+    paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
+  }), [currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 

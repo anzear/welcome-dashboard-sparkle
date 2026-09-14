@@ -9,14 +9,14 @@ import { useTraceSheet } from "./TraceSheetContext";
 import { displayedValue, useHitlStore, type AuditEntry, type AuditEntityType, type HitlRecord } from "@/lib/hitlStore";
 import { getTrace } from "@/lib/mockTraces";
 
-const entityLabels: Record<AuditEntityType, string> = { pathway: "Pathway", company: "Company", company_match: "Company match", paper_patent_match: "Paper & patent match", indicator_value: "Indicator value" };
+const entityLabels: Record<AuditEntityType, string> = { pathway: "Pathway", company: "Company", company_match: "Company match", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value" };
 const decisionOperations = new Set(["accept", "reject", "update", "deactivate", "revert"]);
 
 function recordSummary(record: HitlRecord, type: AuditEntityType, store: ReturnType<typeof useHitlStore>) {
   if (type === "pathway" && "feedstock" in record) return [record.feedstock, record.process_technology, record.product, record.application_market].join(" → ");
   if (type === "company" && "name" in record) return record.name;
   if (type === "company_match" && "company_id" in record) return `${store.companies.find(item => item.id === record.company_id)?.name ?? record.company_name} · ${record.pathway_id}`;
-  if (type === "paper_patent_match" && "title" in record) return `${record.title} · ${record.pathway_id}`;
+  if ((type === "paper_match" || type === "patent_match") && "title" in record) return `${record.title} · ${record.pathway_id}`;
   if (type === "indicator_value" && "indicator" in record) return `${record.indicator} · ${record.pathway_id}`;
   return record.id;
 }
@@ -35,7 +35,8 @@ export function TraceSheet() {
     ...store.pathways.filter(item => item.trace_id === traceId).map(record => ({ type: "pathway" as const, record })),
     ...store.companies.filter(item => item.trace_id === traceId).map(record => ({ type: "company" as const, record })),
     ...store.companyMatches.filter(item => item.trace_id === traceId).map(record => ({ type: "company_match" as const, record })),
-    ...store.paperPatentMatches.filter(item => item.trace_id === traceId).map(record => ({ type: "paper_patent_match" as const, record })),
+    ...store.paperMatches().filter(item => item.trace_id === traceId).map(record => ({ type: "paper_match" as const, record })),
+    ...store.patentMatches().filter(item => item.trace_id === traceId).map(record => ({ type: "patent_match" as const, record })),
     ...store.indicatorValues.filter(item => item.trace_id === traceId).map(record => ({ type: "indicator_value" as const, record })),
   ] : [];
   const recordIds = new Set(typedRecords.map(item => `${item.type}:${item.record.id}`));

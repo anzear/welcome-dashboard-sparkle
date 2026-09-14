@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "pathway", label: "Pathway" }, { value: "company", label: "Company" },
-  { value: "company_match", label: "Company match" }, { value: "paper_patent_match", label: "Paper & patent match" },
+  { value: "company_match", label: "Company match" }, { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" },
 ];
 const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "accept", "reject", "revert"];
