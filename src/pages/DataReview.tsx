@@ -10,7 +10,7 @@ import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { MatchReviewSection } from "@/components/hitl/MatchReviewSection";
 import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
-import { useHitlStore } from "@/lib/hitlStore";
+import { derivedPathwayIds, useHitlStore, type PaperPatentMatch } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type Section = "pathways" | "companies" | "papers" | "patents" | "indicators" | "audit";
@@ -32,6 +32,7 @@ function DataReviewContent() {
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
   const active = sections.find(section => section.value === activeSection) ?? sections[0];
   const nodeFilter = useNodeFilter();
+  const evidencePassesFilter = (item: PaperPatentMatch) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || normalized(item.nodes.feedstock) === normalized(nodeFilter.feedstock)) && (!nodeFilter.product || normalized(item.nodes.product) === normalized(nodeFilter.product)); return direct || derivedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
 
   useEffect(() => {
     if (rawRequested === "papers-patents") { const next = new URLSearchParams(searchParams); next.set("section", "papers"); setSearchParams(next, { replace: true }); }
@@ -40,8 +41,8 @@ function DataReviewContent() {
   const queue = useMemo(() => [
     { label: "Pathways needing approval", count: store.pathways.filter(item => nodeFilter.matchesPathway(item) && item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
     { label: "Company matches pending", count: store.companyMatches.filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Company–pathway links to verify", section: "companies" as Section, icon: Building2 },
-    { label: "Paper matches pending", count: store.paperMatches().filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
-    { label: "Patent matches pending", count: store.patentMatches().filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
+    { label: "Paper matches pending", count: store.paperMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
+    { label: "Patent matches pending", count: store.patentMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
     { label: "Indicator values pending", count: store.indicatorValues.filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Values requiring validation", section: "indicators" as Section, icon: Gauge },
   ], [store.pathways, store.companyMatches, store.paperPatentMatches, store.indicatorValues, nodeFilter.feedstock, nodeFilter.product]);
 

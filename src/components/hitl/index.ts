@@ -5,3 +5,4 @@ export { TraceSheet } from "./TraceSheet";
 export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
 
 export { PathwayRef, pathwaySearchText, type PathwayNodeKey } from "./PathwayRef";
+export { DerivedPathways, DerivedPathwayList, NodeChips, ScopeChip } from "./EvidenceMatchPrimitives";
