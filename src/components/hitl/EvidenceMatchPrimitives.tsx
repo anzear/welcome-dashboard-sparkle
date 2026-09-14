@@ -6,6 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { derivedPathwayIds, useHitlStore, type EvidenceNodes, type EvidenceScope, type PaperPatentMatch } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 import { PathwayRef, type PathwayNodeKey } from "./PathwayRef";
+import { PathwayStatusChip } from "./ReviewPrimitives";
 
 export const evidenceNodeKeys: PathwayNodeKey[] = ["feedstock", "process_technology", "product", "application_market"];
 export const evidenceNodeLabels: Record<PathwayNodeKey, string> = { feedstock: "Feedstock", process_technology: "Process/Technology", product: "Product", application_market: "Application/Market" };
@@ -21,10 +22,11 @@ function NodeChip({ position, value }: { position: PathwayNodeKey; value: string
 }
 
 export function NodeChips({ nodes, compact = false }: { nodes: EvidenceNodes; compact?: boolean }) {
+  const [open, setOpen] = useState(false);
   const entries = matchedNodeKeys(nodes).map(key => ({ key, value: nodes[key] as string }));
   const visible = compact ? entries.slice(0, 2) : entries;
   const hidden = entries.slice(2);
-  return <div className="flex max-w-full flex-wrap gap-1">{visible.map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}{compact && hidden.length > 0 && <Popover><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-5 px-1.5 text-[9px]">+{hidden.length}</Button></PopoverTrigger><PopoverContent className="w-80"><div className="flex flex-wrap gap-1">{hidden.map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}</div></PopoverContent></Popover>}</div>;
+  return <div className="flex max-w-full flex-wrap gap-1">{visible.map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}{compact && hidden.length > 0 && <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-5 px-1.5 text-[9px]" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>+{hidden.length}</Button></PopoverTrigger><PopoverContent className="w-80" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}><div className="flex flex-wrap gap-1">{hidden.map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}</div></PopoverContent></Popover>}</div>;
 }
 
 export function DerivedPathwayList({ match }: { match: Pick<PaperPatentMatch, "nodes"> }) {
@@ -32,7 +34,7 @@ export function DerivedPathwayList({ match }: { match: Pick<PaperPatentMatch, "n
   const ids = derivedPathwayIds(match, store.pathways);
   const emphasisNodes = matchedNodeKeys(match.nodes);
   if (!ids.length) return <p className="py-4 text-xs text-muted-foreground">No pathway contains all matched nodes.</p>;
-  return <div className="divide-y rounded-md border">{ids.map(id => <div key={id} className="px-3 py-2"><PathwayRef pathwayId={id} variant="inline" emphasisNodes={emphasisNodes} /></div>)}</div>;
+  return <div className="divide-y rounded-md border">{ids.map(id => { const pathway = store.pathways.find(item => item.id === id); return <div key={id} className="flex items-center justify-between gap-3 px-3 py-2"><div className="min-w-0 flex-1"><PathwayRef pathwayId={id} variant="inline" emphasisNodes={emphasisNodes} /></div>{pathway && <PathwayStatusChip status={pathway.status} />}</div>; })}</div>;
 }
 
 export function DerivedPathways({ match }: { match: Pick<PaperPatentMatch, "nodes"> }) {
