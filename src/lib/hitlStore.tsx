@@ -4,7 +4,6 @@ export type ReviewStatus = "accepted" | "rejected" | "review_pending";
 export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
 export type VisibilityScope = "all" | string[];
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
-export type EvidenceScope = "production" | "application" | null;
 export interface EvidenceNodes {
   feedstock: string | null;
   process_technology: string | null;
@@ -51,9 +50,7 @@ export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
   external_id: string;
   title: string;
-  pathway_id: string;
-  nodes: EvidenceNodes;
-  scope: EvidenceScope;
+  matched_nodes: string[];
   status: ReviewStatus;
   matched_at: string;
   note: string | null;
@@ -114,7 +111,6 @@ export interface RecordChangeInput {
 const readField = (record: HitlRecord, field: string): unknown => {
   const [root, nested] = field.split(".");
   if (root === "profile_fields" && nested && "profile_fields" in record) return record.profile_fields[nested] ?? null;
-  if (root === "nodes" && nested && "nodes" in record) return record.nodes[nested as keyof EvidenceNodes] ?? null;
   if (root === "secondary_nodes" && nested && "secondary_nodes" in record) return record.secondary_nodes[nested as keyof EvidenceNodes] ?? null;
   return root in record ? record[root as keyof HitlRecord] : null;
 };
@@ -123,9 +119,6 @@ const writeField = <T extends HitlRecord>(record: T, field: string, value: unkno
   const [root, nested] = field.split(".");
   if (root === "profile_fields" && nested && "profile_fields" in record) {
     return { ...record, profile_fields: { ...record.profile_fields, [nested]: value } } as T;
-  }
-  if (root === "nodes" && nested && "nodes" in record) {
-    return { ...record, nodes: { ...record.nodes, [nested]: value } } as T;
   }
   if (root === "secondary_nodes" && nested && "secondary_nodes" in record) {
     return { ...record, secondary_nodes: { ...record.secondary_nodes, [nested]: value } } as T;
@@ -184,19 +177,20 @@ const patentTitles = ["Integrated conversion process for renewable intermediates
 const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => {
   const kind = index % 2 === 0 ? "paper" : "patent";
   const pathway = seedPathways[index % seedPathways.length];
-  const scope: EvidenceScope = index === 4 || index === 9 ? null : index % 2 === 0 ? "production" : "application";
-  const nodes: EvidenceNodes = index === 0
+  const legacyScope = index === 4 || index === 9 ? null : index % 2 === 0 ? "production" : "application";
+  const legacyNodes: EvidenceNodes = index === 0
     ? { feedstock: pathway.feedstock, process_technology: null, product: null, application_market: null }
     : index === 6
       ? { feedstock: null, process_technology: null, product: pathway.product, application_market: null }
-      : scope === "application"
+      : legacyScope === "application"
         ? { feedstock: null, process_technology: null, product: pathway.product, application_market: pathway.application_market }
         : { feedstock: null, process_technology: pathway.process_technology, product: pathway.product, application_market: null };
+  const matched_nodes = [...new Map(Object.values(legacyNodes).filter((value): value is string => Boolean(value?.trim())).map(value => [value.trim().toLocaleLowerCase(), value.trim()])).values()];
   return {
     ...common(`pp-${String(index + 1).padStart(3, "0")}`, 13 - (index % 7)), kind,
     external_id: kind === "paper" ? `10.1016/j.biortech.202${index}.10${index}42` : `EP${3201400 + index}A1`,
     title: kind === "paper" ? paperTitles[(index / 2) % paperTitles.length] : patentTitles[Math.floor(index / 2) % patentTitles.length],
-    pathway_id: pathway.id, nodes, scope, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
+    matched_nodes, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
     year: index === 6 ? null : 2019 + (index % 6),
     authors_or_assignee: index === 9 ? null : kind === "paper" ? ["M. Novak, L. Weber, S. Chen", "A. Rossi, J. Lindström", "E. García, P. Müller"][index % 3] : ["BASF SE", "Novozymes A/S", "Fraunhofer-Gesellschaft"][index % 3],
     abstract: index === 4 ? null : kind === "paper" ? "This study evaluates integrated conversion routes for residual biomass, focusing on resource efficiency, product yield and industrial scale-up constraints." : "A process and apparatus for converting renewable feedstocks into purified bio-based intermediates using an integrated reaction and separation sequence.",
@@ -204,11 +198,38 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
   };
 });
 
+export type PathwayNodePosition = keyof EvidenceNodes;
+export const pathwayNodePositions: PathwayNodePosition[] = ["feedstock", "process_technology", "product", "application_market"];
 const normalizedNode = (value: string | null) => value?.trim().toLocaleLowerCase() ?? null;
-export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
-  const entries = (Object.entries(match.nodes) as [keyof EvidenceNodes, string | null][]).filter((entry): entry is [keyof EvidenceNodes, string] => normalizedNode(entry[1]) !== null);
-  if (!entries.length) return [];
-  return pathways.filter(pathway => pathway.status !== "deleted" && entries.every(([key, value]) => normalizedNode(pathway[key]) === normalizedNode(value))).map(pathway => pathway.id);
+export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
+export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
+  const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
+  pathways.filter(pathway => pathway.status !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
+    const value = pathway[position].trim(); const key = normalizedNode(value);
+    if (!key) return;
+    const current = values.get(key) ?? { value, pathwayIds: new Set<string>(), positions: new Map<PathwayNodePosition, Set<string>>() };
+    current.pathwayIds.add(pathway.id);
+    const ids = current.positions.get(position) ?? new Set<string>(); ids.add(pathway.id); current.positions.set(position, ids); values.set(key, current);
+  }));
+  return [...values.values()].map(item => {
+    const positions = pathwayNodePositions.map(position => ({ position, pathwayCount: item.positions.get(position)?.size ?? 0 })).filter(entry => entry.pathwayCount > 0).sort((a, b) => b.pathwayCount - a.pathwayCount || pathwayNodePositions.indexOf(a.position) - pathwayNodePositions.indexOf(b.position));
+    return { value: item.value, pathwayCount: item.pathwayIds.size, positions, mostCommonPosition: positions[0]?.position ?? "feedstock" };
+  }).sort((a, b) => pathwayNodePositions.indexOf(a.mostCommonPosition) - pathwayNodePositions.indexOf(b.mostCommonPosition) || a.value.localeCompare(b.value));
+}
+export function derivedPathwayIds(match: Pick<PaperPatentMatch, "matched_nodes">, pathways: Pathway[]): string[] {
+  const values = [...new Set(match.matched_nodes.map(normalizedNode).filter((value): value is string => Boolean(value)))];
+  if (!values.length) return [];
+  return pathways.filter(pathway => pathway.status !== "deleted" && values.every(value => pathwayNodePositions.some(position => normalizedNode(pathway[position]) === value))).map(pathway => pathway.id);
+}
+export interface PathwayScope { production: boolean; application: boolean; productionPositions: PathwayNodePosition[]; applicationHit: boolean; }
+export function pathwayScope(match: Pick<PaperPatentMatch, "matched_nodes">, pathway: Pathway): PathwayScope {
+  const values = new Set(match.matched_nodes.map(normalizedNode).filter((value): value is string => Boolean(value)));
+  const productionPositions = (["feedstock", "process_technology", "product"] as PathwayNodePosition[]).filter(position => values.has(normalizedNode(pathway[position]) ?? ""));
+  const applicationHit = values.has(normalizedNode(pathway.application_market) ?? "");
+  return { production: productionPositions.length > 0, application: applicationHit, productionPositions, applicationHit };
+}
+export function scopeSummary(match: Pick<PaperPatentMatch, "matched_nodes">, pathways: Pathway[]) {
+  return derivedPathwayIds(match, pathways).reduce((counts, id) => { const pathway = pathways.find(item => item.id === id); if (!pathway) return counts; const scope = pathwayScope(match, pathway); return { production: counts.production + Number(scope.production), application: counts.application + Number(scope.application) }; }, { production: 0, application: 0 });
 }
 
 const rolePositions = {

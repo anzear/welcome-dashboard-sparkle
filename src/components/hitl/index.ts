@@ -5,5 +5,5 @@ export { TraceSheet } from "./TraceSheet";
 export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
 
 export { PathwayRef, pathwaySearchText, type PathwayNodeKey } from "./PathwayRef";
-export { DerivedPathways, DerivedPathwayList, NodeChips, ScopeChip } from "./EvidenceMatchPrimitives";
+export { DerivedPathwayList, DerivedPathwaysForRecord, NodeChips, NodeValueChips, PathwayScopeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 export { CompanyDerivedPathwayList, CompanyRoleChip, DerivedPathwaysForCompany, FitChip, RoleNodeLine, SecondaryNodes } from "./CompanyFitPrimitives";

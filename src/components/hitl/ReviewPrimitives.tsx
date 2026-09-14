@@ -59,6 +59,7 @@ const jsonPreview = (value: object) => JSON.stringify(value);
 function DiffValue({ value }: { value: unknown }) {
   if (value === null || value === undefined || typeof value === "string" || typeof value === "number") return <ValueCell value={value as string | number | null | undefined} />;
   if (typeof value === "boolean") return <span>{String(value)}</span>;
+  if (Array.isArray(value) && value.every(item => typeof item === "string")) return <span className="max-w-80 break-words text-[10px]">{value.length ? value.join(", ") : "—"}</span>;
   const full = jsonPreview(value as object);
   const preview = full.length > 80 ? `${full.slice(0, 77)}…` : full;
   return <Tooltip><TooltipTrigger asChild><code className="inline-block max-w-44 truncate font-mono text-[10px]">{preview}</code></TooltipTrigger><TooltipContent className="max-w-sm break-all font-mono text-[10px]">{full}</TooltipContent></Tooltip>;

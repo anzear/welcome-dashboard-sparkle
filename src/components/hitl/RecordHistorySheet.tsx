@@ -8,7 +8,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ActorStamp, OperationChip, TraceId, ValueDiff } from "./ReviewPrimitives";
 import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { PathwayRef } from "./PathwayRef";
-import { DerivedPathways, NodeChips, ScopeChip } from "./EvidenceMatchPrimitives";
+import { DerivedPathwaysForRecord, NodeValueChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { useHitlStore, type AuditEntityType, type AuditEntry, type Company, type HitlRecord, type PaperPatentMatch } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -79,7 +79,7 @@ export function RecordHistorySheet() {
   const { target, closeHistory } = useHistorySheet();
   const store = useHitlStore();
   const record = target ? store.getRecord(target.entity_type, target.entity_id) : null;
-  const isEvidence = Boolean(target && (target.entity_type === "paper_match" || target.entity_type === "patent_match") && record && "nodes" in record);
+  const isEvidence = Boolean(target && (target.entity_type === "paper_match" || target.entity_type === "patent_match") && record && "matched_nodes" in record);
   const evidence = isEvidence ? record as PaperPatentMatch : null;
   const company = target?.entity_type === "company" && record && "role_node" in record ? record as Company : null;
   const relatedPathwayId = record && "pathway_id" in record && !isEvidence ? record.pathway_id : target?.entity_type === "pathway" ? target.entity_id : null;
@@ -89,7 +89,7 @@ export function RecordHistorySheet() {
         {target && <>
           <SheetHeader className="border-b px-5 py-4 pr-12">
             <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code></div>
-             <SheetDescription className="text-xs">{target.entity_type === "pathway" ? <PathwayRef pathwayId={target.entity_id} variant="card" /> : company ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{company.name}</span><RoleNodeLine company={company} compact /></span> : evidence ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{evidence.title}</span><span className="flex flex-wrap items-center gap-1"><ScopeChip scope={evidence.scope} /><NodeChips nodes={evidence.nodes} compact /><DerivedPathways match={evidence} /></span></span> : <><span className="block truncate">{summary(record, target.entity_type)}</span>{relatedPathwayId && <span className="mt-2 block"><PathwayRef pathwayId={relatedPathwayId} variant="inline" /></span>}</>}</SheetDescription>
+             <SheetDescription className="text-xs">{target.entity_type === "pathway" ? <PathwayRef pathwayId={target.entity_id} variant="card" /> : company ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{company.name}</span><RoleNodeLine company={company} compact /></span> : evidence ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{evidence.title}</span><span className="flex flex-wrap items-center gap-1"><NodeValueChips values={evidence.matched_nodes} compact /><DerivedPathwaysForRecord match={evidence} /><ScopeSummary match={evidence} /></span></span> : <><span className="block truncate">{summary(record, target.entity_type)}</span>{relatedPathwayId && <span className="mt-2 block"><PathwayRef pathwayId={relatedPathwayId} variant="inline" /></span>}</>}</SheetDescription>
             {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span><TraceId value={record.trace_id} /></div>}
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 py-4">
