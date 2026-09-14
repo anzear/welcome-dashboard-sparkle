@@ -16,7 +16,7 @@ const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "indicator_value", label: "Indicator value" },
 ];
 const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "accept", "reject", "revert"];
-const quoteCsv = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function AuditLogSection() {
   const store = useHitlStore();
