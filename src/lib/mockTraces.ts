@@ -42,7 +42,6 @@ const registerRecords = (prefix: string, count: number, chainFor: (index: number
 };
 registerRecords("pw", 10, () => "ChainScout · Fit");
 registerRecords("co", 8, index => ["ChainScout · Enrich", "ChainScout · Validate"][index % 2] as LlmChain);
-registerRecords("cm", 12, index => ["ChainScout · Find", "ChainScout · Validate", "ChainScout · Fit"][index % 3] as LlmChain);
 registerRecords("pp", 12, index => index % 2 === 0 ? "Paper matcher" : "Patent matcher");
 registerRecords("iv", 20, index => `Indicator · ${indicators[index % indicators.length]}`);
 
