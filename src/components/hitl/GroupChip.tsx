@@ -1,4 +1,5 @@
 import { Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { groupById, pathwaysInGroup, useHitlStore, type Group } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
@@ -20,5 +21,5 @@ export function GroupChip({ groupId, group, onClick }: { groupId?: string | null
     <span className={cn("h-2 w-2 shrink-0 rounded-full", dots[value.color_token])} />
     {value.is_system && <Lock className="h-3 w-3 shrink-0" />}{value.name}{value.is_archived && " (archived)"}
   </span>;
-  return <Tooltip><TooltipTrigger asChild>{onClick ? <button type="button" onClick={onClick}>{content}</button> : content}</TooltipTrigger><TooltipContent>{visibility} · {pathwaysInGroup(store.pathways, value.id).length} pathways</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild>{onClick ? <Button type="button" variant="link" className="h-auto p-0 font-normal" onClick={onClick}>{content}</Button> : content}</TooltipTrigger><TooltipContent>{visibility} · {pathwaysInGroup(store.pathways, value.id).length} pathways</TooltipContent></Tooltip>;
 }
