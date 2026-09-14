@@ -6,6 +6,7 @@
 
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { NODE_LABELS } from '@/lib/hitlStore';
 
 export interface UnifiedTreeRow {
   originalIndex: number;
@@ -19,10 +20,10 @@ export interface UnifiedTreeRow {
 type ColKey = 'feedstock' | 'technology' | 'product' | 'application' | 'trl';
 
 const COLUMNS: { key: ColKey; label: string; green?: boolean }[] = [
-  { key: 'feedstock', label: 'Feedstock' },
-  { key: 'technology', label: 'Process' },
-  { key: 'product', label: 'Product', green: true },
-  { key: 'application', label: 'Application' },
+  { key: 'feedstock', label: NODE_LABELS.feedstock },
+  { key: 'technology', label: NODE_LABELS.process_technology },
+  { key: 'product', label: NODE_LABELS.product, green: true },
+  { key: 'application', label: NODE_LABELS.application_market },
   { key: 'trl', label: 'TRL' },
 ];
 

@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { X, ChevronDown, ChevronUp } from "lucide-react";
 import FilterSection from "./FilterSection";
+import { NODE_LABELS } from "@/lib/hitlStore";
 
 interface FilterCategoriesProps {
   selectedFeedstock: string[];
@@ -36,7 +37,7 @@ const FilterCategories = ({
   productOptions,
   applicationOptions
 }: FilterCategoriesProps) => {
-  const filterCategories = ["Feedstock", "Process", "Product", "Application"];
+  const filterCategories = Object.values(NODE_LABELS);
 
   const toggleSelection = (item: string, selectedItems: string[], setter: (items: string[]) => void) => {
     if (selectedItems.includes(item)) {
