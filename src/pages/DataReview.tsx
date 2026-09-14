@@ -4,7 +4,7 @@ import { Building2, FileText, Gauge, Link2, ScrollText, ShieldCheck } from "luci
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HistorySheetProvider, RecordHistorySheet, TraceSheet, TraceSheetProvider } from "@/components/hitl";
+import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, TraceSheet, TraceSheetProvider, useNodeFilter } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
@@ -31,20 +31,21 @@ function DataReviewContent() {
   const requested = rawRequested as Section | null;
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
   const active = sections.find(section => section.value === activeSection) ?? sections[0];
+  const nodeFilter = useNodeFilter();
 
   useEffect(() => {
-    if (rawRequested === "papers-patents") setSearchParams({ section: "papers" }, { replace: true });
-    else if (!requested || !validSections.has(requested)) setSearchParams({ section: "pathways" }, { replace: true });
+    if (rawRequested === "papers-patents") { const next = new URLSearchParams(searchParams); next.set("section", "papers"); setSearchParams(next, { replace: true }); }
+    else if (!requested || !validSections.has(requested)) { const next = new URLSearchParams(searchParams); next.set("section", "pathways"); setSearchParams(next, { replace: true }); }
   }, [rawRequested, requested, setSearchParams]);
   const queue = useMemo(() => [
-    { label: "Pathways needing approval", count: store.pathways.filter(item => item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
-    { label: "Company matches pending", count: store.companyMatches.filter(item => item.status === "review_pending").length, sub: "Company–pathway links to verify", section: "companies" as Section, icon: Building2 },
-    { label: "Paper matches pending", count: store.paperMatches().filter(item => item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
-    { label: "Patent matches pending", count: store.patentMatches().filter(item => item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
-    { label: "Indicator values pending", count: store.indicatorValues.filter(item => item.status === "review_pending").length, sub: "Values requiring validation", section: "indicators" as Section, icon: Gauge },
-  ], [store.pathways, store.companyMatches, store.paperPatentMatches, store.indicatorValues]);
+    { label: "Pathways needing approval", count: store.pathways.filter(item => nodeFilter.matchesPathway(item) && item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
+    { label: "Company matches pending", count: store.companyMatches.filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Company–pathway links to verify", section: "companies" as Section, icon: Building2 },
+    { label: "Paper matches pending", count: store.paperMatches().filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
+    { label: "Patent matches pending", count: store.patentMatches().filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
+    { label: "Indicator values pending", count: store.indicatorValues.filter(item => nodeFilter.matchingPathwayIds.has(item.pathway_id) && item.status === "review_pending").length, sub: "Values requiring validation", section: "indicators" as Section, icon: Gauge },
+  ], [store.pathways, store.companyMatches, store.paperPatentMatches, store.indicatorValues, nodeFilter.feedstock, nodeFilter.product]);
 
-  const selectSection = (section: Section) => setSearchParams({ section });
+  const selectSection = (section: Section) => { const next = new URLSearchParams(searchParams); next.set("section", section); setSearchParams(next); };
 
   return (
     <div className="h-full overflow-y-auto bg-background">
@@ -70,13 +71,15 @@ function DataReviewContent() {
               <Button key={item.label} type="button" variant="ghost" onClick={() => selectSection(item.section)} className={cn("h-auto justify-start rounded-none px-4 py-3 text-left hover:bg-muted/40", activeSection === item.section && "bg-muted/60")}>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10"><item.icon className="h-4 w-4 text-primary" /></span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{item.label}</span>
+                  <span className="block text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">{item.label}{nodeFilter.isActive && <span className="ml-1 font-normal normal-case tracking-normal">filtered</span>}</span>
                   <span className="flex items-baseline gap-1.5"><span className="text-base font-bold tabular-nums leading-none text-foreground">{item.count}</span><span className="truncate text-[10px] font-normal text-muted-foreground">{item.sub}</span></span>
                 </span>
               </Button>
             ))}
           </div>
         </Card>
+
+        <NodeFilterBar />
 
         <div className="inline-flex max-w-full gap-1 overflow-x-auto rounded-md bg-muted p-1" aria-label="Data Review sections">
           {sections.map(section => <Button key={section.value} type="button" variant="ghost" size="sm" onClick={() => selectSection(section.value)} className={cn("h-7 shrink-0 px-3 text-xs", activeSection === section.value ? "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background" : "text-muted-foreground")}>{section.label}</Button>)}
@@ -99,5 +102,5 @@ function DataReviewContent() {
 }
 
 export default function DataReview() {
-  return <HistorySheetProvider><TraceSheetProvider><DataReviewContent /></TraceSheetProvider></HistorySheetProvider>;
+  return <HistorySheetProvider><TraceSheetProvider><NodeFilterProvider><DataReviewContent /></NodeFilterProvider></TraceSheetProvider></HistorySheetProvider>;
 }
