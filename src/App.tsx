@@ -35,6 +35,7 @@ import Projects from "./pages/Projects";
 import SavedCompanies from "./pages/SavedCompanies";
 import Workspace from "./pages/Workspace";
 import SuperAdmin from "./pages/SuperAdmin";
+import DataReview from "./pages/DataReview";
 import Settings from "./pages/Settings";
 import MaterialPipeline from "./pages/MaterialPipeline";
 import MaterialInventory from "./pages/MaterialInventory";
@@ -44,6 +45,7 @@ import DecisionsSpace from "./pages/DecisionsSpace";
 import ValidationSpace from "./pages/ValidationSpace";
 import MaterialBriefSimple from "./pages/MaterialBriefSimple";
 import Login from "./pages/Login";
+import { HitlStoreProvider } from "@/lib/hitlStore";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -70,6 +72,16 @@ const HeaderBreadcrumb = () => {
 
   const match = location.pathname.match(/\/landscape\/([^/]+)\/([^/]+)/);
   if (!match) {
+
+    if (location.pathname === '/super-admin/data-review') {
+      return (
+        <div className="flex items-center gap-2 text-xs text-muted-foreground ml-3">
+          <button onClick={() => navigate('/super-admin')} className="hover:text-foreground transition-colors">Super Admin</button>
+          <ChevronRight className="w-3 h-3" />
+          <span className="text-foreground font-medium">Data Review</span>
+        </div>
+      );
+    }
 
     // Show "Dashboard" on the home page
     if (location.pathname === '/') {
@@ -192,6 +204,7 @@ const ContentArea = ({ location }: { location: ReturnType<typeof useLocation> })
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/analysis-management" element={<AnalysisManagement />} />
           <Route path="/super-admin" element={<SuperAdmin />} />
+          <Route path="/super-admin/data-review" element={<DataReview />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/organization/:id" element={<OrganizationManagement />} />
           <Route path="/landscape/:category/:topic" element={<TopicLandscape />} />
@@ -270,9 +283,11 @@ const App = () => {
 
 const AppWrapper = () => (
   <QueryClientProvider client={queryClient}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
+    <HitlStoreProvider>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </HitlStoreProvider>
   </QueryClientProvider>
 );
 

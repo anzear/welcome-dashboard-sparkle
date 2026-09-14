@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Home, 
   Settings, 
@@ -12,7 +12,8 @@ import {
   Bell,
   Search,
   Bookmark,
-  Layers
+  Layers,
+  ChevronDown
 } from "lucide-react";
 import vcgLogo from "@/assets/vcg-logo.png";
 import vcgIcon from "@/assets/vcg-icon.png";
@@ -27,22 +28,33 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import { useHitlStore } from "@/lib/hitlStore";
 
 const mainItems = [
   { title: "Dashboard", url: "/", icon: Home, disabled: false },
   { title: "Material Portfolio", url: "/material-pipeline", icon: Layers, disabled: false },
-  { title: "Super Admin", url: "/super-admin", icon: ClipboardList, disabled: false },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { currentUser } = useHitlStore();
+  const isSuperAdminRoute = currentPath.startsWith("/super-admin");
+  const [superAdminOpen, setSuperAdminOpen] = useState(isSuperAdminRoute);
+
+  useEffect(() => {
+    if (isSuperAdminRoute) setSuperAdminOpen(true);
+  }, [isSuperAdminRoute]);
 
   const hasPendingRequests = true;
 
@@ -141,6 +153,49 @@ export function AppSidebar() {
                   )}
                 </SidebarMenuItem>
               ))}
+              {currentUser.role === "Super Admin" && (
+                <SidebarMenuItem>
+                  {collapsed ? (
+                    <div className="flex w-full justify-center">
+                      <SidebarMenuButton asChild tooltip="Super Admin" isActive={isSuperAdminRoute} className="h-10 w-10 !justify-center rounded-lg !p-0">
+                        <NavLink to="/super-admin" aria-label="Super Admin"><ClipboardList className="h-4 w-4" /></NavLink>
+                      </SidebarMenuButton>
+                    </div>
+                  ) : (
+                    <>
+                      <SidebarMenuButton asChild isActive={currentPath === "/super-admin"} className="h-10 rounded-lg pr-8 text-sm transition-colors">
+                        <NavLink to="/super-admin" className="flex w-full items-center gap-3 px-3">
+                          <ClipboardList className="h-4 w-4 shrink-0" />
+                          <span>Super Admin</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                      <SidebarMenuAction
+                        type="button"
+                        className="top-2.5"
+                        onClick={() => setSuperAdminOpen(open => !open)}
+                        aria-label={superAdminOpen ? "Collapse Super Admin navigation" : "Expand Super Admin navigation"}
+                        aria-expanded={superAdminOpen}
+                      >
+                        <ChevronDown className={`h-4 w-4 transition-transform ${superAdminOpen ? "rotate-0" : "-rotate-90"}`} />
+                      </SidebarMenuAction>
+                      {superAdminOpen && (
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild size="sm" isActive={currentPath === "/super-admin"}>
+                              <NavLink to="/super-admin"><span>Control center</span></NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild size="sm" isActive={currentPath === "/super-admin/data-review"}>
+                              <NavLink to="/super-admin/data-review"><span>Data Review</span></NavLink>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      )}
+                    </>
+                  )}
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
