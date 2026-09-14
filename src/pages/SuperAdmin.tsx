@@ -237,7 +237,7 @@ const SuperAdmin = () => {
             {[
               { label: "Total Users", value: stats.totalUsers, sub: `${stats.activeUsers} active`, icon: Users, accent: "text-primary", bg: "bg-primary/10" },
               { label: "Topics", value: stats.totalTopics, sub: `${topics.reduce((s, t) => s + t.analyses, 0)} analyses`, icon: ClipboardList, accent: "text-warning", bg: "bg-warning/10" },
-              { label: "Saved BioLinks", value: topics.reduce((s, t) => s + t.savedBioLinks, 0), sub: "across analyses", icon: Bookmark, accent: "text-info", bg: "bg-info/10" },
+              { label: "Saved Pathway Nodes", value: topics.reduce((s, t) => s + t.savedBioLinks, 0), sub: "across analyses", icon: Bookmark, accent: "text-info", bg: "bg-info/10" },
             ].map((s) => (
               <div key={s.label} className="flex items-center gap-3 px-4 py-3">
                 <div className={`w-8 h-8 rounded-md ${s.bg} flex items-center justify-center shrink-0`}>
@@ -411,7 +411,7 @@ const SuperAdmin = () => {
                   <div>
                     <CardTitle className="text-sm">All Topics</CardTitle>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Track update timestamps, analyses, views and saved BioLinks per starting point.
+                      Track update timestamps, analyses, views and saved Pathway Nodes per starting point.
                     </p>
                   </div>
                   <Button size="sm" className="h-7 text-[11px] px-2.5 bg-foreground text-background hover:bg-foreground/90" onClick={() => setAddTopicOpen(true)}>
@@ -439,7 +439,7 @@ const SuperAdmin = () => {
                       </TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest py-2 h-auto text-right">
                         <Bookmark className="w-3 h-3 inline -mt-0.5 mr-1" />
-                        Saved BioLinks
+                        Saved Pathway Nodes
                       </TableHead>
                       <TableHead className="text-[10px] uppercase tracking-widest py-2 h-auto text-right">Actions</TableHead>
                     </TableRow>

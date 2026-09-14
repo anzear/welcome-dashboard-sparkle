@@ -493,7 +493,7 @@ const MarketActivity = () => {
       case 'product':
         return 'Product';
       case 'market_uptaker':
-        return 'Market Off-taker';
+        return 'Off-taker';
       default:
         return type;
     }
@@ -808,7 +808,7 @@ const MarketActivity = () => {
                       Product Producers ({filterCompaniesByType('product').length})
                     </TabsTrigger>
                     <TabsTrigger value="uptakers" className="h-7 px-3 text-[10px] font-medium flex items-center justify-center gap-1 rounded-md data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm transition-all">
-                      Market Off-takers ({filterCompaniesByType('market_uptaker').length})
+                      Off-takers ({filterCompaniesByType('market_uptaker').length})
                     </TabsTrigger>
                   </TabsList>
                 </div>
@@ -908,7 +908,7 @@ const MarketActivity = () => {
         {(() => {
           const tabTypeMap: Record<string, string> = { suppliers: 'feedstock', producers: 'product', uptakers: 'market_uptaker'  };
           const currentType = tabTypeMap[activeTab] || 'feedstock';
-          const tabLabelMap: Record<string, string> = { suppliers: 'Feedstock Suppliers', producers: 'Product Producers', uptakers: 'Market Off-takers' };
+          const tabLabelMap: Record<string, string> = { suppliers: 'Feedstock Suppliers', producers: 'Product Producers', uptakers: 'Off-takers' };
           const filteredSavedCount = getAllSavedCompanies(currentType).length;
           if (filteredSavedCount === 0) return null;
           return (
