@@ -21,3 +21,8 @@
 - [x] Prompt 7: Global clickable Trace sheet and cross-linked records
 - [x] Prompt 7: Audit Trace filter and complete trace surfaces
 - [x] Prompt 7: Validate known, unknown and human-created traces
+- [ ] Prompt 8: Split navigation and live review queues into Papers and Patents
+- [ ] Prompt 8: Migrate audit entity types and shared store selectors
+- [ ] Prompt 8: Refactor the combined review UI into one kind-driven component
+- [ ] Prompt 8: Update history, Audit Log and Trace sheet integrations
+- [ ] Prompt 8: Remove legacy combined references and validate both flows
