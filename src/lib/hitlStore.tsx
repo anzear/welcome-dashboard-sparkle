@@ -222,7 +222,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       reverts_entry_id: input.reverts_entry_id ?? null,
     };
     const apply = <T extends HitlRecord>(items: T[]): T[] => {
-      if (input.operation === "create" && input.field === null) {
+      if ((input.operation === "create" || input.operation === "link_add") && input.field === null) {
         return [...items, input.new_value as T];
       }
       return items.map(item => {

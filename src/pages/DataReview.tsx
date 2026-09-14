@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HistorySheetProvider, RecordHistorySheet } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
+import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { useHitlStore } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -80,8 +81,8 @@ function DataReviewContent() {
             <CardTitle className="text-sm">{active.title}</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">{active.description}</p>
           </CardHeader>
-          <CardContent className={cn((activeSection === "pathways" || activeSection === "audit-log") && "p-0")}>
-            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "audit-log" ? <AuditLogSection /> : <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">Built in a later step</div>}
+          <CardContent className={cn((activeSection === "pathways" || activeSection === "companies" || activeSection === "audit-log") && "p-0")}>
+            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "audit-log" ? <AuditLogSection /> : <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">Built in a later step</div>}
           </CardContent>
         </Card>
         <RecordHistorySheet />
