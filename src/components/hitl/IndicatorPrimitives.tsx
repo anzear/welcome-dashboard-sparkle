@@ -14,8 +14,8 @@ export type TargetedValue = Pick<IndicatorValue, "scope" | "target">;
 export function ScopeChip({ scope }: { scope: IndicatorScope }) {
   return <Tooltip><TooltipTrigger asChild>
     <span className="inline-flex">
-      <Badge variant="outline" className="h-5 cursor-help gap-1.5 whitespace-nowrap border-border bg-muted/40 px-1.5 text-[9px] font-medium text-muted-foreground">
-        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/70" />{SCOPE_LABELS[scope]}
+      <Badge variant="outline" className="inline-flex h-6 cursor-help items-center gap-1 whitespace-nowrap border-border bg-muted/40 px-2 text-xs font-medium text-muted-foreground">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground/70" />{SCOPE_LABELS[scope]}
       </Badge>
     </span>
   </TooltipTrigger><TooltipContent className="text-xs">{SCOPE_DESCRIPTIONS[scope]}</TooltipContent></Tooltip>;

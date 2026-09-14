@@ -60,7 +60,7 @@ function DataReviewContent() {
               <div className="mb-1.5 flex items-center gap-1.5">
                 <div className="flex h-4 w-4 items-center justify-center rounded-md bg-primary/20"><ShieldCheck className="h-2.5 w-2.5 text-primary" /></div>
                 <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Super Admin</span>
-                <Badge variant="outline" className="ml-1 h-4 border-primary/20 bg-primary/10 px-1.5 text-[9px] text-primary">Restricted access</Badge>
+                <Badge variant="outline" className="ml-1 inline-flex h-6 items-center gap-1 whitespace-nowrap border-primary/20 bg-primary/10 px-2 text-xs text-primary">Restricted access</Badge>
               </div>
               <h1 className="mb-1 text-base font-bold tracking-tight text-foreground">Data <span className="text-primary">review</span></h1>
               <p className="text-[11px] leading-relaxed text-muted-foreground">Review, correct and revert pipeline-generated data. Every change is audited.</p>

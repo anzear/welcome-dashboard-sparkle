@@ -14,11 +14,11 @@ const fitLabels = { exact: "Exact fit", strong: "Strong fit", broad: "Broad fit"
 const names = (keys: CompanyFit["matched"]) => keys.map(key => evidenceNodeLabels[key]).join(", ") || "None";
 
 export function CompanyRoleChip({ role }: { role: Company["role"] }) {
-  return <Badge variant="outline" className="whitespace-nowrap text-[9px] font-normal text-muted-foreground">{companyRoleLabels[role]}</Badge>;
+  return <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal text-muted-foreground">{companyRoleLabels[role]}</Badge>;
 }
 
 export function FitChip({ fit }: { fit: CompanyFit }) {
-  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className={cn("whitespace-nowrap text-[9px] font-normal", fit.level === "exact" ? "border-success/40 text-success" : fit.level === "strong" ? "border-primary/40 text-primary" : "text-muted-foreground")}>{fitLabels[fit.level]}</Badge></TooltipTrigger><TooltipContent className="max-w-sm text-xs">Matches: {names(fit.matched)}. Differs: {names(fit.differing)}. Unknown: {names(fit.unknown)}.</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal", fit.level === "exact" ? "border-success/40 text-success" : fit.level === "strong" ? "border-primary/40 text-primary" : "text-muted-foreground")}>{fitLabels[fit.level]}</Badge></TooltipTrigger><TooltipContent className="max-w-sm text-xs">Matches: {names(fit.matched)}. Differs: {names(fit.differing)}. Unknown: {names(fit.unknown)}.</TooltipContent></Tooltip>;
 }
 
 export function RoleNodeLine({ company, compact = false }: { company: Pick<Company, "role" | "role_node">; compact?: boolean }) {
