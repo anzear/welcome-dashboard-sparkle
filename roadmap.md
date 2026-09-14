@@ -73,8 +73,8 @@
 - [x] Verify audit/history/URLs and both Excel header formats
 
 ## Prompt 18 — Bulk add papers and patents
-- [ ] Add four-step bulk add flow for pasted and uploaded identifiers
-- [ ] Add sequential mock fetching, retry, cancellation, and result states
-- [ ] Add per-row and apply-to-all node and note assignment
-- [ ] Add audited batch linking, result export, sorting, queue, and batch search
-- [ ] Verify mixed paste, template upload, audit entries, links, and queue updates
+- [x] Add four-step bulk add flow for pasted and uploaded identifiers
+- [x] Add sequential mock fetching, retry, cancellation, and result states
+- [x] Add per-row and apply-to-all node and note assignment
+- [x] Add audited batch linking, result export, sorting, queue, and batch search
+- [x] Verify mixed paste, template upload, audit entries, links, and queue updates
