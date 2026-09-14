@@ -98,3 +98,10 @@
 - [x] Update fit calculation, filters, chips, pathway lists, and company references
 - [x] Restrict edit and add forms and audit cleared disallowed values
 - [x] Verify role switching, no-fit suppliers, table layout, build, and console output
+
+## Prompt 22 — Bulk add companies
+- [x] Add four-step bulk company dialog and entry point
+- [x] Support paste/upload parsing, deduplication, templates, and resolution
+- [x] Add per-row and apply-all role/node assignment with validation
+- [x] Create audited company records with shared batch IDs and result export
+- [x] Verify table ordering, search, queue counts, links, upload, and console
