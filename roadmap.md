@@ -94,7 +94,7 @@
 - [x] Verify group management, bulk assignment, typecheck, build, and console output
 
 ## Prompt 21 — Company upstream secondary nodes
-- [ ] Centralise allowed secondary positions and migrate seed company data
-- [ ] Update fit calculation, filters, chips, pathway lists, and company references
-- [ ] Restrict edit and add forms and audit cleared disallowed values
-- [ ] Verify role switching, no-fit suppliers, table layout, build, and console output
+- [x] Centralise allowed secondary positions and migrate seed company data
+- [x] Update fit calculation, filters, chips, pathway lists, and company references
+- [x] Restrict edit and add forms and audit cleared disallowed values
+- [x] Verify role switching, no-fit suppliers, table layout, build, and console output
