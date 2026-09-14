@@ -6,13 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DerivedPathways, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, ScopeChip, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { derivedPathwayIds, useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
+import { DerivedPathways, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { derivedCompanyPathwayIds, derivedPathwayIds, rolePosition, useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "pathway", label: "Pathway" }, { value: "company", label: "Company" },
-  { value: "company_match", label: "Company match" }, { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
+  { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" },
 ];
 const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "accept", "reject", "revert"];
@@ -34,8 +34,7 @@ export function AuditLogSection() {
   const matchesNodeFilter = (item: (typeof store.auditEntries)[number]) => {
     if (!nodeFilter.isActive) return true;
     if (item.entity_type === "pathway") return nodeFilter.matchingPathwayIds.has(item.entity_id);
-    if (item.entity_type === "company") return store.companyMatches.some(match => match.company_id === item.entity_id && nodeFilter.matchingPathwayIds.has(match.pathway_id));
-    if (item.entity_type === "company_match") return nodeFilter.matchingPathwayIds.has(store.companyMatches.find(match => match.id === item.entity_id)?.pathway_id ?? "");
+    if (item.entity_type === "company") { const company = store.companies.find(row => row.id === item.entity_id); if (!company) return false; const position = rolePosition(company.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.feedstock.trim().toLocaleLowerCase())) && (!nodeFilter.product || (position === "product" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.product.trim().toLocaleLowerCase())); return direct || derivedCompanyPathwayIds(company, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
     if (item.entity_type === "paper_match" || item.entity_type === "patent_match") { const match = store.paperPatentMatches.find(row => row.id === item.entity_id); if (!match) return false; const direct = (!nodeFilter.feedstock || match.nodes.feedstock?.trim().toLocaleLowerCase() === nodeFilter.feedstock.trim().toLocaleLowerCase()) && (!nodeFilter.product || match.nodes.product?.trim().toLocaleLowerCase() === nodeFilter.product.trim().toLocaleLowerCase()); return direct || derivedPathwayIds(match, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
     return nodeFilter.matchingPathwayIds.has(store.indicatorValues.find(value => value.id === item.entity_id)?.pathway_id ?? "");
   };
@@ -43,14 +42,13 @@ export function AuditLogSection() {
     const haystack = [item.entity_id, item.actor, item.field, item.note, item.trace_id].join(" ").toLowerCase();
     const time = new Date(item.timestamp).getTime();
     return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (trace === "all" || (trace === "has" ? item.trace_id !== null : item.trace_id === null)) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
-  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companyMatches, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, trace, from, to, nodeFilter.feedstock, nodeFilter.product]);
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companies, store.pathways, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, trace, from, to, nodeFilter.feedstock, nodeFilter.product]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
   useEffect(() => setPage(1), [search, entity, operation, actor, trace, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
   const rows = filtered.slice((page - 1) * 25, page * 25);
   const relatedPathwayId = (item: (typeof store.auditEntries)[number]) => {
     if (item.entity_type === "pathway") return item.entity_id;
-    if (item.entity_type === "company_match") return store.companyMatches.find(match => match.id === item.entity_id)?.pathway_id ?? null;
     if (item.entity_type === "indicator_value") return store.indicatorValues.find(value => value.id === item.entity_id)?.pathway_id ?? null;
     return null;
   };
