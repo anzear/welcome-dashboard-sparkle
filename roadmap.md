@@ -92,3 +92,9 @@
 - [x] Add selection and node-based bulk group assignment workflows
 - [x] Protect system groups from editing, archiving, and manual membership
 - [x] Verify group management, bulk assignment, typecheck, build, and console output
+
+## Prompt 21 — Company upstream secondary nodes
+- [x] Centralise allowed secondary positions and migrate seed company data
+- [x] Update fit calculation, filters, chips, pathway lists, and company references
+- [x] Restrict edit and add forms and audit cleared disallowed values
+- [x] Verify role switching, no-fit suppliers, table layout, build, and console output
