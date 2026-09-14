@@ -113,3 +113,10 @@
 - [ ] Update bulk paste, template validation, per-position apply controls, linking, and results
 - [ ] Verify derivation, zero-node records, audit history, filters, and all add flows
 
+
+## Prompt 24 — Standalone pathway visibility
+- [ ] Add shared single and bulk visibility dialog with Replace, Add, and Remove modes
+- [ ] Add row, selection, by-node, and edit-pathway visibility entry points
+- [ ] Decouple status changes from visibility and link the independent action
+- [ ] Add interactive Visibility column and toolbar filter
+- [ ] Verify audited writes, merge behavior, filtering, and status independence
