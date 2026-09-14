@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Building2, FileSearch, Gauge, Link2, ShieldCheck } from "lucide-react";
+import { Building2, FileText, Gauge, Link2, ScrollText, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,35 +8,39 @@ import { HistorySheetProvider, RecordHistorySheet, TraceSheet, TraceSheetProvide
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
-import { PapersPatentsSection } from "@/components/hitl/PapersPatentsSection";
+import { MatchReviewSection } from "@/components/hitl/MatchReviewSection";
 import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
 import { useHitlStore } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
-type Section = "pathways" | "companies" | "papers-patents" | "indicators" | "audit-log";
+type Section = "pathways" | "companies" | "papers" | "patents" | "indicators" | "audit";
 const sections: { value: Section; label: string; title: string; description: string }[] = [
   { value: "pathways", label: "Pathways", title: "Pathways", description: "Review pathway definitions, node labels, visibility and lifecycle status." },
   { value: "companies", label: "Companies", title: "Companies", description: "Validate company profiles and proposed company–pathway relationships." },
-  { value: "papers-patents", label: "Papers & Patents", title: "Papers & Patents", description: "Inspect publication and patent matches proposed for each pathway." },
+  { value: "papers", label: "Papers", title: "Papers", description: "Inspect publication matches proposed for each Pathway." },
+  { value: "patents", label: "Patents", title: "Patents", description: "Inspect patent matches proposed for each Pathway." },
   { value: "indicators", label: "Indicators", title: "Indicators", description: "Check sourced indicator values, dates, units and human corrections." },
-  { value: "audit-log", label: "Audit Log", title: "Audit Log", description: "Trace every review action, field change and reverted operation." },
+  { value: "audit", label: "Audit Log", title: "Audit Log", description: "Trace every review action, field change and reverted operation." },
 ];
 const validSections = new Set(sections.map(section => section.value));
 
 function DataReviewContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const store = useHitlStore();
-  const requested = searchParams.get("section") as Section | null;
+  const rawRequested = searchParams.get("section");
+  const requested = rawRequested as Section | null;
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
   const active = sections.find(section => section.value === activeSection) ?? sections[0];
 
   useEffect(() => {
-    if (!requested || !validSections.has(requested)) setSearchParams({ section: "pathways" }, { replace: true });
-  }, [requested, setSearchParams]);
+    if (rawRequested === "papers-patents") setSearchParams({ section: "papers" }, { replace: true });
+    else if (!requested || !validSections.has(requested)) setSearchParams({ section: "pathways" }, { replace: true });
+  }, [rawRequested, requested, setSearchParams]);
   const queue = useMemo(() => [
     { label: "Pathways needing approval", count: store.pathways.filter(item => item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
     { label: "Company matches pending", count: store.companyMatches.filter(item => item.status === "review_pending").length, sub: "Company–pathway links to verify", section: "companies" as Section, icon: Building2 },
-    { label: "Paper & patent matches pending", count: store.paperPatentMatches.filter(item => item.status === "review_pending").length, sub: "Evidence matches to inspect", section: "papers-patents" as Section, icon: FileSearch },
+    { label: "Paper matches pending", count: store.paperMatches().filter(item => item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
+    { label: "Patent matches pending", count: store.patentMatches().filter(item => item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
     { label: "Indicator values pending", count: store.indicatorValues.filter(item => item.status === "review_pending").length, sub: "Values requiring validation", section: "indicators" as Section, icon: Gauge },
   ], [store.pathways, store.companyMatches, store.paperPatentMatches, store.indicatorValues]);
 
@@ -61,7 +65,7 @@ function DataReviewContent() {
         </div>
 
         <Card className="overflow-hidden rounded-xl border-border/40 shadow-sm">
-          <div className="grid grid-cols-1 divide-y divide-border/60 md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          <div className="grid grid-cols-1 divide-y divide-border/60 md:grid-cols-2 xl:grid-cols-5 xl:divide-x xl:divide-y-0">
             {queue.map(item => (
               <Button key={item.label} type="button" variant="ghost" onClick={() => selectSection(item.section)} className={cn("h-auto justify-start rounded-none px-4 py-3 text-left hover:bg-muted/40", activeSection === item.section && "bg-muted/60")}>
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10"><item.icon className="h-4 w-4 text-primary" /></span>
@@ -83,8 +87,8 @@ function DataReviewContent() {
             <div className="flex items-center justify-between gap-3"><CardTitle className="text-sm">{active.title}</CardTitle>{activeSection === "indicators" && <span className="font-mono text-[10px] text-muted-foreground">staleness window: 180 d</span>}</div>
             <p className="mt-0.5 text-xs text-muted-foreground">{active.description}</p>
           </CardHeader>
-          <CardContent className={cn((activeSection === "pathways" || activeSection === "companies" || activeSection === "papers-patents" || activeSection === "indicators" || activeSection === "audit-log") && "p-0")}> 
-            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "papers-patents" ? <PapersPatentsSection /> : activeSection === "indicators" ? <IndicatorsSection /> : <AuditLogSection />}
+          <CardContent className="p-0"> 
+            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "papers" ? <MatchReviewSection kind="paper" /> : activeSection === "patents" ? <MatchReviewSection kind="patent" /> : activeSection === "indicators" ? <IndicatorsSection /> : <AuditLogSection />}
           </CardContent>
         </Card>
         <RecordHistorySheet />
