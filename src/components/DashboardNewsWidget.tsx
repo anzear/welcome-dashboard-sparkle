@@ -333,7 +333,7 @@ const DashboardNewsWidget = () => {
         return feedstockOptions;
       case "Product":
         return productOptions;
-      case "Market Application":
+      case "Application":
         return applicationOptions;
       default:
         return [];
@@ -346,7 +346,7 @@ const DashboardNewsWidget = () => {
         return selectedFeedstock;
       case "Product":
         return selectedProducts;
-      case "Market Application":
+      case "Application":
         return selectedApplications;
       default:
         return [];
@@ -359,7 +359,7 @@ const DashboardNewsWidget = () => {
         return setSelectedFeedstock;
       case "Product":
         return setSelectedProducts;
-      case "Market Application":
+      case "Application":
         return setSelectedApplications;
       default:
         return () => {};
@@ -393,7 +393,7 @@ const DashboardNewsWidget = () => {
     } else if (article.applications.length > 0 && article.feedstock.length === 0 && article.products.length === 0) {
       // Pure application article
       tags.push(
-        { type: 'category', value: 'Market Application', color: 'bg-orange-100 text-orange-700' },
+        { type: 'category', value: 'Application', color: 'bg-orange-100 text-orange-700' },
         { type: 'item', value: getDisplayName(article.applications[0], 'application'), color: 'bg-orange-50 text-orange-600' }
       );
     } else {
@@ -405,7 +405,7 @@ const DashboardNewsWidget = () => {
         );
       } else if (article.applications.length > 0) {
         tags.push(
-          { type: 'category', value: 'Market Application', color: 'bg-orange-100 text-orange-700' },
+          { type: 'category', value: 'Application', color: 'bg-orange-100 text-orange-700' },
           { type: 'item', value: getDisplayName(article.applications[0], 'application'), color: 'bg-orange-50 text-orange-600' }
         );
       } else if (article.feedstock.length > 0) {
@@ -434,7 +434,7 @@ const DashboardNewsWidget = () => {
     return biotechImage;
   };
 
-  const filterCategories = ["Feedstock", "Product", "Market Application"];
+  const filterCategories = ["Feedstock", "Product", "Application"];
 
   const filterArticles = (articles: NewsArticle[]) => {
     // If no filters selected, show first 3 from current tab

@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { allNodeValues, derivedPathwayIds, pathwayScope, scopeSummary, useHitlStore, type EvidenceNodes, type PaperPatentMatch, type PathwayScope } from "@/lib/hitlStore";
+import { NODE_LABELS, allNodeValues, derivedPathwayIds, pathwayScope, scopeSummary, useHitlStore, type EvidenceNodes, type PaperPatentMatch, type PathwayScope } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 import { PathwayRef, type PathwayNodeKey } from "./PathwayRef";
 
 export const evidenceNodeKeys: PathwayNodeKey[] = ["feedstock", "process_technology", "product", "application_market"];
-export const evidenceNodeLabels: Record<PathwayNodeKey, string> = { feedstock: "Feedstock", process_technology: "Process/Technology", product: "Product", application_market: "Application/Market" };
+export const evidenceNodeLabels = NODE_LABELS;
 export const matchedNodeKeys = (nodes: EvidenceNodes) => evidenceNodeKeys.filter(key => nodes[key] !== null && nodes[key]?.trim() !== "");
 
 function NodeChip({ position, value }: { position: PathwayNodeKey; value: string }) {
@@ -48,7 +48,7 @@ export function DerivedPathwayList({ match, cards = false }: { match: Pick<Paper
   const store = useHitlStore();
   const rows = derivedPathwayIds(match, store.pathways).map(id => store.pathways.find(item => item.id === id)).filter((item): item is NonNullable<typeof item> => Boolean(item)).map(pathway => ({ pathway, scope: pathwayScope(match, pathway) })).sort((a, b) => Number(b.scope.production && !b.scope.application) - Number(a.scope.production && !a.scope.application) || Number(b.scope.production && b.scope.application) - Number(a.scope.production && a.scope.application));
   if (!rows.length) return <p className="py-4 text-xs text-muted-foreground">No pathway contains all matched nodes.</p>;
-  return <div className={cn("space-y-2", !cards && "divide-y rounded-md border")}>{rows.map(({ pathway, scope }) => <div key={pathway.id} className={cn("space-y-2", cards ? "rounded-md border p-3" : "px-3 py-2")}><div className="flex items-center justify-between gap-3"><div className="min-w-0 flex-1"><PathwayRef pathwayId={pathway.id} variant={cards ? "card" : "inline"} emphasisValues={match.matched_nodes} showStatus={false} /></div><PathwayScopeChips scope={scope} /></div>{cards && <p className="text-[10px] text-muted-foreground">{scope.productionPositions.length ? `Production match: ${scope.productionPositions.map(position => evidenceNodeLabels[position]).join(", ")}.` : "No production-position match."} {scope.applicationHit ? "Application match: Application/Market." : "No Application/Market match."}</p>}</div>)}</div>;
+  return <div className={cn("space-y-2", !cards && "divide-y rounded-md border")}>{rows.map(({ pathway, scope }) => <div key={pathway.id} className={cn("space-y-2", cards ? "rounded-md border p-3" : "px-3 py-2")}><div className="flex items-center justify-between gap-3"><div className="min-w-0 flex-1"><PathwayRef pathwayId={pathway.id} variant={cards ? "card" : "inline"} emphasisValues={match.matched_nodes} showStatus={false} /></div><PathwayScopeChips scope={scope} /></div>{cards && <p className="text-[10px] text-muted-foreground">{scope.productionPositions.length ? `Production match: ${scope.productionPositions.map(position => evidenceNodeLabels[position]).join(", ")}.` : "No production-position match."} {scope.applicationHit ? "Application match: Application." : "No Application match."}</p>}</div>)}</div>;
 }
 
 export function DerivedPathwaysForRecord({ match }: { match: Pick<PaperPatentMatch, "matched_nodes"> }) {

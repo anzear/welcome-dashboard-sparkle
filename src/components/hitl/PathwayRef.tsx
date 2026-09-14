@@ -1,18 +1,12 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { PathwayStatusChip } from "./ReviewPrimitives";
-import { useHitlStore, type Pathway } from "@/lib/hitlStore";
+import { NODE_LABELS, useHitlStore, type Pathway } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 export type PathwayNodeKey = "feedstock" | "process_technology" | "product" | "application_market";
 
-const nodeLabels: Record<PathwayNodeKey, string> = {
-  feedstock: "Feedstock",
-  process_technology: "Process/Technology",
-  product: "Product",
-  application_market: "Application/Market",
-};
-const nodeKeys = Object.keys(nodeLabels) as PathwayNodeKey[];
+const nodeKeys = Object.keys(NODE_LABELS) as PathwayNodeKey[];
 
 export function pathwaySearchText(pathway: Pathway | undefined): string {
   return pathway ? [pathway.id, ...nodeKeys.map(key => pathway[key])].join(" ").toLocaleLowerCase() : "";
@@ -44,7 +38,7 @@ export function PathwayRef({ pathwayId, variant, emphasisNode, emphasisNodes, em
     </div>
     <div className="grid gap-2 sm:grid-cols-4">
       {nodeKeys.map(key => <div key={key} className={cn("min-w-0 pl-2", isEmphasised(key) && "border-l-2 border-l-foreground")}>
-        <div className="text-[9px] text-muted-foreground">{nodeLabels[key]}</div>
+        <div className="text-[9px] text-muted-foreground">{NODE_LABELS[key]}</div>
         <div className={cn("mt-0.5 break-words text-[10px] leading-snug", isEmphasised(key) && "font-bold")}>{pathway[key]}</div>
       </div>)}
     </div>

@@ -202,7 +202,7 @@ export default function ValueChainPathwaysFunnel() {
                                   {pathway.feedstock} → {pathway.product}
                                 </h4>
                                 <p className="text-xs text-muted-foreground mb-1">
-                                  <span className="font-medium">Technology:</span> {pathway.technology}
+                                  <span className="font-medium">Process:</span> {pathway.technology}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                   <span className="font-medium">Application:</span> {pathway.application}

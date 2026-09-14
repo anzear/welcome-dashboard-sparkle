@@ -2559,7 +2559,7 @@ if (sortBy === 'trl') {
               <Input value={newPathway.feedstock} onChange={(e) => setNewPathway({...newPathway, feedstock: e.target.value})} placeholder="e.g., Corn Cobs" />
             </div>
             <div className="space-y-2">
-              <Label>Technology *</Label>
+              <Label>Process *</Label>
               <Input value={newPathway.technology} onChange={(e) => setNewPathway({...newPathway, technology: e.target.value})} placeholder="e.g., Acid Hydrolysis" />
             </div>
             <div className="space-y-2">

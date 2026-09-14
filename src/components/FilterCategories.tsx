@@ -36,7 +36,7 @@ const FilterCategories = ({
   productOptions,
   applicationOptions
 }: FilterCategoriesProps) => {
-  const filterCategories = ["Feedstock", "Process", "Product", "Market Application"];
+  const filterCategories = ["Feedstock", "Process", "Product", "Application"];
 
   const toggleSelection = (item: string, selectedItems: string[], setter: (items: string[]) => void) => {
     if (selectedItems.includes(item)) {
@@ -54,7 +54,7 @@ const FilterCategories = ({
         return technologyOptions;
       case "Product":
         return productOptions;
-      case "Market Application":
+      case "Application":
         return applicationOptions;
       default:
         return [];
@@ -69,7 +69,7 @@ const FilterCategories = ({
         return selectedTechnology;
       case "Product":
         return selectedProducts;
-      case "Market Application":
+      case "Application":
         return selectedApplications;
       default:
         return [];
@@ -84,7 +84,7 @@ const FilterCategories = ({
         return onTechnologyChange;
       case "Product":
         return onProductsChange;
-      case "Market Application":
+      case "Application":
         return onApplicationsChange;
       default:
         return () => {};
@@ -114,7 +114,7 @@ const FilterCategories = ({
                       ? "!bg-product-blue !text-product-blue-foreground hover:!bg-product-blue/90 !border-product-blue"
                       : category === "Product"
                       ? "!bg-application-purple !text-application-purple-foreground hover:!bg-application-purple/90 !border-application-purple"
-                      : category === "Market Application"
+                      : category === "Application"
                       ? "!bg-orange-500 !text-white hover:!bg-orange-600 !border-orange-500"
                       : "!bg-success !text-success-foreground hover:!bg-success/90 !border-success"
                     : "border-input bg-background hover:bg-accent hover:text-accent-foreground"
