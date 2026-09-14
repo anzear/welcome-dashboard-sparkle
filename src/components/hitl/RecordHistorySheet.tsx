@@ -84,7 +84,7 @@ export function RecordHistorySheet() {
           <SheetHeader className="border-b px-5 py-4 pr-12">
             <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code></div>
             <SheetDescription className="truncate text-xs">{summary(record, target.entity_type)}</SheetDescription>
-            {record && <span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span>}
+            {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span><TraceId value={record.trace_id} /></div>}
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <RecordHistoryList entityType={target.entity_type} entityId={target.entity_id} />
