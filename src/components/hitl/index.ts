@@ -3,3 +3,5 @@ export { HistorySheetProvider, RecordHistoryList, RecordHistorySheet, useHistory
 export { TraceSheetProvider, useTraceSheet } from "./TraceSheetContext";
 export { TraceSheet } from "./TraceSheet";
 export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
+
+export { PathwayRef, pathwaySearchText, type PathwayNodeKey } from "./PathwayRef";

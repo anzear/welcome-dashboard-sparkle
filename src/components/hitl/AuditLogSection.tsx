@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { NodeFilterEmpty, OperationChip, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { NodeFilterEmpty, OperationChip, PathwayRef, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import { useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -48,6 +48,13 @@ export function AuditLogSection() {
   useEffect(() => setPage(1), [search, entity, operation, actor, trace, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
   const rows = filtered.slice((page - 1) * 25, page * 25);
+  const relatedPathwayId = (item: (typeof store.auditEntries)[number]) => {
+    if (item.entity_type === "pathway") return item.entity_id;
+    if (item.entity_type === "company_match") return store.companyMatches.find(match => match.id === item.entity_id)?.pathway_id ?? null;
+    if (item.entity_type === "paper_match" || item.entity_type === "patent_match") return store.paperPatentMatches.find(match => match.id === item.entity_id)?.pathway_id ?? null;
+    if (item.entity_type === "indicator_value") return store.indicatorValues.find(value => value.id === item.entity_id)?.pathway_id ?? null;
+    return null;
+  };
   const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setTrace("all"); setFrom(""); setTo(""); };
   const exportCsv = () => {
     const header = ["Timestamp", "Actor", "Entity type", "Entity ID", "Operation", "Field", "Prior value", "New value", "Note", "Trace ID"];
@@ -75,7 +82,7 @@ export function AuditLogSection() {
       <span className="ml-auto text-[10px] text-muted-foreground">{filtered.length} entries</span><Button variant="outline" size="sm" className="h-8 text-[10px]" onClick={exportCsv}><Download className="mr-1 h-3 w-3" />Export CSV</Button>
     </div>
     <div className="overflow-x-auto"><Table className="min-w-[1160px]"><TableHeader><TableRow><TableHead>Timestamp</TableHead><TableHead>Actor</TableHead><TableHead>Entity</TableHead><TableHead>Operation</TableHead><TableHead>Field</TableHead><TableHead>Change</TableHead><TableHead>Note</TableHead><TableHead>Trace</TableHead></TableRow></TableHeader><TableBody>
-      {rows.map(item => <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", store.revertedBy(item) && "border-l-2 border-l-muted-foreground")}><TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell><TableCell>{item.actor}</TableCell><TableCell><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[9px] text-muted-foreground">{entityTypes.find(type => type.value === item.entity_type)?.label}</span><Button variant="link" className="h-auto p-0 font-mono text-[10px]" onClick={() => openHistory(item.entity_type, item.entity_id)}>{item.entity_id}</Button></div></TableCell><TableCell><OperationChip operation={item.operation} /></TableCell><TableCell className="font-mono">{item.field ?? "record"}</TableCell><TableCell><ValueDiff prior_value={item.prior_value} new_value={item.new_value} /></TableCell><TableCell className="max-w-48 truncate italic text-muted-foreground">{item.note ?? "—"}</TableCell><TableCell><TraceId value={item.trace_id} /></TableCell></TableRow>)}
+      {rows.map(item => <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", store.revertedBy(item) && "border-l-2 border-l-muted-foreground")}><TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell><TableCell>{item.actor}</TableCell><TableCell><div className="space-y-1"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[9px] text-muted-foreground">{entityTypes.find(type => type.value === item.entity_type)?.label}</span><Button variant="link" className="h-auto p-0 font-mono text-[10px]" onClick={() => openHistory(item.entity_type, item.entity_id)}>{item.entity_id}</Button></div>{relatedPathwayId(item) && <div className="max-w-[420px] text-muted-foreground"><PathwayRef pathwayId={relatedPathwayId(item) ?? ""} variant="inline" showId={item.entity_type !== "pathway"} /></div>}</div></TableCell><TableCell><OperationChip operation={item.operation} /></TableCell><TableCell className="font-mono">{item.field ?? "record"}</TableCell><TableCell><ValueDiff prior_value={item.prior_value} new_value={item.new_value} /></TableCell><TableCell className="max-w-48 truncate italic text-muted-foreground">{item.note ?? "—"}</TableCell><TableCell><TraceId value={item.trace_id} /></TableCell></TableRow>)}
       {rows.length === 0 && <TableRow><TableCell colSpan={8} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="audit entries" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No audit entries match these filters.</div>}</TableCell></TableRow>}
     </TableBody></Table></div>
     <div className="flex items-center justify-between border-t px-4 py-3"><span className="text-[10px] text-muted-foreground">Page {page} of {pages}</span><div className="flex gap-1"><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</Button><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</Button></div></div>
