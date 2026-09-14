@@ -56,3 +56,11 @@
  - [x] Add audited node editing and company creation flows
  - [x] Update queues, audit/history/trace summaries and Pathway consequences
  - [x] Remove legacy company-match UI/store references and verify interactions
+
+## Prompt 14 — Evidence node values and per-Pathway scope
+- [ ] Migrate paper and patent records from positioned nodes and stored scope to matched node values
+- [ ] Add value metadata, derived Pathway scope helpers, and value-based Pathway emphasis
+- [ ] Rebuild shared evidence chips, summaries, Pathway lists, and audit array rendering
+- [ ] Update Papers and Patents tables, scope filters, detail sheets, and node editor
+- [ ] Update DOI and patent-ID linking plus audit, history, trace, queues, and global filters
+- [ ] Verify per-Pathway scope, writes, filtering, responsive UI, and removal of record-level scope
