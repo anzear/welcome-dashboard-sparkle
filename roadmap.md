@@ -36,8 +36,8 @@
 - [x] Prompt 10: Clear bulk selections on global filter changes
 - [x] Prompt 10: Validate persistence, dependent options and all section results
 ## Prompt 11 — Pathway references and company role nodes
-- [ ] Add shared PathwayRef and roleNode helper
-- [ ] Update Companies match table and profile sheet
-- [ ] Update Papers, Patents, Indicators, Audit, History, Trace
-- [ ] Update pathway selectors and consequences comparison
+- [x] Add shared PathwayRef and roleNode helper
+- [x] Update Companies match table and profile sheet
+- [x] Update Papers, Patents, Indicators, Audit, History, Trace
+- [x] Update pathway selectors and consequences comparison
 - [ ] Expand node-value search and verify UI/build

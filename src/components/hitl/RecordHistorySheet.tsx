@@ -68,9 +68,9 @@ function summary(record: HitlRecord | null, type: AuditEntityType) {
   if (!record) return "Record unavailable";
   if (type === "pathway" && "feedstock" in record) return [record.feedstock, record.process_technology, record.product, record.application_market].join(" → ");
   if (type === "company" && "name" in record) return record.name;
-  if (type === "company_match" && "company_name" in record) return `${record.company_name} · ${record.pathway_id}`;
-  if ((type === "paper_match" || type === "patent_match") && "title" in record) return `${record.title} · ${record.pathway_id}`;
-  if (type === "indicator_value" && "indicator" in record) return `${record.indicator} · ${record.pathway_id}`;
+  if (type === "company_match" && "company_name" in record) return record.company_name;
+  if ((type === "paper_match" || type === "patent_match") && "title" in record) return record.title;
+  if (type === "indicator_value" && "indicator" in record) return record.indicator;
   return record.id;
 }
 
