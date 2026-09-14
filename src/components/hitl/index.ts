@@ -1,1 +1,2 @@
-export { ActorStamp, PathwayStatusChip, ReviewStatusChip, TraceId, ValueCell } from "./ReviewPrimitives";
+export { ActorStamp, OperationChip, PathwayStatusChip, ReviewStatusChip, TraceId, ValueCell, ValueDiff } from "./ReviewPrimitives";
+export { HistorySheetProvider, RecordHistorySheet, useHistorySheet } from "./RecordHistorySheet";

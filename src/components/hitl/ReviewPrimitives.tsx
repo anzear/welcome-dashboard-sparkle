@@ -1,10 +1,10 @@
-import { Archive, Check, Clock, Copy, EyeOff, Lock, X } from "lucide-react";
+import { Archive, Check, Clock, Copy, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { PathwayStatus, ReviewStatus } from "@/lib/hitlStore";
+import type { AuditOperation, PathwayStatus, ReviewStatus } from "@/lib/hitlStore";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
   accepted: { label: "Accepted", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
@@ -35,6 +35,36 @@ export function PathwayStatusChip({ status }: { status: PathwayStatus }) {
 export function ValueCell({ value, unit }: { value: string | number | null | undefined; unit?: string | null }) {
   if (value === null || value === undefined) return <span className="text-muted-foreground" title="null (no value)">—</span>;
   return <span>{value}{unit ? ` ${unit}` : ""}</span>;
+}
+
+const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus; className: string }> = {
+  create: { label: "Create", icon: Plus, className: "border-border text-muted-foreground" },
+  update: { label: "Update", icon: Pencil, className: "border-border text-muted-foreground" },
+  deactivate: { label: "Deactivate", icon: Archive, className: "border-border text-muted-foreground" },
+  link_add: { label: "Link add", icon: Link, className: "border-border text-muted-foreground" },
+  link_remove: { label: "Link remove", icon: Unlink, className: "border-border text-muted-foreground" },
+  accept: { label: "Accept", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
+  reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
+  revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
+};
+
+export function OperationChip({ operation }: { operation: AuditOperation }) {
+  const config = operationConfig[operation];
+  const Icon = config.icon;
+  return <Badge variant="outline" className={cn("h-5 gap-1 whitespace-nowrap px-1.5 text-[9px] font-medium", config.className)}><Icon className="h-2.5 w-2.5" />{config.label}</Badge>;
+}
+
+const jsonPreview = (value: object) => JSON.stringify(value);
+function DiffValue({ value }: { value: unknown }) {
+  if (value === null || value === undefined || typeof value === "string" || typeof value === "number") return <ValueCell value={value as string | number | null | undefined} />;
+  if (typeof value === "boolean") return <span>{String(value)}</span>;
+  const full = jsonPreview(value as object);
+  const preview = full.length > 80 ? `${full.slice(0, 77)}…` : full;
+  return <Tooltip><TooltipTrigger asChild><code className="inline-block max-w-44 truncate font-mono text-[10px]">{preview}</code></TooltipTrigger><TooltipContent className="max-w-sm break-all font-mono text-[10px]">{full}</TooltipContent></Tooltip>;
+}
+
+export function ValueDiff({ prior_value, new_value }: { prior_value: unknown; new_value: unknown }) {
+  return <span className="inline-flex max-w-full items-center gap-1.5 text-[10px]"><DiffValue value={prior_value} /><span className="text-muted-foreground">→</span><DiffValue value={new_value} /></span>;
 }
 
 export function TraceId({ value }: { value: string | null | undefined }) {
