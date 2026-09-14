@@ -19,7 +19,7 @@ export function CompanyRoleChip({ role }: { role: Company["role"] }) {
 
 export function FitChip({ fit }: { fit: CompanyFit | null }) {
   if (!fit) return null;
-  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal", fit.level === "exact" ? "border-success/40 text-success" : fit.level === "strong" ? "border-primary/40 text-primary" : "text-muted-foreground")}>{fitLabels[fit.level]}</Badge></TooltipTrigger><TooltipContent className="max-w-sm text-xs">Matches: {names(fit.matched)}. Differs: {names(fit.differing)}. Unknown: {names(fit.unknown)}.</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild><span><Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal", fit.level === "exact" ? "border-success/40 text-success" : fit.level === "strong" ? "border-primary/40 text-primary" : "text-muted-foreground")}>{fitLabels[fit.level]}</Badge></span></TooltipTrigger><TooltipContent className="max-w-sm text-xs">Matches: {names(fit.matched)}. Differs: {names(fit.differing)}. Unknown: {names(fit.unknown)}.</TooltipContent></Tooltip>;
 }
 
 export function RoleNodeLine({ company, compact = false }: { company: Pick<Company, "role" | "role_node">; compact?: boolean }) {
