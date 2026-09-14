@@ -4,7 +4,7 @@ import { Building2, FileSearch, Gauge, Link2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HistorySheetProvider, RecordHistorySheet } from "@/components/hitl";
+import { HistorySheetProvider, RecordHistorySheet, TraceSheet, TraceSheetProvider } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
@@ -88,11 +88,12 @@ function DataReviewContent() {
           </CardContent>
         </Card>
         <RecordHistorySheet />
+        <TraceSheet />
       </div>
     </div>
   );
 }
 
 export default function DataReview() {
-  return <HistorySheetProvider><DataReviewContent /></HistorySheetProvider>;
+  return <HistorySheetProvider><TraceSheetProvider><DataReviewContent /></TraceSheetProvider></HistorySheetProvider>;
 }

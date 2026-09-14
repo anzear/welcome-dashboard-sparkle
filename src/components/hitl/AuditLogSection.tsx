@@ -25,6 +25,7 @@ export function AuditLogSection() {
   const [entity, setEntity] = useState("all");
   const [operation, setOperation] = useState("all");
   const [actor, setActor] = useState("all");
+  const [trace, setTrace] = useState("all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -32,13 +33,13 @@ export function AuditLogSection() {
   const filtered = useMemo(() => store.auditEntries.filter(item => {
     const haystack = [item.entity_id, item.actor, item.field, item.note, item.trace_id].join(" ").toLowerCase();
     const time = new Date(item.timestamp).getTime();
-    return (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
-  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, search, entity, operation, actor, from, to]);
+    return (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (trace === "all" || (trace === "has" ? item.trace_id !== null : item.trace_id === null)) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, search, entity, operation, actor, trace, from, to]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
-  useEffect(() => setPage(1), [search, entity, operation, actor, from, to]);
+  useEffect(() => setPage(1), [search, entity, operation, actor, trace, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
   const rows = filtered.slice((page - 1) * 25, page * 25);
-  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setFrom(""); setTo(""); };
+  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setTrace("all"); setFrom(""); setTo(""); };
   const exportCsv = () => {
     const header = ["Timestamp", "Actor", "Entity type", "Entity ID", "Operation", "Field", "Prior value", "New value", "Note", "Trace ID"];
     const body = filtered.map(item => [item.timestamp, item.actor, item.entity_type, item.entity_id, item.operation, item.field, JSON.stringify(item.prior_value), JSON.stringify(item.new_value), item.note, item.trace_id]);
@@ -58,6 +59,7 @@ export function AuditLogSection() {
       <Filter value={entity} onChange={setEntity} label="Entity type"><SelectItem value="all">All entities</SelectItem>{entityTypes.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</Filter>
       <Filter value={operation} onChange={setOperation} label="Operation"><SelectItem value="all">All operations</SelectItem>{operations.map(item => <SelectItem key={item} value={item}>{item.replace("_", " ")}</SelectItem>)}</Filter>
       <Filter value={actor} onChange={setActor} label="Actor"><SelectItem value="all">All actors</SelectItem>{actors.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</Filter>
+      <Filter value={trace} onChange={setTrace} label="Trace"><SelectItem value="all">All traces</SelectItem><SelectItem value="has">Has trace</SelectItem><SelectItem value="none">No trace (human-created)</SelectItem></Filter>
       <Input aria-label="From date" type="date" value={from} onChange={event => setFrom(event.target.value)} className="h-8 w-36 text-[10px]" />
       <Input aria-label="To date" type="date" value={to} onChange={event => setTo(event.target.value)} className="h-8 w-36 text-[10px]" />
       <Button variant="link" className="h-8 px-1 text-[10px]" onClick={reset}>Reset</Button>
