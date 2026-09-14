@@ -26,3 +26,7 @@
 - [ ] Prompt 8: Refactor the combined review UI into one kind-driven component
 - [ ] Prompt 8: Update history, Audit Log and Trace sheet integrations
 - [ ] Prompt 8: Remove legacy combined references and validate both flows
+- [ ] Prompt 9: Make Pathway node fields free-text with autocomplete
+- [ ] Prompt 9: Add Required and New node states with case-normalization
+- [ ] Prompt 9: Preserve duplicate checks, consequences and import badges
+- [ ] Prompt 9: Validate new, existing and empty node input behavior
