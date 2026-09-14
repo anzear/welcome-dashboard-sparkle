@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, NodeFilterEmpty, PathwayRef, PathwayStatusChip, TraceId, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { useHitlStore, type Pathway, type PathwayStatus, type VisibilityScope } from "@/lib/hitlStore";
+import { derivedPathwayIds, useHitlStore, type Pathway, type PathwayStatus, type VisibilityScope } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type NodeKey = "feedstock" | "process_technology" | "product" | "application_market";
@@ -87,7 +87,7 @@ function PathwayDialog({ open, pathway, groups, pathways, onClose, onDuplicate }
   useEffect(() => { if (!open) return; setDraft(pathway ? { feedstock: pathway.feedstock, process_technology: pathway.process_technology, product: pathway.product, application_market: pathway.application_market, group: pathway.group } : blankDraft); setNewGroup(""); setError(null); setStep("form"); setImpact("rerun"); }, [open, pathway]);
   const options = useMemo(() => Object.fromEntries((Object.keys(nodeLabels) as NodeKey[]).map(key => [key, [...new Set(pathways.map(item => item[key]))].sort()])), [pathways]) as Record<NodeKey, string[]>;
   const changedNodes = pathway ? (Object.keys(nodeLabels) as NodeKey[]).filter(key => pathway[key] !== draft[key].trim()) : [];
-  const attached = pathway ? [...store.companyMatches.filter(item => item.pathway_id === pathway.id), ...store.paperPatentMatches.filter(item => item.pathway_id === pathway.id), ...store.indicatorValues.filter(item => item.pathway_id === pathway.id)] : [];
+  const attached = pathway ? [...store.companyMatches.filter(item => item.pathway_id === pathway.id), ...store.paperPatentMatches.filter(item => derivedPathwayIds(item, store.pathways).includes(pathway.id)), ...store.indicatorValues.filter(item => item.pathway_id === pathway.id)] : [];
   const validate = () => { const duplicate = pathways.find(item => item.id !== pathway?.id && samePathway(item, draft)); setError(duplicate ?? null); return !duplicate; };
   const save = () => {
     if (!validate()) return; const group = newGroup.trim() || draft.group; const trimmed = Object.fromEntries((Object.keys(nodeLabels) as NodeKey[]).map(key => [key, draft[key].trim()])) as Record<NodeKey, string>;
