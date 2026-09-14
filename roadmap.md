@@ -83,4 +83,4 @@
 - [x] Limit row menus to relevant status verbs
 - [x] Keep group assignment in Edit and the bulk bar only
 - [x] Align bulk verbs and status dialog titles
-- [ ] Verify row, bulk, and dialog behavior
+- [x] Verify row, bulk, and dialog behavior
