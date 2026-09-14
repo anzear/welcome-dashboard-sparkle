@@ -289,7 +289,7 @@ const MarketActivity = () => {
       });
     }
 
-    // Generate Market Off-takers (140 companies)
+    // Generate Off-takers (140 companies)
     for (let i = 0; i < 140; i++) {
       const isProject = i < 1 ? true : Math.random() > 0.3;
       let scaleValue: 'Pilot' | 'Industrial' | 'N/A' = 'Pilot';
