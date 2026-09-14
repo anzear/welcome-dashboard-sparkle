@@ -86,6 +86,12 @@ All colors MUST be HSL.
     --info: 199 89% 48%;
     --info-foreground: 0 0% 98%;
 
+    --group-violet-fill: 270 55% 54%;
+    --group-fuchsia-fill: 318 58% 50%;
+    --group-rose-fill: 350 62% 52%;
+    --group-indigo-fill: 230 52% 52%;
+    --group-bronze-fill: 32 55% 42%;
+
     /* Filter category colors */
     --product-blue: 217 91% 60%;
     --product-blue-foreground: 0 0% 98%;

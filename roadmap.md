@@ -84,3 +84,11 @@
 - [x] Keep group assignment in Edit and the bulk bar only
 - [x] Align bulk verbs and status dialog titles
 - [x] Verify row, bulk, and dialog behavior
+
+## Prompt 20 — Managed pathway groups
+- [x] Migrate pathway group strings into audited group records and group IDs
+- [x] Add GroupChip, group filtering, history, visibility, archive, and restore
+- [x] Add create and edit group workflows with unique-name validation
+- [x] Add selection and node-based bulk group assignment workflows
+- [x] Protect system groups from editing, archiving, and manual membership
+- [x] Verify group management, bulk assignment, typecheck, build, and console output

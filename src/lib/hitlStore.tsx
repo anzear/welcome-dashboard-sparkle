@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type ReactNo
 export type ReviewStatus = "accepted" | "rejected" | "review_pending";
 export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
 export type VisibilityScope = "all" | string[];
+export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
 export interface EvidenceNodes {
   feedstock: string | null;
@@ -20,7 +21,7 @@ export const NODE_LABELS = {
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
 export type IndicatorValueType = "trl" | "count" | "decimal";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "company" | "paper_match" | "patent_match" | "indicator_value";
+export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
@@ -38,8 +39,16 @@ export interface Pathway extends CommonRecord {
   product: string;
   application_market: string;
   status: PathwayStatus;
-  group: string | null;
+  group_id: string | null;
   visibility_scope: VisibilityScope;
+}
+export interface Group extends CommonRecord {
+  name: string;
+  color_token: GroupColorToken;
+  visibility_scope: VisibilityScope;
+  description: string | null;
+  is_system: boolean;
+  is_archived: boolean;
 }
 export interface Company extends CommonRecord {
   name: string;
@@ -105,7 +114,7 @@ export interface AuditEntry extends CommonRecord {
   reverts_entry_id: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
-export type HitlRecord = Pathway | Company | PaperPatentMatch | IndicatorValue;
+export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue;
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
@@ -140,18 +149,29 @@ const iso = (day: number, hour = 9) => `2026-09-${String(day).padStart(2, "0")}T
 const common = (id: string, day: number, actor: string | null = "Anže", trace: string | null = `trace-${id}-8f4a91c2`) => ({
   id, created_at: iso(Math.max(1, day - 3)), updated_at: iso(day), status_changed_at: iso(day), last_actor: actor, trace_id: trace,
 });
+export const GROUP_COLOR_TOKENS: GroupColorToken[] = ["group-violet", "group-fuchsia", "group-rose", "group-indigo", "group-bronze"];
+export const organisations = () => ["VCG.AI", "BioCampus Straubing GmbH", "Packaging Excellence Stuttgart", "Smart Cities and Communities", "Regio Augsburg Wirtschaft GmbH"];
+const seedGroups: Group[] = [
+  { ...common("grp-001", 14), name: "Advanced biofuels", color_token: "group-violet", visibility_scope: "all", description: null, is_system: false, is_archived: false },
+  { ...common("grp-002", 13), name: "Bio-based chemicals", color_token: "group-fuchsia", visibility_scope: "all", description: null, is_system: false, is_archived: false },
+  { ...common("grp-003", 12), name: "Thermochemical routes", color_token: "group-rose", visibility_scope: "all", description: null, is_system: false, is_archived: false },
+  { ...common("grp-004", 11), name: "Fibre products", color_token: "group-indigo", visibility_scope: "all", description: null, is_system: false, is_archived: false },
+  { ...common("grp-005", 10), name: "Annex IX Part A", color_token: "group-bronze", visibility_scope: "all", description: "RED II Annex IX Part A feedstock eligibility, rule-derived", is_system: true, is_archived: false },
+];
+export const groupById = (groups: Group[], groupId: string | null) => groupId ? groups.find(group => group.id === groupId) ?? null : null;
+export const pathwaysInGroup = (pathways: Pathway[], groupId: string) => pathways.filter(pathway => pathway.group_id === groupId);
 
 const seedPathways: Pathway[] = [
-  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", status: "needs_approval", group: "Advanced biofuels", visibility_scope: "all" },
-  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", status: "approved", group: "Bio-based chemicals", visibility_scope: "all" },
-  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", status: "needs_approval", group: null, visibility_scope: ["VCG.AI"] },
-  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", status: "locked", group: "Thermochemical routes", visibility_scope: "all" },
-  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", status: "approved", group: "Bio-based chemicals", visibility_scope: "all" },
-  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", status: "hidden", group: null, visibility_scope: ["VCG.AI", "BioCampus Straubing GmbH"] },
-  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", status: "needs_approval", group: "Advanced biofuels", visibility_scope: "all" },
-  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", status: "deleted", group: null, visibility_scope: "all" },
-  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", status: "approved", group: "Fibre products", visibility_scope: "all" },
-  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", status: "needs_approval", group: null, visibility_scope: ["VCG.AI"] },
+  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", status: "needs_approval", group_id: "grp-005", visibility_scope: "all" },
+  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", status: "approved", group_id: "grp-002", visibility_scope: "all" },
+  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", status: "needs_approval", group_id: null, visibility_scope: ["VCG.AI"] },
+  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", status: "locked", group_id: "grp-003", visibility_scope: "all" },
+  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", status: "approved", group_id: "grp-002", visibility_scope: "all" },
+  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", status: "hidden", group_id: "grp-005", visibility_scope: ["VCG.AI", "BioCampus Straubing GmbH"] },
+  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", status: "needs_approval", group_id: "grp-001", visibility_scope: "all" },
+  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", status: "deleted", group_id: null, visibility_scope: "all" },
+  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", status: "approved", group_id: "grp-004", visibility_scope: "all" },
+  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", status: "needs_approval", group_id: null, visibility_scope: ["VCG.AI"] },
 ];
 
 const companyRows = [
@@ -387,8 +407,7 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
 // audit-004 is already reverted by audit-005.
 const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "needs_approval", "update", { note: "Flagged for a final definition check" }),
-  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group", null, "Renewable chemicals", "update"),
-  auditSeed("audit-003", iso(6, 11), "Jon Goriup", "pathway", "pw-002", "group", "Renewable chemicals", "Bio-based chemicals", "update", { note: "Aligned with portfolio taxonomy" }),
+  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-002", "update"),
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
@@ -408,6 +427,7 @@ const seedAuditEntries: AuditEntry[] = [
 interface HitlStoreValue {
   currentUser: HitlCurrentUser;
   pathways: Pathway[];
+  groups: Group[];
   companies: Company[];
   paperPatentMatches: PaperPatentMatch[];
   paperMatches: () => PaperPatentMatch[];
@@ -425,6 +445,7 @@ const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 
 export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [pathways, setPathways] = useState(seedPathways);
+  const [groups, setGroups] = useState(seedGroups);
   const [companies, setCompanies] = useState(seedCompanies);
   const [paperPatentMatches, setPaperPatentMatches] = useState(seedPaperPatentMatches);
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
@@ -433,11 +454,11 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
-      pathway: pathways, company: companies,
+      pathway: pathways, group: groups, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
-  }, [pathways, companies, paperPatentMatches, indicatorValues]);
+  }, [pathways, groups, companies, paperPatentMatches, indicatorValues]);
 
   const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
     const now = new Date().toISOString();
@@ -465,6 +486,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       });
     };
     if (input.entity_type === "pathway") setPathways(apply);
+    if (input.entity_type === "group") setGroups(apply);
     if (input.entity_type === "company") setCompanies(apply);
     if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
@@ -486,8 +508,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const record = getRecord(target.entity_type, target.entity_id);
     if (!record) return null;
     if (target.operation === "create" || target.operation === "link_add") {
-      const status = target.entity_type === "pathway" ? "deleted" : "rejected";
-      return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field: "status", prior_value: "status" in record ? record.status : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
+      const field = target.entity_type === "group" ? "is_archived" : "status";
+      const status = target.entity_type === "pathway" ? "deleted" : target.entity_type === "group" ? true : "rejected";
+      return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: field in record ? record[field as keyof HitlRecord] : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
     }
     const field = target.operation === "link_remove" ? "status" : target.field;
     if (!field) return null;
@@ -498,9 +521,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const paperMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "paper"), [paperPatentMatches]);
   const patentMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "patent"), [paperPatentMatches]);
   const value = useMemo<HitlStoreValue>(() => ({
-    currentUser, pathways, companies, paperPatentMatches, indicatorValues, auditEntries,
+    currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
     paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
-  }), [currentUser, pathways, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
+  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 
