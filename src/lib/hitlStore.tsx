@@ -35,6 +35,10 @@ export const matchToPathwayPosition: Record<MatchNodePosition, keyof EvidenceNod
   feedstock: "feedstock", process: "process_technology", product: "product", application: "application_market",
 };
 export const emptyMatchNodes = (): MatchNodes => ({ feedstock: null, process: null, product: null, application: null });
+export type PathwayNodePosition = keyof EvidenceNodes;
+export const pathwayNodePositions: PathwayNodePosition[] = ["feedstock", "process_technology", "product", "application_market"];
+const normalizedNode = (value: string | null) => value?.trim().toLocaleLowerCase() ?? null;
+export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
 export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
   if (role === "feedstock_supplier") return [];
   if (role === "product_manufacturer") return ["feedstock", "process_technology"];
@@ -258,10 +262,6 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
   };
 });
 
-export type PathwayNodePosition = keyof EvidenceNodes;
-export const pathwayNodePositions: PathwayNodePosition[] = ["feedstock", "process_technology", "product", "application_market"];
-const normalizedNode = (value: string | null) => value?.trim().toLocaleLowerCase() ?? null;
-export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
 export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
   const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
   pathways.filter(pathway => pathway.status !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {

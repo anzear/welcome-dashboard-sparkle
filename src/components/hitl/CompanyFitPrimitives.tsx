@@ -33,7 +33,13 @@ export function SecondaryNodes({ company, compact = false }: { company: Pick<Com
   const nodes = { feedstock: null, process_technology: null, product: null, application_market: null } as Company["secondary_nodes"]; positions.forEach(position => { nodes[position] = company.secondary_nodes[position]; });
   const hasAny = Object.values(nodes).some(Boolean);
   if (!hasAny) return <span className="text-[10px] text-muted-foreground">No secondary data</span>;
-  return <div className="flex flex-wrap items-center gap-1"><span className="text-[10px] text-muted-foreground">Also known:</span><NodeChips nodes={nodes} compact={compact} /></div>;
+  const matchNodes = {
+    feedstock: nodes.feedstock,
+    process: nodes.process_technology,
+    product: nodes.product,
+    application: nodes.application_market,
+  };
+  return <div className="flex flex-wrap items-center gap-1"><span className="text-[10px] text-muted-foreground">Also known:</span><NodeChips nodes={matchNodes} compact={compact} /></div>;
 }
 
 export function CompanyDerivedPathwayList({ company }: { company: Company }) {

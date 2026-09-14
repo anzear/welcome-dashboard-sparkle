@@ -115,8 +115,8 @@
 
 
 ## Prompt 24 — Standalone pathway visibility
-- [ ] Add shared single and bulk visibility dialog with Replace, Add, and Remove modes
-- [ ] Add row, selection, by-node, and edit-pathway visibility entry points
-- [ ] Decouple status changes from visibility and link the independent action
-- [ ] Add interactive Visibility column and toolbar filter
-- [ ] Verify audited writes, merge behavior, filtering, and status independence
+- [x] Add shared single and bulk visibility dialog with Replace, Add, and Remove modes
+- [x] Add row, selection, by-node, and edit-pathway visibility entry points
+- [x] Decouple status changes from visibility and link the independent action
+- [x] Add interactive Visibility column and toolbar filter
+- [x] Verify audited writes, merge behavior, filtering, and status independence
