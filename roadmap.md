@@ -67,7 +67,7 @@
 
 
 ## Prompt 15 — Rename pathway node labels
-- [ ] Centralise the four node labels in `NODE_LABELS`
-- [ ] Replace legacy labels across Data Review and pathway views
-- [ ] Update Excel template headers while accepting legacy headers
-- [ ] Verify audit/history/URLs and both Excel header formats
+- [x] Centralise the four node labels in `NODE_LABELS`
+- [x] Replace legacy labels across Data Review and pathway views
+- [x] Update Excel template headers while accepting legacy headers
+- [x] Verify audit/history/URLs and both Excel header formats
