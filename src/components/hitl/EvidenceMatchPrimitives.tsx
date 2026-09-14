@@ -13,12 +13,12 @@ export const evidenceNodeLabels = NODE_LABELS;
 export const matchedNodeKeys = (nodes: EvidenceNodes) => evidenceNodeKeys.filter(key => nodes[key] !== null && nodes[key]?.trim() !== "");
 
 function NodeChip({ position, value }: { position: PathwayNodeKey; value: string }) {
-  return <Badge variant="secondary" className="h-auto max-w-full whitespace-normal px-1.5 py-0.5 text-left text-[9px] font-normal"><span className="text-muted-foreground">{evidenceNodeLabels[position]}:</span>&nbsp;{value}</Badge>;
+  return <Badge variant="secondary" className="inline-flex h-6 max-w-none items-center gap-1 whitespace-nowrap px-2 text-left text-xs font-normal"><span className="text-muted-foreground">{evidenceNodeLabels[position]}:</span>{value}</Badge>;
 }
 
 export function NodeChips({ nodes, compact = false }: { nodes: EvidenceNodes; compact?: boolean }) {
   const entries = matchedNodeKeys(nodes).map(key => ({ key, value: nodes[key] as string }));
-  return <div className="flex max-w-full flex-wrap gap-1">{entries.slice(0, compact ? 2 : entries.length).map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}{compact && entries.length > 2 && <Badge variant="outline" className="h-5 text-[9px] font-normal">+{entries.length - 2}</Badge>}</div>;
+  return <div className="flex max-w-full flex-wrap gap-1">{entries.slice(0, compact ? 2 : entries.length).map(entry => <NodeChip key={entry.key} position={entry.key} value={entry.value} />)}{compact && entries.length > 2 && <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal">+{entries.length - 2}</Badge>}</div>;
 }
 
 export function NodeValueChips({ values, compact = false, onEdit }: { values: string[]; compact?: boolean; onEdit?: (value: string) => void }) {
@@ -30,12 +30,12 @@ export function NodeValueChips({ values, compact = false, onEdit }: { values: st
     return evidenceNodeKeys.indexOf(aMeta?.mostCommonPosition ?? "feedstock") - evidenceNodeKeys.indexOf(bMeta?.mostCommonPosition ?? "feedstock") || a.localeCompare(b);
   });
   const visible = compact ? ordered.slice(0, 2) : ordered; const hidden = ordered.slice(2);
-  const chip = (value: string) => { const meta = metadata.find(item => item.value.toLocaleLowerCase() === value.trim().toLocaleLowerCase()); return <Tooltip key={value}><TooltipTrigger asChild><span><Badge variant="secondary" className="h-auto max-w-full whitespace-normal px-1.5 py-0.5 text-left text-[9px] font-normal">{value}{onEdit && <Button type="button" variant="ghost" size="icon" className="ml-1 h-4 w-4" aria-label={`Edit ${value}`} onClick={() => onEdit(value)}>×</Button>}</Badge></span></TooltipTrigger><TooltipContent className="max-w-xs text-[10px]">{meta ? meta.positions.map(item => <p key={item.position}>Appears as {evidenceNodeLabels[item.position]} in {item.pathwayCount} {item.pathwayCount === 1 ? "Pathway" : "Pathways"}</p>) : <p>New node · not currently used in a Pathway</p>}</TooltipContent></Tooltip>; };
+  const chip = (value: string) => { const meta = metadata.find(item => item.value.toLocaleLowerCase() === value.trim().toLocaleLowerCase()); return <Tooltip key={value}><TooltipTrigger asChild><span><Badge variant="secondary" className="inline-flex h-6 max-w-none items-center gap-1 whitespace-nowrap px-2 text-left text-xs font-normal">{value}{onEdit && <Button type="button" variant="ghost" size="icon" className="ml-1 h-4 w-4" aria-label={`Edit ${value}`} onClick={() => onEdit(value)}>×</Button>}</Badge></span></TooltipTrigger><TooltipContent className="max-w-xs text-[10px]">{meta ? meta.positions.map(item => <p key={item.position}>Appears as {evidenceNodeLabels[item.position]} in {item.pathwayCount} {item.pathwayCount === 1 ? "Pathway" : "Pathways"}</p>) : <p>New node · not currently used in a Pathway</p>}</TooltipContent></Tooltip>; };
   return <div className="flex max-w-full flex-wrap gap-1">{visible.map(chip)}{compact && hidden.length > 0 && <Popover open={open} onOpenChange={setOpen}><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-5 px-1.5 text-[9px]" onMouseEnter={() => setOpen(true)}>+{hidden.length}</Button></PopoverTrigger><PopoverContent className="w-80" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}><div className="flex flex-wrap gap-1">{hidden.map(chip)}</div></PopoverContent></Popover>}</div>;
 }
 
 export function PathwayScopeChips({ scope }: { scope: PathwayScope }) {
-  return <span className="inline-flex flex-wrap gap-1">{scope.production && <Badge variant="outline" className="h-5 gap-1 whitespace-nowrap border-success/40 text-[9px] font-normal text-success"><Factory className="h-3 w-3" />Production</Badge>}{scope.application && <Badge variant="outline" className="h-5 gap-1 whitespace-nowrap border-primary/40 text-[9px] font-normal text-primary"><Target className="h-3 w-3" />Application</Badge>}</span>;
+  return <span className="inline-flex flex-wrap gap-1">{scope.production && <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap border-success/40 px-2 text-xs font-normal text-success"><Factory className="h-3 w-3 shrink-0" />Production</Badge>}{scope.application && <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap border-primary/40 px-2 text-xs font-normal text-primary"><Target className="h-3 w-3 shrink-0" />Application</Badge>}</span>;
 }
 
 export function ScopeSummary({ match }: { match: Pick<PaperPatentMatch, "matched_nodes"> }) {
