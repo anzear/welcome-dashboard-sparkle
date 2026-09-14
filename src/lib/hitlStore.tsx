@@ -11,6 +11,12 @@ export interface EvidenceNodes {
   product: string | null;
   application_market: string | null;
 }
+export const NODE_LABELS = {
+  feedstock: "Feedstock",
+  process_technology: "Process",
+  product: "Product",
+  application_market: "Application",
+} as const satisfies Record<keyof EvidenceNodes, string>;
 export interface MatchNodes {
   feedstock: string | null;
   process: string | null;
@@ -29,12 +35,6 @@ export const matchToPathwayPosition: Record<MatchNodePosition, keyof EvidenceNod
   feedstock: "feedstock", process: "process_technology", product: "product", application: "application_market",
 };
 export const emptyMatchNodes = (): MatchNodes => ({ feedstock: null, process: null, product: null, application: null });
-export const NODE_LABELS = {
-  feedstock: "Feedstock",
-  process_technology: "Process",
-  product: "Product",
-  application_market: "Application",
-} as const satisfies Record<keyof EvidenceNodes, string>;
 export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
   if (role === "feedstock_supplier") return [];
   if (role === "product_manufacturer") return ["feedstock", "process_technology"];
