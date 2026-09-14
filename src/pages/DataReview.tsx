@@ -9,6 +9,7 @@ import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { PapersPatentsSection } from "@/components/hitl/PapersPatentsSection";
+import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
 import { useHitlStore } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -79,11 +80,11 @@ function DataReviewContent() {
 
         <Card className="overflow-hidden rounded-xl border-border/40 shadow-sm">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm">{active.title}</CardTitle>
+            <div className="flex items-center justify-between gap-3"><CardTitle className="text-sm">{active.title}</CardTitle>{activeSection === "indicators" && <span className="font-mono text-[10px] text-muted-foreground">staleness window: 180 d</span>}</div>
             <p className="mt-0.5 text-xs text-muted-foreground">{active.description}</p>
           </CardHeader>
-          <CardContent className={cn((activeSection === "pathways" || activeSection === "companies" || activeSection === "papers-patents" || activeSection === "audit-log") && "p-0")}>
-            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "papers-patents" ? <PapersPatentsSection /> : activeSection === "audit-log" ? <AuditLogSection /> : <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">Built in a later step</div>}
+          <CardContent className={cn((activeSection === "pathways" || activeSection === "companies" || activeSection === "papers-patents" || activeSection === "indicators" || activeSection === "audit-log") && "p-0")}> 
+            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "papers-patents" ? <PapersPatentsSection /> : activeSection === "indicators" ? <IndicatorsSection /> : <AuditLogSection />}
           </CardContent>
         </Card>
         <RecordHistorySheet />
