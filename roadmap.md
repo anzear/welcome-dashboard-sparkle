@@ -40,4 +40,4 @@
 - [x] Update Companies match table and profile sheet
 - [x] Update Papers, Patents, Indicators, Audit, History, Trace
 - [x] Update pathway selectors and consequences comparison
-- [ ] Expand node-value search and verify UI/build
+- [x] Expand node-value search and verify UI/build
