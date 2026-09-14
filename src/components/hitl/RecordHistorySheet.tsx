@@ -62,13 +62,13 @@ export function RecordHistoryList({ entityType, entityId }: { entityType: AuditE
   </>;
 }
 
-const labels: Record<AuditEntityType, string> = { pathway: "Pathway", company: "Company", company_match: "Company match", paper_patent_match: "Paper & patent match", indicator_value: "Indicator value" };
+const labels: Record<AuditEntityType, string> = { pathway: "Pathway", company: "Company", company_match: "Company match", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value" };
 function summary(record: HitlRecord | null, type: AuditEntityType) {
   if (!record) return "Record unavailable";
   if (type === "pathway" && "feedstock" in record) return [record.feedstock, record.process_technology, record.product, record.application_market].join(" → ");
   if (type === "company" && "name" in record) return record.name;
   if (type === "company_match" && "company_name" in record) return `${record.company_name} · ${record.pathway_id}`;
-  if (type === "paper_patent_match" && "title" in record) return `${record.title} · ${record.pathway_id}`;
+  if ((type === "paper_match" || type === "patent_match") && "title" in record) return `${record.title} · ${record.pathway_id}`;
   if (type === "indicator_value" && "indicator" in record) return `${record.indicator} · ${record.pathway_id}`;
   return record.id;
 }
