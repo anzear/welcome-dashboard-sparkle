@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, OperationChip, TraceId, ValueDiff } from "./ReviewPrimitives";
+import { PathwayRef } from "./PathwayRef";
 import { useHitlStore, type AuditEntityType, type AuditEntry, type HitlRecord } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -77,13 +78,14 @@ export function RecordHistorySheet() {
   const { target, closeHistory } = useHistorySheet();
   const store = useHitlStore();
   const record = target ? store.getRecord(target.entity_type, target.entity_id) : null;
+  const relatedPathwayId = record && "pathway_id" in record ? record.pathway_id : target?.entity_type === "pathway" ? target.entity_id : null;
   return (
     <Sheet open={target !== null} onOpenChange={open => { if (!open) closeHistory(); }}>
       <SheetContent className="flex w-[min(94vw,680px)] flex-col gap-0 p-0 sm:max-w-[680px]">
         {target && <>
           <SheetHeader className="border-b px-5 py-4 pr-12">
             <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code></div>
-            <SheetDescription className="truncate text-xs">{summary(record, target.entity_type)}</SheetDescription>
+            <SheetDescription className="text-xs">{target.entity_type === "pathway" ? <PathwayRef pathwayId={target.entity_id} variant="card" /> : <><span className="block truncate">{summary(record, target.entity_type)}</span>{relatedPathwayId && <span className="mt-2 block"><PathwayRef pathwayId={relatedPathwayId} variant="inline" /></span>}</>}</SheetDescription>
             {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span><TraceId value={record.trace_id} /></div>}
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 py-4">
