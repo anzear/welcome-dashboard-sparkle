@@ -7,3 +7,4 @@ export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } fro
 export { PathwayRef, pathwaySearchText, type PathwayNodeKey } from "./PathwayRef";
 export { DerivedPathwayList, DerivedPathwaysForRecord, NodeChips, NodeValueChips, PathwayScopeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 export { CompanyDerivedPathwayList, CompanyRoleChip, DerivedPathwaysForCompany, FitChip, RoleNodeLine, SecondaryNodes } from "./CompanyFitPrimitives";
+export { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
