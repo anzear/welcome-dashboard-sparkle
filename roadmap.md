@@ -48,3 +48,11 @@
 - [x] Replace reassignment and add flows with node selection
 - [x] Update audit, history and trace summaries
 - [x] Verify interactions and build
+
+## Prompt 13 — Companies node assignment and fit
+- [ ] Migrate company records, audit entities and derived-fit helpers
+- [ ] Add shared company role, secondary-node, fit and derived-Pathway displays
+- [ ] Rebuild the Companies table, decisions and company sheet
+- [ ] Add audited node editing and company creation flows
+- [ ] Update queues, audit/history/trace summaries and Pathway consequences
+- [ ] Remove CompanyMatch UI/store references and verify interactions
