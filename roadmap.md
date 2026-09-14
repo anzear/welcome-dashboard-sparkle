@@ -120,3 +120,10 @@
 - [x] Decouple status changes from visibility and link the independent action
 - [x] Add interactive Visibility column and toolbar filter
 - [x] Verify audited writes, merge behavior, filtering, and status independence
+
+## Prompt 26 — Assign evidence nodes before fetching
+- [x] Reorder bulk papers and patents to Identifiers, Nodes, Fetch, Result
+- [x] Validate malformed, duplicate, and existing identifiers before node assignment
+- [x] Preserve assigned nodes and fetched metadata across backward navigation
+- [x] Exclude unresolved rows from creation and include their nodes in CSV export
+- [x] Verify paper and patent flows, labels, outcomes, build, and console output
