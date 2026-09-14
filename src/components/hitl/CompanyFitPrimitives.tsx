@@ -30,7 +30,7 @@ export function RoleNodeLine({ company, compact = false }: { company: Pick<Compa
 export function SecondaryNodes({ company, compact = false }: { company: Pick<Company, "role" | "secondary_nodes">; compact?: boolean }) {
   const positions = allowedSecondaryPositions(company.role);
   if (!positions.length) return <Tooltip><TooltipTrigger asChild><span className="text-[10px] text-muted-foreground">—</span></TooltipTrigger><TooltipContent>Feedstock suppliers have no upstream nodes</TooltipContent></Tooltip>;
-  const nodes = Object.fromEntries(positions.map(position => [position, company.secondary_nodes[position]]));
+  const nodes = { feedstock: null, process_technology: null, product: null, application_market: null } as Company["secondary_nodes"]; positions.forEach(position => { nodes[position] = company.secondary_nodes[position]; });
   const hasAny = Object.values(nodes).some(Boolean);
   if (!hasAny) return <span className="text-[10px] text-muted-foreground">No secondary data</span>;
   return <div className="flex flex-wrap items-center gap-1"><span className="text-[10px] text-muted-foreground">Also known:</span><NodeChips nodes={nodes} compact={compact} /></div>;
