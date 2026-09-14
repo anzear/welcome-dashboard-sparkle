@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { OperationChip, TraceId, ValueDiff, useHistorySheet } from "@/components/hitl";
+import { NodeFilterEmpty, OperationChip, TraceId, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import { useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +21,7 @@ const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')
 export function AuditLogSection() {
   const store = useHitlStore();
   const { openHistory } = useHistorySheet();
+  const nodeFilter = useNodeFilter();
   const [search, setSearch] = useState("");
   const [entity, setEntity] = useState("all");
   const [operation, setOperation] = useState("all");
@@ -30,11 +31,19 @@ export function AuditLogSection() {
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
   const actors = useMemo(() => [...new Set(store.auditEntries.map(item => item.actor))].sort(), [store.auditEntries]);
+  const matchesNodeFilter = (item: (typeof store.auditEntries)[number]) => {
+    if (!nodeFilter.isActive) return true;
+    if (item.entity_type === "pathway") return nodeFilter.matchingPathwayIds.has(item.entity_id);
+    if (item.entity_type === "company") return store.companyMatches.some(match => match.company_id === item.entity_id && nodeFilter.matchingPathwayIds.has(match.pathway_id));
+    if (item.entity_type === "company_match") return nodeFilter.matchingPathwayIds.has(store.companyMatches.find(match => match.id === item.entity_id)?.pathway_id ?? "");
+    if (item.entity_type === "paper_match" || item.entity_type === "patent_match") return nodeFilter.matchingPathwayIds.has(store.paperPatentMatches.find(match => match.id === item.entity_id)?.pathway_id ?? "");
+    return nodeFilter.matchingPathwayIds.has(store.indicatorValues.find(value => value.id === item.entity_id)?.pathway_id ?? "");
+  };
   const filtered = useMemo(() => store.auditEntries.filter(item => {
     const haystack = [item.entity_id, item.actor, item.field, item.note, item.trace_id].join(" ").toLowerCase();
     const time = new Date(item.timestamp).getTime();
-    return (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (trace === "all" || (trace === "has" ? item.trace_id !== null : item.trace_id === null)) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
-  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, search, entity, operation, actor, trace, from, to]);
+    return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (trace === "all" || (trace === "has" ? item.trace_id !== null : item.trace_id === null)) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companyMatches, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, trace, from, to, nodeFilter.feedstock, nodeFilter.product]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
   useEffect(() => setPage(1), [search, entity, operation, actor, trace, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
@@ -67,7 +76,7 @@ export function AuditLogSection() {
     </div>
     <div className="overflow-x-auto"><Table className="min-w-[1160px]"><TableHeader><TableRow><TableHead>Timestamp</TableHead><TableHead>Actor</TableHead><TableHead>Entity</TableHead><TableHead>Operation</TableHead><TableHead>Field</TableHead><TableHead>Change</TableHead><TableHead>Note</TableHead><TableHead>Trace</TableHead></TableRow></TableHeader><TableBody>
       {rows.map(item => <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", store.revertedBy(item) && "border-l-2 border-l-muted-foreground")}><TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell><TableCell>{item.actor}</TableCell><TableCell><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[9px] text-muted-foreground">{entityTypes.find(type => type.value === item.entity_type)?.label}</span><Button variant="link" className="h-auto p-0 font-mono text-[10px]" onClick={() => openHistory(item.entity_type, item.entity_id)}>{item.entity_id}</Button></div></TableCell><TableCell><OperationChip operation={item.operation} /></TableCell><TableCell className="font-mono">{item.field ?? "record"}</TableCell><TableCell><ValueDiff prior_value={item.prior_value} new_value={item.new_value} /></TableCell><TableCell className="max-w-48 truncate italic text-muted-foreground">{item.note ?? "—"}</TableCell><TableCell><TraceId value={item.trace_id} /></TableCell></TableRow>)}
-      {rows.length === 0 && <TableRow><TableCell colSpan={8} className="h-32 text-center text-xs text-muted-foreground">No audit entries match these filters.</TableCell></TableRow>}
+      {rows.length === 0 && <TableRow><TableCell colSpan={8} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="audit entries" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No audit entries match these filters.</div>}</TableCell></TableRow>}
     </TableBody></Table></div>
     <div className="flex items-center justify-between border-t px-4 py-3"><span className="text-[10px] text-muted-foreground">Page {page} of {pages}</span><div className="flex gap-1"><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</Button><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</Button></div></div>
     {import.meta.env.DEV && <div className="m-4 flex items-center justify-between rounded-md border border-dashed p-3"><span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">DEV — simulate pipeline change</span><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={simulate}>Update random indicator value</Button></div>}
