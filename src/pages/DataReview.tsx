@@ -1,10 +1,12 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Archive, Building2, Clock, FileSearch, Gauge, Link2, ShieldCheck } from "lucide-react";
+import { Building2, FileSearch, Gauge, Link2, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ActorStamp, PathwayStatusChip, ReviewStatusChip, TraceId, ValueCell } from "@/components/hitl";
+import { HistorySheetProvider, RecordHistorySheet } from "@/components/hitl";
+import { AuditLogSection } from "@/components/hitl/AuditLogSection";
+import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { useHitlStore } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +20,7 @@ const sections: { value: Section; label: string; title: string; description: str
 ];
 const validSections = new Set(sections.map(section => section.value));
 
-export default function DataReview() {
+function DataReviewContent() {
   const [searchParams, setSearchParams] = useSearchParams();
   const store = useHitlStore();
   const requested = searchParams.get("section") as Section | null;
@@ -78,23 +80,16 @@ export default function DataReview() {
             <CardTitle className="text-sm">{active.title}</CardTitle>
             <p className="mt-0.5 text-xs text-muted-foreground">{active.description}</p>
           </CardHeader>
-          <CardContent>
-            <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">Built in a later step</div>
-            {import.meta.env.DEV && activeSection === "pathways" && (
-              <div className="mt-4 border-t border-border pt-4" data-testid="hitl-primitives-preview">
-                <div className="mb-2 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground"><Archive className="h-3 w-3" />Primitive preview</div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <ReviewStatusChip status="accepted" /><ReviewStatusChip status="rejected" /><ReviewStatusChip status="review_pending" />
-                  <PathwayStatusChip status="approved" /><PathwayStatusChip status="needs_approval" /><PathwayStatusChip status="locked" /><PathwayStatusChip status="hidden" /><PathwayStatusChip status="deleted" />
-                  <span className="mx-1 h-4 w-px bg-border" />
-                  <ValueCell value={null} /><ValueCell value={0} /><ValueCell value={42.7} unit="%" />
-                  <TraceId value="trace-preview-8f4a91c2" /><ActorStamp name="Anže" timestamp="2026-09-14T07:50:00.000Z" />
-                </div>
-              </div>
-            )}
+          <CardContent className={cn((activeSection === "pathways" || activeSection === "audit-log") && "p-0")}>
+            {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "audit-log" ? <AuditLogSection /> : <div className="flex min-h-44 items-center justify-center rounded-lg border border-dashed border-border bg-muted/20 text-xs text-muted-foreground">Built in a later step</div>}
           </CardContent>
         </Card>
+        <RecordHistorySheet />
       </div>
     </div>
   );
+}
+
+export default function DataReview() {
+  return <HistorySheetProvider><DataReviewContent /></HistorySheetProvider>;
 }

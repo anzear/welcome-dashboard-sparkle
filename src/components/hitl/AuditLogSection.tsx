@@ -1,0 +1,77 @@
+import { useEffect, useMemo, useState } from "react";
+import { Download, Search } from "lucide-react";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { OperationChip, TraceId, ValueDiff, useHistorySheet } from "@/components/hitl";
+import { useHitlStore, type AuditEntityType, type AuditOperation } from "@/lib/hitlStore";
+import { cn } from "@/lib/utils";
+
+const entityTypes: { value: AuditEntityType; label: string }[] = [
+  { value: "pathway", label: "Pathway" }, { value: "company", label: "Company" },
+  { value: "company_match", label: "Company match" }, { value: "paper_patent_match", label: "Paper & patent match" },
+  { value: "indicator_value", label: "Indicator value" },
+];
+const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "accept", "reject", "revert"];
+const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+
+export function AuditLogSection() {
+  const store = useHitlStore();
+  const { openHistory } = useHistorySheet();
+  const [search, setSearch] = useState("");
+  const [entity, setEntity] = useState("all");
+  const [operation, setOperation] = useState("all");
+  const [actor, setActor] = useState("all");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [page, setPage] = useState(1);
+  const actors = useMemo(() => [...new Set(store.auditEntries.map(item => item.actor))].sort(), [store.auditEntries]);
+  const filtered = useMemo(() => store.auditEntries.filter(item => {
+    const haystack = [item.entity_id, item.actor, item.field, item.note, item.trace_id].join(" ").toLowerCase();
+    const time = new Date(item.timestamp).getTime();
+    return (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, search, entity, operation, actor, from, to]);
+  const pages = Math.max(1, Math.ceil(filtered.length / 25));
+  useEffect(() => setPage(1), [search, entity, operation, actor, from, to]);
+  useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
+  const rows = filtered.slice((page - 1) * 25, page * 25);
+  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setFrom(""); setTo(""); };
+  const exportCsv = () => {
+    const header = ["Timestamp", "Actor", "Entity type", "Entity ID", "Operation", "Field", "Prior value", "New value", "Note", "Trace ID"];
+    const body = filtered.map(item => [item.timestamp, item.actor, item.entity_type, item.entity_id, item.operation, item.field, JSON.stringify(item.prior_value), JSON.stringify(item.new_value), item.note, item.trace_id]);
+    const blob = new Blob([[header, ...body].map(row => row.map(quoteCsv).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = "data-review-audit-log.csv"; link.click(); URL.revokeObjectURL(url);
+  };
+  const simulate = () => {
+    const target = store.indicatorValues[Math.floor(Math.random() * store.indicatorValues.length)];
+    if (!target) return;
+    const value = Math.random() < .2 ? null : Number((Math.random() * 100).toFixed(1));
+    const entry = store.recordChange({ entity_type: "indicator_value", entity_id: target.id, field: "value", prior_value: target.value, new_value: value, operation: "update", trace_id: `tr_${Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}` });
+    toast.success(`Pipeline change written — ${entry.id}`);
+  };
+  return <div>
+    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+      <div className="relative min-w-56 flex-1"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><Input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search audit entries…" className="h-8 pl-8 text-xs" /></div>
+      <Filter value={entity} onChange={setEntity} label="Entity type"><SelectItem value="all">All entities</SelectItem>{entityTypes.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</Filter>
+      <Filter value={operation} onChange={setOperation} label="Operation"><SelectItem value="all">All operations</SelectItem>{operations.map(item => <SelectItem key={item} value={item}>{item.replace("_", " ")}</SelectItem>)}</Filter>
+      <Filter value={actor} onChange={setActor} label="Actor"><SelectItem value="all">All actors</SelectItem>{actors.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</Filter>
+      <Input aria-label="From date" type="date" value={from} onChange={event => setFrom(event.target.value)} className="h-8 w-36 text-[10px]" />
+      <Input aria-label="To date" type="date" value={to} onChange={event => setTo(event.target.value)} className="h-8 w-36 text-[10px]" />
+      <Button variant="link" className="h-8 px-1 text-[10px]" onClick={reset}>Reset</Button>
+      <span className="ml-auto text-[10px] text-muted-foreground">{filtered.length} entries</span><Button variant="outline" size="sm" className="h-8 text-[10px]" onClick={exportCsv}><Download className="mr-1 h-3 w-3" />Export CSV</Button>
+    </div>
+    <div className="overflow-x-auto"><Table className="min-w-[1160px]"><TableHeader><TableRow><TableHead>Timestamp</TableHead><TableHead>Actor</TableHead><TableHead>Entity</TableHead><TableHead>Operation</TableHead><TableHead>Field</TableHead><TableHead>Change</TableHead><TableHead>Note</TableHead><TableHead>Trace</TableHead></TableRow></TableHeader><TableBody>
+      {rows.map(item => <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", store.revertedBy(item) && "border-l-2 border-l-muted-foreground")}><TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell><TableCell>{item.actor}</TableCell><TableCell><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[9px] text-muted-foreground">{entityTypes.find(type => type.value === item.entity_type)?.label}</span><Button variant="link" className="h-auto p-0 font-mono text-[10px]" onClick={() => openHistory(item.entity_type, item.entity_id)}>{item.entity_id}</Button></div></TableCell><TableCell><OperationChip operation={item.operation} /></TableCell><TableCell className="font-mono">{item.field ?? "record"}</TableCell><TableCell><ValueDiff prior_value={item.prior_value} new_value={item.new_value} /></TableCell><TableCell className="max-w-48 truncate italic text-muted-foreground">{item.note ?? "—"}</TableCell><TableCell><TraceId value={item.trace_id} /></TableCell></TableRow>)}
+      {rows.length === 0 && <TableRow><TableCell colSpan={8} className="h-32 text-center text-xs text-muted-foreground">No audit entries match these filters.</TableCell></TableRow>}
+    </TableBody></Table></div>
+    <div className="flex items-center justify-between border-t px-4 py-3"><span className="text-[10px] text-muted-foreground">Page {page} of {pages}</span><div className="flex gap-1"><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</Button><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</Button></div></div>
+    {import.meta.env.DEV && <div className="m-4 flex items-center justify-between rounded-md border border-dashed p-3"><span className="text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">DEV — simulate pipeline change</span><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={simulate}>Update random indicator value</Button></div>}
+  </div>;
+}
+
+function Filter({ value, onChange, label, children }: { value: string; onChange: (value: string) => void; label: string; children: React.ReactNode }) {
+  return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label} className="h-8 w-40 text-[10px]"><SelectValue /></SelectTrigger><SelectContent>{children}</SelectContent></Select>;
+}

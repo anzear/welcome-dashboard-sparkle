@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type ReviewStatus = "accepted" | "rejected" | "review_pending";
 export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
@@ -74,6 +74,18 @@ export interface AuditEntry extends CommonRecord {
   reverts_entry_id: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
+export type HitlRecord = Pathway | Company | CompanyMatch | PaperPatentMatch | IndicatorValue;
+export interface RecordChangeInput {
+  entity_type: AuditEntityType;
+  entity_id: string;
+  field: string | null;
+  prior_value: unknown | null;
+  new_value: unknown | null;
+  operation: AuditOperation;
+  note?: string | null;
+  trace_id?: string | null;
+  reverts_entry_id?: string | null;
+}
 
 const iso = (day: number, hour = 9) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:00:00.000Z`;
 const common = (id: string, day: number, actor: string | null = "Anže", trace: string | null = `trace-${id}-8f4a91c2`) => ({
@@ -126,11 +138,29 @@ const seedIndicatorValues: IndicatorValue[] = Array.from({ length: 20 }, (_, ind
   return { ...common(`iv-${String(index + 1).padStart(3, "0")}`, 14 - (index % 9)), pathway_id: seedPathways[index % seedPathways.length].id, indicator, value: deliberateValue, unit: units[indicator], value_date: index === 17 ? null : iso(1 + (index % 12)), status: indicatorStatuses[index], corrected_value: index === 8 ? 61.4 : null, correction_note: index === 8 ? "Updated against source table" : null };
 });
 
-const operations: AuditOperation[] = ["create", "update", "accept", "reject", "link_add", "link_remove", "deactivate", "revert"];
-const entityTypes: AuditEntityType[] = ["pathway", "company", "company_match", "paper_patent_match", "indicator_value"];
-const seedAuditEntries: AuditEntry[] = Array.from({ length: 15 }, (_, index) => ({
-  ...common(`audit-${String(index + 1).padStart(3, "0")}`, 14 - (index % 10), index % 2 === 0 ? "Jon Goriup" : "Anže", index % 6 === 0 ? null : `trace-audit-${index + 1}-91de7c40`), timestamp: iso(14 - (index % 10), 8 + (index % 7)), actor: index % 2 === 0 ? "Jon Goriup" : "Anže", entity_type: entityTypes[index % entityTypes.length], entity_id: index % 5 === 0 ? seedPathways[index % seedPathways.length].id : `entity-${index + 1}`, field: index % 3 === 0 ? "status" : null, prior_value: index % 3 === 0 ? "review_pending" : null, new_value: index % 3 === 0 ? "accepted" : null, operation: operations[index % operations.length], note: index % 4 === 0 ? "Reviewed against primary evidence" : null, reverts_entry_id: index === 7 ? "audit-003" : null,
-}));
+const auditSeed = (id: string, timestamp: string, actor: string, entity_type: AuditEntityType, entity_id: string, field: string | null, prior_value: unknown, new_value: unknown, operation: AuditOperation, extra: Partial<AuditEntry> = {}): AuditEntry => ({
+  id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
+});
+
+// Every latest seed value mirrors its record. audit-002 is superseded by audit-003;
+// audit-004 is already reverted by audit-005.
+const seedAuditEntries: AuditEntry[] = [
+  auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "needs_approval", "update", { note: "Flagged for a final definition check" }),
+  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group", null, "Renewable chemicals", "update"),
+  auditSeed("audit-003", iso(6, 11), "Jon Goriup", "pathway", "pw-002", "group", "Renewable chemicals", "Bio-based chemicals", "update", { note: "Aligned with portfolio taxonomy" }),
+  auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 12.5, "update"),
+  auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 12.5, 0, "revert", { reverts_entry_id: "audit-004" }),
+  auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company_match", "cm-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
+  auditSeed("audit-007", iso(8, 13), "Anže", "paper_patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
+  auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
+  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
+  auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 47.3, null, "update", { note: "Source no longer reports this value" }),
+  auditSeed("audit-011", iso(10, 14), "Anže", "company_match", "cm-004", "status", "review_pending", "rejected", "reject"),
+  auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_patent_match", "pp-001", "note", null, "Check pathway specificity", "update"),
+  auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
+  auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 61.4, "update", { note: "Updated against source table" }),
+  auditSeed("audit-015", iso(14, 10), "Anže", "paper_patent_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
+];
 
 interface HitlStoreValue {
   currentUser: HitlCurrentUser;
@@ -140,12 +170,12 @@ interface HitlStoreValue {
   paperPatentMatches: PaperPatentMatch[];
   indicatorValues: IndicatorValue[];
   auditEntries: AuditEntry[];
-  updatePathway: (id: string, patch: Partial<Pathway>) => void;
-  updateCompany: (id: string, patch: Partial<Company>) => void;
-  updateCompanyMatch: (id: string, patch: Partial<CompanyMatch>) => void;
-  updatePaperPatentMatch: (id: string, patch: Partial<PaperPatentMatch>) => void;
-  updateIndicatorValue: (id: string, patch: Partial<IndicatorValue>) => void;
-  addAuditEntry: (entry: AuditEntry) => void;
+  recordChange: (input: RecordChangeInput) => AuditEntry;
+  revertEntry: (entryId: string) => AuditEntry | null;
+  getHistory: (entityType: AuditEntityType, entityId: string) => AuditEntry[];
+  isSuperseded: (entry: AuditEntry) => AuditEntry[];
+  revertedBy: (entry: AuditEntry) => AuditEntry | null;
+  getRecord: (entityType: AuditEntityType, entityId: string) => HitlRecord | null;
 }
 const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 
@@ -156,15 +186,78 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [paperPatentMatches, setPaperPatentMatches] = useState(seedPaperPatentMatches);
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
+  const currentUser: HitlCurrentUser = useMemo(() => ({ name: "Jon Goriup", role: "Super Admin" }), []);
+
+  const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
+    const collections: Record<AuditEntityType, HitlRecord[]> = {
+      pathway: pathways, company: companies, company_match: companyMatches,
+      paper_patent_match: paperPatentMatches, indicator_value: indicatorValues,
+    };
+    return collections[entityType].find(item => item.id === entityId) ?? null;
+  }, [pathways, companies, companyMatches, paperPatentMatches, indicatorValues]);
+
+  const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
+    const now = new Date().toISOString();
+    const entryId = `audit-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const entry: AuditEntry = {
+      id: entryId, created_at: now, updated_at: now, status_changed_at: now,
+      last_actor: currentUser.name, trace_id: input.trace_id ?? null,
+      timestamp: now, actor: currentUser.name, entity_type: input.entity_type,
+      entity_id: input.entity_id, field: input.field, prior_value: input.prior_value,
+      new_value: input.new_value, operation: input.operation, note: input.note ?? null,
+      reverts_entry_id: input.reverts_entry_id ?? null,
+    };
+    const apply = <T extends HitlRecord>(items: T[]): T[] => {
+      if (input.operation === "create" && input.field === null) {
+        return [...items, input.new_value as T];
+      }
+      return items.map(item => {
+        if (item.id !== input.entity_id || input.field === null) return item;
+        return {
+          ...item,
+          [input.field]: input.new_value,
+          updated_at: now,
+          last_actor: currentUser.name,
+          ...(input.field === "status" ? { status_changed_at: now } : {}),
+        };
+      });
+    };
+    if (input.entity_type === "pathway") setPathways(apply);
+    if (input.entity_type === "company") setCompanies(apply);
+    if (input.entity_type === "company_match") setCompanyMatches(apply);
+    if (input.entity_type === "paper_patent_match") setPaperPatentMatches(apply);
+    if (input.entity_type === "indicator_value") setIndicatorValues(apply);
+    setAuditEntries(items => [...items, entry]);
+    return entry;
+  }, [currentUser.name]);
+
+  const revertedBy = useCallback((entry: AuditEntry) => auditEntries.find(item => item.reverts_entry_id === entry.id) ?? null, [auditEntries]);
+  const isSuperseded = useCallback((entry: AuditEntry) => auditEntries
+    .filter(item => item.entity_type === entry.entity_type && item.entity_id === entry.entity_id && item.field === entry.field && new Date(item.timestamp).getTime() > new Date(entry.timestamp).getTime())
+    .sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp)), [auditEntries]);
+  const getHistory = useCallback((entityType: AuditEntityType, entityId: string) => auditEntries
+    .filter(item => item.entity_type === entityType && item.entity_id === entityId)
+    .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [auditEntries]);
+
+  const revertEntry = useCallback((entryId: string): AuditEntry | null => {
+    const target = auditEntries.find(item => item.id === entryId);
+    if (!target || auditEntries.some(item => item.reverts_entry_id === entryId)) return null;
+    const record = getRecord(target.entity_type, target.entity_id);
+    if (!record) return null;
+    if (target.operation === "create" || target.operation === "link_add") {
+      const status = target.entity_type === "pathway" ? "deleted" : "rejected";
+      return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field: "status", prior_value: "status" in record ? record.status : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
+    }
+    const field = target.operation === "link_remove" ? "status" : target.field;
+    if (!field) return null;
+    const currentValue = field in record ? record[field as keyof HitlRecord] : null;
+    return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: currentValue, new_value: target.prior_value, operation: "revert", reverts_entry_id: target.id, trace_id: target.trace_id, note: `Reverted entry ${target.id}` });
+  }, [auditEntries, getRecord, recordChange]);
+
   const value = useMemo<HitlStoreValue>(() => ({
-    currentUser: { name: "Jon Goriup", role: "Super Admin" }, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries,
-    updatePathway: (id, patch) => setPathways(items => items.map(item => item.id === id ? { ...item, ...patch } : item)),
-    updateCompany: (id, patch) => setCompanies(items => items.map(item => item.id === id ? { ...item, ...patch } : item)),
-    updateCompanyMatch: (id, patch) => setCompanyMatches(items => items.map(item => item.id === id ? { ...item, ...patch } : item)),
-    updatePaperPatentMatch: (id, patch) => setPaperPatentMatches(items => items.map(item => item.id === id ? { ...item, ...patch } : item)),
-    updateIndicatorValue: (id, patch) => setIndicatorValues(items => items.map(item => item.id === id ? { ...item, ...patch } : item)),
-    addAuditEntry: entry => setAuditEntries(items => [entry, ...items]),
-  }), [pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries]);
+    currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries,
+    recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
+  }), [currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 
