@@ -7,6 +7,7 @@ export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "appli
 export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
 export type AuditEntityType = "pathway" | "company" | "company_match" | "paper_patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
+export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
   id: string;
@@ -64,7 +65,20 @@ export interface IndicatorValue extends CommonRecord {
   status: ReviewStatus;
   corrected_value: number | null;
   correction_note: string | null;
+  corrected_at: string | null;
 }
+
+export const displayedValue = (indicatorValue: IndicatorValue): number | null => {
+  if (indicatorValue.corrected_value !== null) return indicatorValue.corrected_value;
+  if (indicatorValue.status === "rejected") return null;
+  return indicatorValue.value;
+};
+
+export const isStale = (indicatorValue: IndicatorValue): boolean => {
+  if (indicatorValue.corrected_at === null) return false;
+  const correctedAt = new Date(indicatorValue.corrected_at).getTime();
+  return Number.isFinite(correctedAt) && Date.now() - correctedAt > STALENESS_DAYS * 86_400_000;
+};
 export interface AuditEntry extends CommonRecord {
   timestamp: string;
   actor: string;
@@ -165,7 +179,13 @@ const indicatorStatuses: ReviewStatus[] = ["review_pending", "accepted", "review
 const seedIndicatorValues: IndicatorValue[] = Array.from({ length: 20 }, (_, index) => {
   const indicator = indicators[index % indicators.length];
   const deliberateValue = index === 2 || index === 15 ? 0 : index === 6 || index === 17 ? null : Number((18.5 + index * 4.7).toFixed(1));
-  return { ...common(`iv-${String(index + 1).padStart(3, "0")}`, 14 - (index % 9)), pathway_id: seedPathways[index % seedPathways.length].id, indicator, value: deliberateValue, unit: units[indicator], value_date: index === 17 ? null : iso(1 + (index % 12)), status: indicatorStatuses[index], corrected_value: index === 8 ? 61.4 : null, correction_note: index === 8 ? "Updated against source table" : null };
+  const correctedValues: Record<number, { value: number; note: string; at: string }> = {
+    1: { value: 24.1, note: "Corrected from verified source appendix", at: "2026-01-08T10:00:00.000Z" },
+    4: { value: 39.8, note: "Aligned with published regional dataset", at: "2026-02-14T11:30:00.000Z" },
+    8: { value: 61.4, note: "Updated against source table", at: "2026-09-13T09:00:00.000Z" },
+  };
+  const correction = correctedValues[index];
+  return { ...common(`iv-${String(index + 1).padStart(3, "0")}`, 14 - (index % 9)), pathway_id: seedPathways[index % seedPathways.length].id, indicator, value: deliberateValue, unit: units[indicator], value_date: index === 17 ? null : iso(1 + (index % 12)), status: indicatorStatuses[index], corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null };
 });
 
 const auditSeed = (id: string, timestamp: string, actor: string, entity_type: AuditEntityType, entity_id: string, field: string | null, prior_value: unknown, new_value: unknown, operation: AuditOperation, extra: Partial<AuditEntry> = {}): AuditEntry => ({
@@ -190,6 +210,8 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 61.4, "update", { note: "Updated against source table" }),
   auditSeed("audit-015", iso(14, 10), "Anže", "paper_patent_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
+  auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 24.1, "update", { note: "Corrected from verified source appendix" }),
+  auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 39.8, "update", { note: "Aligned with published regional dataset" }),
 ];
 
 interface HitlStoreValue {

@@ -1,0 +1,114 @@
+import { useEffect, useMemo, useState } from "react";
+import { format, formatDistanceStrict } from "date-fns";
+import { Check, ChevronDown, ChevronRight, History, MoreHorizontal, Pencil, Search, X } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ReviewStatusChip, TraceId, ValueCell, useHistorySheet } from "@/components/hitl";
+import { displayedValue, isStale, STALENESS_DAYS, useHitlStore, type IndicatorName, type IndicatorValue, type Pathway, type ReviewStatus } from "@/lib/hitlStore";
+import { cn } from "@/lib/utils";
+
+type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
+type DecisionTarget = { ids: string[]; status: DecidedStatus } | null;
+type ViewMode = "flat" | "pathway";
+
+const INDICATORS: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
+const shortPath = (pathway: Pathway) => `${pathway.id} · ${pathway.feedstock} → ${pathway.product}`;
+const fullPath = (pathway: Pathway) => `${pathway.feedstock} → ${pathway.process_technology} → ${pathway.product} → ${pathway.application_market}`;
+const formatDate = (value: string | null) => value ? format(new Date(value), "dd MMM yyyy") : null;
+const valueWithUnit = (value: number | null, unit: string | null) => <ValueCell value={value} unit={value === null ? null : unit} />;
+
+function FilterSelect({ value, onChange, label, children, className }: { value: string; onChange: (value: string) => void; label: string; children: React.ReactNode; className?: string }) {
+  return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label} className={cn("h-8 w-40 text-[10px]", className)}><SelectValue /></SelectTrigger><SelectContent>{children}</SelectContent></Select>;
+}
+
+function StalenessCell({ item }: { item: IndicatorValue }) {
+  if (!isStale(item) || item.corrected_at === null) return <ValueCell value={null} />;
+  const days = Math.floor((Date.now() - new Date(item.corrected_at).getTime()) / 86_400_000);
+  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className="h-5 whitespace-nowrap border-warning/40 bg-warning/10 px-1.5 text-[9px] text-warning-foreground">Stale · {days} d</Badge></TooltipTrigger><TooltipContent>Correction may be refreshed by the next pipeline run</TooltipContent></Tooltip>;
+}
+
+function IndicatorRow({ item, path, selected, showPathway, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; path?: Pathway; selected: boolean; showPathway: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: () => void; onClear: () => void }) {
+  const { openHistory } = useHistorySheet();
+  return <TableRow>
+    <TableCell><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
+    {showPathway && <TableCell>{path ? <Tooltip><TooltipTrigger asChild><code className="cursor-help font-mono text-[10px]">{item.pathway_id}</code></TooltipTrigger><TooltipContent className="max-w-md text-xs">{fullPath(path)}</TooltipContent></Tooltip> : <code className="font-mono text-[10px]">{item.pathway_id}</code>}</TableCell>}
+    <TableCell className="whitespace-nowrap text-[10px] font-medium">{item.indicator}</TableCell>
+    <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
+    <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
+    <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
+    <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
+    <TableCell><ReviewStatusChip status={item.status} /></TableCell>
+    <TableCell className="whitespace-nowrap font-mono text-[10px]">{formatDate(item.status_changed_at)}</TableCell>
+    <TableCell><StalenessCell item={item} /></TableCell>
+    <TableCell><Tooltip><TooltipTrigger asChild><span className="block max-w-44 truncate text-[10px]"><ValueCell value={item.correction_note} /></span></TooltipTrigger>{item.correction_note && <TooltipContent className="max-w-sm text-xs">{item.correction_note}</TooltipContent>}</Tooltip></TableCell>
+    <TableCell><TraceId value={item.trace_id} /></TableCell>
+    <TableCell><div className="flex justify-end gap-1">
+      {item.status !== "accepted" && <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" aria-label={`Accept ${item.id}`} onClick={() => onDecision("accepted")}><Check className="h-3.5 w-3.5" /></Button>}
+      {item.status !== "rejected" && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label={`Reject ${item.id}`} onClick={() => onDecision("rejected")}><X className="h-3.5 w-3.5" /></Button>}
+      <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Correct ${item.id}`} onClick={onCorrect}><Pencil className="h-3.5 w-3.5" /></Button>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${item.id}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{item.corrected_value !== null && <DropdownMenuItem onClick={onClear}>Clear correction</DropdownMenuItem>}<DropdownMenuItem onClick={() => openHistory("indicator_value", item.id)}><History className="mr-2 h-3.5 w-3.5" />History</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+    </div></TableCell>
+  </TableRow>;
+}
+
+function IndicatorHeader({ showPathway, checked, onCheckedChange }: { showPathway: boolean; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+  return <TableHeader><TableRow><TableHead className="w-9"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>{showPathway && <TableHead>Pathway</TableHead>}<TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead>Value date</TableHead><TableHead>Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead><TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>;
+}
+
+export function IndicatorsSection() {
+  const store = useHitlStore();
+  const [search, setSearch] = useState(""); const [indicator, setIndicator] = useState("all"); const [status, setStatus] = useState("all"); const [pathway, setPathway] = useState("all"); const [staleOnly, setStaleOnly] = useState(false); const [view, setView] = useState<ViewMode>("flat"); const [selected, setSelected] = useState<string[]>([]);
+  const [decision, setDecision] = useState<DecisionTarget>(null); const [correctId, setCorrectId] = useState<string | null>(null); const [clearId, setClearId] = useState<string | null>(null);
+  const filtered = useMemo(() => store.indicatorValues.filter(item => {
+    const haystack = [item.pathway_id, item.indicator, item.correction_note].join(" ").toLowerCase();
+    return (!search || haystack.includes(search.toLowerCase())) && (indicator === "all" || item.indicator === indicator) && (status === "all" || item.status === status) && (pathway === "all" || item.pathway_id === pathway) && (!staleOnly || isStale(item));
+  }).sort((a, b) => (a.status === "review_pending" ? 0 : 1) - (b.status === "review_pending" ? 0 : 1) || (a.value_date === null ? 1 : b.value_date === null ? -1 : +new Date(b.value_date) - +new Date(a.value_date))), [store.indicatorValues, search, indicator, status, pathway, staleOnly]);
+  const groups = useMemo(() => store.pathways.map(path => ({ path, rows: filtered.filter(item => item.pathway_id === path.id) })).filter(group => group.rows.length > 0), [store.pathways, filtered]);
+  const toggle = (id: string, checked: boolean) => setSelected(items => checked ? [...new Set([...items, id])] : items.filter(item => item !== id));
+  const row = (item: IndicatorValue, showPathway: boolean) => <IndicatorRow key={item.id} item={item} path={store.pathways.find(path => path.id === item.pathway_id)} selected={selected.includes(item.id)} showPathway={showPathway} onSelect={checked => toggle(item.id, checked)} onDecision={next => setDecision({ ids: [item.id], status: next })} onCorrect={() => setCorrectId(item.id)} onClear={() => setClearId(item.id)} />;
+  return <>
+    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3"><div className="relative min-w-52 flex-1"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><Input className="h-8 pl-8 text-xs" placeholder="Search indicator values…" value={search} onChange={event => setSearch(event.target.value)} /></div><FilterSelect value={indicator} onChange={setIndicator} label="Indicator"><SelectItem value="all">All indicators</SelectItem>{INDICATORS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</FilterSelect><FilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="accepted">Accepted</SelectItem><SelectItem value="rejected">Rejected</SelectItem></FilterSelect><FilterSelect value={pathway} onChange={setPathway} label="Pathway" className="w-64"><SelectItem value="all">All Pathways</SelectItem>{store.pathways.map(item => <SelectItem key={item.id} value={item.id}>{shortPath(item)}</SelectItem>)}</FilterSelect><label className="flex h-8 items-center gap-2 whitespace-nowrap text-[10px] text-muted-foreground"><Switch className="h-5 w-9 [&>span]:h-4 [&>span]:w-4 data-[state=checked]:[&>span]:translate-x-4" checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label><div className="inline-flex rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "pathway" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("pathway")}>By pathway</Button></div></div>
+    {selected.length > 0 && <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background px-4 py-2 shadow-sm"><span className="text-xs font-medium">{selected.length} selected</span><Button variant="outline" size="sm" className="h-7 text-[10px] text-primary" onClick={() => setDecision({ ids: selected, status: "accepted" })}><Check className="mr-1 h-3 w-3" />Accept</Button><Button variant="outline" size="sm" className="h-7 text-[10px] text-destructive" onClick={() => setDecision({ ids: selected, status: "rejected" })}><X className="mr-1 h-3 w-3" />Reject</Button><Button variant="link" size="sm" className="h-7 text-[10px]" onClick={() => setSelected([])}>Clear selection</Button></div>}
+    {view === "flat" ? <div className="overflow-x-auto"><Table className="min-w-[1680px]"><IndicatorHeader showPathway checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>{filtered.map(item => row(item, true))}{filtered.length === 0 && <TableRow><TableCell colSpan={13} className="h-32 text-center text-xs text-muted-foreground">No indicator values fit these filters.</TableCell></TableRow>}</TableBody></Table></div> : <div className="divide-y">{groups.map(group => <PathwayGroup key={group.path.id} path={group.path} rows={group.rows} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={setCorrectId} onClear={setClearId} />)}{groups.length === 0 && <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</div>}
+    <DecisionDialog target={decision} onClose={() => setDecision(null)} afterSave={() => setSelected([])} />
+    <CorrectDialog itemId={correctId} onClose={() => setCorrectId(null)} />
+    <ClearDialog itemId={clearId} onClose={() => setClearId(null)} />
+  </>;
+}
+
+function PathwayGroup({ path, rows, selected, onSelect, onDecision, onCorrect, onClear }: { path: Pathway; rows: IndicatorValue[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string) => void; onClear: (id: string) => void }) {
+  const pending = rows.filter(item => item.status === "review_pending").length; const [open, setOpen] = useState(pending > 0);
+  return <Collapsible open={open} onOpenChange={setOpen}><div className="flex items-center gap-3 bg-muted/30 px-4 py-3"><CollapsibleTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`${open ? "Collapse" : "Expand"} ${path.id}`}>{open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button></CollapsibleTrigger><code className="font-mono text-[10px] font-semibold">{path.id}</code><span className="min-w-0 flex-1 truncate text-xs">{fullPath(path)}</span><Badge variant="outline" className="h-5 text-[9px] font-normal">{pending} review pending</Badge></div><CollapsibleContent><div className="overflow-x-auto"><Table className="min-w-[1550px]"><IndicatorHeader showPathway={false} checked={rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>{rows.map(item => <IndicatorRow key={item.id} item={item} path={path} selected={selected.includes(item.id)} showPathway={false} onSelect={checked => onSelect(item.id, checked)} onDecision={next => onDecision(item.id, next)} onCorrect={() => onCorrect(item.id)} onClear={() => onClear(item.id)} />)}</TableBody></Table></div></CollapsibleContent></Collapsible>;
+}
+
+function DecisionDialog({ target, onClose, afterSave }: { target: DecisionTarget; onClose: () => void; afterSave: () => void }) {
+  const store = useHitlStore(); const [note, setNote] = useState(""); useEffect(() => { if (target) setNote(""); }, [target]);
+  const first = target?.ids.length === 1 ? store.indicatorValues.find(item => item.id === target.ids[0]) : null;
+  const save = () => { if (!target) return; target.ids.forEach(id => { const item = store.indicatorValues.find(row => row.id === id); if (item && item.status !== target.status) store.recordChange({ entity_type: "indicator_value", entity_id: id, field: "status", prior_value: item.status, new_value: target.status, operation: target.status === "accepted" ? "accept" : "reject", note: note.trim() || null }); }); toast.success(target.status === "accepted" ? "Value accepted." : "Value rejected. Displayed value is now empty."); afterSave(); onClose(); };
+  return <Dialog open={target !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>{target?.status === "accepted" ? "Accept indicator value" : "Reject indicator value"}</DialogTitle><DialogDescription>{first ? <>{first.pathway_id} · {first.indicator} · <ValueCell value={first.value} unit={first.value === null ? null : first.unit} /></> : `${target?.ids.length ?? 0} values`}</DialogDescription></DialogHeader>{target && <div className="space-y-4"><ReviewStatusChip status={target.status} />{target.status === "rejected" && <p className="text-xs text-muted-foreground">Rejected values are retained in history. The platform displays no value (—) for this indicator until a correction is entered.</p>}<div><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Note (optional)</Label><Textarea className="mt-1 text-xs" value={note} onChange={event => setNote(event.target.value)} /></div></div>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={save}>Confirm</Button></DialogFooter></DialogContent></Dialog>;
+}
+
+function CorrectDialog({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
+  const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId); const [corrected, setCorrected] = useState(""); const [unit, setUnit] = useState(""); const [date, setDate] = useState(""); const [note, setNote] = useState("");
+  useEffect(() => { if (!item) return; setCorrected(item.corrected_value === null ? "" : String(item.corrected_value)); setUnit(item.unit ?? ""); setDate(format(new Date(), "yyyy-MM-dd")); setNote(item.correction_note ?? ""); }, [itemId]);
+  const save = () => { if (!item || corrected.trim() === "") return; const nextValue = Number(corrected); if (!Number.isFinite(nextValue)) return; const nextNote = note.trim() || null; const nextDate = new Date(`${date}T00:00:00.000Z`).toISOString(); const now = new Date().toISOString(); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: nextValue, operation: "update", note: nextNote }); if (nextNote !== item.correction_note) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "correction_note", prior_value: item.correction_note, new_value: nextNote, operation: "update", note: nextNote }); if (item.unit === null && unit.trim()) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "unit", prior_value: null, new_value: unit.trim(), operation: "update", note: nextNote }); if (nextDate !== item.value_date) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "value_date", prior_value: item.value_date, new_value: nextDate, operation: "update", note: nextNote }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: now, operation: "update", note: nextNote }); if (item.status !== "accepted") store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "accepted", operation: "accept", note: "corrected" }); toast.success("Correction saved. Displayed value updated. Benchmark scoring update queued."); onClose(); };
+  return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Correct indicator value</DialogTitle><DialogDescription>{item ? `${item.pathway_id} · ${item.indicator}` : "Enter a corrected value."}</DialogDescription></DialogHeader>{item && <div className="space-y-4"><div className="grid grid-cols-2 gap-3 rounded-md border p-3 text-xs"><div><span className="text-muted-foreground">Pipeline value</span><p className="font-semibold">{valueWithUnit(item.value, item.unit)}</p></div><div><span className="text-muted-foreground">Current corrected value</span><p className="font-semibold">{valueWithUnit(item.corrected_value, item.unit)}</p></div></div><div><Label htmlFor="corrected-value">Corrected value</Label><Input id="corrected-value" type="number" step="any" value={corrected} onChange={event => setCorrected(event.target.value)} /></div><div><Label htmlFor="correction-unit">Unit</Label>{item.unit !== null ? <p className="mt-1 text-xs"><ValueCell value={item.unit} /></p> : <Input id="correction-unit" value={unit} onChange={event => setUnit(event.target.value)} />}</div><div><Label htmlFor="correction-date">Value date</Label><Input id="correction-date" type="date" value={date} onChange={event => setDate(event.target.value)} /></div><div><Label htmlFor="correction-note">Note (optional)</Label><Textarea id="correction-note" value={note} onChange={event => setNote(event.target.value)} /></div></div>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={corrected.trim() === "" || !date} onClick={save}>Save correction</Button></DialogFooter></DialogContent></Dialog>;
+}
+
+function ClearDialog({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
+  const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId); const nextDisplayed = item?.status === "rejected" ? null : item?.value ?? null;
+  const save = () => { if (!item || item.corrected_value === null) return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: null, operation: "update", note: "Correction cleared" }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: null, operation: "update", note: "Correction cleared" }); toast.success("Correction cleared."); onClose(); };
+  return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Clear correction</DialogTitle><DialogDescription>Clear the corrected value? It returns to null. Displayed value becomes <strong><ValueCell value={nextDisplayed} unit={nextDisplayed === null ? null : item?.unit} /></strong>.</DialogDescription></DialogHeader>{item?.corrected_at && <p className="text-xs text-muted-foreground">Current correction was saved {formatDistanceStrict(new Date(item.corrected_at), new Date(), { addSuffix: true })}.</p>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button variant="destructive" onClick={save}>Clear correction</Button></DialogFooter></DialogContent></Dialog>;
+}
