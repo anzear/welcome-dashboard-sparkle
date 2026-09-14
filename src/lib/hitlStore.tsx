@@ -4,6 +4,13 @@ export type ReviewStatus = "accepted" | "rejected" | "review_pending";
 export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
 export type VisibilityScope = "all" | string[];
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
+export type EvidenceScope = "production" | "application" | null;
+export interface EvidenceNodes {
+  feedstock: string | null;
+  process_technology: string | null;
+  product: string | null;
+  application_market: string | null;
+}
 export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
 export type AuditEntityType = "pathway" | "company" | "company_match" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
@@ -48,6 +55,8 @@ export interface PaperPatentMatch extends CommonRecord {
   external_id: string;
   title: string;
   pathway_id: string;
+  nodes: EvidenceNodes;
+  scope: EvidenceScope;
   status: ReviewStatus;
   matched_at: string;
   note: string | null;
@@ -108,6 +117,7 @@ export interface RecordChangeInput {
 const readField = (record: HitlRecord, field: string): unknown => {
   const [root, nested] = field.split(".");
   if (root === "profile_fields" && nested && "profile_fields" in record) return record.profile_fields[nested] ?? null;
+  if (root === "nodes" && nested && "nodes" in record) return record.nodes[nested as keyof EvidenceNodes] ?? null;
   return root in record ? record[root as keyof HitlRecord] : null;
 };
 
@@ -115,6 +125,9 @@ const writeField = <T extends HitlRecord>(record: T, field: string, value: unkno
   const [root, nested] = field.split(".");
   if (root === "profile_fields" && nested && "profile_fields" in record) {
     return { ...record, profile_fields: { ...record.profile_fields, [nested]: value } } as T;
+  }
+  if (root === "nodes" && nested && "nodes" in record) {
+    return { ...record, nodes: { ...record.nodes, [nested]: value } } as T;
   }
   return { ...record, [field]: value } as T;
 };
@@ -161,17 +174,33 @@ const paperTitles = ["Enzymatic fractionation of agricultural residues for advan
 const patentTitles = ["Integrated conversion process for renewable intermediates", "Continuous fermentation system for bio-based organic acids", "Catalytic upgrading of lignocellulosic feedstocks"];
 const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => {
   const kind = index % 2 === 0 ? "paper" : "patent";
+  const pathway = seedPathways[index % seedPathways.length];
+  const scope: EvidenceScope = index === 4 || index === 9 ? null : index % 2 === 0 ? "production" : "application";
+  const nodes: EvidenceNodes = index === 0
+    ? { feedstock: pathway.feedstock, process_technology: null, product: null, application_market: null }
+    : index === 6
+      ? { feedstock: null, process_technology: null, product: pathway.product, application_market: null }
+      : scope === "application"
+        ? { feedstock: null, process_technology: null, product: pathway.product, application_market: pathway.application_market }
+        : { feedstock: null, process_technology: pathway.process_technology, product: pathway.product, application_market: null };
   return {
     ...common(`pp-${String(index + 1).padStart(3, "0")}`, 13 - (index % 7)), kind,
     external_id: kind === "paper" ? `10.1016/j.biortech.202${index}.10${index}42` : `EP${3201400 + index}A1`,
     title: kind === "paper" ? paperTitles[(index / 2) % paperTitles.length] : patentTitles[Math.floor(index / 2) % patentTitles.length],
-    pathway_id: seedPathways[index % seedPathways.length].id, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
+    pathway_id: pathway.id, nodes, scope, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
     year: index === 6 ? null : 2019 + (index % 6),
     authors_or_assignee: index === 9 ? null : kind === "paper" ? ["M. Novak, L. Weber, S. Chen", "A. Rossi, J. Lindström", "E. García, P. Müller"][index % 3] : ["BASF SE", "Novozymes A/S", "Fraunhofer-Gesellschaft"][index % 3],
     abstract: index === 4 ? null : kind === "paper" ? "This study evaluates integrated conversion routes for residual biomass, focusing on resource efficiency, product yield and industrial scale-up constraints." : "A process and apparatus for converting renewable feedstocks into purified bio-based intermediates using an integrated reaction and separation sequence.",
     source: index === 11 ? null : kind === "paper" ? "Semantic Scholar" : "USPTO",
   };
 });
+
+const normalizedNode = (value: string | null) => value?.trim().toLocaleLowerCase() ?? null;
+export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
+  const entries = (Object.entries(match.nodes) as [keyof EvidenceNodes, string | null][]).filter((entry): entry is [keyof EvidenceNodes, string] => normalizedNode(entry[1]) !== null);
+  if (!entries.length) return [];
+  return pathways.filter(pathway => pathway.status !== "deleted" && entries.every(([key, value]) => normalizedNode(pathway[key]) === normalizedNode(value))).map(pathway => pathway.id);
+}
 
 const indicators: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
 const units: Record<IndicatorName, string> = { "GHG impact": "kg CO₂e/t", Yield: "%", "Technology TRL": "TRL", "Pathway TRL": "TRL", "Feedstock availability": "kt/yr", Price: "€/t", "EU market size": "€m", "Global market size": "€m", CAGR: "%" };
