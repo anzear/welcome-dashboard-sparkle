@@ -1624,7 +1624,7 @@ const TechnologySnapshotSection: React.FC<{
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search technology or category…"
+                placeholder="Search technology…"
                 className="h-8 pl-8 !text-[11px] placeholder:!text-[11px] bg-card border-border/60"
               />
             </div>
