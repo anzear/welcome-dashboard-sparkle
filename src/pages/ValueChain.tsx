@@ -2648,7 +2648,7 @@ const MarketSnapshotSection: React.FC<{
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search application or category…"
+              placeholder="Search application…"
               className="h-8 pl-8 !text-[11px] placeholder:!text-[11px] bg-card border-border/60"
             />
           </div>
