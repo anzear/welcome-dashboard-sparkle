@@ -20,4 +20,4 @@
 - [x] Prompt 7: Mock LLM trace registry with deterministic fallback
 - [x] Prompt 7: Global clickable Trace sheet and cross-linked records
 - [x] Prompt 7: Audit Trace filter and complete trace surfaces
-- [ ] Prompt 7: Validate known, unknown and human-created traces
+- [x] Prompt 7: Validate known, unknown and human-created traces
