@@ -13,7 +13,7 @@ import { useTraceSheet } from "./TraceSheetContext";
 import { displayedValue, indicatorLabel, useHitlStore, type AuditEntry, type AuditEntityType, type HitlRecord } from "@/lib/hitlStore";
 import { getTrace } from "@/lib/mockTraces";
 
-const entityLabels: Record<AuditEntityType, string> = { pathway: "Pathway", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value" };
+const entityLabels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value" };
 const decisionOperations = new Set(["accept", "reject", "update", "deactivate", "revert"]);
 
 function recordSummary(record: HitlRecord, type: AuditEntityType, store: ReturnType<typeof useHitlStore>) {

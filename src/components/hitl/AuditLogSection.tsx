@@ -11,7 +11,7 @@ import { affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, indica
 import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [
-  { value: "pathway", label: "Pathway" }, { value: "company", label: "Company" },
+  { value: "pathway", label: "Pathway" }, { value: "group", label: "Group" }, { value: "company", label: "Company" },
   { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" },
 ];
@@ -36,6 +36,7 @@ export function AuditLogSection() {
     if (item.entity_type === "pathway") return nodeFilter.matchingPathwayIds.has(item.entity_id);
     if (item.entity_type === "company") { const company = store.companies.find(row => row.id === item.entity_id); if (!company) return false; const position = rolePosition(company.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.feedstock.trim().toLocaleLowerCase())) && (!nodeFilter.product || (position === "product" && company.role_node.trim().toLocaleLowerCase() === nodeFilter.product.trim().toLocaleLowerCase())); return direct || derivedCompanyPathwayIds(company, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
     if (item.entity_type === "paper_match" || item.entity_type === "patent_match") { const match = store.paperPatentMatches.find(row => row.id === item.entity_id); if (!match) return false; const values = new Set(match.matched_nodes.map(value => value.trim().toLocaleLowerCase())); const direct = (!nodeFilter.feedstock || values.has(nodeFilter.feedstock.trim().toLocaleLowerCase())) && (!nodeFilter.product || values.has(nodeFilter.product.trim().toLocaleLowerCase())); return direct || derivedPathwayIds(match, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
+    if (item.entity_type === "group") return store.pathways.some(pathway => pathway.group_id === item.entity_id && nodeFilter.matchingPathwayIds.has(pathway.id));
     const indicatorValue = store.indicatorValues.find(value => value.id === item.entity_id);
     if (!indicatorValue) return false;
     const norm = (value: string | null) => value?.trim().toLocaleLowerCase() ?? "";

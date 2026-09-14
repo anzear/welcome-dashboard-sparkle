@@ -4,11 +4,11 @@ import { groupById, pathwaysInGroup, useHitlStore, type Group } from "@/lib/hitl
 import { cn } from "@/lib/utils";
 
 const dots: Record<Group["color_token"], string> = {
-  "group-violet": "bg-group-violet",
-  "group-fuchsia": "bg-group-fuchsia",
-  "group-rose": "bg-group-rose",
-  "group-indigo": "bg-group-indigo",
-  "group-bronze": "bg-group-bronze",
+  "group-violet": "bg-group-violet-fill",
+  "group-fuchsia": "bg-group-fuchsia-fill",
+  "group-rose": "bg-group-rose-fill",
+  "group-indigo": "bg-group-indigo-fill",
+  "group-bronze": "bg-group-bronze-fill",
 };
 
 export function GroupChip({ groupId, group, onClick }: { groupId?: string | null; group?: Group | null; onClick?: () => void }) {
