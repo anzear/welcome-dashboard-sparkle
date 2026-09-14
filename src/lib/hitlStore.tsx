@@ -12,7 +12,7 @@ export interface EvidenceNodes {
   application_market: string | null;
 }
 export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
-export type AuditEntityType = "pathway" | "company" | "company_match" | "paper_match" | "patent_match" | "indicator_value";
+export type AuditEntityType = "pathway" | "company" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
@@ -40,15 +40,12 @@ export interface Company extends CommonRecord {
   hq_city: string | null;
   country: string | null;
   profile_fields: Record<string, string | number | null>;
-}
-export interface CompanyMatch extends CommonRecord {
-  company_id: string;
-  company_name: string;
-  pathway_id: string;
   role: CompanyRole;
+  role_node: string;
+  secondary_nodes: EvidenceNodes;
   status: ReviewStatus;
-  note: string | null;
   evidence: string | null;
+  note: string | null;
 }
 export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
@@ -101,7 +98,7 @@ export interface AuditEntry extends CommonRecord {
   reverts_entry_id: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
-export type HitlRecord = Pathway | Company | CompanyMatch | PaperPatentMatch | IndicatorValue;
+export type HitlRecord = Pathway | Company | PaperPatentMatch | IndicatorValue;
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
@@ -118,6 +115,7 @@ const readField = (record: HitlRecord, field: string): unknown => {
   const [root, nested] = field.split(".");
   if (root === "profile_fields" && nested && "profile_fields" in record) return record.profile_fields[nested] ?? null;
   if (root === "nodes" && nested && "nodes" in record) return record.nodes[nested as keyof EvidenceNodes] ?? null;
+  if (root === "secondary_nodes" && nested && "secondary_nodes" in record) return record.secondary_nodes[nested as keyof EvidenceNodes] ?? null;
   return root in record ? record[root as keyof HitlRecord] : null;
 };
 
@@ -128,6 +126,9 @@ const writeField = <T extends HitlRecord>(record: T, field: string, value: unkno
   }
   if (root === "nodes" && nested && "nodes" in record) {
     return { ...record, nodes: { ...record.nodes, [nested]: value } } as T;
+  }
+  if (root === "secondary_nodes" && nested && "secondary_nodes" in record) {
+    return { ...record, secondary_nodes: { ...record.secondary_nodes, [nested]: value } } as T;
   }
   return { ...record, [field]: value } as T;
 };
@@ -160,13 +161,21 @@ const companyRows = [
   ["Danube Biopolymers", "https://danube-biopolymers.example", "HU-011829", null, "Hungary"],
   ["Atlantic Algae", "https://atlantic-algae.example", "PT-521908", "Porto", "Portugal"],
 ] as const;
-const seedCompanies: Company[] = companyRows.map((row, index) => ({ ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], hq_city: row[3], country: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18, founded: 2008 + index } }));
-
-const matchStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted"];
-const roles: CompanyRole[] = ["feedstock_supplier", "product_manufacturer", "application_offtaker"];
-const seedCompanyMatches: CompanyMatch[] = Array.from({ length: 12 }, (_, index) => {
-  const company = seedCompanies[index % seedCompanies.length];
-  return { ...common(`cm-${String(index + 1).padStart(3, "0")}`, 14 - (index % 8)), company_id: company.id, company_name: company.name, pathway_id: seedPathways[index % seedPathways.length].id, role: roles[index % roles.length], status: matchStatuses[index], note: index % 4 === 0 ? "Confirm commercial activity in Europe" : null, evidence: index % 3 === 0 ? "Company product page and registry filing" : null };
+const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewStatus; secondary_nodes: EvidenceNodes; evidence: string | null; note: string | null }[] = [
+  { role: "feedstock_supplier", pathway: 0, status: "rejected", secondary_nodes: { feedstock: null, process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: "Confirm commercial activity in Europe" },
+  { role: "product_manufacturer", pathway: 1, status: "accepted", secondary_nodes: { feedstock: "Kraft lignin", process_technology: "Fermentation", product: null, application_market: null }, evidence: null, note: null },
+  { role: "application_offtaker", pathway: 2, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: "Lactic acid", application_market: null }, evidence: null, note: null },
+  { role: "feedstock_supplier", pathway: 3, status: "rejected", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: "Company product page and registry filing", note: null },
+  { role: "product_manufacturer", pathway: 4, status: "accepted", secondary_nodes: { feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: null, application_market: "Bio-based polymers" }, evidence: null, note: "Confirm commercial activity in Europe" },
+  { role: "application_offtaker", pathway: 5, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
+  { role: "feedstock_supplier", pathway: 6, status: "accepted", secondary_nodes: { feedstock: null, process_technology: "Fermentation", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: null },
+  { role: "product_manufacturer", pathway: 7, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
+];
+const seedCompanies: Company[] = companyRows.map((row, index) => {
+  const assignment = companyAssignments[index];
+  const pathway = seedPathways[assignment.pathway];
+  const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], hq_city: row[3], country: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18, founded: 2008 + index }, role: assignment.role, role_node: pathway[position], secondary_nodes: assignment.secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
@@ -202,6 +211,26 @@ export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathwa
   return pathways.filter(pathway => pathway.status !== "deleted" && entries.every(([key, value]) => normalizedNode(pathway[key]) === normalizedNode(value))).map(pathway => pathway.id);
 }
 
+const rolePositions = {
+  feedstock_supplier: { positionKey: "feedstock", positionLabel: "Feedstock", verb: "Supplies" },
+  product_manufacturer: { positionKey: "product", positionLabel: "Product", verb: "Produces" },
+  application_offtaker: { positionKey: "application_market", positionLabel: "Application/Market", verb: "Offtakes" },
+} as const;
+export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
+export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
+  const position = rolePosition(company.role).positionKey;
+  return pathways.filter(pathway => pathway.status !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
+}
+export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
+export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit {
+  const roleKey = rolePosition(company.role).positionKey;
+  const positions = (Object.keys(company.secondary_nodes) as (keyof EvidenceNodes)[]).filter(key => key !== roleKey);
+  const matched = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) === normalizedNode(pathway[key]));
+  const differing = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) !== normalizedNode(pathway[key]));
+  const unknown = positions.filter(key => normalizedNode(company.secondary_nodes[key]) === null);
+  return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
+}
+
 const indicators: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
 const units: Record<IndicatorName, string> = { "GHG impact": "kg CO₂e/t", Yield: "%", "Technology TRL": "TRL", "Pathway TRL": "TRL", "Feedstock availability": "kt/yr", Price: "€/t", "EU market size": "€m", "Global market size": "€m", CAGR: "%" };
 const indicatorStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted", "review_pending", "accepted", "rejected", "review_pending", "accepted", "review_pending", "accepted", "review_pending"];
@@ -229,12 +258,12 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-003", iso(6, 11), "Jon Goriup", "pathway", "pw-002", "group", "Renewable chemicals", "Bio-based chemicals", "update", { note: "Aligned with portfolio taxonomy" }),
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 12.5, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 12.5, 0, "revert", { reverts_entry_id: "audit-004" }),
-  auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company_match", "cm-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
+  auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
   auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 47.3, null, "update", { note: "Source no longer reports this value" }),
-  auditSeed("audit-011", iso(10, 14), "Anže", "company_match", "cm-004", "status", "review_pending", "rejected", "reject"),
+  auditSeed("audit-011", iso(10, 14), "Anže", "company", "co-004", "status", "review_pending", "rejected", "reject"),
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 61.4, "update", { note: "Updated against source table" }),
@@ -247,7 +276,6 @@ interface HitlStoreValue {
   currentUser: HitlCurrentUser;
   pathways: Pathway[];
   companies: Company[];
-  companyMatches: CompanyMatch[];
   paperPatentMatches: PaperPatentMatch[];
   paperMatches: () => PaperPatentMatch[];
   patentMatches: () => PaperPatentMatch[];
@@ -265,7 +293,6 @@ const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [pathways, setPathways] = useState(seedPathways);
   const [companies, setCompanies] = useState(seedCompanies);
-  const [companyMatches, setCompanyMatches] = useState(seedCompanyMatches);
   const [paperPatentMatches, setPaperPatentMatches] = useState(seedPaperPatentMatches);
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
@@ -273,11 +300,11 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
-      pathway: pathways, company: companies, company_match: companyMatches,
+      pathway: pathways, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
-  }, [pathways, companies, companyMatches, paperPatentMatches, indicatorValues]);
+  }, [pathways, companies, paperPatentMatches, indicatorValues]);
 
   const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
     const now = new Date().toISOString();
@@ -306,7 +333,6 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     };
     if (input.entity_type === "pathway") setPathways(apply);
     if (input.entity_type === "company") setCompanies(apply);
-    if (input.entity_type === "company_match") setCompanyMatches(apply);
     if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
     setAuditEntries(items => [...items, entry]);
@@ -339,9 +365,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const paperMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "paper"), [paperPatentMatches]);
   const patentMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "patent"), [paperPatentMatches]);
   const value = useMemo<HitlStoreValue>(() => ({
-    currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries,
+    currentUser, pathways, companies, paperPatentMatches, indicatorValues, auditEntries,
     paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
-  }), [currentUser, pathways, companies, companyMatches, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
+  }), [currentUser, pathways, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 
