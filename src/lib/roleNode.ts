@@ -1,13 +1,19 @@
-import type { CompanyMatch, Pathway } from "@/lib/hitlStore";
+import type { Company, CompanyRole } from "@/lib/hitlStore";
 import type { PathwayNodeKey } from "@/components/hitl/PathwayRef";
 
-const roleMap = {
+const labels: Record<CompanyRole, string> = {
+  feedstock_supplier: "Feedstock supplier",
+  product_manufacturer: "Product manufacturer",
+  application_offtaker: "Application offtaker",
+};
+
+const positions = {
   feedstock_supplier: { positionKey: "feedstock", positionLabel: "Feedstock", verb: "Supplies" },
   product_manufacturer: { positionKey: "product", positionLabel: "Product", verb: "Produces" },
   application_offtaker: { positionKey: "application_market", positionLabel: "Application/Market", verb: "Offtakes" },
-} as const;
+} satisfies Record<CompanyRole, { positionKey: PathwayNodeKey; positionLabel: string; verb: string }>;
 
-export function roleNode(match: CompanyMatch, pathway?: Pathway): { positionKey: PathwayNodeKey; positionLabel: string; value: string | null; verb: string } {
-  const mapping = roleMap[match.role];
-  return { ...mapping, value: pathway?.[mapping.positionKey] ?? null };
+export const companyRoleLabels = labels;
+export function roleNode(company: Pick<Company, "role" | "role_node">) {
+  return { ...positions[company.role], roleLabel: labels[company.role], value: company.role_node };
 }
