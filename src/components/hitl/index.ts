@@ -2,3 +2,4 @@ export { ActorStamp, OperationChip, PathwayStatusChip, ReviewStatusChip, TraceId
 export { HistorySheetProvider, RecordHistoryList, RecordHistorySheet, useHistorySheet } from "./RecordHistorySheet";
 export { TraceSheetProvider, useTraceSheet } from "./TraceSheetContext";
 export { TraceSheet } from "./TraceSheet";
+export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
