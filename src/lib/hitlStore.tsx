@@ -17,7 +17,9 @@ export const NODE_LABELS = {
   application_market: "Application",
 } as const satisfies Record<keyof EvidenceNodes, string>;
 
-export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
+export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
+export type IndicatorValueType = "trl" | "count" | "decimal";
+export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "company" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
@@ -67,8 +69,9 @@ export interface PaperPatentMatch extends CommonRecord {
   source: "Semantic Scholar" | "USPTO" | null;
 }
 export interface IndicatorValue extends CommonRecord {
-  pathway_id: string;
-  indicator: IndicatorName;
+  indicator_key: string;
+  scope: IndicatorScope;
+  target: IndicatorTarget;
   value: number | null;
   unit: string | null;
   value_date: string | null;
@@ -259,20 +262,122 @@ export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, p
   return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
 }
 
-const indicators: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
-const units: Record<IndicatorName, string> = { "GHG impact": "kg CO₂e/t", Yield: "%", "Technology TRL": "TRL", "Pathway TRL": "TRL", "Feedstock availability": "kt/yr", Price: "€/t", "EU market size": "€m", "Global market size": "€m", CAGR: "%" };
-const indicatorStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted", "review_pending", "rejected", "accepted", "review_pending", "accepted", "review_pending", "accepted", "rejected", "review_pending", "accepted", "review_pending", "accepted", "review_pending"];
-const seedIndicatorValues: IndicatorValue[] = Array.from({ length: 20 }, (_, index) => {
-  const indicator = indicators[index % indicators.length];
-  const deliberateValue = index === 2 || index === 15 ? 0 : index === 6 || index === 17 ? null : Number((18.5 + index * 4.7).toFixed(1));
-  const correctedValues: Record<number, { value: number; note: string; at: string }> = {
-    1: { value: 24.1, note: "Corrected from verified source appendix", at: "2026-01-08T10:00:00.000Z" },
-    4: { value: 39.8, note: "Aligned with published regional dataset", at: "2026-02-14T11:30:00.000Z" },
-    8: { value: 61.4, note: "Updated against source table", at: "2026-09-13T09:00:00.000Z" },
+export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; }
+export const INDICATORS: IndicatorDefinition[] = [
+  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t" },
+  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr" },
+  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL" },
+  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t" },
+  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr" },
+  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m" },
+  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m" },
+  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr" },
+  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr" },
+  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index" },
+  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL" },
+  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents" },
+  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers" },
+  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL" },
+  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents" },
+  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers" },
+];
+export const INDICATOR_SCOPES: IndicatorScope[] = ["feedstock", "process", "product", "production", "application"];
+export const SCOPE_LABELS: Record<IndicatorScope, string> = { feedstock: "Feedstock", process: "Process", product: "Product", production: "Production", application: "Application" };
+export const SCOPE_DESCRIPTIONS: Record<IndicatorScope, string> = {
+  feedstock: `Node level · one ${NODE_LABELS.feedstock} value`,
+  process: `Node level · one ${NODE_LABELS.process_technology} value`,
+  product: `Node level · one ${NODE_LABELS.product} value`,
+  production: `${NODE_LABELS.feedstock} → ${NODE_LABELS.process_technology} → ${NODE_LABELS.product}`,
+  application: "Whole pathway",
+};
+export type IndicatorTargetKey = keyof IndicatorTarget;
+export const SCOPE_TARGET_KEYS: Record<IndicatorScope, IndicatorTargetKey[]> = {
+  feedstock: ["feedstock"], process: ["process"], product: ["product"],
+  production: ["feedstock", "process", "product"], application: ["feedstock", "process", "product", "application"],
+};
+export const indicatorTargetKeys: IndicatorTargetKey[] = ["feedstock", "process", "product", "application"];
+export const TARGET_POSITION_LABELS: Record<IndicatorTargetKey, string> = { feedstock: NODE_LABELS.feedstock, process: NODE_LABELS.process_technology, product: NODE_LABELS.product, application: NODE_LABELS.application_market };
+export const targetToPathwayPosition: Record<IndicatorTargetKey, PathwayNodePosition> = { feedstock: "feedstock", process: "process_technology", product: "product", application: "application_market" };
+export const emptyIndicatorTarget: IndicatorTarget = { feedstock: null, process: null, product: null, application: null };
+export const indicatorDefinition = (key: string): IndicatorDefinition | undefined => INDICATORS.find(item => item.key === key);
+export const indicatorLabel = (key: string): string => indicatorDefinition(key)?.label ?? key;
+export const indicatorsForScope = (scope: IndicatorScope): IndicatorDefinition[] => INDICATORS.filter(item => item.scope === scope);
+type TargetedValue = Pick<IndicatorValue, "scope" | "target">;
+export const filledTargetKeys = (iv: TargetedValue): IndicatorTargetKey[] => SCOPE_TARGET_KEYS[iv.scope].filter(key => Boolean(iv.target[key]?.trim()));
+export const targetValues = (iv: TargetedValue): string[] => filledTargetKeys(iv).map(key => (iv.target[key] ?? "").trim());
+export function affectedPathwayIds(iv: TargetedValue, pathways: Pathway[]): string[] {
+  const keys = filledTargetKeys(iv);
+  if (keys.length !== SCOPE_TARGET_KEYS[iv.scope].length) return [];
+  return pathways.filter(pathway => pathway.status !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
+}
+export function targetLabel(iv: TargetedValue): string {
+  const values = SCOPE_TARGET_KEYS[iv.scope].map(key => iv.target[key]?.trim() || "—");
+  if (iv.scope === "production" || iv.scope === "application") return values.join(" → ");
+  return `${SCOPE_LABELS[iv.scope]} · ${values[0]}`;
+}
+export const sameIndicatorTarget = (a: IndicatorTarget, b: IndicatorTarget) => indicatorTargetKeys.every(key => normalizedNode(a[key]) === normalizedNode(b[key]));
+export function findIndicatorValue(values: IndicatorValue[], indicator_key: string, target: IndicatorTarget): IndicatorValue | null {
+  return values.find(item => item.indicator_key === indicator_key && sameIndicatorTarget(item.target, target)) ?? null;
+}
+export function targetForPathway(scope: IndicatorScope, pathway: Pick<Pathway, PathwayNodePosition>): IndicatorTarget {
+  const keys = SCOPE_TARGET_KEYS[scope];
+  return {
+    feedstock: keys.includes("feedstock") ? pathway.feedstock : null,
+    process: keys.includes("process") ? pathway.process_technology : null,
+    product: keys.includes("product") ? pathway.product : null,
+    application: keys.includes("application") ? pathway.application_market : null,
   };
-  const correction = correctedValues[index];
-  return { ...common(`iv-${String(index + 1).padStart(3, "0")}`, 14 - (index % 9)), pathway_id: seedPathways[index % seedPathways.length].id, indicator, value: deliberateValue, unit: units[indicator], value_date: index === 17 ? null : iso(1 + (index % 12)), status: indicatorStatuses[index], corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null };
-});
+}
+
+// Seed migration: legacy pathway-keyed rows mapped onto the indicator registry
+// (Technology TRL → Process TRL, Pathway TRL → Application TRL, Price → Product price,
+// CAGR → Market growth (EU); GHG impact and Yield dropped), deduped by (indicator_key, target).
+type IndicatorSeed = [id: string, key: string, pathwayIndex: number, value: number | null, status: ReviewStatus, day: number];
+const indicatorSeeds: IndicatorSeed[] = [
+  ["iv-001", "feedstock_price", 0, 82.5, "review_pending", 14],
+  ["iv-002", "feedstock_availability", 0, 1250, "accepted", 13],
+  ["iv-003", "production_ip_count", 0, 0, "review_pending", 12],
+  ["iv-004", "process_trl", 2, 7, "accepted", 12],
+  ["iv-005", "product_price", 2, 1480, "accepted", 11],
+  ["iv-006", "product_availability", 2, 310, "review_pending", 11],
+  ["iv-007", "market_size_eu", 2, null, "review_pending", 10],
+  ["iv-008", "market_size_global", 2, 4200, "accepted", 10],
+  ["iv-009", "market_growth_eu", 2, -1.4, "review_pending", 9],
+  ["iv-010", "market_growth_global", 2, 4.6, "accepted", 9],
+  ["iv-011", "market_concentration", 2, 0.42, "accepted", 8],
+  ["iv-012", "production_trl", 2, 6, "review_pending", 8],
+  ["iv-013", "production_research_count", 2, 128, "accepted", 7],
+  ["iv-014", "application_trl", 2, 5, "review_pending", 7],
+  ["iv-015", "application_ip_count", 2, 34, "accepted", 6],
+  ["iv-016", "application_research_count", 2, 12, "rejected", 6],
+  ["iv-017", "product_price", 0, 640, "review_pending", 5],
+  ["iv-018", "product_availability", 0, null, "accepted", 5],
+  ["iv-019", "feedstock_price", 4, 44, "accepted", 4],
+  ["iv-020", "process_trl", 1, 4, "review_pending", 4],
+  ["iv-021", "application_trl", 0, 8, "accepted", 3],
+  ["iv-022", "production_trl", 0, 7, "accepted", 3],
+  ["iv-023", "production_ip_count", 2, 210, "accepted", 2],
+  ["iv-024", "application_ip_count", 0, 76, "review_pending", 2],
+  ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
+];
+const seedCorrections: Record<string, { value: number; note: string; at: string }> = {
+  "iv-002": { value: 1180, note: "Corrected from verified source appendix", at: "2026-01-08T10:00:00.000Z" },
+  "iv-005": { value: 1520, note: "Aligned with published regional dataset", at: "2026-02-14T11:30:00.000Z" },
+  "iv-009": { value: 3.2, note: "Updated against source table", at: "2026-09-13T09:00:00.000Z" },
+};
+const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
+  const definition = indicatorDefinition(key);
+  if (!definition) return rows;
+  const target = targetForPathway(definition.scope, seedPathways[pathwayIndex]);
+  if (findIndicatorValue(rows, key, target)) return rows;
+  const correction = seedCorrections[id];
+  rows.push({
+    ...common(id, day), indicator_key: key, scope: definition.scope, target, value, unit: definition.unit,
+    value_date: id === "iv-018" ? null : iso(1 + (index % 12)), status,
+    corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null,
+  });
+  return rows;
+}, []);
 
 const auditSeed = (id: string, timestamp: string, actor: string, entity_type: AuditEntityType, entity_id: string, field: string | null, prior_value: unknown, new_value: unknown, operation: AuditOperation, extra: Partial<AuditEntry> = {}): AuditEntry => ({
   id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
@@ -284,20 +389,20 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "needs_approval", "update", { note: "Flagged for a final definition check" }),
   auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group", null, "Renewable chemicals", "update"),
   auditSeed("audit-003", iso(6, 11), "Jon Goriup", "pathway", "pw-002", "group", "Renewable chemicals", "Bio-based chemicals", "update", { note: "Aligned with portfolio taxonomy" }),
-  auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 12.5, "update"),
-  auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 12.5, 0, "revert", { reverts_entry_id: "audit-004" }),
+  auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
+  auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
   auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
-  auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 47.3, null, "update", { note: "Source no longer reports this value" }),
+  auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 1900, null, "update", { note: "Source no longer reports this value" }),
   auditSeed("audit-011", iso(10, 14), "Anže", "company", "co-004", "status", "review_pending", "rejected", "reject"),
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
-  auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 61.4, "update", { note: "Updated against source table" }),
+  auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
   auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
-  auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 24.1, "update", { note: "Corrected from verified source appendix" }),
-  auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 39.8, "update", { note: "Aligned with published regional dataset" }),
+  auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
+  auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];
 
 interface HitlStoreValue {

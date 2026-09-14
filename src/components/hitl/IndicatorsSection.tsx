@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format, formatDistanceStrict } from "date-fns";
-import { Check, ChevronDown, ChevronRight, History, MoreHorizontal, Pencil, Search, X } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, History, MoreHorizontal, Pencil, Plus, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,24 +10,40 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, TraceId, ValueCell, pathwaySearchText, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { displayedValue, isStale, STALENESS_DAYS, useHitlStore, type IndicatorName, type IndicatorValue, type Pathway, type ReviewStatus } from "@/lib/hitlStore";
+import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
+import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, TraceId, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import {
+  INDICATORS, INDICATOR_SCOPES, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
+  affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
+  indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
+  type IndicatorScope, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type ReviewStatus,
+} from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
 type DecisionTarget = { ids: string[]; status: DecidedStatus } | null;
-type ViewMode = "flat" | "pathway";
+type ViewMode = "flat" | "target";
+type AddPreset = { scope: IndicatorScope; indicator_key: string; target: IndicatorTarget } | null;
 
-const INDICATORS: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
-const shortPath = (pathway: Pathway) => `${pathway.id} · ${pathway.feedstock} → ${pathway.product}`;
-const fullPath = (pathway: Pathway) => `${pathway.feedstock} → ${pathway.process_technology} → ${pathway.product} → ${pathway.application_market}`;
+const clean = (value: string | null | undefined) => (value ?? "").trim().toLocaleLowerCase();
 const formatDate = (value: string | null) => value ? format(new Date(value), "dd MMM yyyy") : null;
 const valueWithUnit = (value: number | null, unit: string | null) => <ValueCell value={value} unit={value === null ? null : unit} />;
+const targetKey = (scope: IndicatorScope, target: IndicatorTarget) => `${scope}|${SCOPE_TARGET_KEYS[scope].map(key => clean(target[key])).join("|")}`;
+
+function parseValue(raw: string, type: IndicatorValueType): { value: number } | { error: string } {
+  const trimmed = raw.trim();
+  if (trimmed === "") return { error: "Enter a value" };
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return { error: "Enter a number" };
+  if (type === "trl") return Number.isInteger(parsed) && parsed >= 1 && parsed <= 9 ? { value: parsed } : { error: "TRL is an integer from 1 to 9" };
+  if (type === "count") return Number.isInteger(parsed) && parsed >= 0 ? { value: parsed } : { error: "Count is an integer of 0 or more" };
+  return { value: parsed };
+}
 
 function FilterSelect({ value, onChange, label, children, className }: { value: string; onChange: (value: string) => void; label: string; children: React.ReactNode; className?: string }) {
   return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label} className={cn("h-8 w-40 text-[10px]", className)}><SelectValue /></SelectTrigger><SelectContent>{children}</SelectContent></Select>;
@@ -36,15 +52,41 @@ function FilterSelect({ value, onChange, label, children, className }: { value: 
 function StalenessCell({ item }: { item: IndicatorValue }) {
   if (!isStale(item) || item.corrected_at === null) return <ValueCell value={null} />;
   const days = Math.floor((Date.now() - new Date(item.corrected_at).getTime()) / 86_400_000);
-  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className="h-5 whitespace-nowrap border-warning/40 bg-warning/10 px-1.5 text-[9px] text-warning-foreground">Stale · {days} d</Badge></TooltipTrigger><TooltipContent>Correction may be refreshed by the next pipeline run</TooltipContent></Tooltip>;
+  return <Tooltip><TooltipTrigger asChild><span className="inline-flex"><Badge variant="outline" className="h-5 whitespace-nowrap border-warning/40 bg-warning/10 px-1.5 text-[9px] text-warning-foreground">Stale · {days} d</Badge></span></TooltipTrigger><TooltipContent>Correction may be refreshed by the next pipeline run</TooltipContent></Tooltip>;
 }
 
-function IndicatorRow({ item, path, selected, showPathway, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; path?: Pathway; selected: boolean; showPathway: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: () => void; onClear: () => void }) {
+function NodeCombobox({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
+  const [focused, setFocused] = useState(false);
+  const normalized = value.trim();
+  const exact = options.find(option => clean(option) === clean(normalized));
+  const suggestions = options.filter(option => option.toLocaleLowerCase().includes(normalized.toLocaleLowerCase())).slice(0, 8);
+  const isNew = Boolean(normalized) && !exact;
+  return <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{label}</Label>
+    <div className="relative">
+      <Input value={value} onFocus={() => setFocused(true)} onChange={event => { onChange(event.target.value); setFocused(true); }} onBlur={() => window.setTimeout(() => setFocused(false), 120)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); onChange(exact ?? normalized); setFocused(false); } }} placeholder={`Enter ${label}…`} className="h-9 pr-20 text-xs" />
+      {isNew && <Badge variant="outline" className="pointer-events-none absolute right-2 top-1/2 h-4 -translate-y-1/2 px-1 text-[8px] text-muted-foreground">New node</Badge>}
+      {focused && suggestions.length > 0 && <div className="absolute z-[110] mt-1 max-h-44 w-full overflow-y-auto rounded-md border bg-popover p-1 text-popover-foreground shadow-md">{suggestions.map(option => <Button key={option} type="button" variant="ghost" className="h-auto w-full justify-start px-2 py-1.5 text-left text-xs" onMouseDown={event => event.preventDefault()} onClick={() => { onChange(option); setFocused(false); }}><Check className={cn("mr-2 h-3 w-3", exact === option ? "opacity-100" : "opacity-0")} />{option}</Button>)}</div>}
+    </div>
+  </div>;
+}
+
+function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat" | "grouped"; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
+  return <TableHeader><TableRow>
+    <TableHead className="w-9"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
+    {variant === "flat" && <><TableHead>Scope</TableHead><TableHead>Target</TableHead></>}
+    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead>
+    <TableHead>Value date</TableHead><TableHead>Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
+    {variant === "flat" && <TableHead>Pathways</TableHead>}
+    <TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="text-right">Actions</TableHead>
+  </TableRow></TableHeader>;
+}
+
+function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: () => void; onClear: () => void }) {
   const { openHistory } = useHistorySheet();
-  return <TableRow>
+  return <TableRow id={`indicator-row-${item.id}`}>
     <TableCell><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
-    {showPathway && <TableCell><PathwayRef pathwayId={item.pathway_id} variant="inline" /></TableCell>}
-    <TableCell className="whitespace-nowrap text-[10px] font-medium">{item.indicator}</TableCell>
+    {variant === "flat" && <><TableCell><ScopeChip scope={item.scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={item} /></TableCell></>}
+    <TableCell className="whitespace-nowrap text-[10px] font-medium">{indicatorLabel(item.indicator_key)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
@@ -52,6 +94,7 @@ function IndicatorRow({ item, path, selected, showPathway, onSelect, onDecision,
     <TableCell><ReviewStatusChip status={item.status} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]">{formatDate(item.status_changed_at)}</TableCell>
     <TableCell><StalenessCell item={item} /></TableCell>
+    {variant === "flat" && <TableCell><AffectedPathways iv={item} /></TableCell>}
     <TableCell><Tooltip><TooltipTrigger asChild><span className="block max-w-44 truncate text-[10px]"><ValueCell value={item.correction_note} /></span></TooltipTrigger>{item.correction_note && <TooltipContent className="max-w-sm text-xs">{item.correction_note}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><TraceId value={item.trace_id} /></TableCell>
     <TableCell><div className="flex justify-end gap-1">
@@ -63,54 +106,234 @@ function IndicatorRow({ item, path, selected, showPathway, onSelect, onDecision,
   </TableRow>;
 }
 
-function IndicatorHeader({ showPathway, checked, onCheckedChange }: { showPathway: boolean; checked: boolean; onCheckedChange: (checked: boolean) => void }) {
-  return <TableHeader><TableRow><TableHead className="w-9"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>{showPathway && <TableHead>Pathway</TableHead>}<TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead>Value date</TableHead><TableHead>Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead><TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="text-right">Actions</TableHead></TableRow></TableHeader>;
+function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) {
+  return <TableRow className="text-muted-foreground">
+    <TableCell />
+    <TableCell className="whitespace-nowrap text-[10px] font-medium">{label}</TableCell>
+    {Array.from({ length: 4 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
+    <TableCell className="whitespace-nowrap text-[10px] italic">not computed</TableCell>
+    {Array.from({ length: 4 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
+    <TableCell><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
+  </TableRow>;
 }
 
 export function IndicatorsSection() {
   const store = useHitlStore();
   const nodeFilter = useNodeFilter();
-  const [search, setSearch] = useState(""); const [indicator, setIndicator] = useState("all"); const [status, setStatus] = useState("all"); const [pathway, setPathway] = useState("all"); const [staleOnly, setStaleOnly] = useState(false); const [view, setView] = useState<ViewMode>("flat"); const [selected, setSelected] = useState<string[]>([]);
-  const [decision, setDecision] = useState<DecisionTarget>(null); const [correctId, setCorrectId] = useState<string | null>(null); const [clearId, setClearId] = useState<string | null>(null);
+  const [search, setSearch] = useState(""); const [scope, setScope] = useState("all"); const [indicator, setIndicator] = useState("all"); const [status, setStatus] = useState("all"); const [staleOnly, setStaleOnly] = useState(false); const [view, setView] = useState<ViewMode>("flat"); const [selected, setSelected] = useState<string[]>([]);
+  const [decision, setDecision] = useState<DecisionTarget>(null); const [correctId, setCorrectId] = useState<string | null>(null); const [clearId, setClearId] = useState<string | null>(null); const [addOpen, setAddOpen] = useState(false); const [addPreset, setAddPreset] = useState<AddPreset>(null);
+  const indicatorOptions = useMemo(() => INDICATOR_SCOPES.filter(item => scope === "all" || item === scope).map(item => ({ scope: item, indicators: indicatorsForScope(item) })), [scope]);
+
+  const passesNodeFilter = (item: IndicatorValue) => {
+    if (!nodeFilter.isActive) return true;
+    const direct = (!nodeFilter.feedstock || clean(item.target.feedstock) === clean(nodeFilter.feedstock)) && (!nodeFilter.product || clean(item.target.product) === clean(nodeFilter.product));
+    return direct || affectedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id));
+  };
   const filtered = useMemo(() => store.indicatorValues.filter(item => {
-    const linkedPathway = store.pathways.find(path => path.id === item.pathway_id); const haystack = [item.pathway_id, item.indicator, item.correction_note, pathwaySearchText(linkedPathway)].join(" ").toLowerCase();
-    return nodeFilter.matchingPathwayIds.has(item.pathway_id) && (!search || haystack.includes(search.toLowerCase())) && (indicator === "all" || item.indicator === indicator) && (status === "all" || item.status === status) && (pathway === "all" || item.pathway_id === pathway) && (!staleOnly || isStale(item));
-  }).sort((a, b) => (a.status === "review_pending" ? 0 : 1) - (b.status === "review_pending" ? 0 : 1) || (a.value_date === null ? 1 : b.value_date === null ? -1 : +new Date(b.value_date) - +new Date(a.value_date))), [store.indicatorValues, store.pathways, search, indicator, status, pathway, staleOnly, nodeFilter.feedstock, nodeFilter.product]);
-  const groups = useMemo(() => store.pathways.map(path => ({ path, rows: filtered.filter(item => item.pathway_id === path.id) })).filter(group => group.rows.length > 0), [store.pathways, filtered]);
+    const haystack = [indicatorLabel(item.indicator_key), targetSearchText(item.target), item.correction_note].join(" ").toLowerCase();
+    return passesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (scope === "all" || item.scope === scope) && (indicator === "all" || item.indicator_key === indicator) && (status === "all" || item.status === status) && (!staleOnly || isStale(item));
+  }).sort((a, b) => (a.status === "review_pending" ? 0 : 1) - (b.status === "review_pending" ? 0 : 1) || INDICATOR_SCOPES.indexOf(a.scope) - INDICATOR_SCOPES.indexOf(b.scope) || targetLabel(a).localeCompare(targetLabel(b)) || INDICATORS.findIndex(item => item.key === a.indicator_key) - INDICATORS.findIndex(item => item.key === b.indicator_key)),
+    [store.indicatorValues, store.pathways, search, scope, indicator, status, staleOnly, nodeFilter.feedstock, nodeFilter.product]);
+
+  const scopeGroups = useMemo(() => INDICATOR_SCOPES.filter(item => scope === "all" || item === scope).map(currentScope => {
+    const rows = filtered.filter(item => item.scope === currentScope);
+    const targets: { key: string; target: IndicatorTarget; rows: IndicatorValue[] }[] = [];
+    rows.forEach(item => {
+      const key = targetKey(currentScope, item.target);
+      const existing = targets.find(entry => entry.key === key);
+      if (existing) existing.rows.push(item); else targets.push({ key, target: item.target, rows: [item] });
+    });
+    return { scope: currentScope, rows, targets };
+  }).filter(group => group.rows.length > 0), [filtered, scope]);
+
   const toggle = (id: string, checked: boolean) => setSelected(items => checked ? [...new Set([...items, id])] : items.filter(item => item !== id));
-  const row = (item: IndicatorValue, showPathway: boolean) => <IndicatorRow key={item.id} item={item} path={store.pathways.find(path => path.id === item.pathway_id)} selected={selected.includes(item.id)} showPathway={showPathway} onSelect={checked => toggle(item.id, checked)} onDecision={next => setDecision({ ids: [item.id], status: next })} onCorrect={() => setCorrectId(item.id)} onClear={() => setClearId(item.id)} />;
-  useEffect(() => { setSelected([]); if (pathway !== "all" && !nodeFilter.matchingPathwayIds.has(pathway)) setPathway("all"); }, [nodeFilter.feedstock, nodeFilter.product]);
+  useEffect(() => { setSelected([]); }, [nodeFilter.feedstock, nodeFilter.product]);
+  useEffect(() => { if (indicator !== "all" && scope !== "all" && indicatorDefinition(indicator)?.scope !== scope) setIndicator("all"); }, [scope, indicator]);
+  const openAdd = (preset: AddPreset) => { setAddPreset(preset); setAddOpen(true); };
+  const rowProps = (item: IndicatorValue) => ({ selected: selected.includes(item.id), onSelect: (checked: boolean) => toggle(item.id, checked), onDecision: (next: DecidedStatus) => setDecision({ ids: [item.id], status: next }), onCorrect: () => setCorrectId(item.id), onClear: () => setClearId(item.id) });
+
   return <>
-    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3"><div className="relative min-w-52 flex-1"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><Input className="h-8 pl-8 text-xs" placeholder="Search indicator values…" value={search} onChange={event => setSearch(event.target.value)} /></div><FilterSelect value={indicator} onChange={setIndicator} label="Indicator"><SelectItem value="all">All indicators</SelectItem>{INDICATORS.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</FilterSelect><FilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="accepted">Accepted</SelectItem><SelectItem value="rejected">Rejected</SelectItem></FilterSelect><FilterSelect value={pathway} onChange={setPathway} label="Pathway" className="w-64"><SelectItem value="all">All Pathways</SelectItem>{store.pathways.filter(nodeFilter.matchesPathway).map(item => <SelectItem key={item.id} value={item.id}>{shortPath(item)}</SelectItem>)}</FilterSelect><label className="flex h-8 items-center gap-2 whitespace-nowrap text-[10px] text-muted-foreground"><Switch className="h-5 w-9 [&>span]:h-4 [&>span]:w-4 data-[state=checked]:[&>span]:translate-x-4" checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label><div className="inline-flex rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "pathway" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("pathway")}>By pathway</Button></div></div>
+    <div className="flex flex-wrap items-center gap-2 border-b px-4 py-3">
+      <div className="relative min-w-52 flex-1"><Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" /><Input className="h-8 pl-8 text-xs" placeholder="Search indicator values…" value={search} onChange={event => setSearch(event.target.value)} /></div>
+      <FilterSelect value={scope} onChange={setScope} label="Scope"><SelectItem value="all">All scopes</SelectItem>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]}</SelectItem>)}</FilterSelect>
+      <FilterSelect value={indicator} onChange={setIndicator} label="Indicator" className="w-56"><SelectItem value="all">All indicators</SelectItem>{indicatorOptions.map(group => <SelectGroup key={group.scope}><SelectLabel className="text-[9px] uppercase tracking-widest">{SCOPE_LABELS[group.scope]}</SelectLabel>{group.indicators.map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectGroup>)}</FilterSelect>
+      <FilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="accepted">Accepted</SelectItem><SelectItem value="rejected">Rejected</SelectItem></FilterSelect>
+      <label className="flex h-8 items-center gap-2 whitespace-nowrap text-[10px] text-muted-foreground"><Switch className="h-5 w-9 [&>span]:h-4 [&>span]:w-4 data-[state=checked]:[&>span]:translate-x-4" checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label>
+      <div className="inline-flex rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-6 px-2 text-[10px]", view === "target" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("target")}>By target</Button></div>
+      <Button size="sm" className="ml-auto h-8 text-[10px]" onClick={() => openAdd(null)}><Plus className="mr-1 h-3 w-3" />Add value</Button>
+    </div>
     {selected.length > 0 && <div className="sticky top-0 z-10 flex items-center gap-2 border-b bg-background px-4 py-2 shadow-sm"><span className="text-xs font-medium">{selected.length} selected</span><Button variant="outline" size="sm" className="h-7 text-[10px] text-primary" onClick={() => setDecision({ ids: selected, status: "accepted" })}><Check className="mr-1 h-3 w-3" />Accept</Button><Button variant="outline" size="sm" className="h-7 text-[10px] text-destructive" onClick={() => setDecision({ ids: selected, status: "rejected" })}><X className="mr-1 h-3 w-3" />Reject</Button><Button variant="link" size="sm" className="h-7 text-[10px]" onClick={() => setSelected([])}>Clear selection</Button></div>}
-    {view === "flat" ? <div className="overflow-x-auto"><Table className="min-w-[1680px]"><IndicatorHeader showPathway checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>{filtered.map(item => row(item, true))}{filtered.length === 0 && <TableRow><TableCell colSpan={13} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}</TableBody></Table></div> : <div className="divide-y">{groups.map(group => <PathwayGroup key={group.path.id} path={group.path} rows={group.rows} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={setCorrectId} onClear={setClearId} />)}{groups.length === 0 && (nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>)}</div>}
+    {view === "flat"
+      ? <div className="overflow-x-auto"><Table className="min-w-[1880px]"><IndicatorHeader variant="flat" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>
+          {filtered.map(item => <IndicatorRow key={item.id} item={item} variant="flat" {...rowProps(item)} />)}
+          {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
+        </TableBody></Table></div>
+      : <div className="divide-y">
+          {scopeGroups.map(group => <ScopeGroup key={group.scope} scope={group.scope} rows={group.rows} targets={group.targets} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={setCorrectId} onClear={setClearId} onAdd={openAdd} />)}
+          {scopeGroups.length === 0 && (nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>)}
+        </div>}
     <DecisionDialog target={decision} onClose={() => setDecision(null)} afterSave={() => setSelected([])} />
     <CorrectDialog itemId={correctId} onClose={() => setCorrectId(null)} />
     <ClearDialog itemId={clearId} onClose={() => setClearId(null)} />
+    <AddValueDialog open={addOpen} preset={addPreset} onClose={() => { setAddOpen(false); setAddPreset(null); }} />
   </>;
 }
 
-function PathwayGroup({ path, rows, selected, onSelect, onDecision, onCorrect, onClear }: { path: Pathway; rows: IndicatorValue[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string) => void; onClear: (id: string) => void }) {
-  const pending = rows.filter(item => item.status === "review_pending").length; const [open, setOpen] = useState(pending > 0);
-  return <Collapsible open={open} onOpenChange={setOpen}><div className="flex items-center gap-3 bg-muted/30 px-4 py-3"><CollapsibleTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`${open ? "Collapse" : "Expand"} ${path.id}`}>{open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button></CollapsibleTrigger><div className="min-w-0 flex-1"><PathwayRef pathwayId={path.id} variant="card" showStatus={false} /></div><Badge variant="outline" className="h-5 text-[9px] font-normal">{pending} review pending</Badge></div><CollapsibleContent><div className="overflow-x-auto"><Table className="min-w-[1550px]"><IndicatorHeader showPathway={false} checked={rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>{rows.map(item => <IndicatorRow key={item.id} item={item} path={path} selected={selected.includes(item.id)} showPathway={false} onSelect={checked => onSelect(item.id, checked)} onDecision={next => onDecision(item.id, next)} onCorrect={() => onCorrect(item.id)} onClear={() => onClear(item.id)} />)}</TableBody></Table></div></CollapsibleContent></Collapsible>;
+function ScopeGroup({ scope, rows, targets, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; rows: IndicatorValue[]; targets: { key: string; target: IndicatorTarget; rows: IndicatorValue[] }[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
+  const pending = rows.filter(item => item.status === "review_pending").length;
+  const [open, setOpen] = useState(pending > 0);
+  return <Collapsible open={open} onOpenChange={setOpen}>
+    <div className="flex items-center gap-3 bg-muted/40 px-4 py-3">
+      <CollapsibleTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6" aria-label={`${open ? "Collapse" : "Expand"} ${SCOPE_LABELS[scope]} scope`}>{open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button></CollapsibleTrigger>
+      <ScopeChip scope={scope} /><span className="text-[10px] text-muted-foreground">{SCOPE_DESCRIPTIONS[scope]}</span>
+      <Badge variant="outline" className="ml-auto h-5 text-[9px] font-normal">{rows.length} value{rows.length === 1 ? "" : "s"}</Badge>
+      <Badge variant="outline" className="h-5 text-[9px] font-normal">{pending} review pending</Badge>
+    </div>
+    <CollapsibleContent>
+      <div className="divide-y">{targets.map(entry => <TargetGroup key={entry.key} scope={scope} target={entry.target} rows={entry.rows} selected={selected} onSelect={onSelect} onDecision={onDecision} onCorrect={onCorrect} onClear={onClear} onAdd={onAdd} />)}</div>
+    </CollapsibleContent>
+  </Collapsible>;
+}
+
+function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; target: IndicatorTarget; rows: IndicatorValue[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
+  const reference = { scope, target };
+  return <div>
+    <div className="flex flex-wrap items-center gap-3 bg-muted/15 px-6 py-2">
+      <div className="min-w-0 flex-1"><TargetRef iv={reference} /></div>
+      <AffectedPathways iv={reference} />
+    </div>
+    <div className="overflow-x-auto"><Table className="min-w-[1400px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
+      {indicatorsForScope(scope).map(definition => {
+        const item = rows.find(row => row.indicator_key === definition.key);
+        return item
+          ? <IndicatorRow key={definition.key} item={item} variant="grouped" selected={selected.includes(item.id)} onSelect={checked => onSelect(item.id, checked)} onDecision={next => onDecision(item.id, next)} onCorrect={() => onCorrect(item.id)} onClear={() => onClear(item.id)} />
+          : <NotComputedRow key={definition.key} label={definition.label} onAdd={() => onAdd({ scope, indicator_key: definition.key, target })} />;
+      })}
+    </TableBody></Table></div>
+  </div>;
 }
 
 function DecisionDialog({ target, onClose, afterSave }: { target: DecisionTarget; onClose: () => void; afterSave: () => void }) {
   const store = useHitlStore(); const [note, setNote] = useState(""); useEffect(() => { if (target) setNote(""); }, [target]);
   const first = target?.ids.length === 1 ? store.indicatorValues.find(item => item.id === target.ids[0]) : null;
   const save = () => { if (!target) return; target.ids.forEach(id => { const item = store.indicatorValues.find(row => row.id === id); if (item && item.status !== target.status) store.recordChange({ entity_type: "indicator_value", entity_id: id, field: "status", prior_value: item.status, new_value: target.status, operation: target.status === "accepted" ? "accept" : "reject", note: note.trim() || null }); }); toast.success(target.status === "accepted" ? "Value accepted." : "Value rejected. Displayed value is now empty."); afterSave(); onClose(); };
-  return <Dialog open={target !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>{target?.status === "accepted" ? "Accept indicator value" : "Reject indicator value"}</DialogTitle><DialogDescription>{first ? <span className="space-y-2"><span className="block">{first.indicator} · <ValueCell value={first.value} unit={first.value === null ? null : first.unit} /></span><PathwayRef pathwayId={first.pathway_id} variant="inline" /></span> : `${target?.ids.length ?? 0} values`}</DialogDescription></DialogHeader>{target && <div className="space-y-4"><ReviewStatusChip status={target.status} />{target.status === "rejected" && <p className="text-xs text-muted-foreground">Rejected values are retained in history. The platform displays no value (—) for this indicator until a correction is entered.</p>}<div><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Note (optional)</Label><Textarea className="mt-1 text-xs" value={note} onChange={event => setNote(event.target.value)} /></div></div>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={save}>Confirm</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={target !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>{target?.status === "accepted" ? "Accept indicator value" : "Reject indicator value"}</DialogTitle><DialogDescription>{first ? <span className="space-y-2"><span className="flex flex-wrap items-center gap-2"><ScopeChip scope={first.scope} /><span className="text-xs font-medium text-foreground">{indicatorLabel(first.indicator_key)}</span><ValueCell value={first.value} unit={first.value === null ? null : first.unit} /></span><TargetRef iv={first} /></span> : `${target?.ids.length ?? 0} values`}</DialogDescription></DialogHeader>{target && <div className="space-y-4"><ReviewStatusChip status={target.status} />{target.status === "rejected" && <p className="text-xs text-muted-foreground">Rejected values are retained in history. The platform displays no value (—) for this indicator until a correction is entered.</p>}<div><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Note (optional)</Label><Textarea className="mt-1 text-xs" value={note} onChange={event => setNote(event.target.value)} /></div></div>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button onClick={save}>Confirm</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function CorrectDialog({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
-  const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId); const [corrected, setCorrected] = useState(""); const [unit, setUnit] = useState(""); const [date, setDate] = useState(""); const [note, setNote] = useState("");
-  useEffect(() => { if (!item) return; setCorrected(item.corrected_value === null ? "" : String(item.corrected_value)); setUnit(item.unit ?? ""); setDate(format(new Date(), "yyyy-MM-dd")); setNote(item.correction_note ?? ""); }, [itemId]);
-  const save = () => { if (!item || corrected.trim() === "") return; const nextValue = Number(corrected); if (!Number.isFinite(nextValue)) return; const nextNote = note.trim() || null; const nextDate = new Date(`${date}T00:00:00.000Z`).toISOString(); const now = new Date().toISOString(); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: nextValue, operation: "update", note: nextNote }); if (nextNote !== item.correction_note) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "correction_note", prior_value: item.correction_note, new_value: nextNote, operation: "update", note: nextNote }); if (item.unit === null && unit.trim()) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "unit", prior_value: null, new_value: unit.trim(), operation: "update", note: nextNote }); if (nextDate !== item.value_date) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "value_date", prior_value: item.value_date, new_value: nextDate, operation: "update", note: nextNote }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: now, operation: "update", note: nextNote }); if (item.status !== "accepted") store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "accepted", operation: "accept", note: "corrected" }); toast.success("Correction saved. Displayed value updated. Benchmark scoring update queued."); onClose(); };
-  return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Correct indicator value</DialogTitle><DialogDescription>{item ? <span className="space-y-2"><span className="block">{item.indicator}</span><PathwayRef pathwayId={item.pathway_id} variant="inline" /></span> : "Enter a corrected value."}</DialogDescription></DialogHeader>{item && <div className="space-y-4"><div className="grid grid-cols-2 gap-3 rounded-md border p-3 text-xs"><div><span className="text-muted-foreground">Pipeline value</span><p className="font-semibold">{valueWithUnit(item.value, item.unit)}</p></div><div><span className="text-muted-foreground">Current corrected value</span><p className="font-semibold">{valueWithUnit(item.corrected_value, item.unit)}</p></div></div><div><Label htmlFor="corrected-value">Corrected value</Label><Input id="corrected-value" type="number" step="any" value={corrected} onChange={event => setCorrected(event.target.value)} /></div><div><Label htmlFor="correction-unit">Unit</Label>{item.unit !== null ? <p className="mt-1 text-xs"><ValueCell value={item.unit} /></p> : <Input id="correction-unit" value={unit} onChange={event => setUnit(event.target.value)} />}</div><div><Label htmlFor="correction-date">Value date</Label><Input id="correction-date" type="date" value={date} onChange={event => setDate(event.target.value)} /></div><div><Label htmlFor="correction-note">Note (optional)</Label><Textarea id="correction-note" value={note} onChange={event => setNote(event.target.value)} /></div></div>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={corrected.trim() === "" || !date} onClick={save}>Save correction</Button></DialogFooter></DialogContent></Dialog>;
+  const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId);
+  const definition = item ? indicatorDefinition(item.indicator_key) : undefined;
+  const [corrected, setCorrected] = useState(""); const [unit, setUnit] = useState(""); const [date, setDate] = useState(""); const [note, setNote] = useState("");
+  useEffect(() => { if (!item) return; setCorrected(item.corrected_value === null ? "" : String(item.corrected_value)); setUnit(item.unit ?? definition?.unit ?? ""); setDate(format(new Date(), "yyyy-MM-dd")); setNote(item.correction_note ?? ""); }, [itemId]);
+  const parsed = definition ? parseValue(corrected, definition.value_type) : { error: "Unknown indicator" };
+  const error = corrected.trim() === "" ? null : "error" in parsed ? parsed.error : null;
+  const save = () => {
+    if (!item || !("value" in parsed)) return;
+    const nextValue = parsed.value; const nextNote = note.trim() || null; const nextDate = new Date(`${date}T00:00:00.000Z`).toISOString(); const now = new Date().toISOString();
+    store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: nextValue, operation: "update", note: nextNote });
+    if (nextNote !== item.correction_note) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "correction_note", prior_value: item.correction_note, new_value: nextNote, operation: "update", note: nextNote });
+    if (item.unit === null && unit.trim()) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "unit", prior_value: null, new_value: unit.trim(), operation: "update", note: nextNote });
+    if (nextDate !== item.value_date) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "value_date", prior_value: item.value_date, new_value: nextDate, operation: "update", note: nextNote });
+    store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: now, operation: "update", note: nextNote });
+    if (item.status !== "accepted") store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "accepted", operation: "accept", note: "corrected" });
+    toast.success("Correction saved. Displayed value updated. Benchmark scoring update queued."); onClose();
+  };
+  return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Correct indicator value</DialogTitle><DialogDescription>{item ? <span className="space-y-2"><span className="flex flex-wrap items-center gap-2"><ScopeChip scope={item.scope} /><span className="text-xs font-medium text-foreground">{indicatorLabel(item.indicator_key)}</span></span><TargetRef iv={item} /></span> : "Enter a corrected value."}</DialogDescription></DialogHeader>
+    {item && <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 rounded-md border p-3 text-xs"><div><span className="text-muted-foreground">Pipeline value</span><p className="font-semibold">{valueWithUnit(item.value, item.unit)}</p></div><div><span className="text-muted-foreground">Current corrected value</span><p className="font-semibold">{valueWithUnit(item.corrected_value, item.unit)}</p></div></div>
+      <div><Label htmlFor="corrected-value">Corrected value</Label><Input id="corrected-value" type="number" step="any" value={corrected} onChange={event => setCorrected(event.target.value)} />{error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}</div>
+      <div><Label htmlFor="correction-unit">Unit</Label><Input id="correction-unit" value={unit} onChange={event => setUnit(event.target.value)} /></div>
+      <div><Label htmlFor="correction-date">Value date</Label><Input id="correction-date" type="date" value={date} onChange={event => setDate(event.target.value)} /></div>
+      <div><Label htmlFor="correction-note">Note (optional)</Label><Textarea id="correction-note" value={note} onChange={event => setNote(event.target.value)} /></div>
+    </div>}
+    <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={corrected.trim() === "" || Boolean(error) || !date} onClick={save}>Save correction</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function ClearDialog({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
   const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId); const nextDisplayed = item?.status === "rejected" ? null : item?.value ?? null;
   const save = () => { if (!item || item.corrected_value === null) return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: null, operation: "update", note: "Correction cleared" }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: null, operation: "update", note: "Correction cleared" }); toast.success("Correction cleared."); onClose(); };
   return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Clear correction</DialogTitle><DialogDescription>Clear the corrected value? It returns to null. Displayed value becomes <strong><ValueCell value={nextDisplayed} unit={nextDisplayed === null ? null : item?.unit} /></strong>.</DialogDescription></DialogHeader>{item?.corrected_at && <p className="text-xs text-muted-foreground">Current correction was saved {formatDistanceStrict(new Date(item.corrected_at), new Date(), { addSuffix: true })}.</p>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button variant="destructive" onClick={save}>Clear correction</Button></DialogFooter></DialogContent></Dialog>;
+}
+
+function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddPreset; onClose: () => void }) {
+  const store = useHitlStore();
+  const [step, setStep] = useState(1);
+  const [scope, setScope] = useState<IndicatorScope>("feedstock");
+  const [indicatorKey, setIndicatorKey] = useState("");
+  const [target, setTarget] = useState<IndicatorTarget>(emptyIndicatorTarget);
+  const [pathwaySearch, setPathwaySearch] = useState("");
+  const [value, setValue] = useState(""); const [unit, setUnit] = useState(""); const [date, setDate] = useState(""); const [note, setNote] = useState("");
+  const definition = indicatorDefinition(indicatorKey);
+  useEffect(() => {
+    if (!open) return;
+    setPathwaySearch(""); setValue(""); setNote(""); setDate(format(new Date(), "yyyy-MM-dd"));
+    if (preset) { setScope(preset.scope); setIndicatorKey(preset.indicator_key); setTarget(preset.target); setUnit(indicatorDefinition(preset.indicator_key)?.unit ?? ""); setStep(3); }
+    else { setScope("feedstock"); setIndicatorKey(""); setTarget(emptyIndicatorTarget); setUnit(""); setStep(1); }
+  }, [open, preset]);
+  useEffect(() => { if (definition) setUnit(current => current || definition.unit); }, [indicatorKey]);
+
+  const nodeOptions = (key: IndicatorTargetKey) => [...new Set(store.pathways.filter(pathway => pathway.status !== "deleted").map(pathway => pathway[targetToPathwayPosition[key]]))].sort((a, b) => a.localeCompare(b));
+  const setNode = (key: IndicatorTargetKey, next: string) => setTarget(current => ({ ...current, [key]: next || null }));
+  const targetKeys = SCOPE_TARGET_KEYS[scope];
+  const targetReady = targetKeys.every(key => Boolean(target[key]?.trim()));
+  const reference = { scope, target };
+  const affected = targetReady ? affectedPathwayIds(reference, store.pathways) : [];
+  const duplicate = definition && targetReady ? findIndicatorValue(store.indicatorValues, definition.key, target) : null;
+  const parsed = definition ? parseValue(value, definition.value_type) : { error: "Select an indicator" };
+  const valueError = value.trim() === "" ? null : "error" in parsed ? parsed.error : null;
+  const selectablePathways = store.pathways.filter(pathway => pathway.status !== "deleted" && [pathway.id, pathway.feedstock, pathway.process_technology, pathway.product, pathway.application_market].join(" ").toLowerCase().includes(pathwaySearch.toLowerCase()));
+  const chosenPathway = scope === "application" && targetReady ? store.pathways.find(pathway => sameIndicatorTarget(targetForPathway("application", pathway), target)) : undefined;
+
+  const save = () => {
+    if (!definition || !targetReady || duplicate || !("value" in parsed)) return;
+    const now = new Date().toISOString();
+    const id = `iv-${String(Math.max(0, ...store.indicatorValues.map(item => Number(item.id.match(/\d+/)?.[0] ?? 0))) + 1).padStart(3, "0")}`;
+    const trimmedTarget: IndicatorTarget = { feedstock: target.feedstock?.trim() || null, process: target.process?.trim() || null, product: target.product?.trim() || null, application: target.application?.trim() || null };
+    const record: IndicatorValue = {
+      id, created_at: now, updated_at: now, status_changed_at: now, last_actor: store.currentUser.name, trace_id: null,
+      indicator_key: definition.key, scope: definition.scope, target: trimmedTarget, value: null, unit: unit.trim() || definition.unit,
+      value_date: new Date(`${date}T00:00:00.000Z`).toISOString(), status: "accepted",
+      corrected_value: parsed.value, correction_note: note.trim() || null, corrected_at: now,
+    };
+    store.recordChange({ entity_type: "indicator_value", entity_id: id, field: null, prior_value: null, new_value: record, operation: "create", note: note.trim() || null });
+    toast.success(`${definition.label} added for ${targetLabel(record)} · affects ${affectedPathwayIds(record, store.pathways).length} pathways`);
+    onClose();
+  };
+  const openDuplicate = () => { onClose(); window.setTimeout(() => document.getElementById(`indicator-row-${duplicate?.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60); };
+
+  return <Dialog open={open} onOpenChange={next => { if (!next) onClose(); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+    <DialogHeader><DialogTitle>Add indicator value</DialogTitle><DialogDescription>{step === 1 ? "Choose the scope and indicator." : step === 2 ? "Define the target nodes." : "Enter the human value for this target."}</DialogDescription></DialogHeader>
+    {step === 1 && <div className="space-y-4">
+      <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scope</Label><Select value={scope} onValueChange={next => { setScope(next as IndicatorScope); setIndicatorKey(""); setTarget(emptyIndicatorTarget); }}><SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger><SelectContent>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]} · {SCOPE_DESCRIPTIONS[item]}</SelectItem>)}</SelectContent></Select></div>
+      <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Indicator</Label><Select value={indicatorKey} onValueChange={setIndicatorKey}><SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select indicator" /></SelectTrigger><SelectContent>{indicatorsForScope(scope).map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectContent></Select></div>
+    </div>}
+    {step === 2 && <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2"><ScopeChip scope={scope} /><span className="text-xs font-medium">{definition?.label}</span></div>
+      {scope === "application"
+        ? <div className="space-y-2">
+            <Input value={pathwaySearch} onChange={event => setPathwaySearch(event.target.value)} placeholder="Search pathways…" className="h-8 text-xs" />
+            <div className="max-h-52 space-y-1 overflow-y-auto rounded-md border p-1">{selectablePathways.map(pathway => <Button key={pathway.id} type="button" variant="ghost" className={cn("h-auto w-full justify-start px-2 py-1.5 text-left", chosenPathway?.id === pathway.id && "bg-muted")} onClick={() => setTarget(targetForPathway("application", pathway))}><PathwayRef pathwayId={pathway.id} variant="inline" /></Button>)}{selectablePathways.length === 0 && <p className="p-2 text-[10px] text-muted-foreground">No pathway matches this search.</p>}</div>
+            {chosenPathway && <PathwayRef pathwayId={chosenPathway.id} variant="card" />}
+          </div>
+        : <div className="space-y-3">{targetKeys.map(key => <NodeCombobox key={key} label={TARGET_POSITION_LABELS[key]} value={target[key] ?? ""} options={nodeOptions(key)} onChange={next => setNode(key, next)} />)}</div>}
+      {targetReady && <div className="flex flex-wrap items-center gap-2 rounded-md border p-3 text-[10px]"><span className="text-muted-foreground">Affects</span><AffectedPathways iv={reference} /></div>}
+      {duplicate && <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive"><span>Value exists for this target</span><Button variant="link" className="h-auto p-0 text-xs" onClick={openDuplicate}>Open</Button></div>}
+    </div>}
+    {step === 3 && <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2"><ScopeChip scope={scope} /><span className="text-xs font-medium">{definition?.label}</span></div>
+      <div className="rounded-md border p-3"><TargetRef iv={reference} /><div className="mt-2 flex items-center gap-2 text-[10px]"><span className="text-muted-foreground">Affects</span><AffectedPathways iv={reference} /></div></div>
+      {duplicate && <div className="flex items-center justify-between gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-2 text-xs text-destructive"><span>Value exists for this target</span><Button variant="link" className="h-auto p-0 text-xs" onClick={openDuplicate}>Open</Button></div>}
+      <div><Label htmlFor="add-value">Value</Label><Input id="add-value" type="number" step="any" value={value} onChange={event => setValue(event.target.value)} />{valueError && <p className="mt-1 text-[10px] text-destructive">{valueError}</p>}</div>
+      <div><Label htmlFor="add-unit">Unit</Label><Input id="add-unit" value={unit} onChange={event => setUnit(event.target.value)} /></div>
+      <div><Label htmlFor="add-date">Value date</Label><Input id="add-date" type="date" value={date} onChange={event => setDate(event.target.value)} /></div>
+      <div><Label htmlFor="add-note">Note (optional)</Label><Textarea id="add-note" value={note} onChange={event => setNote(event.target.value)} /></div>
+    </div>}
+    <DialogFooter>
+      {step > 1 && !preset && <Button variant="outline" onClick={() => setStep(current => current - 1)}>Back</Button>}
+      <Button variant="outline" onClick={onClose}>Cancel</Button>
+      {step < 3
+        ? <Button disabled={step === 1 ? !definition : !targetReady || Boolean(duplicate)} onClick={() => setStep(current => current + 1)}>Continue</Button>
+        : <Button disabled={!targetReady || Boolean(duplicate) || value.trim() === "" || Boolean(valueError) || !date} onClick={save}>Add value</Button>}
+    </DialogFooter>
+  </DialogContent></Dialog>;
 }
