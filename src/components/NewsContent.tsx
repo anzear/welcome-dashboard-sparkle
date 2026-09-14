@@ -220,12 +220,12 @@ const NewsContent = ({ articles, selectedFeedstock, selectedTechnology, selected
       );
     } else if (selectedType === 'technology') {
       tags.push(
-        { type: 'category', value: 'Technology', color: 'bg-product-blue text-product-blue-foreground' },
+        { type: 'category', value: 'Process', color: 'bg-product-blue text-product-blue-foreground' },
         { type: 'item', value: getDisplayName(article.technology[0], 'technology'), color: 'bg-product-blue/10 text-product-blue border border-product-blue/20' }
       );
     } else if (selectedType === 'applications') {
       tags.push(
-        { type: 'category', value: 'Market Application', color: 'bg-market-orange text-market-orange-foreground' },
+        { type: 'category', value: 'Application', color: 'bg-market-orange text-market-orange-foreground' },
         { type: 'item', value: getDisplayName(article.applications[0], 'application'), color: 'bg-market-orange/10 text-market-orange border border-market-orange/20' }
       );
     } else if (selectedType === 'products') {

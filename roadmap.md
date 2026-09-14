@@ -64,3 +64,10 @@
 - [x] Update Papers and Patents tables, scope filters, detail sheets, and node editor
 - [x] Update DOI and patent-ID linking plus audit, history, trace, queues, and global filters
 - [x] Verify per-Pathway scope, writes, filtering, responsive UI, and removal of record-level scope
+
+
+## Prompt 15 — Rename pathway node labels
+- [x] Centralise the four node labels in `NODE_LABELS`
+- [x] Replace legacy labels across Data Review and pathway views
+- [x] Update Excel template headers while accepting legacy headers
+- [x] Verify audit/history/URLs and both Excel header formats

@@ -661,7 +661,7 @@ const BriefCardsRow: React.FC<{
   }> = [
 
     { key: 'feedstock', label: 'Feedstock', Icon: Sprout },
-    { key: 'technology', label: 'Technology', Icon: FlaskConical },
+    { key: 'technology', label: 'Process', Icon: FlaskConical },
     { key: 'material', label: 'Material', Icon: Package },
     { key: 'application', label: 'Application', Icon: Target },
   ];

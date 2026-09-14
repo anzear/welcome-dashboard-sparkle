@@ -10,6 +10,13 @@ export interface EvidenceNodes {
   product: string | null;
   application_market: string | null;
 }
+export const NODE_LABELS = {
+  feedstock: "Feedstock",
+  process_technology: "Process",
+  product: "Product",
+  application_market: "Application",
+} as const satisfies Record<keyof EvidenceNodes, string>;
+
 export type IndicatorName = "GHG impact" | "Yield" | "Technology TRL" | "Pathway TRL" | "Feedstock availability" | "Price" | "EU market size" | "Global market size" | "CAGR";
 export type AuditEntityType = "pathway" | "company" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
@@ -233,9 +240,9 @@ export function scopeSummary(match: Pick<PaperPatentMatch, "matched_nodes">, pat
 }
 
 const rolePositions = {
-  feedstock_supplier: { positionKey: "feedstock", positionLabel: "Feedstock", verb: "Supplies" },
-  product_manufacturer: { positionKey: "product", positionLabel: "Product", verb: "Produces" },
-  application_offtaker: { positionKey: "application_market", positionLabel: "Application/Market", verb: "Offtakes" },
+  feedstock_supplier: { positionKey: "feedstock", positionLabel: NODE_LABELS.feedstock, verb: "Supplies" },
+  product_manufacturer: { positionKey: "product", positionLabel: NODE_LABELS.product, verb: "Produces" },
+  application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {

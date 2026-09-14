@@ -271,7 +271,7 @@ const ValueChainDetailModal = ({ isOpen, onClose, type }: ValueChainDetailModalP
     },
     technology: {
       icon: <TestTube className="w-6 h-6" />,
-      title: 'Technology (8)',
+      title: 'Process (8)',
       color: 'text-blue-700',
       bgColor: 'bg-blue-100',
       signal: 'neutral',
@@ -376,7 +376,7 @@ const ValueChainDetailModal = ({ isOpen, onClose, type }: ValueChainDetailModalP
                 <div className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-gradient-to-br from-white to-gray-50/30">
                   <img
                     src={type === 'technology' ? trlChartLeft : type === 'market' ? marketApplicationsChart : feedstockRegionsChart}
-                    alt={type === 'technology' ? 'TRL Distribution' : type === 'market' ? 'Market Applications Distribution' : 'Feedstock Regions'} 
+                    alt={type === 'technology' ? 'TRL Distribution' : type === 'market' ? 'Applications Distribution' : 'Feedstock Regions'} 
                     style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                   />
                 </div>
@@ -419,7 +419,7 @@ const ValueChainDetailModal = ({ isOpen, onClose, type }: ValueChainDetailModalP
                         {/* Column Headers */}
                         <TableRow className="border-b border-gray-200">
                           <TableHead className="font-semibold text-[10px] h-8 py-2 text-gray-700 uppercase tracking-wider text-center">
-                            Market Application ({marketData.length})
+                            Application ({marketData.length})
                           </TableHead>
                           <TableHead className="font-semibold text-[10px] h-8 py-2 text-gray-700 uppercase tracking-wider text-center">
                             <div className="flex items-center justify-center gap-0.5">

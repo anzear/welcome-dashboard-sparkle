@@ -12,6 +12,7 @@ import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
+import { NODE_LABELS } from '@/lib/hitlStore';
 
 
 const PathwayDetail = () => {
@@ -612,10 +613,10 @@ const PathwayDetail = () => {
                         </Popover>
                       </div>
                       {([
-                        { label: 'Feedstock', value: currentFeedstock, type: 'feedstock' as const, isAnchor: category === 'Feedstock' },
-                        { label: 'Process', value: currentTechnology, type: 'technology' as const, isAnchor: false },
-                        { label: 'Product', value: currentProduct, type: 'product' as const, isAnchor: category === 'Product' },
-                        { label: 'Application', value: currentApplication, type: 'application' as const, isAnchor: false },
+                        { label: NODE_LABELS.feedstock, value: currentFeedstock, type: 'feedstock' as const, isAnchor: category === NODE_LABELS.feedstock },
+                        { label: NODE_LABELS.process_technology, value: currentTechnology, type: 'technology' as const, isAnchor: false },
+                        { label: NODE_LABELS.product, value: currentProduct, type: 'product' as const, isAnchor: category === NODE_LABELS.product },
+                        { label: NODE_LABELS.application_market, value: currentApplication, type: 'application' as const, isAnchor: false },
                       ]).map((node, pi) => (
                         <div
                           key={pi}

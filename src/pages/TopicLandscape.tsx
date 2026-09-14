@@ -207,7 +207,7 @@ const TopicLandscape = () => {
         return "text-product-blue";
       case "Product":
         return "text-application-purple";
-      case "Market Application":
+      case "Application":
         return "text-orange-500";
       default:
         return "text-success";
@@ -527,7 +527,7 @@ const TopicLandscape = () => {
           iconColor: "text-application-purple",
           gradientColor: "from-application-purple/5"
         };
-      case "Market Application":
+      case "Application":
       case "Application":
         return {
           borderColor: "border-application-orange/30",

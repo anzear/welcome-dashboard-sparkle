@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { usePathwayGroups, GroupChips, DerivedGroupChips, GroupColorDot, groupChipClass, peekNextGroupColor, isSystemGroup, groupChipLabel, ANNEX_IX_A_GROUP_ID, type DerivedGroupChip, type PathwayGroup } from '@/components/pathwayGroups';
 import { ANNEX_IX_PATHWAYS, annexIxInfo } from '@/data/annexIx';
+import { NODE_LABELS } from '@/lib/hitlStore';
 import { Lock, X } from 'lucide-react';
 
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
@@ -1257,10 +1258,10 @@ if (sortBy === 'trl') {
 
               <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center">#</span>
               {([
-                { key: 'feedstock', label: 'Feedstock', green: false },
-                { key: 'technology', label: 'Process', green: false },
-                { key: 'product', label: 'Product', green: true },
-                { key: 'application', label: 'Application', green: false },
+                { key: 'feedstock', label: NODE_LABELS.feedstock, green: false },
+                { key: 'technology', label: NODE_LABELS.process_technology, green: false },
+                { key: 'product', label: NODE_LABELS.product, green: true },
+                { key: 'application', label: NODE_LABELS.application_market, green: false },
               ] as { key: SortKey; label: string; green: boolean }[]).map(({ key, label, green }) => (
 
                 <button
@@ -1539,7 +1540,7 @@ if (sortBy === 'trl') {
                       groups.get(k)!.push(row);
                     });
                   const groupByLabel = compressedGroupBy === 'feedstock' ? 'Feedstock'
-                    : compressedGroupBy === 'technology' ? 'Technology' : 'Application';
+                    : compressedGroupBy === 'technology' ? NODE_LABELS.process_technology : NODE_LABELS.application_market;
 
                   // Tree flowchart primitives (used per-group when display === 'tree').
                   const materialName = 'Lactic Acid';
@@ -2559,7 +2560,7 @@ if (sortBy === 'trl') {
               <Input value={newPathway.feedstock} onChange={(e) => setNewPathway({...newPathway, feedstock: e.target.value})} placeholder="e.g., Corn Cobs" />
             </div>
             <div className="space-y-2">
-              <Label>Technology *</Label>
+              <Label>Process *</Label>
               <Input value={newPathway.technology} onChange={(e) => setNewPathway({...newPathway, technology: e.target.value})} placeholder="e.g., Acid Hydrolysis" />
             </div>
             <div className="space-y-2">

@@ -1,4 +1,4 @@
-import type { Company, CompanyRole } from "@/lib/hitlStore";
+import { NODE_LABELS, type Company, type CompanyRole } from "@/lib/hitlStore";
 import type { PathwayNodeKey } from "@/components/hitl/PathwayRef";
 
 const labels: Record<CompanyRole, string> = {
@@ -8,9 +8,9 @@ const labels: Record<CompanyRole, string> = {
 };
 
 const positions = {
-  feedstock_supplier: { positionKey: "feedstock", positionLabel: "Feedstock", verb: "Supplies" },
-  product_manufacturer: { positionKey: "product", positionLabel: "Product", verb: "Produces" },
-  application_offtaker: { positionKey: "application_market", positionLabel: "Application/Market", verb: "Offtakes" },
+  feedstock_supplier: { positionKey: "feedstock", positionLabel: NODE_LABELS.feedstock, verb: "Supplies" },
+  product_manufacturer: { positionKey: "product", positionLabel: NODE_LABELS.product, verb: "Produces" },
+  application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } satisfies Record<CompanyRole, { positionKey: PathwayNodeKey; positionLabel: string; verb: string }>;
 
 export const companyRoleLabels = labels;

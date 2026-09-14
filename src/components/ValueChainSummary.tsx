@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { ChevronDown, Sprout, TestTube, Box, TrendingUp, ChevronRight, CheckCircle2, AlertCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NODE_LABELS } from "@/lib/hitlStore";
 
 interface ValueChainSummaryProps {
   productName: string;
@@ -17,7 +18,7 @@ const ValueChainSummary = ({ productName, onExpand, onCardClick }: ValueChainSum
   const summaryData = [
     {
       id: 'feedstock',
-      title: 'Feedstock',
+      title: NODE_LABELS.feedstock,
       icon: <Sprout className="w-5 h-5" />,
       signal: 'positive' as SignalType,
       total: 12,
@@ -30,7 +31,7 @@ const ValueChainSummary = ({ productName, onExpand, onCardClick }: ValueChainSum
     },
     {
       id: 'technology',
-      title: 'Technology',
+      title: NODE_LABELS.process_technology,
       icon: <TestTube className="w-5 h-5" />,
       signal: 'neutral' as SignalType,
       total: 8,
