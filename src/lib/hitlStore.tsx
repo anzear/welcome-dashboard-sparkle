@@ -50,6 +50,10 @@ export interface PaperPatentMatch extends CommonRecord {
   status: ReviewStatus;
   matched_at: string;
   note: string | null;
+  year: number | null;
+  authors_or_assignee: string | null;
+  abstract: string | null;
+  source: "Semantic Scholar" | "USPTO" | null;
 }
 export interface IndicatorValue extends CommonRecord {
   pathway_id: string;
@@ -139,9 +143,21 @@ const seedCompanyMatches: CompanyMatch[] = Array.from({ length: 12 }, (_, index)
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
-const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => ({
-  ...common(`pp-${String(index + 1).padStart(3, "0")}`, 13 - (index % 7)), kind: index % 2 === 0 ? "paper" : "patent", external_id: index % 2 === 0 ? `10.1016/j.biortech.202${index}.10${index}42` : `EP${3201400 + index}A1`, title: index % 2 === 0 ? `Process performance for bioeconomy pathway ${index + 1}` : `Integrated conversion process for renewable intermediates ${index + 1}`, pathway_id: seedPathways[index % seedPathways.length].id, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
-}));
+const paperTitles = ["Enzymatic fractionation of agricultural residues for advanced biorefineries", "Fermentative conversion of side streams into renewable platform chemicals", "Process intensification routes for circular bio-based production"];
+const patentTitles = ["Integrated conversion process for renewable intermediates", "Continuous fermentation system for bio-based organic acids", "Catalytic upgrading of lignocellulosic feedstocks"];
+const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => {
+  const kind = index % 2 === 0 ? "paper" : "patent";
+  return {
+    ...common(`pp-${String(index + 1).padStart(3, "0")}`, 13 - (index % 7)), kind,
+    external_id: kind === "paper" ? `10.1016/j.biortech.202${index}.10${index}42` : `EP${3201400 + index}A1`,
+    title: kind === "paper" ? paperTitles[(index / 2) % paperTitles.length] : patentTitles[Math.floor(index / 2) % patentTitles.length],
+    pathway_id: seedPathways[index % seedPathways.length].id, status: ppStatuses[index], matched_at: iso(10 + (index % 5)), note: index % 5 === 0 ? "Check pathway specificity" : null,
+    year: index === 6 ? null : 2019 + (index % 6),
+    authors_or_assignee: index === 9 ? null : kind === "paper" ? ["M. Novak, L. Weber, S. Chen", "A. Rossi, J. Lindström", "E. García, P. Müller"][index % 3] : ["BASF SE", "Novozymes A/S", "Fraunhofer-Gesellschaft"][index % 3],
+    abstract: index === 4 ? null : kind === "paper" ? "This study evaluates integrated conversion routes for residual biomass, focusing on resource efficiency, product yield and industrial scale-up constraints." : "A process and apparatus for converting renewable feedstocks into purified bio-based intermediates using an integrated reaction and separation sequence.",
+    source: index === 11 ? null : kind === "paper" ? "Semantic Scholar" : "USPTO",
+  };
+});
 
 const indicators: IndicatorName[] = ["GHG impact", "Yield", "Technology TRL", "Pathway TRL", "Feedstock availability", "Price", "EU market size", "Global market size", "CAGR"];
 const units: Record<IndicatorName, string> = { "GHG impact": "kg CO₂e/t", Yield: "%", "Technology TRL": "TRL", "Pathway TRL": "TRL", "Feedstock availability": "kt/yr", Price: "€/t", "EU market size": "€m", "Global market size": "€m", CAGR: "%" };
