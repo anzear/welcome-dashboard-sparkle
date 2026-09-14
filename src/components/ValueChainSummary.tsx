@@ -30,7 +30,7 @@ const ValueChainSummary = ({ productName, onExpand, onCardClick }: ValueChainSum
     },
     {
       id: 'technology',
-      title: 'Technology',
+      title: 'Process',
       icon: <TestTube className="w-5 h-5" />,
       signal: 'neutral' as SignalType,
       total: 8,

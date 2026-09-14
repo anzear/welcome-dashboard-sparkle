@@ -75,7 +75,7 @@ export const ValueChainMarketDetail: React.FC<ValueChainMarketDetailProps> = ({
           <div className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-gradient-to-br from-white to-gray-50/30">
             <img
               src={marketApplicationsChart}
-              alt="Market Applications Distribution"
+              alt="Applications Distribution"
               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
             />
           </div>
@@ -88,7 +88,7 @@ export const ValueChainMarketDetail: React.FC<ValueChainMarketDetailProps> = ({
               <TableHeader className="sticky top-0 bg-gradient-to-b from-gray-100 to-gray-50 z-10">
                 <TableRow className="border-b border-gray-300">
                   <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-gray-800 uppercase tracking-wider text-left">
-                    Market Application
+                    Application
                   </TableHead>
                   {category !== 'Feedstock' && (
                     <>

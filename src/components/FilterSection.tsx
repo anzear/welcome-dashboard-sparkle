@@ -101,7 +101,7 @@ const FilterSection = ({ title, options, selectedItems, onToggleSelection, onClo
           iconColor: "text-application-purple",
           gradientColor: "from-application-purple/5"
         };
-      case "Market Application":
+      case "Application":
       case "Application":
         return {
           borderColor: "border-application-orange/30",

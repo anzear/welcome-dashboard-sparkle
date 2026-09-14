@@ -1539,7 +1539,7 @@ if (sortBy === 'trl') {
                       groups.get(k)!.push(row);
                     });
                   const groupByLabel = compressedGroupBy === 'feedstock' ? 'Feedstock'
-                    : compressedGroupBy === 'technology' ? 'Technology' : 'Application';
+                    : compressedGroupBy === 'technology' ? 'Process' : 'Application';
 
                   // Tree flowchart primitives (used per-group when display === 'tree').
                   const materialName = 'Lactic Acid';
