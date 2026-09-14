@@ -30,3 +30,8 @@
 - [x] Prompt 9: Add Required and New node states with case-normalization
 - [x] Prompt 9: Preserve duplicate checks, consequences and import badges
 - [x] Prompt 9: Validate new, existing and empty node input behavior
+- [ ] Prompt 10: Add URL-persisted Feedstock and Product filter context and bar
+- [ ] Prompt 10: Filter six sections, queue counts and dependent Pathway options
+- [ ] Prompt 10: Add filtered profile counts, audit resolution and empty states
+- [ ] Prompt 10: Clear bulk selections on global filter changes
+- [ ] Prompt 10: Validate persistence, dependent options and all section results
