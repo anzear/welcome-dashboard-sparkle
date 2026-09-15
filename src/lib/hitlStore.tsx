@@ -1,7 +1,23 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export type ReviewStatus = "approved" | "rejected" | "review_pending";
-export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
+export type ReviewStatus = "review_pending" | "approved" | "rejected";
+export type PathwayAvailability = "active" | "locked" | "hidden" | "deleted";
+export const PATHWAY_AVAILABILITIES: PathwayAvailability[] = ["active", "locked", "hidden", "deleted"];
+export const AVAILABILITY_MEANINGS: Record<PathwayAvailability, string> = {
+  active: "Visible and usable.",
+  locked: "Visible to users but not usable.",
+  hidden: "Not visible in Pathway Explorer, counts or benchmarks.",
+  deleted: "Soft-deleted, retained with history.",
+};
+// Legacy pathway status values migrated onto the unified review status plus availability.
+type LegacyPathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted" | ReviewStatus;
+export const migratePathwayStatus = (status: LegacyPathwayStatus): { status: ReviewStatus; availability: PathwayAvailability } => {
+  if (status === "locked") return { status: "approved", availability: "locked" };
+  if (status === "hidden") return { status: "approved", availability: "hidden" };
+  if (status === "deleted") return { status: "approved", availability: "deleted" };
+  if (status === "needs_approval") return { status: "review_pending", availability: "active" };
+  return { status, availability: "active" };
+};
 export type VisibilityScope = "all" | string[];
 export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
