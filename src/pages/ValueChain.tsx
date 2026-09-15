@@ -871,14 +871,6 @@ const FeedstockSnapshotSection: React.FC<{
                 <StageDot stage={s} /> {STAGE_META[s].label}
               </span>
             ))}
-            <span className="inline-flex items-center gap-1.5 pl-2 ml-1 border-l border-border/60">
-              <span className="inline-flex items-end gap-1">
-                <span className="inline-block rounded-full border border-slate-400/70" style={{ width: 5, height: 5 }} />
-                <span className="inline-block rounded-full border border-slate-400/70" style={{ width: 8, height: 8 }} />
-                <span className="inline-block rounded-full border border-slate-400/70" style={{ width: 12, height: 12 }} />
-              </span>
-              <span className="text-muted-foreground/80"># pathways</span>
-            </span>
 
 
 
