@@ -135,3 +135,5 @@
 - [x] Prompt 30 — Editable company evidence across review, editing, and creation
 
 - [x] Prompt 31 — Rename user-visible company Evidence labels to Relevance with legacy import support
+
+- [ ] Prompt 32 — Add direct row and bulk revert actions to Audit Log, complete field labels, and correct audit seeds.
