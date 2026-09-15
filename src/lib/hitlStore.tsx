@@ -17,7 +17,43 @@ export const NODE_LABELS = {
   product: "Product",
   application_market: "Application",
 } as const satisfies Record<keyof EvidenceNodes, string>;
-export const FIELD_LABELS: Record<string, string> = { evidence: "Relevance" };
+export const FIELD_LABELS: Record<string, string> = {
+  status: "Status",
+  note: "Note",
+  visibility_scope: "Visibility",
+  feedstock: "Feedstock",
+  process_technology: "Process",
+  product: "Product",
+  application_market: "Application",
+  group_id: "Group",
+  "nodes.feedstock": "Feedstock",
+  "nodes.process": "Process",
+  "nodes.product": "Product",
+  "nodes.application": "Application",
+  name: "Name",
+  website: "Website",
+  registry_id: "Registry ID",
+  hq_city: "HQ city",
+  country: "Country",
+  role: "Role",
+  role_node: "Role node",
+  evidence: "Relevance",
+  "secondary_nodes.feedstock": "Secondary feedstock",
+  "secondary_nodes.process_technology": "Secondary process",
+  "secondary_nodes.product": "Secondary product",
+  "secondary_nodes.application_market": "Secondary application",
+  "profile_fields.employees": "Employees",
+  "profile_fields.founded": "Founded",
+  color_token: "Colour",
+  description: "Description",
+  is_archived: "Archived",
+  value: "Value",
+  unit: "Unit",
+  value_date: "Value date",
+  corrected_value: "Corrected value",
+  correction_note: "Correction note",
+  corrected_at: "Corrected at",
+};
 export interface MatchNodes {
   feedstock: string | null;
   process: string | null;
@@ -455,10 +491,11 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
 // audit-004 is already reverted by audit-005.
 const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "needs_approval", "update", { note: "Flagged for a final definition check" }),
-  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-002", "update"),
+  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-001", "update"),
+  auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"),
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
-  auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "accepted", "review_pending", "update", { note: "Evidence requires verification" }),
+  auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
   auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
@@ -467,7 +504,7 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
-  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "link_add"),
+  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];
