@@ -84,6 +84,7 @@ export function PathwaysSection() {
 }
 
 function Cell({ children }: { children: React.ReactNode }) { return <TableCell className="max-w-48 truncate text-[10px]" title={String(children)}>{children}</TableCell>; }
+function SimpleSelect({ value, onChange, label, children, className }: { value: string; onChange: (value: string) => void; label: string; children: React.ReactNode; className?: string }) { return <Select value={value} onValueChange={onChange}><SelectTrigger aria-label={label} className={cn("h-8 w-40 text-[10px]", className)}><SelectValue /></SelectTrigger><SelectContent>{children}</SelectContent></Select>; }
 function BulkStatus({ onChoose }: { onChoose: (status: PathwayStatus) => void }) { return <DropdownMenu><DropdownMenuTrigger asChild><Button variant="outline" size="sm" className="h-7 text-[10px]">Set status <ChevronDown className="ml-1 h-3 w-3" /></Button></DropdownMenuTrigger><DropdownMenuContent>{statusActions.map(action => <DropdownMenuItem key={action.status} onSelect={() => onChoose(action.status)}>{action.verb}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>; }
 
 function NodeCombobox({ label, value, options, onChange }: { label: string; value: string; options: string[]; onChange: (value: string) => void }) {
