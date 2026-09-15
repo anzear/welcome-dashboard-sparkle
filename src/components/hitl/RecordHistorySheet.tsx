@@ -10,6 +10,7 @@ import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { PathwayRef } from "./PathwayRef";
 import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
+import { SourcesPopover } from "./IndicatorSources";
 import { FIELD_LABELS, groupById, indicatorLabel, methodTagLabel, useHitlStore, type AuditEntityType, type AuditEntry, type Company, type Group, type HitlRecord, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { GroupChip } from "./GroupChip";
 import { cn } from "@/lib/utils";
@@ -94,7 +95,7 @@ export function RecordHistorySheet() {
       <SheetContent className="flex w-[min(94vw,680px)] flex-col gap-0 p-0 sm:max-w-[680px]">
         {target && <>
           <SheetHeader className="border-b px-5 py-4 pr-12">
-             <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code>{indicatorValue && <span className="inline-flex h-6 items-center whitespace-nowrap rounded-md bg-muted px-2 text-xs text-muted-foreground">Method: {methodTagLabel(indicatorValue.method_tag)}</span>}</div>
+             <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code>{indicatorValue && <span className="inline-flex h-6 items-center whitespace-nowrap rounded-md bg-muted px-2 text-xs text-muted-foreground">Method: {methodTagLabel(indicatorValue.method_tag)}</span>}{indicatorValue && indicatorValue.sources.length > 0 && <SourcesPopover sources={indicatorValue.sources} />}</div>
              <SheetDescription className="text-xs">{target.entity_type === "pathway" ? <PathwayRef pathwayId={target.entity_id} variant="card" /> : group ? <GroupChip group={group} /> : company ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{company.name}</span><RoleNodeLine company={company} compact /></span> : evidence ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{evidence.title}</span><span className="flex flex-wrap items-center gap-1"><NodeChips nodes={evidence.nodes} compact /><DerivedPathwaysForRecord match={evidence} /><ScopeSummary match={evidence} /></span></span> : indicatorValue ? <span className="space-y-2"><span className="flex flex-wrap items-center gap-2"><ScopeChip scope={indicatorValue.scope} /><span className="font-medium text-foreground">{indicatorLabel(indicatorValue.indicator_key)}</span></span><TargetRef iv={indicatorValue} /></span> : <><span className="block truncate">{summary(record, target.entity_type)}</span>{relatedPathwayId && <span className="mt-2 block"><PathwayRef pathwayId={relatedPathwayId} variant="inline" /></span>}</>}</SheetDescription>
              {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span></div>}
           </SheetHeader>

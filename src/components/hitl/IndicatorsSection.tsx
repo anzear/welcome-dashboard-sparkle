@@ -176,7 +176,7 @@ export function IndicatorsSection() {
     return direct || affectedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id));
   };
   const filtered = useMemo(() => store.indicatorValues.filter(item => {
-    const haystack = [indicatorLabel(item.indicator_key), targetSearchText(item.target), item.correction_note, item.justification].join(" ").toLowerCase();
+    const haystack = [indicatorLabel(item.indicator_key), targetSearchText(item.target), item.correction_note, item.justification, ...item.sources.flatMap(source => [source.label ?? "", source.url])].join(" ").toLowerCase();
     return passesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (scope === "all" || item.scope === scope) && (indicator === "all" || item.indicator_key === indicator) && (status === "all" || item.status === status) && (!staleOnly || isStale(item));
   }).sort((a, b) => (a.status === "review_pending" ? 0 : 1) - (b.status === "review_pending" ? 0 : 1) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime() || INDICATOR_SCOPES.indexOf(a.scope) - INDICATOR_SCOPES.indexOf(b.scope) || targetLabel(a).localeCompare(targetLabel(b)) || INDICATORS.findIndex(item => item.key === a.indicator_key) - INDICATORS.findIndex(item => item.key === b.indicator_key)),
     [store.indicatorValues, store.pathways, search, scope, indicator, status, staleOnly, nodeFilter.feedstock, nodeFilter.product]);
