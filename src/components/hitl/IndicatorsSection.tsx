@@ -153,6 +153,7 @@ function ComputedIndicatorRow({ variant, scope, indicatorKey, target }: { varian
     <TableCell className="whitespace-nowrap text-[10px] font-normal text-foreground">{count} {definition?.unit}</TableCell>
     <TableCell className="text-[10px] italic">Computed from matched records</TableCell>
     <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
     <TableCell className="min-w-[9.5rem] whitespace-nowrap"><ComputedChip /></TableCell>
     <TableCell className="text-[10px]">—</TableCell>
     <TableCell className="text-[10px]">—</TableCell>
@@ -230,21 +231,21 @@ export function IndicatorsSection() {
       ? <div className="overflow-x-auto"><Table className="min-w-[1740px]"><IndicatorHeader variant="flat" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>
           {filtered.map(item => <IndicatorRow key={item.id} item={item} variant="flat" {...rowProps(item)} />)}
             {computedRows.map(row => <ComputedIndicatorRow key={row.key} variant="flat" scope={row.scope} indicatorKey={row.indicator_key} target={row.target} />)}
-            {filtered.length === 0 && computedRows.length === 0 && <TableRow><TableCell colSpan={15} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
+            {filtered.length === 0 && computedRows.length === 0 && <TableRow><TableCell colSpan={16} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
         </TableBody></Table></div>
       : <div className="divide-y">
-           {scopeGroups.map(group => <ScopeGroup key={group.scope} scope={group.scope} rows={group.rows} targets={group.targets} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={(id, focus = false) => { setFocusJustification(focus); setCorrectId(id); }} onClear={setClearId} onAdd={openAdd} />)}
+           {scopeGroups.map(group => <ScopeGroup key={group.scope} scope={group.scope} rows={group.rows} targets={group.targets} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={(id, focus = false, sources = false) => { setFocusJustification(focus); setFocusSources(sources); setCorrectId(id); }} onClear={setClearId} onAdd={openAdd} />)}
           {scopeGroups.length === 0 && (nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>)}
         </div>}
     <DecisionDialog target={decision} onClose={() => setDecision(null)} afterSave={() => setSelected([])} />
-    <CorrectDialog itemId={correctId} focusJustification={focusJustification} onClose={() => setCorrectId(null)} />
+    <CorrectDialog itemId={correctId} focusJustification={focusJustification} focusSources={focusSources} onClose={() => setCorrectId(null)} />
     <ClearDialog itemId={clearId} onClose={() => setClearId(null)} />
     <AddValueDialog open={addOpen} preset={addPreset} onClose={() => { setAddOpen(false); setAddPreset(null); }} />
     <BulkAddIndicatorValuesDialog open={bulkAddOpen} onClose={() => setBulkAddOpen(false)} onOpenRecord={id => { setBulkAddOpen(false); window.setTimeout(() => document.getElementById(`indicator-row-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60); }} />
   </>;
 }
 
-function ScopeGroup({ scope, rows, targets, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; rows: IndicatorValue[]; targets: { key: string; target: IndicatorTarget; rows: IndicatorValue[] }[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string, focusJustification?: boolean) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
+function ScopeGroup({ scope, rows, targets, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; rows: IndicatorValue[]; targets: { key: string; target: IndicatorTarget; rows: IndicatorValue[] }[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string, focusJustification?: boolean, focusSources?: boolean) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
   const pending = rows.filter(item => item.status === "review_pending").length;
   const [open, setOpen] = useState(pending > 0);
   return <Collapsible open={open} onOpenChange={setOpen}>
@@ -260,7 +261,7 @@ function ScopeGroup({ scope, rows, targets, selected, onSelect, onDecision, onCo
   </Collapsible>;
 }
 
-function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; target: IndicatorTarget; rows: IndicatorValue[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string, focusJustification?: boolean) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
+function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCorrect, onClear, onAdd }: { scope: IndicatorScope; target: IndicatorTarget; rows: IndicatorValue[]; selected: string[]; onSelect: (id: string, checked: boolean) => void; onDecision: (id: string, status: DecidedStatus) => void; onCorrect: (id: string, focusJustification?: boolean, focusSources?: boolean) => void; onClear: (id: string) => void; onAdd: (preset: AddPreset) => void }) {
   const reference = { scope, target };
   return <div>
     <div className="flex flex-wrap items-center gap-3 bg-muted/15 px-6 py-2">
@@ -298,7 +299,7 @@ function UnitPicker({ id, definition, value, onChange, storedUnit }: { id: strin
   </div>;
 }
 
-function CorrectDialog({ itemId, focusJustification, onClose }: { itemId: string | null; focusJustification: boolean; onClose: () => void }) {
+function CorrectDialog({ itemId, focusJustification, focusSources, onClose }: { itemId: string | null; focusJustification: boolean; focusSources?: boolean; onClose: () => void }) {
   const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId);
   const definition = item ? indicatorDefinition(item.indicator_key) : undefined;
   const [corrected, setCorrected] = useState(""); const [unit, setUnit] = useState(""); const [date, setDate] = useState(""); const [note, setNote] = useState(""); const [justification, setJustification] = useState(""); const [methodTag, setMethodTag] = useState<MethodTag | "">(""); const [methodDetail, setMethodDetail] = useState("");
