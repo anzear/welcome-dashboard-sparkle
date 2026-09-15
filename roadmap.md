@@ -131,3 +131,5 @@
 - [x] Prompt 28 — Shared three-row SectionToolbar across all Data Review sections
 
 - [x] Prompt 29 — Remove all trace UI while preserving trace_id data and dev writes
+
+- [ ] Prompt 30 — Editable company evidence across review, editing, and creation
