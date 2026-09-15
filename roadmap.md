@@ -139,4 +139,5 @@
 - [x] Prompt 32 — Add direct row and bulk revert actions to Audit Log, complete field labels, and correct audit seeds.
 
 - [x] Prompt 33 — Add indicator justification and edit-only method across tables, dialogs, review, and history.
-- [ ] Prompt 34 — Bulk add indicator values
+- [x] Prompt 34 — Bulk add indicator values
+- [x] Remove “IP” from value-chain summary card labels
