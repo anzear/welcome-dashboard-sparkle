@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export type ReviewStatus = "accepted" | "rejected" | "review_pending";
+export type ReviewStatus = "approved" | "rejected" | "review_pending";
 export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
 export type VisibilityScope = "all" | string[];
 export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
@@ -97,7 +97,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
-export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
+export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -268,12 +268,12 @@ const companyRows = [
 ] as const;
 const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewStatus; secondary_nodes: EvidenceNodes; evidence: string | null; note: string | null }[] = [
   { role: "feedstock_supplier", pathway: 0, status: "rejected", secondary_nodes: { feedstock: null, process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: "Confirm commercial activity in Europe" },
-  { role: "product_manufacturer", pathway: 1, status: "accepted", secondary_nodes: { feedstock: "Kraft lignin", process_technology: "Fermentation", product: null, application_market: null }, evidence: null, note: null },
+  { role: "product_manufacturer", pathway: 1, status: "approved", secondary_nodes: { feedstock: "Kraft lignin", process_technology: "Fermentation", product: null, application_market: null }, evidence: null, note: null },
   { role: "application_offtaker", pathway: 2, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: "Lactic acid", application_market: null }, evidence: null, note: null },
   { role: "feedstock_supplier", pathway: 3, status: "rejected", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: "Company product page and registry filing", note: null },
-  { role: "product_manufacturer", pathway: 4, status: "accepted", secondary_nodes: { feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: null, application_market: "Bio-based polymers" }, evidence: null, note: "Confirm commercial activity in Europe" },
+  { role: "product_manufacturer", pathway: 4, status: "approved", secondary_nodes: { feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: null, application_market: "Bio-based polymers" }, evidence: null, note: "Confirm commercial activity in Europe" },
   { role: "application_offtaker", pathway: 5, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
-  { role: "feedstock_supplier", pathway: 6, status: "accepted", secondary_nodes: { feedstock: null, process_technology: "Fermentation", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: null },
+  { role: "feedstock_supplier", pathway: 6, status: "approved", secondary_nodes: { feedstock: null, process_technology: "Fermentation", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: null },
   { role: "product_manufacturer", pathway: 7, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
 ];
 const seedCompanies: Company[] = companyRows.map((row, index) => {
@@ -285,7 +285,7 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], source_url: row[4], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
-const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
+const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
 const paperTitles = ["Enzymatic fractionation of agricultural residues for advanced biorefineries", "Fermentative conversion of side streams into renewable platform chemicals", "Process intensification routes for circular bio-based production"];
 const patentTitles = ["Integrated conversion process for renewable intermediates", "Continuous fermentation system for bio-based organic acids", "Catalytic upgrading of lignocellulosic feedstocks"];
 const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => {
@@ -453,28 +453,28 @@ export function targetForPathway(scope: IndicatorScope, pathway: Pick<Pathway, P
 type IndicatorSeed = [id: string, key: string, pathwayIndex: number, value: number | null, status: ReviewStatus, day: number];
 const indicatorSeeds: IndicatorSeed[] = [
   ["iv-001", "feedstock_price", 0, 82.5, "review_pending", 14],
-  ["iv-002", "feedstock_availability", 0, 1250, "accepted", 13],
+  ["iv-002", "feedstock_availability", 0, 1250, "approved", 13],
   ["iv-003", "production_ip_count", 0, 0, "review_pending", 12],
-  ["iv-004", "process_trl", 2, 7, "accepted", 12],
-  ["iv-005", "product_price", 2, 1480, "accepted", 11],
+  ["iv-004", "process_trl", 2, 7, "approved", 12],
+  ["iv-005", "product_price", 2, 1480, "approved", 11],
   ["iv-006", "product_availability", 2, 310, "review_pending", 11],
   ["iv-007", "market_size_eu", 2, null, "review_pending", 10],
-  ["iv-008", "market_size_global", 2, 4200, "accepted", 10],
+  ["iv-008", "market_size_global", 2, 4200, "approved", 10],
   ["iv-009", "market_growth_eu", 2, -1.4, "review_pending", 9],
-  ["iv-010", "market_growth_global", 2, 4.6, "accepted", 9],
-  ["iv-011", "market_concentration", 2, 0.42, "accepted", 8],
+  ["iv-010", "market_growth_global", 2, 4.6, "approved", 9],
+  ["iv-011", "market_concentration", 2, 0.42, "approved", 8],
   ["iv-012", "production_trl", 2, 6, "review_pending", 8],
-  ["iv-013", "production_research_count", 2, 128, "accepted", 7],
+  ["iv-013", "production_research_count", 2, 128, "approved", 7],
   ["iv-014", "application_trl", 2, 5, "review_pending", 7],
-  ["iv-015", "application_ip_count", 2, 34, "accepted", 6],
+  ["iv-015", "application_ip_count", 2, 34, "approved", 6],
   ["iv-016", "application_research_count", 2, 12, "rejected", 6],
   ["iv-017", "product_price", 0, 640, "review_pending", 5],
-  ["iv-018", "product_availability", 0, null, "accepted", 5],
-  ["iv-019", "feedstock_price", 4, 44, "accepted", 4],
+  ["iv-018", "product_availability", 0, null, "approved", 5],
+  ["iv-019", "feedstock_price", 4, 44, "approved", 4],
   ["iv-020", "process_trl", 1, 4, "review_pending", 4],
-  ["iv-021", "application_trl", 0, 8, "accepted", 3],
-  ["iv-022", "production_trl", 0, 7, "accepted", 3],
-  ["iv-023", "production_ip_count", 2, 210, "accepted", 2],
+  ["iv-021", "application_trl", 0, 8, "approved", 3],
+  ["iv-022", "production_trl", 0, 7, "approved", 3],
+  ["iv-023", "production_ip_count", 2, 210, "approved", 2],
   ["iv-024", "application_ip_count", 0, 76, "review_pending", 2],
   ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
 ];
@@ -532,7 +532,7 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
-  auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
+  auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
   auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 1900, null, "update", { note: "Source no longer reports this value" }),
@@ -540,7 +540,7 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
-  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "update"),
+  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "approved", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];

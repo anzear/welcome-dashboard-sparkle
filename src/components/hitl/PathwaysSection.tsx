@@ -120,7 +120,7 @@ function PathwayDialog({ open, pathway, groups, pathways, onClose, onDuplicate, 
     const note = changedNodes.length ? impact === "rerun" ? "Re-run matching after node change" : impact === "keep" ? "Keep accepted decisions; re-run remaining matches" : "flagged after node change" : null;
     changedNodes.forEach(key => store.recordChange({ entity_type: "pathway", entity_id: pathway.id, field: key, prior_value: pathway[key], new_value: trimmed[key], operation: "update", note }));
     if (draft.group_id !== pathway.group_id) store.recordChange({ entity_type: "pathway", entity_id: pathway.id, field: "group_id", prior_value: pathway.group_id, new_value: draft.group_id, operation: "update" });
-    if (changedNodes.length) applicationScoped.forEach(item => { if (impact === "keep" && item.status === "accepted") return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "review_pending", operation: "update", note }); });
+    if (changedNodes.length) applicationScoped.forEach(item => { if (impact === "keep" && item.status === "approved") return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "review_pending", operation: "update", note }); });
     toast.success(changedNodes.length ? `Pathway updated; ${applicationScoped.length} Application-scope indicator values processed.` : "Pathway updated."); onClose();
   };
   const ready = (Object.keys(nodeLabels) as NodeKey[]).every(key => draft[key].trim());

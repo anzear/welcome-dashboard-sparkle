@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import type { AuditOperation, PathwayStatus, ReviewStatus } from "@/lib/hitlStore";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
-  accepted: { label: "Accepted", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
+  accepted: { label: "Approved", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
   rejected: { label: "Rejected", icon: X, className: "border-destructive/25 bg-destructive/10 text-destructive" },
   review_pending: { label: "Review pending", icon: Clock, className: "border-border bg-muted text-muted-foreground" },
 };
@@ -43,7 +43,7 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   deactivate: { label: "Deactivate", icon: Archive, className: "border-border text-muted-foreground" },
   link_add: { label: "Link add", icon: Link, className: "border-border text-muted-foreground" },
   link_remove: { label: "Link remove", icon: Unlink, className: "border-border text-muted-foreground" },
-  accept: { label: "Accept", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
+  accept: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
 };
