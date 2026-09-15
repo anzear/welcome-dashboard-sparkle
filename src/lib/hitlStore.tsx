@@ -647,7 +647,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const record = getRecord(target.entity_type, target.entity_id);
     if (!record) return null;
     if (target.operation === "create" || target.operation === "link_add") {
-      const field = target.entity_type === "group" ? "is_archived" : "status";
+      const field = target.entity_type === "group" ? "is_archived" : target.entity_type === "pathway" ? "availability" : "status";
       const status = target.entity_type === "pathway" ? "deleted" : target.entity_type === "group" ? true : "rejected";
       return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: field in record ? record[field as keyof HitlRecord] : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
     }
