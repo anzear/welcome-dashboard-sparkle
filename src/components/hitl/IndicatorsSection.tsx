@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
-import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TraceId, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
   INDICATORS, INDICATOR_SCOPES, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
@@ -77,7 +77,7 @@ function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat
     <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead>
     <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
-    <TableHead>Note</TableHead><TableHead>Trace</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
+    <TableHead>Note</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
 }
 
@@ -96,7 +96,6 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell><StalenessCell item={item} /></TableCell>
     {variant === "flat" && <TableCell><AffectedPathways iv={item} /></TableCell>}
     <TableCell><Tooltip><TooltipTrigger asChild><span className="block max-w-44 truncate text-[10px]"><ValueCell value={item.correction_note} /></span></TooltipTrigger>{item.correction_note && <TooltipContent className="max-w-sm text-xs">{item.correction_note}</TooltipContent>}</Tooltip></TableCell>
-    <TableCell><TraceId value={item.trace_id} /></TableCell>
     <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end gap-1">
       {item.status !== "accepted" && <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" aria-label={`Accept ${item.id}`} onClick={() => onDecision("accepted")}><Check className="h-3.5 w-3.5" /></Button>}
       {item.status !== "rejected" && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label={`Reject ${item.id}`} onClick={() => onDecision("rejected")}><X className="h-3.5 w-3.5" /></Button>}
@@ -112,7 +111,7 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{label}</TableCell>
     {Array.from({ length: 4 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap text-[10px] italic">not computed</TableCell>
-    {Array.from({ length: 4 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
+    {Array.from({ length: 3 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
   </TableRow>;
 }
@@ -156,9 +155,9 @@ export function IndicatorsSection() {
   return <>
     <SectionToolbar title="Indicators" description="Check sourced indicator values, dates, units and human corrections." filtersActive={filtersActive} onReset={() => { setSearch(""); setScope("all"); setIndicator("all"); setStatus("all"); setStaleOnly(false); setView("flat"); }} count={filtered.length} total={store.indicatorValues.length} actions={<Button size="sm" className="h-9 text-xs" onClick={() => openAdd(null)}>Add value</Button>} filters={<><SectionSearch placeholder="Search indicator values…" value={search} onChange={setSearch} /><SectionFilterSelect value={scope} onChange={setScope} label="Scope"><SelectItem value="all">All scopes</SelectItem>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={indicator} onChange={setIndicator} label="Indicator"><SelectItem value="all">All indicators</SelectItem>{indicatorOptions.map(group => <SelectGroup key={group.scope}><SelectLabel className="text-[9px] uppercase tracking-widest">{SCOPE_LABELS[group.scope]}</SelectLabel>{group.indicators.map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectGroup>)}</SectionFilterSelect><SectionFilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="accepted">Accepted</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SectionFilterSelect><label className="flex h-9 shrink-0 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"><Switch checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label><div className="inline-flex h-9 shrink-0 items-center rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "target" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("target")}>By target</Button></div></>} bulkBar={<SectionBulkBar count={selected.length} onClear={() => setSelected([])}><Button variant="outline" size="sm" className="h-7 text-[10px] text-primary" onClick={() => setDecision({ ids: selected, status: "accepted" })}>Accept</Button><Button variant="outline" size="sm" className="h-7 text-[10px] text-destructive" onClick={() => setDecision({ ids: selected, status: "rejected" })}>Reject</Button></SectionBulkBar>} />
     {view === "flat"
-      ? <div className="overflow-x-auto"><Table className="min-w-[1880px]"><IndicatorHeader variant="flat" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>
+      ? <div className="overflow-x-auto"><Table className="min-w-[1740px]"><IndicatorHeader variant="flat" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>
           {filtered.map(item => <IndicatorRow key={item.id} item={item} variant="flat" {...rowProps(item)} />)}
-          {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
+           {filtered.length === 0 && <TableRow><TableCell colSpan={14} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
         </TableBody></Table></div>
       : <div className="divide-y">
           {scopeGroups.map(group => <ScopeGroup key={group.scope} scope={group.scope} rows={group.rows} targets={group.targets} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={setCorrectId} onClear={setClearId} onAdd={openAdd} />)}
@@ -194,7 +193,7 @@ function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCo
       <div className="min-w-0 flex-1"><TargetRef iv={reference} /></div>
       <AffectedPathways iv={reference} />
     </div>
-    <div className="overflow-x-auto"><Table className="min-w-[1400px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
+    <div className="overflow-x-auto"><Table className="min-w-[1280px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
       {indicatorsForScope(scope).map(definition => {
         const item = rows.find(row => row.indicator_key === definition.key);
         return item
