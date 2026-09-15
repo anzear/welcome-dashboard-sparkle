@@ -247,6 +247,7 @@ function CorrectDialog({ itemId, focusJustification, onClose }: { itemId: string
       <div className="space-y-2"><Label htmlFor="correction-method">Method</Label><Select value={methodTag || "not_set"} onValueChange={value => setMethodTag(value === "not_set" ? "" : value as MethodTag)}><SelectTrigger id="correction-method"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="not_set">Not set</SelectItem>{METHOD_TAGS.map(tag => <SelectItem key={tag.value} value={tag.value}>{tag.label}</SelectItem>)}</SelectContent></Select><p className="text-[10px] text-muted-foreground">Pick the dominant basis. An estimated component makes the whole value Estimated.</p></div>
       <div><Label htmlFor="correction-method-detail">Method detail</Label><Textarea id="correction-method-detail" rows={2} placeholder="How the value was derived — inputs, aggregation, period" value={methodDetail} onChange={event => setMethodDetail(event.target.value)} /></div>
       <div><Label htmlFor="correction-note">Note (optional)</Label><Textarea id="correction-note" value={note} onChange={event => setNote(event.target.value)} /></div>
+      <p className="text-[10px] text-muted-foreground">Saving a corrected value sets the row to Approved.</p>
     </div>}
     <DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={Boolean(error) || !date} onClick={save}>Save correction</Button></DialogFooter></DialogContent></Dialog>;
 }
