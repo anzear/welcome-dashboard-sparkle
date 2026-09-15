@@ -4,12 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AuditOperation, PathwayStatus, ReviewStatus } from "@/lib/hitlStore";
+import type { AuditOperation, PathwayAvailability, ReviewStatus } from "@/lib/hitlStore";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
-  accepted: { label: "Accepted", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
-  rejected: { label: "Rejected", icon: X, className: "border-destructive/25 bg-destructive/10 text-destructive" },
   review_pending: { label: "Review pending", icon: Clock, className: "border-border bg-muted text-muted-foreground" },
+  approved: { label: "Approved", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
+  rejected: { label: "Rejected", icon: X, className: "border-destructive/25 bg-destructive/10 text-destructive" },
 };
 
 export function ReviewStatusChip({ status }: { status: ReviewStatus }) {
@@ -18,18 +18,17 @@ export function ReviewStatusChip({ status }: { status: ReviewStatus }) {
   return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
 }
 
-const pathwayConfig: Record<PathwayStatus, { label: string; icon?: typeof Clock; className: string }> = {
-  approved: { label: "Approved", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
-  needs_approval: { label: "Needs approval", icon: Clock, className: "border-border bg-muted text-muted-foreground" },
+const availabilityConfig: Record<PathwayAvailability, { label: string; icon: typeof Check; className: string }> = {
+  active: { label: "Active", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
   locked: { label: "Locked", icon: Lock, className: "border-border bg-secondary text-secondary-foreground" },
   hidden: { label: "Hidden", icon: EyeOff, className: "border-border bg-secondary text-secondary-foreground" },
   deleted: { label: "Deleted", icon: Archive, className: "border-destructive/25 bg-destructive/10 text-destructive" },
 };
 
-export function PathwayStatusChip({ status }: { status: PathwayStatus }) {
-  const config = pathwayConfig[status];
+export function AvailabilityChip({ availability }: { availability: PathwayAvailability }) {
+  const config = availabilityConfig[availability];
   const Icon = config.icon;
-  return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}>{Icon && <Icon className="h-3 w-3 shrink-0" />}{config.label}</Badge>;
+  return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
 }
 
 export function ValueCell({ value, unit }: { value: string | number | null | undefined; unit?: string | null }) {
@@ -43,7 +42,7 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   deactivate: { label: "Deactivate", icon: Archive, className: "border-border text-muted-foreground" },
   link_add: { label: "Link add", icon: Link, className: "border-border text-muted-foreground" },
   link_remove: { label: "Link remove", icon: Unlink, className: "border-border text-muted-foreground" },
-  accept: { label: "Accept", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
+  approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
 };

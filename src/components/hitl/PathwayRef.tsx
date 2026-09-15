@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PathwayStatusChip } from "./ReviewPrimitives";
+import { AvailabilityChip } from "./ReviewPrimitives";
 import { NODE_LABELS, useHitlStore, type Pathway } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -33,8 +33,8 @@ export function PathwayRef({ pathwayId, variant, emphasisNode, emphasisNodes, em
 
   if (variant === "card") return <div className="rounded-md border bg-background p-3 text-left">
     <div className="mb-3 flex items-center justify-between gap-2">
-      {showId ? <code className="font-mono text-[10px] font-medium">{pathway.id}{pathway.status === "deleted" && <span className="ml-1 font-sans text-muted-foreground">(deleted)</span>}</code> : <span />}
-      {showStatus && <PathwayStatusChip status={pathway.status} />}
+      {showId ? <code className="font-mono text-[10px] font-medium">{pathway.id}{pathway.availability === "deleted" && <span className="ml-1 font-sans text-muted-foreground">(deleted)</span>}</code> : <span />}
+      {showStatus && <AvailabilityChip availability={pathway.availability} />}
     </div>
     <div className="grid gap-2 sm:grid-cols-4">
       {nodeKeys.map(key => <div key={key} className={cn("min-w-0 pl-2", isEmphasised(key) && "border-l-2 border-l-foreground")}>
@@ -47,7 +47,7 @@ export function PathwayRef({ pathwayId, variant, emphasisNode, emphasisNodes, em
   return <Popover open={open} onOpenChange={setOpen}>
     <PopoverTrigger asChild>
       <span className="inline-flex min-w-0 max-w-full cursor-help items-center gap-1.5" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-        {showId && <code className="shrink-0 font-mono text-[10px]">{pathway.id}{pathway.status === "deleted" && <span className="ml-1 font-sans text-muted-foreground">(deleted)</span>}</code>}
+        {showId && <code className="shrink-0 font-mono text-[10px]">{pathway.id}{pathway.availability === "deleted" && <span className="ml-1 font-sans text-muted-foreground">(deleted)</span>}</code>}
         <span className="min-w-0 truncate text-[10px]">
            {nodeKeys.map((key, index) => <span key={key}>{index > 0 && <span className="text-muted-foreground"> → </span>}<span className={cn(isEmphasised(key) && "font-bold")}>{pathway[key]}</span></span>)}
         </span>

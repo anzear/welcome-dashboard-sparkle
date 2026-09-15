@@ -18,7 +18,7 @@ const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" },
 ];
-const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "accept", "reject", "revert"];
+const operations: AuditOperation[] = ["create", "update", "deactivate", "link_add", "link_remove", "approve", "reject", "revert"];
 const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function AuditLogSection() {

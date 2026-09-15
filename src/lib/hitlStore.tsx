@@ -1,7 +1,23 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-export type ReviewStatus = "accepted" | "rejected" | "review_pending";
-export type PathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted";
+export type ReviewStatus = "review_pending" | "approved" | "rejected";
+export type PathwayAvailability = "active" | "locked" | "hidden" | "deleted";
+export const PATHWAY_AVAILABILITIES: PathwayAvailability[] = ["active", "locked", "hidden", "deleted"];
+export const AVAILABILITY_MEANINGS: Record<PathwayAvailability, string> = {
+  active: "Visible and usable.",
+  locked: "Visible to users but not usable.",
+  hidden: "Not visible in Pathway Explorer, counts or benchmarks.",
+  deleted: "Soft-deleted, retained with history.",
+};
+// Legacy pathway status values migrated onto the unified review status plus availability.
+type LegacyPathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted" | ReviewStatus;
+export const migratePathwayStatus = (status: LegacyPathwayStatus): { status: ReviewStatus; availability: PathwayAvailability } => {
+  if (status === "locked") return { status: "approved", availability: "locked" };
+  if (status === "hidden") return { status: "approved", availability: "hidden" };
+  if (status === "deleted") return { status: "approved", availability: "deleted" };
+  if (status === "needs_approval") return { status: "review_pending", availability: "active" };
+  return { status, availability: "active" };
+};
 export type VisibilityScope = "all" | string[];
 export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
 export type CompanyRole = "feedstock_supplier" | "product_manufacturer" | "application_offtaker";
@@ -19,6 +35,7 @@ export const NODE_LABELS = {
 } as const satisfies Record<keyof EvidenceNodes, string>;
 export const FIELD_LABELS: Record<string, string> = {
   status: "Status",
+  availability: "Availability",
   note: "Note",
   visibility_scope: "Visibility",
   feedstock: "Feedstock",
@@ -97,7 +114,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
-export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
+export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -113,7 +130,8 @@ export interface Pathway extends CommonRecord {
   process_technology: string;
   product: string;
   application_market: string;
-  status: PathwayStatus;
+  status: ReviewStatus;
+  availability: PathwayAvailability;
   group_id: string | null;
   visibility_scope: VisibilityScope;
 }
@@ -244,16 +262,16 @@ export const groupById = (groups: Group[], groupId: string | null) => groupId ? 
 export const pathwaysInGroup = (pathways: Pathway[], groupId: string) => pathways.filter(pathway => pathway.group_id === groupId);
 
 const seedPathways: Pathway[] = [
-  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", status: "needs_approval", group_id: "grp-005", visibility_scope: "all" },
-  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", status: "approved", group_id: "grp-002", visibility_scope: "all" },
-  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", status: "needs_approval", group_id: null, visibility_scope: ["VCG.AI"] },
-  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", status: "locked", group_id: "grp-003", visibility_scope: "all" },
-  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", status: "approved", group_id: "grp-002", visibility_scope: "all" },
-  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", status: "hidden", group_id: "grp-005", visibility_scope: ["VCG.AI", "BioCampus Straubing GmbH"] },
-  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", status: "needs_approval", group_id: "grp-001", visibility_scope: "all" },
-  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", status: "deleted", group_id: null, visibility_scope: "all" },
-  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", status: "approved", group_id: "grp-004", visibility_scope: "all" },
-  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", status: "needs_approval", group_id: null, visibility_scope: ["VCG.AI"] },
+  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", ...migratePathwayStatus("needs_approval"), group_id: "grp-005", visibility_scope: "all" },
+  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", ...migratePathwayStatus("approved"), group_id: "grp-002", visibility_scope: "all" },
+  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", ...migratePathwayStatus("needs_approval"), group_id: null, visibility_scope: ["VCG.AI"] },
+  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", ...migratePathwayStatus("locked"), group_id: "grp-003", visibility_scope: "all" },
+  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", ...migratePathwayStatus("approved"), group_id: "grp-002", visibility_scope: "all" },
+  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", ...migratePathwayStatus("hidden"), group_id: "grp-005", visibility_scope: ["VCG.AI", "BioCampus Straubing GmbH"] },
+  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", ...migratePathwayStatus("needs_approval"), group_id: "grp-001", visibility_scope: "all" },
+  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", ...migratePathwayStatus("deleted"), group_id: null, visibility_scope: "all" },
+  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", ...migratePathwayStatus("approved"), group_id: "grp-004", visibility_scope: "all" },
+  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", ...migratePathwayStatus("needs_approval"), group_id: null, visibility_scope: ["VCG.AI"] },
 ];
 
 const companyRows = [
@@ -268,12 +286,12 @@ const companyRows = [
 ] as const;
 const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewStatus; secondary_nodes: EvidenceNodes; evidence: string | null; note: string | null }[] = [
   { role: "feedstock_supplier", pathway: 0, status: "rejected", secondary_nodes: { feedstock: null, process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: "Confirm commercial activity in Europe" },
-  { role: "product_manufacturer", pathway: 1, status: "accepted", secondary_nodes: { feedstock: "Kraft lignin", process_technology: "Fermentation", product: null, application_market: null }, evidence: null, note: null },
+  { role: "product_manufacturer", pathway: 1, status: "approved", secondary_nodes: { feedstock: "Kraft lignin", process_technology: "Fermentation", product: null, application_market: null }, evidence: null, note: null },
   { role: "application_offtaker", pathway: 2, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: "Lactic acid", application_market: null }, evidence: null, note: null },
   { role: "feedstock_supplier", pathway: 3, status: "rejected", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: "Company product page and registry filing", note: null },
-  { role: "product_manufacturer", pathway: 4, status: "accepted", secondary_nodes: { feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: null, application_market: "Bio-based polymers" }, evidence: null, note: "Confirm commercial activity in Europe" },
+  { role: "product_manufacturer", pathway: 4, status: "approved", secondary_nodes: { feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: null, application_market: "Bio-based polymers" }, evidence: null, note: "Confirm commercial activity in Europe" },
   { role: "application_offtaker", pathway: 5, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
-  { role: "feedstock_supplier", pathway: 6, status: "accepted", secondary_nodes: { feedstock: null, process_technology: "Fermentation", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: null },
+  { role: "feedstock_supplier", pathway: 6, status: "approved", secondary_nodes: { feedstock: null, process_technology: "Fermentation", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: null },
   { role: "product_manufacturer", pathway: 7, status: "review_pending", secondary_nodes: { feedstock: null, process_technology: null, product: null, application_market: null }, evidence: null, note: null },
 ];
 const seedCompanies: Company[] = companyRows.map((row, index) => {
@@ -285,7 +303,7 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], source_url: row[4], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
-const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
+const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
 const paperTitles = ["Enzymatic fractionation of agricultural residues for advanced biorefineries", "Fermentative conversion of side streams into renewable platform chemicals", "Process intensification routes for circular bio-based production"];
 const patentTitles = ["Integrated conversion process for renewable intermediates", "Continuous fermentation system for bio-based organic acids", "Catalytic upgrading of lignocellulosic feedstocks"];
 const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_, index) => {
@@ -315,7 +333,7 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
 
 export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
   const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
-  pathways.filter(pathway => pathway.status !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
+  pathways.filter(pathway => pathway.availability !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
     const value = pathway[position].trim(); const key = normalizedNode(value);
     if (!key) return;
     const current = values.get(key) ?? { value, pathwayIds: new Set<string>(), positions: new Map<PathwayNodePosition, Set<string>>() };
@@ -347,7 +365,7 @@ export function hasNoNodes(match: Pick<PaperPatentMatch, "nodes">): boolean { re
 export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
   const positions = filledPositions(match);
   if (!positions.length) return [];
-  return pathways.filter(pathway => pathway.status !== "deleted" && positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
 }
 export interface PathwayScope { production: boolean; application: boolean; productionPositions: MatchNodePosition[]; applicationHit: boolean; }
 export function pathwayScope(match: Pick<PaperPatentMatch, "nodes">, pathway: Pathway): PathwayScope {
@@ -368,7 +386,7 @@ const rolePositions = {
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => pathway.status !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
 export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
@@ -426,7 +444,7 @@ export const targetValues = (iv: TargetedValue): string[] => filledTargetKeys(iv
 export function affectedPathwayIds(iv: TargetedValue, pathways: Pathway[]): string[] {
   const keys = filledTargetKeys(iv);
   if (keys.length !== SCOPE_TARGET_KEYS[iv.scope].length) return [];
-  return pathways.filter(pathway => pathway.status !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
 }
 export function targetLabel(iv: TargetedValue): string {
   const values = SCOPE_TARGET_KEYS[iv.scope].map(key => iv.target[key]?.trim() || "—");
@@ -453,28 +471,28 @@ export function targetForPathway(scope: IndicatorScope, pathway: Pick<Pathway, P
 type IndicatorSeed = [id: string, key: string, pathwayIndex: number, value: number | null, status: ReviewStatus, day: number];
 const indicatorSeeds: IndicatorSeed[] = [
   ["iv-001", "feedstock_price", 0, 82.5, "review_pending", 14],
-  ["iv-002", "feedstock_availability", 0, 1250, "accepted", 13],
+  ["iv-002", "feedstock_availability", 0, 1250, "approved", 13],
   ["iv-003", "production_ip_count", 0, 0, "review_pending", 12],
-  ["iv-004", "process_trl", 2, 7, "accepted", 12],
-  ["iv-005", "product_price", 2, 1480, "accepted", 11],
+  ["iv-004", "process_trl", 2, 7, "approved", 12],
+  ["iv-005", "product_price", 2, 1480, "approved", 11],
   ["iv-006", "product_availability", 2, 310, "review_pending", 11],
   ["iv-007", "market_size_eu", 2, null, "review_pending", 10],
-  ["iv-008", "market_size_global", 2, 4200, "accepted", 10],
+  ["iv-008", "market_size_global", 2, 4200, "approved", 10],
   ["iv-009", "market_growth_eu", 2, -1.4, "review_pending", 9],
-  ["iv-010", "market_growth_global", 2, 4.6, "accepted", 9],
-  ["iv-011", "market_concentration", 2, 0.42, "accepted", 8],
+  ["iv-010", "market_growth_global", 2, 4.6, "approved", 9],
+  ["iv-011", "market_concentration", 2, 0.42, "approved", 8],
   ["iv-012", "production_trl", 2, 6, "review_pending", 8],
-  ["iv-013", "production_research_count", 2, 128, "accepted", 7],
+  ["iv-013", "production_research_count", 2, 128, "approved", 7],
   ["iv-014", "application_trl", 2, 5, "review_pending", 7],
-  ["iv-015", "application_ip_count", 2, 34, "accepted", 6],
+  ["iv-015", "application_ip_count", 2, 34, "approved", 6],
   ["iv-016", "application_research_count", 2, 12, "rejected", 6],
   ["iv-017", "product_price", 0, 640, "review_pending", 5],
-  ["iv-018", "product_availability", 0, null, "accepted", 5],
-  ["iv-019", "feedstock_price", 4, 44, "accepted", 4],
+  ["iv-018", "product_availability", 0, null, "approved", 5],
+  ["iv-019", "feedstock_price", 4, 44, "approved", 4],
   ["iv-020", "process_trl", 1, 4, "review_pending", 4],
-  ["iv-021", "application_trl", 0, 8, "accepted", 3],
-  ["iv-022", "production_trl", 0, 7, "accepted", 3],
-  ["iv-023", "production_ip_count", 2, 210, "accepted", 2],
+  ["iv-021", "application_trl", 0, 8, "approved", 3],
+  ["iv-022", "production_trl", 0, 7, "approved", 3],
+  ["iv-023", "production_ip_count", 2, 210, "approved", 2],
   ["iv-024", "application_ip_count", 0, 76, "review_pending", 2],
   ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
 ];
@@ -526,21 +544,21 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
 // Every latest seed value mirrors its record. audit-002 is superseded by audit-003;
 // audit-004 is already reverted by audit-005.
 const seedAuditEntries: AuditEntry[] = [
-  auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "needs_approval", "update", { note: "Flagged for a final definition check" }),
+  auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "review_pending", "update", { note: "Flagged for a final definition check" }),
   auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-001", "update"),
   auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"),
   auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
   auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
-  auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "accepted", "accept"),
+  auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
-  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
+  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "availability", "active", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 1900, null, "update", { note: "Source no longer reports this value" }),
   auditSeed("audit-011", iso(10, 14), "Anže", "company", "co-004", "status", "review_pending", "rejected", "reject"),
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
   auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
-  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "accepted", "review_pending", "update"),
+  auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "approved", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];
@@ -629,7 +647,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const record = getRecord(target.entity_type, target.entity_id);
     if (!record) return null;
     if (target.operation === "create" || target.operation === "link_add") {
-      const field = target.entity_type === "group" ? "is_archived" : "status";
+      const field = target.entity_type === "group" ? "is_archived" : target.entity_type === "pathway" ? "availability" : "status";
       const status = target.entity_type === "pathway" ? "deleted" : target.entity_type === "group" ? true : "rejected";
       return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: field in record ? record[field as keyof HitlRecord] : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
     }
