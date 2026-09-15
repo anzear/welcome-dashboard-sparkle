@@ -16,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
-import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, TraceId, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TraceId, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
   INDICATORS, INDICATOR_SCOPES, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
