@@ -1,4 +1,4 @@
-export { ActorStamp, AvailabilityChip, OperationChip, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
+export { ActorStamp, VisibilityChip, OperationChip, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
 export { HistorySheetProvider, RecordHistoryList, RecordHistorySheet, useHistorySheet } from "./RecordHistorySheet";
 export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
 
