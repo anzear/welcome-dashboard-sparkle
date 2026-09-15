@@ -19,23 +19,23 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ActorStamp, BulkActionsButton, GroupChip, NodeFilterEmpty, PathwayRef, PathwayStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { GROUP_COLOR_TOKENS, NODE_LABELS, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, organisations, pathwaysInGroup, sameIndicatorTarget, targetForPathway, useHitlStore, type Group, type GroupColorToken, type Pathway, type PathwayStatus, type VisibilityScope } from "@/lib/hitlStore";
+import { ActorStamp, AvailabilityChip, BulkActionsButton, GroupChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { AVAILABILITY_MEANINGS, GROUP_COLOR_TOKENS, NODE_LABELS, PATHWAY_AVAILABILITIES, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, organisations, pathwaysInGroup, sameIndicatorTarget, targetForPathway, useHitlStore, type Group, type GroupColorToken, type Pathway, type PathwayAvailability, type ReviewStatus, type VisibilityScope } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type NodeKey = "feedstock" | "process_technology" | "product" | "application_market";
 type Draft = Pick<Pathway, NodeKey | "group_id">;
+type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
 const nodeLabels = NODE_LABELS;
-const statuses: PathwayStatus[] = ["approved", "needs_approval", "locked", "hidden", "deleted"];
-const statusActions = [
-  { status: "approved", verb: "Approve" },
-  { status: "locked", verb: "Lock" },
-  { status: "hidden", verb: "Hide" },
-  { status: "deleted", verb: "Delete" },
-] as const satisfies { status: PathwayStatus; verb: string }[];
-const statusMeaning: Record<PathwayStatus, string> = {
-  approved: "Visible and usable.", needs_approval: "Awaiting review.", locked: "Visible to users but not usable; used for sales and marketing.", hidden: "Not visible in Pathway Explorer, counts or benchmarks.", deleted: "Soft-deleted and retained with history.",
-};
+const reviewStatuses: ReviewStatus[] = ["review_pending", "approved", "rejected"];
+const reviewStatusLabels: Record<ReviewStatus, string> = { review_pending: "Review pending", approved: "Approved", rejected: "Rejected" };
+const availabilityActions = [
+  { availability: "active", verb: "Activate" },
+  { availability: "locked", verb: "Lock" },
+  { availability: "hidden", verb: "Hide" },
+  { availability: "deleted", verb: "Delete" },
+] as const satisfies { availability: PathwayAvailability; verb: string }[];
+const availabilityLabels: Record<PathwayAvailability, string> = { active: "Active", locked: "Locked", hidden: "Hidden", deleted: "Deleted" };
 const blankDraft: Draft = { feedstock: "", process_technology: "", product: "", application_market: "", group_id: null };
 const clean = (value: string) => value.trim().toLocaleLowerCase();
 const organisationCounts: Record<string, number> = { "VCG.AI": 1, "BioCampus Straubing GmbH": 2, "Packaging Excellence Stuttgart": 2, "Smart Cities and Communities": 2, "Regio Augsburg Wirtschaft GmbH": 2 };
