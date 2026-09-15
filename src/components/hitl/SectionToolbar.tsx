@@ -29,7 +29,7 @@ export function SectionFilterSelect({ value, onChange, label, children, classNam
 
 export function SectionToolbar({ title, description, actions, filters, filtersActive, onReset, count, total, bulkBar }: { title: string; description: string; actions?: ReactNode; filters: ReactNode; filtersActive: boolean; onReset: () => void; count: number; total: number; bulkBar?: ReactNode }) {
   return <div className="border-b">
-    <div className="flex min-h-[60px] items-start justify-between gap-4 px-4 py-3">
+    <div className="flex min-h-[60px] items-center justify-between gap-4 px-4 py-3">
       <div className="min-w-0"><h2 className="text-sm font-semibold text-foreground">{title}</h2><p className="mt-0.5 text-xs text-muted-foreground">{description}</p></div>
       {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
     </div>
