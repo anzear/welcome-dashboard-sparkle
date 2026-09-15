@@ -35,6 +35,7 @@ export const NODE_LABELS = {
 } as const satisfies Record<keyof EvidenceNodes, string>;
 export const FIELD_LABELS: Record<string, string> = {
   status: "Status",
+  availability: "Availability",
   note: "Note",
   visibility_scope: "Visibility",
   feedstock: "Feedstock",
@@ -331,7 +332,7 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
 
 export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
   const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
-  pathways.filter(pathway => pathway.status !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
+  pathways.filter(pathway => pathway.availability !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
     const value = pathway[position].trim(); const key = normalizedNode(value);
     if (!key) return;
     const current = values.get(key) ?? { value, pathwayIds: new Set<string>(), positions: new Map<PathwayNodePosition, Set<string>>() };
@@ -363,7 +364,7 @@ export function hasNoNodes(match: Pick<PaperPatentMatch, "nodes">): boolean { re
 export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
   const positions = filledPositions(match);
   if (!positions.length) return [];
-  return pathways.filter(pathway => pathway.status !== "deleted" && positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
 }
 export interface PathwayScope { production: boolean; application: boolean; productionPositions: MatchNodePosition[]; applicationHit: boolean; }
 export function pathwayScope(match: Pick<PaperPatentMatch, "nodes">, pathway: Pathway): PathwayScope {
@@ -384,7 +385,7 @@ const rolePositions = {
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => pathway.status !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
 export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
@@ -442,7 +443,7 @@ export const targetValues = (iv: TargetedValue): string[] => filledTargetKeys(iv
 export function affectedPathwayIds(iv: TargetedValue, pathways: Pathway[]): string[] {
   const keys = filledTargetKeys(iv);
   if (keys.length !== SCOPE_TARGET_KEYS[iv.scope].length) return [];
-  return pathways.filter(pathway => pathway.status !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => pathway.availability !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
 }
 export function targetLabel(iv: TargetedValue): string {
   const values = SCOPE_TARGET_KEYS[iv.scope].map(key => iv.target[key]?.trim() || "—");
