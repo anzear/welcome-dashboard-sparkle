@@ -12,15 +12,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
-import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ComputedChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
-  INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
-  affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
+  COMPUTED_RULES, INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
+  affectedPathwayIds, computedMatches, computedValue, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
   indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
   type IndicatorScope, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
 } from "@/lib/hitlStore";
@@ -30,6 +31,7 @@ type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
 type DecisionTarget = { ids: string[]; status: DecidedStatus } | null;
 type ViewMode = "flat" | "target";
 type AddPreset = { scope: IndicatorScope; indicator_key: string; target: IndicatorTarget } | null;
+type ComputedRow = { key: string; scope: IndicatorScope; indicator_key: string; target: IndicatorTarget };
 
 const clean = (value: string | null | undefined) => (value ?? "").trim().toLocaleLowerCase();
 const formatDate = (value: string | null) => value ? format(new Date(value), "dd MMM yyyy") : null;
@@ -118,14 +120,55 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
   </TableRow>;
 }
 
+function ShowMatchesButton({ indicatorKey, target }: { indicatorKey: string; target: IndicatorTarget }) {
+  const store = useHitlStore();
+  const matches = computedMatches(indicatorKey, target, store.paperPatentMatches, store.pathways);
+  return <Popover><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-7 text-[10px]">Show matches</Button></PopoverTrigger>
+    <PopoverContent align="end" className="w-80 p-0">
+      <div className="flex items-center justify-between border-b px-3 py-2"><span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Counted records</span><span className="text-[10px] text-muted-foreground">{matches.length} total</span></div>
+      {matches.length === 0
+        ? <p className="p-3 text-xs text-muted-foreground">No approved matches yet.</p>
+        : <div className="max-h-72 space-y-2 overflow-y-auto p-3">{matches.map(match => <div key={match.id} className="space-y-1 border-b pb-2 last:border-0 last:pb-0">
+            <div className="flex items-center gap-2"><Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal">{match.kind === "patent" ? "Patent" : "Paper"}</Badge><ReviewStatusChip status={match.status} /></div>
+            <p className="text-xs font-medium leading-snug">{match.title}</p>
+            <a href={`#match-row-${match.id}`} className="font-mono text-[10px] text-primary hover:underline">{match.external_id}</a>
+          </div>)}</div>}
+    </PopoverContent>
+  </Popover>;
+}
+
+function ComputedIndicatorRow({ variant, scope, indicatorKey, target }: { variant: "flat" | "grouped"; scope: IndicatorScope; indicatorKey: string; target: IndicatorTarget }) {
+  const store = useHitlStore();
+  const definition = indicatorDefinition(indicatorKey);
+  const count = computedValue(indicatorKey, target, store.paperPatentMatches, store.pathways);
+  const reference = { scope, target };
+  const rule = COMPUTED_RULES[indicatorKey];
+  return <TableRow className="text-muted-foreground">
+    <TableCell className="sticky left-0 z-10 bg-background" />
+    {variant === "flat" && <><TableCell className="min-w-36 whitespace-nowrap"><ScopeChip scope={scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={reference} /></TableCell></>}
+    <TableCell className="whitespace-nowrap text-[10px] font-medium"><Tooltip><TooltipTrigger asChild><span>{definition?.label ?? indicatorKey}</span></TooltipTrigger>{rule && <TooltipContent className="max-w-sm text-xs">{rule}</TooltipContent>}</Tooltip></TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="whitespace-nowrap text-[10px] font-normal text-foreground">{count} {definition?.unit}</TableCell>
+    <TableCell className="text-[10px] italic">Computed from matched records</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="min-w-[9.5rem] whitespace-nowrap"><ComputedChip /></TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    {variant === "flat" && <TableCell><AffectedPathways iv={reference} /></TableCell>}
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><ShowMatchesButton indicatorKey={indicatorKey} target={target} /></div></TableCell>
+  </TableRow>;
+}
+
 export function IndicatorsSection() {
   const store = useHitlStore();
   const nodeFilter = useNodeFilter();
-  const [search, setSearch] = useState(""); const [scope, setScope] = useState("all"); const [indicator, setIndicator] = useState("all"); const [status, setStatus] = useState("all"); const [staleOnly, setStaleOnly] = useState(false); const [view, setView] = useState<ViewMode>("flat"); const [selected, setSelected] = useState<string[]>([]);
+  const [search, setSearch] = useState(""); const [scope, setScope] = useState("all"); const [indicator, setIndicator] = useState("all"); const [status, setStatus] = useState("all"); const [staleOnly, setStaleOnly] = useState(false); const [showComputed, setShowComputed] = useState(false); const [view, setView] = useState<ViewMode>("flat"); const [selected, setSelected] = useState<string[]>([]);
   const [decision, setDecision] = useState<DecisionTarget>(null); const [correctId, setCorrectId] = useState<string | null>(null); const [focusJustification, setFocusJustification] = useState(false); const [clearId, setClearId] = useState<string | null>(null); const [addOpen, setAddOpen] = useState(false); const [bulkAddOpen, setBulkAddOpen] = useState(false); const [addPreset, setAddPreset] = useState<AddPreset>(null);
   const indicatorOptions = useMemo(() => INDICATOR_SCOPES.filter(item => scope === "all" || item === scope).map(item => ({ scope: item, indicators: indicatorsForScope(item) })), [scope]);
 
-  const passesNodeFilter = (item: IndicatorValue) => {
+  const passesNodeFilter = (item: { scope: IndicatorScope; target: IndicatorTarget }) => {
     if (!nodeFilter.isActive) return true;
     const direct = (!nodeFilter.feedstock || clean(item.target.feedstock) === clean(nodeFilter.feedstock)) && (!nodeFilter.product || clean(item.target.product) === clean(nodeFilter.product));
     return direct || affectedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id));
@@ -135,6 +178,32 @@ export function IndicatorsSection() {
     return passesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (scope === "all" || item.scope === scope) && (indicator === "all" || item.indicator_key === indicator) && (status === "all" || item.status === status) && (!staleOnly || isStale(item));
   }).sort((a, b) => (a.status === "review_pending" ? 0 : 1) - (b.status === "review_pending" ? 0 : 1) || new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime() || INDICATOR_SCOPES.indexOf(a.scope) - INDICATOR_SCOPES.indexOf(b.scope) || targetLabel(a).localeCompare(targetLabel(b)) || INDICATORS.findIndex(item => item.key === a.indicator_key) - INDICATORS.findIndex(item => item.key === b.indicator_key)),
     [store.indicatorValues, store.pathways, search, scope, indicator, status, staleOnly, nodeFilter.feedstock, nodeFilter.product]);
+
+  const computedRows = useMemo(() => {
+    if (view !== "flat" || !showComputed || status !== "all" || staleOnly) return [] as ComputedRow[];
+    const rows: ComputedRow[] = [];
+    const push = (currentScope: IndicatorScope, target: IndicatorTarget) => {
+      indicatorsForScope(currentScope).filter(item => item.computed).forEach(definition => {
+        if (scope !== "all" && currentScope !== scope) return;
+        if (indicator !== "all" && definition.key !== indicator) return;
+        const reference = { scope: currentScope, target };
+        if (!passesNodeFilter(reference)) return;
+        const haystack = [definition.label, targetSearchText(target)].join(" ").toLowerCase();
+        if (search && !haystack.includes(search.toLowerCase())) return;
+        const key = `${definition.key}|${targetKey(currentScope, target)}`;
+        if (rows.some(row => row.key === key)) return;
+        rows.push({ key, scope: currentScope, indicator_key: definition.key, target });
+      });
+    };
+    const triples = new Set<string>();
+    store.pathways.forEach(pathway => {
+      const productionTarget = targetForPathway("production", pathway);
+      const identity = targetKey("production", productionTarget);
+      if (!triples.has(identity)) { triples.add(identity); push("production", productionTarget); }
+      push("application", targetForPathway("application", pathway));
+    });
+    return rows;
+  }, [store.pathways, view, showComputed, status, staleOnly, scope, indicator, search, nodeFilter.feedstock, nodeFilter.product]);
 
   const scopeGroups = useMemo(() => INDICATOR_SCOPES.filter(item => scope === "all" || item === scope).map(currentScope => {
     const rows = filtered.filter(item => item.scope === currentScope);
@@ -153,13 +222,14 @@ export function IndicatorsSection() {
   const openAdd = (preset: AddPreset) => { setAddPreset(preset); setAddOpen(true); };
   const rowProps = (item: IndicatorValue) => ({ selected: selected.includes(item.id), onSelect: (checked: boolean) => toggle(item.id, checked), onDecision: (next: DecidedStatus) => setDecision({ ids: [item.id], status: next }), onCorrect: (focus = false) => { setFocusJustification(focus); setCorrectId(item.id); }, onClear: () => setClearId(item.id) });
 
-  const filtersActive = Boolean(search || scope !== "all" || indicator !== "all" || status !== "all" || staleOnly || view !== "flat");
+  const filtersActive = Boolean(search || scope !== "all" || indicator !== "all" || status !== "all" || staleOnly || showComputed || view !== "flat");
   return <>
-    <SectionToolbar title="Indicators" description="Check sourced indicator values, dates, units and human corrections." filtersActive={filtersActive} onReset={() => { setSearch(""); setScope("all"); setIndicator("all"); setStatus("all"); setStaleOnly(false); setView("flat"); }} count={filtered.length} total={store.indicatorValues.length} actions={<SplitAddButton label="Add value" icon={Plus} onClick={() => openAdd(null)} ariaLabel="More add value options" items={[{ label: "Single value", icon: Plus, onSelect: () => openAdd(null) }, { label: "Bulk add values…", icon: Upload, onSelect: () => setBulkAddOpen(true) }, { label: "Download bulk template", icon: Download, onSelect: downloadBulkIndicatorValuesTemplate, separatorBefore: true }]} />} filters={<><SectionSearch placeholder="Search indicator values…" value={search} onChange={setSearch} /><SectionFilterSelect value={scope} onChange={setScope} label="Scope"><SelectItem value="all">All scopes</SelectItem>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={indicator} onChange={setIndicator} label="Indicator"><SelectItem value="all">All indicators</SelectItem>{indicatorOptions.map(group => <SelectGroup key={group.scope}><SelectLabel className="text-[9px] uppercase tracking-widest">{SCOPE_LABELS[group.scope]}</SelectLabel>{group.indicators.map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectGroup>)}</SectionFilterSelect><SectionFilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SectionFilterSelect><label className="flex h-9 shrink-0 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"><Switch checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label><div className="inline-flex h-9 shrink-0 items-center rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "target" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("target")}>By target</Button></div></>} bulkBar={<SectionBulkBar count={selected.length} onClear={() => setSelected([])}><Button variant="outline" size="sm" className="h-7 text-[10px] text-primary" onClick={() => setDecision({ ids: selected, status: "approved" })}>Approve</Button><Button variant="outline" size="sm" className="h-7 text-[10px] text-destructive" onClick={() => setDecision({ ids: selected, status: "rejected" })}>Reject</Button></SectionBulkBar>} />
+    <SectionToolbar title="Indicators" description="Check sourced indicator values, dates, units and human corrections." filtersActive={filtersActive} onReset={() => { setSearch(""); setScope("all"); setIndicator("all"); setStatus("all"); setStaleOnly(false); setShowComputed(false); setView("flat"); }} count={filtered.length} total={store.indicatorValues.length} actions={<SplitAddButton label="Add value" icon={Plus} onClick={() => openAdd(null)} ariaLabel="More add value options" items={[{ label: "Single value", icon: Plus, onSelect: () => openAdd(null) }, { label: "Bulk add values…", icon: Upload, onSelect: () => setBulkAddOpen(true) }, { label: "Download bulk template", icon: Download, onSelect: downloadBulkIndicatorValuesTemplate, separatorBefore: true }]} />} filters={<><SectionSearch placeholder="Search indicator values…" value={search} onChange={setSearch} /><SectionFilterSelect value={scope} onChange={setScope} label="Scope"><SelectItem value="all">All scopes</SelectItem>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={indicator} onChange={setIndicator} label="Indicator"><SelectItem value="all">All indicators</SelectItem>{indicatorOptions.map(group => <SelectGroup key={group.scope}><SelectLabel className="text-[9px] uppercase tracking-widest">{SCOPE_LABELS[group.scope]}</SelectLabel>{group.indicators.map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectGroup>)}</SectionFilterSelect><SectionFilterSelect value={status} onChange={setStatus} label="Status"><SelectItem value="all">All statuses</SelectItem><SelectItem value="review_pending">Review pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SectionFilterSelect><label className="flex h-9 shrink-0 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"><Switch checked={staleOnly} onCheckedChange={setStaleOnly} />Stale corrections only</label>{view === "flat" && <label className="flex h-9 shrink-0 items-center gap-2 whitespace-nowrap text-xs text-muted-foreground"><Switch checked={showComputed} onCheckedChange={setShowComputed} />Show computed</label>}<div className="inline-flex h-9 shrink-0 items-center rounded-md bg-muted p-1"><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "flat" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("flat")}>Flat</Button><Button variant="ghost" size="sm" className={cn("h-7 px-2 text-[10px]", view === "target" && "bg-foreground text-background shadow-sm hover:bg-foreground hover:text-background")} onClick={() => setView("target")}>By target</Button></div></>} bulkBar={<SectionBulkBar count={selected.length} onClear={() => setSelected([])}><Button variant="outline" size="sm" className="h-7 text-[10px] text-primary" onClick={() => setDecision({ ids: selected, status: "approved" })}>Approve</Button><Button variant="outline" size="sm" className="h-7 text-[10px] text-destructive" onClick={() => setDecision({ ids: selected, status: "rejected" })}>Reject</Button></SectionBulkBar>} />
     {view === "flat"
       ? <div className="overflow-x-auto"><Table className="min-w-[1740px]"><IndicatorHeader variant="flat" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /><TableBody>
           {filtered.map(item => <IndicatorRow key={item.id} item={item} variant="flat" {...rowProps(item)} />)}
-            {filtered.length === 0 && <TableRow><TableCell colSpan={15} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
+            {computedRows.map(row => <ComputedIndicatorRow key={row.key} variant="flat" scope={row.scope} indicatorKey={row.indicator_key} target={row.target} />)}
+            {filtered.length === 0 && computedRows.length === 0 && <TableRow><TableCell colSpan={15} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="indicator values" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No indicator values fit these filters.</div>}</TableCell></TableRow>}
         </TableBody></Table></div>
       : <div className="divide-y">
            {scopeGroups.map(group => <ScopeGroup key={group.scope} scope={group.scope} rows={group.rows} targets={group.targets} selected={selected} onSelect={toggle} onDecision={(id, next) => setDecision({ ids: [id], status: next })} onCorrect={(id, focus = false) => { setFocusJustification(focus); setCorrectId(id); }} onClear={setClearId} onAdd={openAdd} />)}
@@ -198,6 +268,7 @@ function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCo
     </div>
     <div className="overflow-x-auto"><Table className="min-w-[1280px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
       {indicatorsForScope(scope).map(definition => {
+        if (definition.computed) return <ComputedIndicatorRow key={definition.key} variant="grouped" scope={scope} indicatorKey={definition.key} target={target} />;
         const item = rows.find(row => row.indicator_key === definition.key);
         return item
           ? <IndicatorRow key={definition.key} item={item} variant="grouped" selected={selected.includes(item.id)} onSelect={checked => onSelect(item.id, checked)} onDecision={next => onDecision(item.id, next)} onCorrect={focus => onCorrect(item.id, focus)} onClear={() => onClear(item.id)} />
@@ -288,7 +359,7 @@ function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddP
   const chosenPathway = scope === "application" && targetReady ? store.pathways.find(pathway => sameIndicatorTarget(targetForPathway("application", pathway), target)) : undefined;
 
   const save = () => {
-    if (!definition || !targetReady || duplicate || !("value" in parsed) || !justification.trim()) return;
+    if (!definition || definition.computed || !targetReady || duplicate || !("value" in parsed) || !justification.trim()) return;
     const now = new Date().toISOString();
     const id = `iv-${String(Math.max(0, ...store.indicatorValues.map(item => Number(item.id.match(/\d+/)?.[0] ?? 0))) + 1).padStart(3, "0")}`;
     const trimmedTarget: IndicatorTarget = { feedstock: target.feedstock?.trim() || null, process: target.process?.trim() || null, product: target.product?.trim() || null, application: target.application?.trim() || null };
@@ -309,7 +380,7 @@ function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddP
     <DialogHeader><DialogTitle>Add indicator value</DialogTitle><DialogDescription>{step === 1 ? "Choose the scope and indicator." : step === 2 ? "Define the target nodes." : "Enter the human value for this target."}</DialogDescription></DialogHeader>
     {step === 1 && <div className="space-y-4">
       <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scope</Label><Select value={scope} onValueChange={next => { setScope(next as IndicatorScope); setIndicatorKey(""); setTarget(emptyIndicatorTarget); }}><SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger><SelectContent>{INDICATOR_SCOPES.map(item => <SelectItem key={item} value={item}>{SCOPE_LABELS[item]} · {SCOPE_DESCRIPTIONS[item]}</SelectItem>)}</SelectContent></Select></div>
-      <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Indicator</Label><Select value={indicatorKey} onValueChange={setIndicatorKey}><SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select indicator" /></SelectTrigger><SelectContent>{indicatorsForScope(scope).map(item => <SelectItem key={item.key} value={item.key}>{item.label}</SelectItem>)}</SelectContent></Select></div>
+      <div className="space-y-1.5"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Indicator</Label><Select value={indicatorKey} onValueChange={setIndicatorKey}><SelectTrigger className="h-9 text-xs"><SelectValue placeholder="Select indicator" /></SelectTrigger><SelectContent>{indicatorsForScope(scope).map(item => <SelectItem key={item.key} value={item.key} disabled={item.computed}>{item.label}{item.computed ? " · computed" : ""}</SelectItem>)}</SelectContent></Select></div>
     </div>}
     {step === 2 && <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2"><ScopeChip scope={scope} /><span className="text-xs font-medium">{definition?.label}</span></div>

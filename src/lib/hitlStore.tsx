@@ -416,25 +416,33 @@ export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, p
   return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
 }
 
-export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; }
+export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; computed: boolean; }
 export const INDICATORS: IndicatorDefinition[] = [
-  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t" },
-  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr" },
-  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL" },
-  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t" },
-  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr" },
-  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m" },
-  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m" },
-  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr" },
-  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr" },
-  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index" },
-  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL" },
-  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents" },
-  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers" },
-  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL" },
-  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents" },
-  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers" },
+  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t", computed: false },
+  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr", computed: false },
+  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL", computed: false },
+  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t", computed: false },
+  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr", computed: false },
+  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
+  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
+  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
+  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
+  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index", computed: false },
+  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL", computed: false },
+  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents", computed: true },
+  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers", computed: true },
+  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL", computed: false },
+  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents", computed: true },
+  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers", computed: true },
 ];
+export const COMPUTED_RULES: Record<string, string> = {
+  production_ip_count: "Number of approved patent matches whose derived pathways include a pathway with this production triple.",
+  production_research_count: "Number of approved paper matches whose derived pathways include a pathway with this production triple.",
+  application_ip_count: "Approved patent matches with a derived pathway equal to this pathway and application scope true.",
+  application_research_count: "Approved paper matches with a derived pathway equal to this pathway and application scope true.",
+};
+export const isComputedIndicator = (key: string): boolean => indicatorDefinition(key)?.computed === true;
+export const COMPUTED_INDICATOR_ERROR = "Computed indicator — not editable";
 export const INDICATOR_SCOPES: IndicatorScope[] = ["feedstock", "process", "product", "production", "application"];
 export const SCOPE_LABELS: Record<IndicatorScope, string> = { feedstock: "Feedstock", process: "Process", product: "Product", production: "Production", application: "Application" };
 export const SCOPE_DESCRIPTIONS: Record<IndicatorScope, string> = {
@@ -471,7 +479,27 @@ export function targetLabel(iv: TargetedValue): string {
 }
 export const sameIndicatorTarget = (a: IndicatorTarget, b: IndicatorTarget) => indicatorTargetKeys.every(key => normalizedNode(a[key]) === normalizedNode(b[key]));
 export function findIndicatorValue(values: IndicatorValue[], indicator_key: string, target: IndicatorTarget): IndicatorValue | null {
+  if (isComputedIndicator(indicator_key)) return null;
   return values.find(item => item.indicator_key === indicator_key && sameIndicatorTarget(item.target, target)) ?? null;
+}
+// Computed count indicators: never stored, always derived live from approved paper / patent matches.
+export function computedMatches(indicator_key: string, target: IndicatorTarget, matches: PaperPatentMatch[], pathways: Pathway[]): PaperPatentMatch[] {
+  if (!isComputedIndicator(indicator_key)) return [];
+  const kind: PaperPatentMatch["kind"] = indicator_key.includes("_ip_") ? "patent" : "paper";
+  const application = indicator_key.startsWith("application_");
+  const scope: IndicatorScope = application ? "application" : "production";
+  const keys = SCOPE_TARGET_KEYS[scope];
+  if (keys.some(key => !target[key]?.trim())) return [];
+  const targeted = pathways.filter(pathway => keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(target[key])));
+  if (!targeted.length) return [];
+  return matches.filter(match => {
+    if (match.kind !== kind || match.status !== "approved") return false;
+    const derived = derivedPathwayIds(match, pathways);
+    return targeted.some(pathway => derived.includes(pathway.id) && (!application || pathwayScope(match, pathway).application));
+  });
+}
+export function computedValue(indicator_key: string, target: IndicatorTarget, matches: PaperPatentMatch[], pathways: Pathway[]): number {
+  return computedMatches(indicator_key, target, matches, pathways).length;
 }
 export function targetForPathway(scope: IndicatorScope, pathway: Pick<Pathway, PathwayNodePosition>): IndicatorTarget {
   const keys = SCOPE_TARGET_KEYS[scope];
@@ -490,7 +518,7 @@ type IndicatorSeed = [id: string, key: string, pathwayIndex: number, value: numb
 const indicatorSeeds: IndicatorSeed[] = [
   ["iv-001", "feedstock_price", 0, 82.5, "review_pending", 14],
   ["iv-002", "feedstock_availability", 0, 1250, "approved", 13],
-  ["iv-003", "production_ip_count", 0, 0, "review_pending", 12],
+  
   ["iv-004", "process_trl", 2, 7, "approved", 12],
   ["iv-005", "product_price", 2, 1480, "approved", 11],
   ["iv-006", "product_availability", 2, 310, "review_pending", 11],
@@ -500,18 +528,13 @@ const indicatorSeeds: IndicatorSeed[] = [
   ["iv-010", "market_growth_global", 2, 4.6, "approved", 9],
   ["iv-011", "market_concentration", 2, 0.42, "approved", 8],
   ["iv-012", "production_trl", 2, 6, "review_pending", 8],
-  ["iv-013", "production_research_count", 2, 128, "approved", 7],
   ["iv-014", "application_trl", 2, 5, "review_pending", 7],
-  ["iv-015", "application_ip_count", 2, 34, "approved", 6],
-  ["iv-016", "application_research_count", 2, 12, "rejected", 6],
   ["iv-017", "product_price", 0, 640, "review_pending", 5],
   ["iv-018", "product_availability", 0, null, "approved", 5],
   ["iv-019", "feedstock_price", 4, 44, "approved", 4],
   ["iv-020", "process_trl", 1, 4, "review_pending", 4],
   ["iv-021", "application_trl", 0, 8, "approved", 3],
   ["iv-022", "production_trl", 0, 7, "approved", 3],
-  ["iv-023", "production_ip_count", 2, 210, "approved", 2],
-  ["iv-024", "application_ip_count", 0, 76, "review_pending", 2],
   ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
 ];
 const seedCorrections: Record<string, { value: number; note: string; at: string }> = {
@@ -540,7 +563,7 @@ const seedJustifications: Record<string, string> = {
 const seedMethodTags: MethodTag[] = ["reported", "summed", "derived", "estimated", "expert_judgement"];
 const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
   const definition = indicatorDefinition(key);
-  if (!definition) return rows;
+  if (!definition || definition.computed) return rows;
   const target = targetForPathway(definition.scope, seedPathways[pathwayIndex]);
   if (findIndicatorValue(rows, key, target)) return rows;
   const correction = seedCorrections[id];
@@ -559,14 +582,11 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
   id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
 });
 
-// Every latest seed value mirrors its record. audit-002 is superseded by audit-003;
-// audit-004 is already reverted by audit-005.
+// Every latest seed value mirrors its record. audit-002 is superseded by audit-003.
 const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "review_pending", "update", { note: "Flagged for a final definition check" }),
   auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-001", "update"),
   auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"),
-  auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
-  auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),

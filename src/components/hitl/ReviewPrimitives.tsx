@@ -1,4 +1,4 @@
-import { Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
+import { Calculator, Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,10 @@ export function VisibilityChip({ state }: { state: VisibilityState }) {
   const config = visibilityConfig[state];
   const Icon = config.icon;
   return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
+}
+
+export function ComputedChip() {
+  return <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap border-border px-2 text-xs font-medium text-muted-foreground"><Calculator className="h-3 w-3 shrink-0" />Computed</Badge>;
 }
 
 export function ValueCell({ value, unit }: { value: string | number | null | undefined; unit?: string | null }) {
