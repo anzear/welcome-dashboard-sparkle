@@ -1,22 +1,35 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type ReviewStatus = "review_pending" | "approved" | "rejected";
-export type PathwayAvailability = "active" | "locked" | "hidden" | "deleted";
-export const PATHWAY_AVAILABILITIES: PathwayAvailability[] = ["active", "locked", "hidden", "deleted"];
-export const AVAILABILITY_MEANINGS: Record<PathwayAvailability, string> = {
-  active: "Visible and usable.",
-  locked: "Visible to users but not usable.",
-  hidden: "Not visible in Pathway Explorer, counts or benchmarks.",
-  deleted: "Soft-deleted, retained with history.",
+export type VisibilityState = "visible" | "locked" | "hidden";
+export const VISIBILITY_STATES: VisibilityState[] = ["visible", "locked", "hidden"];
+export const VISIBILITY_MEANINGS: Record<VisibilityState, string> = {
+  visible: "Usable in Pathway Explorer.",
+  locked: "Shown but not usable, for sales and marketing.",
+  hidden: "Not shown in Pathway Explorer, counts or benchmarks.",
 };
-// Legacy pathway status values migrated onto the unified review status plus availability.
+export const VISIBILITY_LABELS: Record<VisibilityState, string> = { visible: "Visible", locked: "Locked", hidden: "Hidden" };
+export interface PathwayVisibility { default: VisibilityState; overrides: Record<string, VisibilityState>; }
+// Legacy pathway lifecycle values migrated onto the unified review status plus visibility state.
 type LegacyPathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted" | ReviewStatus;
-export const migratePathwayStatus = (status: LegacyPathwayStatus): { status: ReviewStatus; availability: PathwayAvailability } => {
-  if (status === "locked") return { status: "approved", availability: "locked" };
-  if (status === "hidden") return { status: "approved", availability: "hidden" };
-  if (status === "deleted") return { status: "approved", availability: "deleted" };
-  if (status === "needs_approval") return { status: "review_pending", availability: "active" };
-  return { status, availability: "active" };
+type LegacyAvailability = "active" | "locked" | "hidden" | "deleted";
+const availabilityToVisibility = (availability: LegacyAvailability): VisibilityState => availability === "active" ? "visible" : availability === "deleted" ? "hidden" : availability;
+export const migratePathwayStatus = (status: LegacyPathwayStatus, scope: "all" | string[] = "all"): { status: ReviewStatus; visibility: PathwayVisibility } => {
+  const availability: LegacyAvailability = status === "locked" || status === "hidden" || status === "deleted" ? status : "active";
+  const reviewStatus: ReviewStatus = status === "needs_approval" ? "review_pending" : status === "locked" || status === "hidden" || status === "deleted" ? "approved" : status;
+  const state = availabilityToVisibility(availability);
+  if (scope === "all") return { status: reviewStatus, visibility: { default: state, overrides: {} } };
+  return { status: reviewStatus, visibility: { default: "visible", overrides: Object.fromEntries(scope.map(org => [org, state])) } };
+};
+export const effectiveVisibility = (pathway: Pathway, organisation: string): VisibilityState => pathway.visibility.overrides[organisation] ?? pathway.visibility.default;
+export const visibilitySummary = (pathway: Pathway | PathwayVisibility): string => {
+  const visibility = "visibility" in pathway ? pathway.visibility : pathway;
+  const entries = Object.entries(visibility.overrides);
+  const base = `${VISIBILITY_LABELS[visibility.default]}${entries.length ? "" : visibility.default === "visible" ? " to all" : " for all"}`;
+  if (!entries.length) return base;
+  const groupedStates = VISIBILITY_STATES.filter(state => state !== visibility.default && entries.some(([, value]) => value === state));
+  const parts = groupedStates.map(state => { const count = entries.filter(([, value]) => value === state).length; return `${VISIBILITY_LABELS[state]} for ${count} organisation${count === 1 ? "" : "s"}`; });
+  return [base, ...parts].join(" · ");
 };
 export type VisibilityScope = "all" | string[];
 export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
