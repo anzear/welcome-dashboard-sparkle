@@ -479,7 +479,27 @@ export function targetLabel(iv: TargetedValue): string {
 }
 export const sameIndicatorTarget = (a: IndicatorTarget, b: IndicatorTarget) => indicatorTargetKeys.every(key => normalizedNode(a[key]) === normalizedNode(b[key]));
 export function findIndicatorValue(values: IndicatorValue[], indicator_key: string, target: IndicatorTarget): IndicatorValue | null {
+  if (isComputedIndicator(indicator_key)) return null;
   return values.find(item => item.indicator_key === indicator_key && sameIndicatorTarget(item.target, target)) ?? null;
+}
+// Computed count indicators: never stored, always derived live from approved paper / patent matches.
+export function computedMatches(indicator_key: string, target: IndicatorTarget, matches: PaperPatentMatch[], pathways: Pathway[]): PaperPatentMatch[] {
+  if (!isComputedIndicator(indicator_key)) return [];
+  const kind: PaperPatentMatch["kind"] = indicator_key.includes("_ip_") ? "patent" : "paper";
+  const application = indicator_key.startsWith("application_");
+  const scope: IndicatorScope = application ? "application" : "production";
+  const keys = SCOPE_TARGET_KEYS[scope];
+  if (keys.some(key => !target[key]?.trim())) return [];
+  const targeted = pathways.filter(pathway => keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(target[key])));
+  if (!targeted.length) return [];
+  return matches.filter(match => {
+    if (match.kind !== kind || match.status !== "approved") return false;
+    const derived = derivedPathwayIds(match, pathways);
+    return targeted.some(pathway => derived.includes(pathway.id) && (!application || pathwayScope(match, pathway).application));
+  });
+}
+export function computedValue(indicator_key: string, target: IndicatorTarget, matches: PaperPatentMatch[], pathways: Pathway[]): number {
+  return computedMatches(indicator_key, target, matches, pathways).length;
 }
 export function targetForPathway(scope: IndicatorScope, pathway: Pick<Pathway, PathwayNodePosition>): IndicatorTarget {
   const keys = SCOPE_TARGET_KEYS[scope];
