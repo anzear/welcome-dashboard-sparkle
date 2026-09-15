@@ -85,9 +85,10 @@ function OutcomeChip({ outcome }: { outcome: Outcome }) {
 export function BulkAddIndicatorValuesDialog({ open, onClose, onOpenRecord }: { open: boolean; onClose: () => void; onOpenRecord: (id: string) => void }) {
   const store = useHitlStore(); const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1); const [paste, setPaste] = useState(""); const [rows, setRows] = useState<BulkRow[]>([]); const [uploadRows, setUploadRows] = useState<RawRow[]>([]); const [uploadError, setUploadError] = useState(""); const [pendingReview, setPendingReview] = useState(false);
+  const [batchId, setBatchId] = useState("");
   const [allJustification, setAllJustification] = useState(""); const [allMethod, setAllMethod] = useState<MethodTag>("expert_judgement"); const [allMethodDetail, setAllMethodDetail] = useState(""); const [allDate, setAllDate] = useState(""); const [allNote, setAllNote] = useState("");
   const sourceRows = uploadRows.length ? uploadRows : parsePaste(paste); const built = useMemo(() => buildRows(sourceRows, store.indicatorValues), [paste, uploadRows, store.indicatorValues]); const activeRows = rows.length ? rows : built.rows; const overLimit = sourceRows.length > 200;
-  const reset = () => { setStep(1); setPaste(""); setRows([]); setUploadRows([]); setUploadError(""); setPendingReview(false); setAllJustification(""); setAllMethod("expert_judgement"); setAllMethodDetail(""); setAllDate(""); setAllNote(""); };
+  const reset = () => { setStep(1); setPaste(""); setRows([]); setUploadRows([]); setUploadError(""); setPendingReview(false); setBatchId(""); setAllJustification(""); setAllMethod("expert_judgement"); setAllMethodDetail(""); setAllDate(""); setAllNote(""); };
   useEffect(() => { if (open) reset(); }, [open]);
   const updateRow = (key: string, patch: Partial<BulkRow>) => setRows(current => current.map(row => row.key === key ? { ...row, ...patch } : row));
   const validSourceRows = activeRows.filter(row => !row.duplicate && row.definition && row.errors.length === 0);
@@ -105,14 +106,14 @@ export function BulkAddIndicatorValuesDialog({ open, onClose, onOpenRecord }: { 
   const rowWritable = (row: BulkRow) => Boolean(row.justification.trim()) && Boolean(row.definition) && parseNumber(row.value, row.definition as IndicatorDefinition) !== undefined && (!row.existingId || row.existingMode === "correct");
   const writeCount = validSourceRows.filter(rowWritable).length; const correctionCount = validSourceRows.filter(row => rowWritable(row) && row.existingId).length;
   const writeRows = () => {
-    const batchId = `bulk-${Date.now()}`; const now = new Date().toISOString(); let numericId = Math.max(0, ...store.indicatorValues.map(item => Number(item.id.match(/\d+/)?.[0] ?? 0))); const occupied = [...store.indicatorValues];
+    const nextBatchId = `bulk-${Date.now()}`; setBatchId(nextBatchId); const now = new Date().toISOString(); let numericId = Math.max(0, ...store.indicatorValues.map(item => Number(item.id.match(/\d+/)?.[0] ?? 0))); const occupied = [...store.indicatorValues];
     const results = rows.map(row => {
       if (row.duplicate || !row.definition || row.errors.length) return { ...row, outcome: "invalid" as const, pathwayCount: 0 };
       if (!row.justification.trim()) return { ...row, outcome: "justification" as const, pathwayCount: affectedPathwayIds({ scope: row.definition.scope, target: row.target }, store.pathways).length };
       const existing = findIndicatorValue(occupied, row.definition.key, row.target);
       if (existing && row.existingMode !== "correct") return { ...row, outcome: "exists" as const, recordId: existing.id, pathwayCount: affectedPathwayIds(existing, store.pathways).length };
       const parsedValue = parseNumber(row.value, row.definition); if (parsedValue === undefined) return { ...row, outcome: "invalid" as const, pathwayCount: 0 };
-      const note = [row.note.trim(), `batch ${batchId}`].filter(Boolean).join(" · "); const methodTag = methodFromLabel(row.method) ?? "expert_judgement"; const date = row.valueDate ? new Date(`${row.valueDate.slice(0, 10)}T00:00:00.000Z`).toISOString() : null;
+      const note = [row.note.trim(), `batch ${nextBatchId}`].filter(Boolean).join(" · "); const methodTag = methodFromLabel(row.method) ?? "expert_judgement"; const date = row.valueDate ? new Date(`${row.valueDate.slice(0, 10)}T00:00:00.000Z`).toISOString() : null;
       if (existing) {
         const changes: [keyof IndicatorValue, unknown, unknown][] = [["corrected_value", existing.corrected_value, parsedValue], ["unit", existing.unit, row.unit.trim() || row.definition.unit], ["value_date", existing.value_date, date], ["justification", existing.justification, row.justification.trim()], ["method_tag", existing.method_tag, methodTag], ["method_detail", existing.method_detail, row.methodDetail.trim() || null], ["correction_note", existing.correction_note, note], ["corrected_at", existing.corrected_at, now]];
         changes.forEach(([field, prior, next]) => { if (prior !== next) store.recordChange({ entity_type: "indicator_value", entity_id: existing.id, field, prior_value: prior, new_value: next, operation: "update", note }); });
