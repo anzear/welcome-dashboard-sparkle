@@ -416,25 +416,33 @@ export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, p
   return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
 }
 
-export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; }
+export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; computed: boolean; }
 export const INDICATORS: IndicatorDefinition[] = [
-  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t" },
-  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr" },
-  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL" },
-  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t" },
-  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr" },
-  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m" },
-  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m" },
-  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr" },
-  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr" },
-  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index" },
-  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL" },
-  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents" },
-  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers" },
-  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL" },
-  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents" },
-  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers" },
+  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t", computed: false },
+  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr", computed: false },
+  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL", computed: false },
+  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t", computed: false },
+  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr", computed: false },
+  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
+  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
+  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
+  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
+  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index", computed: false },
+  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL", computed: false },
+  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents", computed: true },
+  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers", computed: true },
+  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL", computed: false },
+  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents", computed: true },
+  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers", computed: true },
 ];
+export const COMPUTED_RULES: Record<string, string> = {
+  production_ip_count: "Number of approved patent matches whose derived pathways include a pathway with this production triple.",
+  production_research_count: "Number of approved paper matches whose derived pathways include a pathway with this production triple.",
+  application_ip_count: "Approved patent matches with a derived pathway equal to this pathway and application scope true.",
+  application_research_count: "Approved paper matches with a derived pathway equal to this pathway and application scope true.",
+};
+export const isComputedIndicator = (key: string): boolean => indicatorDefinition(key)?.computed === true;
+export const COMPUTED_INDICATOR_ERROR = "Computed indicator — not editable";
 export const INDICATOR_SCOPES: IndicatorScope[] = ["feedstock", "process", "product", "production", "application"];
 export const SCOPE_LABELS: Record<IndicatorScope, string> = { feedstock: "Feedstock", process: "Process", product: "Product", production: "Production", application: "Application" };
 export const SCOPE_DESCRIPTIONS: Record<IndicatorScope, string> = {
