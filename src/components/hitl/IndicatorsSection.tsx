@@ -20,9 +20,9 @@ import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./Indi
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
 import { ComputedChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
-  COMPUTED_INDICATOR_ERROR, COMPUTED_RULES, INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
+  COMPUTED_RULES, INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   affectedPathwayIds, computedMatches, computedValue, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel,
-  indicatorsForScope, isComputedIndicator, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
+  indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
   type IndicatorScope, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
 } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";

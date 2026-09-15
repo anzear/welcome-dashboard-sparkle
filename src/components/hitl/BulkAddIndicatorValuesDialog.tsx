@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
 import {
-  INDICATORS, METHOD_TAGS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS, affectedPathwayIds, emptyIndicatorTarget,
+  COMPUTED_INDICATOR_ERROR, INDICATORS, METHOD_TAGS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS, affectedPathwayIds, emptyIndicatorTarget,
   findIndicatorValue, type IndicatorDefinition, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue,
   type MethodTag, useHitlStore,
 } from "@/lib/hitlStore";
@@ -46,7 +46,8 @@ function buildRows(rawRows: RawRow[], existingValues: IndicatorValue[]): { rows:
     const target: IndicatorTarget = { ...emptyIndicatorTarget };
     const errors: string[] = []; const warnings: string[] = [];
     if (!definition) errors.push("Unknown indicator");
-    if (definition) {
+    else if (definition.computed) errors.push(COMPUTED_INDICATOR_ERROR);
+    if (definition && !definition.computed) {
       const used = SCOPE_TARGET_KEYS[definition.scope];
       used.forEach(key => { target[key] = supplied[key] || null; });
       const missing = used.filter(key => !supplied[key]).map(key => TARGET_POSITION_LABELS[key]);
