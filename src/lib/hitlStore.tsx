@@ -64,7 +64,7 @@ export const FIELD_LABELS: Record<string, string> = {
   website: "Website",
   registry_id: "Registry ID",
   address: "Address",
-  source_url: "Source URL",
+  relevance_url: "Relevance URL",
   country: "Country",
   city: "City",
   industry_sector: "Industry sector",
@@ -163,7 +163,7 @@ export interface Company extends CommonRecord {
   website: string | null;
   registry_id: string | null;
   address: string | null;
-  source_url: string | null;
+  relevance_url: string | null;
   country: string | null;
   city: string | null;
   industry_sector: string | null;
@@ -318,7 +318,7 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
   const allowed = new Set(allowedSecondaryPositions(assignment.role));
   const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => [key, allowed.has(key) ? assignment.secondary_nodes[key] : null])) as unknown as EvidenceNodes;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], source_url: row[4], country: row[5], city: row[6], industry_sector: row[7], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], relevance_url: row[4], country: row[5], city: row[6], industry_sector: row[7], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
