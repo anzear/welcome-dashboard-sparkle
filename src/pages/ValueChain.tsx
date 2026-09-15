@@ -1592,8 +1592,8 @@ const TechnologySnapshotSection: React.FC<{
         const leastIp = [...cats].sort((a, b) => a.avgIp - b.avgIp)[0];
         const cards: { label: string; cat: typeof cats[number]; metric: string; unit: string }[] = [
           { label: 'Highest TRL',      cat: mostScalable, metric: mostScalable.avgTrl.toFixed(1),      unit: 'avg TRL' },
-          { label: 'Highest IP / Patent Count', cat: mostIp,  metric: Math.round(mostIp.avgIp).toString(), unit: 'avg IP / Patent count' },
-          { label: 'Lowest IP / Patent Count',  cat: leastIp, metric: Math.round(leastIp.avgIp).toString(), unit: 'avg IP / Patent count' },
+          { label: 'Highest Patent Count', cat: mostIp,  metric: Math.round(mostIp.avgIp).toString(), unit: 'avg patent count' },
+          { label: 'Lowest Patent Count',  cat: leastIp, metric: Math.round(leastIp.avgIp).toString(), unit: 'avg patent count' },
         ];
         return (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-0 rounded-lg border border-border/60 bg-muted/40 overflow-hidden divide-y md:divide-y-0 md:divide-x divide-border/60">
