@@ -102,7 +102,7 @@ export function BulkAddIndicatorValuesDialog({ open, onClose, onOpenRecord }: { 
   };
   const applyAll = () => setRows(current => current.map(row => !row.duplicate && row.definition && row.errors.length === 0 ? { ...row, justification: allJustification, method: METHOD_TAGS.find(item => item.value === allMethod)?.label ?? "", methodDetail: allMethodDetail, valueDate: allDate, note: allNote } : row));
   const clearAll = () => { setAllJustification(""); setAllMethod("expert_judgement"); setAllMethodDetail(""); setAllDate(""); setAllNote(""); setRows(current => current.map(row => !row.duplicate && row.definition && row.errors.length === 0 ? { ...row, justification: "", method: "", methodDetail: "", valueDate: "", note: "" } : row)); };
-  const rowWritable = (row: BulkRow) => Boolean(row.justification.trim()) && (!row.existingId || row.existingMode === "correct");
+  const rowWritable = (row: BulkRow) => Boolean(row.justification.trim()) && Boolean(row.definition) && parseNumber(row.value, row.definition as IndicatorDefinition) !== undefined && (!row.existingId || row.existingMode === "correct");
   const writeCount = validSourceRows.filter(rowWritable).length; const correctionCount = validSourceRows.filter(row => rowWritable(row) && row.existingId).length;
   const writeRows = () => {
     const batchId = `bulk-${Date.now()}`; const now = new Date().toISOString(); let numericId = Math.max(0, ...store.indicatorValues.map(item => Number(item.id.match(/\d+/)?.[0] ?? 0))); const occupied = [...store.indicatorValues];
