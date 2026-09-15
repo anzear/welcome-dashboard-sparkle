@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Archive, Check, ChevronDown, ChevronRight, Download, Edit3, Eye, FileSpreadsheet, History, Lock, MoreHorizontal, Plus, RotateCcw, Search, Upload } from "lucide-react";
+import { Archive, Check, ChevronDown, ChevronRight, Download, Edit3, Eye, FileSpreadsheet, History, Lock, MoreHorizontal, Plus, RotateCcw, Search, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { Badge } from "@/components/ui/badge";
