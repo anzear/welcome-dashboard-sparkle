@@ -127,3 +127,5 @@
 - [x] Preserve assigned nodes and fetched metadata across backward navigation
 - [x] Exclude unresolved rows from creation and include their nodes in CSV export
 - [x] Verify paper and patent flows, labels, outcomes, build, and console output
+
+- [x] Prompt 28 — Shared three-row SectionToolbar across all Data Review sections
