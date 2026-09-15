@@ -136,4 +136,4 @@
 
 - [x] Prompt 31 — Rename user-visible company Evidence labels to Relevance with legacy import support
 
-- [ ] Prompt 32 — Add direct row and bulk revert actions to Audit Log, complete field labels, and correct audit seeds.
+- [x] Prompt 32 — Add direct row and bulk revert actions to Audit Log, complete field labels, and correct audit seeds.
