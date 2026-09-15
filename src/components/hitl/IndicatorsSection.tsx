@@ -122,7 +122,7 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
 
 function ShowMatchesButton({ indicatorKey, target }: { indicatorKey: string; target: IndicatorTarget }) {
   const store = useHitlStore();
-  const matches = computedMatches(indicatorKey, target, store.matches, store.pathways);
+  const matches = computedMatches(indicatorKey, target, store.paperPatentMatches, store.pathways);
   return <Popover><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-7 text-[10px]">Show matches</Button></PopoverTrigger>
     <PopoverContent align="end" className="w-80 p-0">
       <div className="flex items-center justify-between border-b px-3 py-2"><span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Counted records</span><span className="text-[10px] text-muted-foreground">{matches.length} total</span></div>
@@ -140,7 +140,7 @@ function ShowMatchesButton({ indicatorKey, target }: { indicatorKey: string; tar
 function ComputedIndicatorRow({ variant, scope, indicatorKey, target }: { variant: "flat" | "grouped"; scope: IndicatorScope; indicatorKey: string; target: IndicatorTarget }) {
   const store = useHitlStore();
   const definition = indicatorDefinition(indicatorKey);
-  const count = computedValue(indicatorKey, target, store.matches, store.pathways);
+  const count = computedValue(indicatorKey, target, store.paperPatentMatches, store.pathways);
   const reference = { scope, target };
   const rule = COMPUTED_RULES[indicatorKey];
   return <TableRow className="text-muted-foreground">
