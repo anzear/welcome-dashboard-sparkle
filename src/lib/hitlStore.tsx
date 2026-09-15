@@ -64,6 +64,7 @@ export const FIELD_LABELS: Record<string, string> = {
   website: "Website",
   registry_id: "Registry ID",
   address: "Address",
+  postal_code: "Postal code",
   relevance_url: "Relevance URL",
   country: "Country",
   city: "City",
@@ -164,6 +165,7 @@ export interface Company extends CommonRecord {
   website: string | null;
   registry_id: string | null;
   address: string | null;
+  postal_code: string | null;
   relevance_url: string | null;
   country: string | null;
   city: string | null;
@@ -310,14 +312,14 @@ const seedPathways: Pathway[] = [
 ];
 
 const companyRows = [
-  ["Nordic Enzymes", "https://nordic-enzymes.example", "DK-482910", "Havnegade 12, 1058 Copenhagen, Denmark", "https://nordic-enzymes.example/about", "Denmark", "Copenhagen", "Industrial biotechnology"],
-  ["Rhein BioCarbon", "https://rhein-biocarbon.example", "DE-HRB-77120", "Rheinuferstrasse 8, 50678 Cologne, Germany", "https://rhein-biocarbon.example/company", "Germany", "Cologne", "Chemicals"],
-  ["Alpine Fermentation", "https://alpine-fermentation.example", null, "Grazbachgasse 45, 8010 Graz, Austria", null, "Austria", "Graz", "Industrial biotechnology"],
-  ["Baltic Fibre Works", "https://baltic-fibre.example", "LV-402034", "Brivibas iela 103, 1001 Riga, Latvia", "https://baltic-fibre.example/contact", "Latvia", "Riga", "Pulp and paper"],
-  ["Circular Oils Europe", null, "NL-908172", "Waalhaven 22, 3087 Rotterdam, Netherlands", "https://registry.example/nl-908172", "Netherlands", "Rotterdam", null],
-  ["GreenRoute Fuels", "https://greenroute.example", null, "Havenlaan 17, 9000 Ghent, Belgium", null, "Belgium", "Ghent", "Chemicals"],
-  ["Danube Biopolymers", "https://danube-biopolymers.example", "HU-011829", null, "https://danube-biopolymers.example/imprint", "Hungary", null, "Packaging"],
-  ["Atlantic Algae", "https://atlantic-algae.example", "PT-521908", "Rua do Porto 210, 4050 Porto, Portugal", "https://atlantic-algae.example/about", "Portugal", "Porto", null],
+  ["Nordic Enzymes", "https://nordic-enzymes.example", "DK-482910", "Havnegade 12", "1058", "https://nordic-enzymes.example/about", "Denmark", "Copenhagen", "Industrial biotechnology"],
+  ["Rhein BioCarbon", "https://rhein-biocarbon.example", "DE-HRB-77120", "Rheinuferstrasse 8", "50678", "https://rhein-biocarbon.example/company", "Germany", "Cologne", "Chemicals"],
+  ["Alpine Fermentation", "https://alpine-fermentation.example", null, "Grazbachgasse 45", "8010", null, "Austria", "Graz", "Industrial biotechnology"],
+  ["Baltic Fibre Works", "https://baltic-fibre.example", "LV-402034", "Brivibas iela 103", "1001", "https://baltic-fibre.example/contact", "Latvia", "Riga", "Pulp and paper"],
+  ["Circular Oils Europe", null, "NL-908172", "Waalhaven 22", "3087", "https://registry.example/nl-908172", "Netherlands", "Rotterdam", null],
+  ["GreenRoute Fuels", "https://greenroute.example", null, "Havenlaan 17", "9000", null, "Belgium", "Ghent", "Chemicals"],
+  ["Danube Biopolymers", "https://danube-biopolymers.example", "HU-011829", null, null, "https://danube-biopolymers.example/imprint", "Hungary", null, "Packaging"],
+  ["Atlantic Algae", "https://atlantic-algae.example", "PT-521908", "Rua do Porto 210", "4050", "https://atlantic-algae.example/about", "Portugal", "Porto", null],
 ] as const;
 const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewStatus; secondary_nodes: EvidenceNodes; evidence: string | null; note: string | null }[] = [
   { role: "feedstock_supplier", pathway: 0, status: "rejected", secondary_nodes: { feedstock: null, process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: "Confirm commercial activity in Europe" },
@@ -335,7 +337,7 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
   const allowed = new Set(allowedSecondaryPositions(assignment.role));
   const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => [key, allowed.has(key) ? assignment.secondary_nodes[key] : null])) as unknown as EvidenceNodes;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], relevance_url: row[4], country: row[5], city: row[6], industry_sector: row[7], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
