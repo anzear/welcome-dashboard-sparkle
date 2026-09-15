@@ -19,8 +19,8 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ActorStamp, AvailabilityChip, BulkActionsButton, GroupChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { AVAILABILITY_MEANINGS, GROUP_COLOR_TOKENS, NODE_LABELS, PATHWAY_AVAILABILITIES, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, organisations, pathwaysInGroup, sameIndicatorTarget, targetForPathway, useHitlStore, type Group, type GroupColorToken, type Pathway, type PathwayAvailability, type ReviewStatus, type VisibilityScope } from "@/lib/hitlStore";
+import { ActorStamp, BulkActionsButton, GroupChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, VisibilityChip, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { GROUP_COLOR_TOKENS, NODE_LABELS, VISIBILITY_LABELS, VISIBILITY_MEANINGS, VISIBILITY_STATES, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, effectiveVisibility, organisations, pathwaysInGroup, sameIndicatorTarget, targetForPathway, useHitlStore, visibilitySummary, type Group, type GroupColorToken, type Pathway, type PathwayVisibility, type ReviewStatus, type VisibilityScope, type VisibilityState } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type NodeKey = "feedstock" | "process_technology" | "product" | "application_market";
@@ -29,13 +29,25 @@ type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
 const nodeLabels = NODE_LABELS;
 const reviewStatuses: ReviewStatus[] = ["review_pending", "approved", "rejected"];
 const reviewStatusLabels: Record<ReviewStatus, string> = { review_pending: "Review pending", approved: "Approved", rejected: "Rejected" };
-const availabilityActions = [
-  { availability: "active", verb: "Activate" },
-  { availability: "locked", verb: "Lock" },
-  { availability: "hidden", verb: "Hide" },
-  { availability: "deleted", verb: "Delete" },
-] as const satisfies { availability: PathwayAvailability; verb: string }[];
-const availabilityLabels: Record<PathwayAvailability, string> = { active: "Active", locked: "Locked", hidden: "Hidden", deleted: "Deleted" };
+const visibilityFilterMatches = (pathway: Pathway, filter: string) => {
+  const overrides = Object.entries(pathway.visibility.overrides);
+  if (filter === "all") return true;
+  if (filter === "visible-all") return pathway.visibility.default === "visible" && overrides.length === 0;
+  if (filter === "locked" || filter === "hidden") return pathway.visibility.default === filter || overrides.some(([, state]) => state === filter);
+  if (filter === "overrides") return overrides.length > 0;
+  return effectiveVisibility(pathway, filter) !== "visible";
+};
+const nextVisibility = (pathway: Pathway, scope: "all" | "selected", state: VisibilityState, orgs: string[], mode: VisibilityMerge, clearOverrides: boolean): PathwayVisibility => {
+  if (scope === "all") {
+    const kept = clearOverrides ? {} : Object.fromEntries(Object.entries(pathway.visibility.overrides).filter(([, value]) => value !== state));
+    return { default: state, overrides: kept };
+  }
+  const overrides: Record<string, VisibilityState> = { ...pathway.visibility.overrides };
+  orgs.forEach(org => { if (mode === "remove") delete overrides[org]; else overrides[org] = state; });
+  Object.entries(overrides).forEach(([org, value]) => { if (value === pathway.visibility.default) delete overrides[org]; });
+  return { default: pathway.visibility.default, overrides };
+};
+const sameVisibilityState = (left: PathwayVisibility, right: PathwayVisibility) => left.default === right.default && JSON.stringify(Object.entries(left.overrides).sort()) === JSON.stringify(Object.entries(right.overrides).sort());
 const blankDraft: Draft = { feedstock: "", process_technology: "", product: "", application_market: "", group_id: null };
 const clean = (value: string) => value.trim().toLocaleLowerCase();
 const organisationCounts: Record<string, number> = { "VCG.AI": 1, "BioCampus Straubing GmbH": 2, "Packaging Excellence Stuttgart": 2, "Smart Cities and Communities": 2, "Regio Augsburg Wirtschaft GmbH": 2 };
