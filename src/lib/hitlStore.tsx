@@ -416,24 +416,24 @@ export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, p
   return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
 }
 
-export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; computed: boolean; }
+export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; units: string[]; computed: boolean; }
 export const INDICATORS: IndicatorDefinition[] = [
-  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t", computed: false },
-  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr", computed: false },
-  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL", computed: false },
-  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t", computed: false },
-  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr", computed: false },
-  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
-  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m", computed: false },
-  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
-  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr", computed: false },
-  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "index", computed: false },
-  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL", computed: false },
-  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents", computed: true },
-  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers", computed: true },
-  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL", computed: false },
-  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents", computed: true },
-  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers", computed: true },
+  { key: "feedstock_price", label: "Feedstock price (Europe)", scope: "feedstock", value_type: "decimal", unit: "EUR/t", units: ["EUR/t", "EUR/kg", "USD/t"], computed: false },
+  { key: "feedstock_availability", label: "Feedstock availability (Europe)", scope: "feedstock", value_type: "decimal", unit: "kt/yr", units: ["kt/yr", "t/yr", "Mt/yr"], computed: false },
+  { key: "process_trl", label: "Process TRL", scope: "process", value_type: "trl", unit: "TRL", units: ["TRL"], computed: false },
+  { key: "product_price", label: "Product price", scope: "product", value_type: "decimal", unit: "EUR/t", units: ["EUR/t", "EUR/kg", "USD/t"], computed: false },
+  { key: "product_availability", label: "Product availability (Europe)", scope: "product", value_type: "decimal", unit: "kt/yr", units: ["kt/yr", "t/yr", "Mt/yr"], computed: false },
+  { key: "market_size_eu", label: "Market size (EU)", scope: "product", value_type: "decimal", unit: "EUR m", units: ["EUR m", "EUR bn", "USD m", "USD bn"], computed: false },
+  { key: "market_size_global", label: "Market size (Global)", scope: "product", value_type: "decimal", unit: "EUR m", units: ["EUR m", "EUR bn", "USD m", "USD bn"], computed: false },
+  { key: "market_growth_eu", label: "Market growth (EU)", scope: "product", value_type: "decimal", unit: "%/yr", units: ["%/yr"], computed: false },
+  { key: "market_growth_global", label: "Market growth (Global)", scope: "product", value_type: "decimal", unit: "%/yr", units: ["%/yr"], computed: false },
+  { key: "market_concentration", label: "Market concentration", scope: "product", value_type: "decimal", unit: "HHI", units: ["HHI", "CR4 %"], computed: false },
+  { key: "production_trl", label: "Production TRL", scope: "production", value_type: "trl", unit: "TRL", units: ["TRL"], computed: false },
+  { key: "production_ip_count", label: "Production IP count", scope: "production", value_type: "count", unit: "patents", units: ["patents"], computed: true },
+  { key: "production_research_count", label: "Production research count", scope: "production", value_type: "count", unit: "papers", units: ["papers"], computed: true },
+  { key: "application_trl", label: "Application TRL", scope: "application", value_type: "trl", unit: "TRL", units: ["TRL"], computed: false },
+  { key: "application_ip_count", label: "Application IP count", scope: "application", value_type: "count", unit: "patents", units: ["patents"], computed: true },
+  { key: "application_research_count", label: "Application research count", scope: "application", value_type: "count", unit: "papers", units: ["papers"], computed: true },
 ];
 export const COMPUTED_RULES: Record<string, string> = {
   production_ip_count: "Number of approved patent matches whose derived pathways include a pathway with this production triple.",
@@ -441,6 +441,23 @@ export const COMPUTED_RULES: Record<string, string> = {
   application_ip_count: "Approved patent matches with a derived pathway equal to this pathway and application scope true.",
   application_research_count: "Approved paper matches with a derived pathway equal to this pathway and application scope true.",
 };
+export const UNIT_ALIASES: Record<string, string> = {
+  "€/t": "EUR/t", "eur/tonne": "EUR/t", "kt/a": "kt/yr", "eur million": "EUR m", "eur billion": "EUR bn", "% p.a.": "%/yr",
+};
+// Normalises an imported unit for an indicator: alias map, then exact match against the accepted list.
+export function normalizeUnit(indicator_key: string, raw: string | null): string | null {
+  const definition = indicatorDefinition(indicator_key);
+  if (!definition) return null;
+  const trimmed = (raw ?? "").trim();
+  if (!trimmed) return definition.units[0];
+  const exact = definition.units.find(unit => unit.toLowerCase() === trimmed.toLowerCase());
+  if (exact) return exact;
+  const alias = UNIT_ALIASES[trimmed.toLowerCase()] ?? UNIT_ALIASES[trimmed];
+  if (alias && definition.units.includes(alias)) return alias;
+  if (trimmed === "%" && definition.units.includes("%/yr")) return "%/yr";
+  return null;
+}
+export const unitForStorage = (indicator_key: string, raw: string | null): string => normalizeUnit(indicator_key, raw) ?? indicatorDefinition(indicator_key)?.units[0] ?? "";
 export const isComputedIndicator = (key: string): boolean => indicatorDefinition(key)?.computed === true;
 export const COMPUTED_INDICATOR_ERROR = "Computed indicator — not editable";
 export const INDICATOR_SCOPES: IndicatorScope[] = ["feedstock", "process", "product", "production", "application"];
