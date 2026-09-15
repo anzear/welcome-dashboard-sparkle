@@ -133,3 +133,5 @@
 - [x] Prompt 29 — Remove all trace UI while preserving trace_id data and dev writes
 
 - [x] Prompt 30 — Editable company evidence across review, editing, and creation
+
+- [x] Prompt 31 — Rename user-visible company Evidence labels to Relevance with legacy import support
