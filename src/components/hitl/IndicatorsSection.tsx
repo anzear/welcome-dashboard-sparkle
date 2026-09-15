@@ -118,6 +118,47 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
   </TableRow>;
 }
 
+function ShowMatchesButton({ indicatorKey, target }: { indicatorKey: string; target: IndicatorTarget }) {
+  const store = useHitlStore();
+  const matches = computedMatches(indicatorKey, target, store.matches, store.pathways);
+  return <Popover><PopoverTrigger asChild><Button variant="outline" size="sm" className="h-7 text-[10px]">Show matches</Button></PopoverTrigger>
+    <PopoverContent align="end" className="w-80 p-0">
+      <div className="flex items-center justify-between border-b px-3 py-2"><span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Counted records</span><span className="text-[10px] text-muted-foreground">{matches.length} total</span></div>
+      {matches.length === 0
+        ? <p className="p-3 text-xs text-muted-foreground">No approved matches yet.</p>
+        : <div className="max-h-72 space-y-2 overflow-y-auto p-3">{matches.map(match => <div key={match.id} className="space-y-1 border-b pb-2 last:border-0 last:pb-0">
+            <div className="flex items-center gap-2"><Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-normal">{match.kind === "patent" ? "Patent" : "Paper"}</Badge><ReviewStatusChip status={match.status} /></div>
+            <p className="text-xs font-medium leading-snug">{match.title}</p>
+            <a href={`#match-row-${match.id}`} className="font-mono text-[10px] text-primary hover:underline">{match.external_id}</a>
+          </div>)}</div>}
+    </PopoverContent>
+  </Popover>;
+}
+
+function ComputedIndicatorRow({ variant, scope, indicatorKey, target }: { variant: "flat" | "grouped"; scope: IndicatorScope; indicatorKey: string; target: IndicatorTarget }) {
+  const store = useHitlStore();
+  const definition = indicatorDefinition(indicatorKey);
+  const count = computedValue(indicatorKey, target, store.matches, store.pathways);
+  const reference = { scope, target };
+  const rule = COMPUTED_RULES[indicatorKey];
+  return <TableRow className="text-muted-foreground">
+    <TableCell className="sticky left-0 z-10 bg-background" />
+    {variant === "flat" && <><TableCell className="min-w-36 whitespace-nowrap"><ScopeChip scope={scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={reference} /></TableCell></>}
+    <TableCell className="whitespace-nowrap text-[10px] font-medium"><Tooltip><TooltipTrigger asChild><span>{definition?.label ?? indicatorKey}</span></TooltipTrigger>{rule && <TooltipContent className="max-w-sm text-xs">{rule}</TooltipContent>}</Tooltip></TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="whitespace-nowrap text-[10px] font-normal text-foreground">{count} {definition?.unit}</TableCell>
+    <TableCell className="text-[10px] italic">Computed from matched records</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="min-w-[9.5rem] whitespace-nowrap"><ComputedChip /></TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="text-[10px]">—</TableCell>
+    {variant === "flat" && <TableCell><AffectedPathways iv={reference} /></TableCell>}
+    <TableCell className="text-[10px]">—</TableCell>
+    <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><ShowMatchesButton indicatorKey={indicatorKey} target={target} /></div></TableCell>
+  </TableRow>;
+}
+
 export function IndicatorsSection() {
   const store = useHitlStore();
   const nodeFilter = useNodeFilter();
