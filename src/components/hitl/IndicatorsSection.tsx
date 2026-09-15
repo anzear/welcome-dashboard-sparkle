@@ -275,7 +275,7 @@ function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddP
   }, [open, preset]);
   useEffect(() => { if (definition) setUnit(current => current || definition.unit); }, [indicatorKey]);
 
-  const nodeOptions = (key: IndicatorTargetKey) => [...new Set(store.pathways.filter(pathway => pathway.availability !== "deleted").map(pathway => pathway[targetToPathwayPosition[key]]))].sort((a, b) => a.localeCompare(b));
+  const nodeOptions = (key: IndicatorTargetKey) => [...new Set(store.pathways.map(pathway => pathway[targetToPathwayPosition[key]]))].sort((a, b) => a.localeCompare(b));
   const setNode = (key: IndicatorTargetKey, next: string) => setTarget(current => ({ ...current, [key]: next || null }));
   const targetKeys = SCOPE_TARGET_KEYS[scope];
   const targetReady = targetKeys.every(key => Boolean(target[key]?.trim()));
@@ -284,7 +284,7 @@ function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddP
   const duplicate = definition && targetReady ? findIndicatorValue(store.indicatorValues, definition.key, target) : null;
   const parsed = definition ? parseValue(value, definition.value_type) : { error: "Select an indicator" };
   const valueError = value.trim() === "" ? null : "error" in parsed ? parsed.error : null;
-  const selectablePathways = store.pathways.filter(pathway => pathway.availability !== "deleted" && [pathway.id, pathway.feedstock, pathway.process_technology, pathway.product, pathway.application_market].join(" ").toLowerCase().includes(pathwaySearch.toLowerCase()));
+  const selectablePathways = store.pathways.filter(pathway => [pathway.id, pathway.feedstock, pathway.process_technology, pathway.product, pathway.application_market].join(" ").toLowerCase().includes(pathwaySearch.toLowerCase()));
   const chosenPathway = scope === "application" && targetReady ? store.pathways.find(pathway => sameIndicatorTarget(targetForPathway("application", pathway), target)) : undefined;
 
   const save = () => {
