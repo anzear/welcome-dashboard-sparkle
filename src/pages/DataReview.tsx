@@ -41,7 +41,7 @@ function DataReviewContent() {
     else if (!requested || !validSections.has(requested)) { const next = new URLSearchParams(searchParams); next.set("section", "pathways"); setSearchParams(next, { replace: true }); }
   }, [rawRequested, requested, setSearchParams]);
   const queue = useMemo(() => [
-    { label: "Pathways needing approval", count: store.pathways.filter(item => nodeFilter.matchesPathway(item) && item.status === "needs_approval").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
+    { label: "Pathways pending review", count: store.pathways.filter(item => nodeFilter.matchesPathway(item) && item.status === "review_pending" && item.availability !== "deleted").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
     { label: "Companies pending review", count: store.companies.filter(item => companyPassesFilter(item) && item.status === "review_pending").length, sub: "Company node assignments to verify", section: "companies" as Section, icon: Building2 },
     { label: "Paper matches pending", count: store.paperMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
     { label: "Patent matches pending", count: store.patentMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
