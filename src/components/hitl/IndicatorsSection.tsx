@@ -18,12 +18,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
-import { ComputedChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ComputedChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
   COMPUTED_RULES, INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   affectedPathwayIds, computedMatches, computedValue, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel, unitForStorage,
   indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
-  type IndicatorDefinition, type IndicatorScope, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
+  sameSources, type IndicatorDefinition, type IndicatorScope, type IndicatorSource, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
 } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -77,14 +77,14 @@ function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat
   return <TableHeader><TableRow>
     <TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
     {variant === "flat" && <><TableHead className="min-w-36 whitespace-nowrap">Scope</TableHead><TableHead>Target</TableHead></>}
-    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="min-w-56">Justification</TableHead>
+    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
     <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
     <TableHead>Note</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
 }
 
-function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean) => void; onClear: () => void }) {
+function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean, focusSources?: boolean) => void; onClear: () => void }) {
   const { openHistory } = useHistorySheet();
   return <TableRow id={`indicator-row-${item.id}`}>
     <TableCell className="sticky left-0 z-10 bg-background"><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
@@ -94,6 +94,7 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
     <TableCell className="cursor-pointer" onClick={() => onCorrect(true)}><Tooltip><TooltipTrigger asChild><span className="block max-w-56 truncate text-[10px]"><ValueCell value={item.justification} /></span></TooltipTrigger>{item.justification && <TooltipContent className="max-w-sm text-xs">{item.justification}</TooltipContent>}</Tooltip></TableCell>
+    <TableCell><SourcesPopover sources={item.sources} onEdit={() => onCorrect(false, true)} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
     <TableCell className="min-w-[9.5rem] whitespace-nowrap"><ReviewStatusChip status={item.status} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]">{formatDate(item.status_changed_at)}</TableCell>
@@ -113,7 +114,7 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
   return <TableRow className="text-muted-foreground">
     <TableCell className="sticky left-0 z-10 bg-background" />
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{label}</TableCell>
-    {Array.from({ length: 5 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
+    {Array.from({ length: 6 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap text-[10px] italic">not computed</TableCell>
     {Array.from({ length: 3 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
