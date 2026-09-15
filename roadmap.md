@@ -129,3 +129,5 @@
 - [x] Verify paper and patent flows, labels, outcomes, build, and console output
 
 - [x] Prompt 28 — Shared three-row SectionToolbar across all Data Review sections
+
+- [x] Prompt 29 — Remove all trace UI while preserving trace_id data and dev writes
