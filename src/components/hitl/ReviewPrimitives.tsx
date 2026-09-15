@@ -1,4 +1,4 @@
-import { Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
+import { Calculator, Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
