@@ -528,18 +528,13 @@ const indicatorSeeds: IndicatorSeed[] = [
   ["iv-010", "market_growth_global", 2, 4.6, "approved", 9],
   ["iv-011", "market_concentration", 2, 0.42, "approved", 8],
   ["iv-012", "production_trl", 2, 6, "review_pending", 8],
-  ["iv-013", "production_research_count", 2, 128, "approved", 7],
   ["iv-014", "application_trl", 2, 5, "review_pending", 7],
-  ["iv-015", "application_ip_count", 2, 34, "approved", 6],
-  ["iv-016", "application_research_count", 2, 12, "rejected", 6],
   ["iv-017", "product_price", 0, 640, "review_pending", 5],
   ["iv-018", "product_availability", 0, null, "approved", 5],
   ["iv-019", "feedstock_price", 4, 44, "approved", 4],
   ["iv-020", "process_trl", 1, 4, "review_pending", 4],
   ["iv-021", "application_trl", 0, 8, "approved", 3],
   ["iv-022", "production_trl", 0, 7, "approved", 3],
-  ["iv-023", "production_ip_count", 2, 210, "approved", 2],
-  ["iv-024", "application_ip_count", 0, 76, "review_pending", 2],
   ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
 ];
 const seedCorrections: Record<string, { value: number; note: string; at: string }> = {
@@ -568,7 +563,7 @@ const seedJustifications: Record<string, string> = {
 const seedMethodTags: MethodTag[] = ["reported", "summed", "derived", "estimated", "expert_judgement"];
 const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
   const definition = indicatorDefinition(key);
-  if (!definition) return rows;
+  if (!definition || definition.computed) return rows;
   const target = targetForPathway(definition.scope, seedPathways[pathwayIndex]);
   if (findIndicatorValue(rows, key, target)) return rows;
   const correction = seedCorrections[id];
@@ -587,14 +582,11 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
   id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
 });
 
-// Every latest seed value mirrors its record. audit-002 is superseded by audit-003;
-// audit-004 is already reverted by audit-005.
+// Every latest seed value mirrors its record. audit-002 is superseded by audit-003.
 const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "review_pending", "update", { note: "Flagged for a final definition check" }),
   auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-001", "update"),
-  auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"),
-  auditSeed("audit-004", iso(7, 8), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"),
-  auditSeed("audit-005", iso(7, 12), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
+  auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"), "Anže", "indicator_value", "iv-003", "value", 0, 24, "update"), "Jon Goriup", "indicator_value", "iv-003", "value", 24, 0, "revert", { reverts_entry_id: "audit-004" }),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
