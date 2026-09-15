@@ -53,6 +53,9 @@ export const FIELD_LABELS: Record<string, string> = {
   corrected_value: "Corrected value",
   correction_note: "Correction note",
   corrected_at: "Corrected at",
+  justification: "Justification",
+  method_tag: "Method",
+  method_detail: "Method detail",
 };
 export interface MatchNodes {
   feedstock: string | null;
@@ -84,6 +87,15 @@ export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNod
 
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
 export type IndicatorValueType = "trl" | "count" | "decimal";
+export type MethodTag = "reported" | "summed" | "derived" | "estimated" | "expert_judgement";
+export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
+  { value: "reported", label: "Reported" },
+  { value: "summed", label: "Summed" },
+  { value: "derived", label: "Derived" },
+  { value: "estimated", label: "Estimated" },
+  { value: "expert_judgement", label: "Expert judgement" },
+];
+export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
 export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "accept" | "reject" | "revert";
@@ -152,6 +164,9 @@ export interface IndicatorValue extends CommonRecord {
   corrected_value: number | null;
   correction_note: string | null;
   corrected_at: string | null;
+  justification: string | null;
+  method_tag: MethodTag | null;
+  method_detail: string | null;
 }
 
 export const displayedValue = (indicatorValue: IndicatorValue): number | null => {
@@ -469,6 +484,25 @@ const seedCorrections: Record<string, { value: number; note: string; at: string 
   "iv-005": { value: 1520, note: "Aligned with published regional dataset", at: "2026-02-14T11:30:00.000Z" },
   "iv-009": { value: 3.2, note: "Updated against source table", at: "2026-09-13T09:00:00.000Z" },
 };
+const seedJustifications: Record<string, string> = {
+  feedstock_price: "Average of three 2025 European spot quotes for the specified feedstock.",
+  feedstock_availability: "Available European volume after competing uses and collection losses.",
+  process_trl: "Highest maturity demonstrated for this process at the named node.",
+  product_price: "Average of recent European contract and spot references for this product grade.",
+  product_availability: "Total commercially available European volume reported for the latest year.",
+  market_size_eu: "European demand multiplied by the representative annual selling price.",
+  market_size_global: "Published global sales estimate reconciled across two market sources.",
+  market_growth_eu: "Year-on-year change derived from the latest two comparable European observations.",
+  market_growth_global: "Reported global annual market growth for the relevant product category.",
+  market_concentration: "Supplier shares were normalized before calculating the concentration index.",
+  production_trl: "Lowest demonstrated maturity across the feedstock, process and product chain.",
+  production_ip_count: "Active patent families matched to all three production nodes.",
+  production_research_count: "Peer-reviewed papers matching the complete production target.",
+  application_trl: "Commercial readiness assessed for the complete pathway and end application.",
+  application_ip_count: "Active patent families matching the pathway including its application.",
+  application_research_count: "Peer-reviewed papers matching all pathway nodes and the application.",
+};
+const seedMethodTags: MethodTag[] = ["reported", "summed", "derived", "estimated", "expert_judgement"];
 const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
   const definition = indicatorDefinition(key);
   if (!definition) return rows;
@@ -479,6 +513,9 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
     ...common(id, day), indicator_key: key, scope: definition.scope, target, value, unit: definition.unit,
     value_date: id === "iv-018" ? null : iso(1 + (index % 12)), status,
     corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null,
+    justification: index % 7 === 6 ? null : seedJustifications[key] ?? null,
+    method_tag: correction ? "reported" : index % 6 === 5 ? null : seedMethodTags[index % seedMethodTags.length],
+    method_detail: index % 2 === 0 ? `${seedJustifications[key] ?? "Source observations were reviewed"} Reference period: 2024–2025.` : null,
   });
   return rows;
 }, []);
