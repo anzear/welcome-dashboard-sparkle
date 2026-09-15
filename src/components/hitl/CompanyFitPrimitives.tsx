@@ -8,7 +8,7 @@ import { companyRoleLabels, roleNode } from "@/lib/roleNode";
 import { cn } from "@/lib/utils";
 import { NodeChips, evidenceNodeLabels } from "./EvidenceMatchPrimitives";
 import { PathwayRef } from "./PathwayRef";
-import { AvailabilityChip } from "./ReviewPrimitives";
+import { VisibilityChip } from "./ReviewPrimitives";
 
 const fitLabels = { exact: "Exact fit", strong: "Strong fit", broad: "Broad fit" } as const;
 const names = (keys: CompanyFit["matched"]) => keys.map(key => evidenceNodeLabels[key]).join(", ") || "None";
@@ -46,7 +46,7 @@ export function CompanyDerivedPathwayList({ company }: { company: Company }) {
   const store = useHitlStore(); const ref = roleNode(company);
   const rows = derivedCompanyPathwayIds(company, store.pathways).map(id => store.pathways.find(pathway => pathway.id === id)).filter((pathway): pathway is NonNullable<typeof pathway> => Boolean(pathway)).map(pathway => ({ pathway, fit: computeFit(company, pathway) })).sort((a, b) => a.fit && b.fit ? ({ exact: 0, strong: 1, broad: 2 }[a.fit.level] - { exact: 0, strong: 1, broad: 2 }[b.fit.level]) : 0);
   if (!rows.length) return <p className="py-4 text-xs text-muted-foreground">No pathway contains {ref.positionLabel}: {company.role_node}.</p>;
-  return <div className="divide-y rounded-md border">{rows.map(({ pathway, fit }) => <div key={pathway.id} className="flex items-center gap-2 px-3 py-2"><div className="min-w-0 flex-1"><PathwayRef pathwayId={pathway.id} variant="inline" emphasisNodes={[ref.positionKey, ...(fit?.matched ?? [])]} /></div>{fit ? <FitChip fit={fit} /> : <span className="text-xs text-muted-foreground">—</span>}<AvailabilityChip availability={pathway.availability} /></div>)}</div>;
+  return <div className="divide-y rounded-md border">{rows.map(({ pathway, fit }) => <div key={pathway.id} className="flex items-center gap-2 px-3 py-2"><div className="min-w-0 flex-1"><PathwayRef pathwayId={pathway.id} variant="inline" emphasisNodes={[ref.positionKey, ...(fit?.matched ?? [])]} /></div>{fit ? <FitChip fit={fit} /> : <span className="text-xs text-muted-foreground">—</span>}<VisibilityChip state={pathway.visibility.default} /></div>)}</div>;
 }
 
 export function DerivedPathwaysForCompany({ company }: { company: Company }) {

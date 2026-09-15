@@ -1,22 +1,35 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 export type ReviewStatus = "review_pending" | "approved" | "rejected";
-export type PathwayAvailability = "active" | "locked" | "hidden" | "deleted";
-export const PATHWAY_AVAILABILITIES: PathwayAvailability[] = ["active", "locked", "hidden", "deleted"];
-export const AVAILABILITY_MEANINGS: Record<PathwayAvailability, string> = {
-  active: "Visible and usable.",
-  locked: "Visible to users but not usable.",
-  hidden: "Not visible in Pathway Explorer, counts or benchmarks.",
-  deleted: "Soft-deleted, retained with history.",
+export type VisibilityState = "visible" | "locked" | "hidden";
+export const VISIBILITY_STATES: VisibilityState[] = ["visible", "locked", "hidden"];
+export const VISIBILITY_MEANINGS: Record<VisibilityState, string> = {
+  visible: "Usable in Pathway Explorer.",
+  locked: "Shown but not usable, for sales and marketing.",
+  hidden: "Not shown in Pathway Explorer, counts or benchmarks.",
 };
-// Legacy pathway status values migrated onto the unified review status plus availability.
+export const VISIBILITY_LABELS: Record<VisibilityState, string> = { visible: "Visible", locked: "Locked", hidden: "Hidden" };
+export interface PathwayVisibility { default: VisibilityState; overrides: Record<string, VisibilityState>; }
+// Legacy pathway lifecycle values migrated onto the unified review status plus visibility state.
 type LegacyPathwayStatus = "approved" | "needs_approval" | "locked" | "hidden" | "deleted" | ReviewStatus;
-export const migratePathwayStatus = (status: LegacyPathwayStatus): { status: ReviewStatus; availability: PathwayAvailability } => {
-  if (status === "locked") return { status: "approved", availability: "locked" };
-  if (status === "hidden") return { status: "approved", availability: "hidden" };
-  if (status === "deleted") return { status: "approved", availability: "deleted" };
-  if (status === "needs_approval") return { status: "review_pending", availability: "active" };
-  return { status, availability: "active" };
+type LegacyAvailability = "active" | "locked" | "hidden" | "deleted";
+const availabilityToVisibility = (availability: LegacyAvailability): VisibilityState => availability === "active" ? "visible" : availability === "deleted" ? "hidden" : availability;
+export const migratePathwayStatus = (status: LegacyPathwayStatus, scope: "all" | string[] = "all"): { status: ReviewStatus; visibility: PathwayVisibility } => {
+  const availability: LegacyAvailability = status === "locked" || status === "hidden" || status === "deleted" ? status : "active";
+  const reviewStatus: ReviewStatus = status === "needs_approval" ? "review_pending" : status === "locked" || status === "hidden" || status === "deleted" ? "approved" : status;
+  const state = availabilityToVisibility(availability);
+  if (scope === "all") return { status: reviewStatus, visibility: { default: state, overrides: {} } };
+  return { status: reviewStatus, visibility: { default: "visible", overrides: Object.fromEntries(scope.map(org => [org, state])) } };
+};
+export const effectiveVisibility = (pathway: Pathway, organisation: string): VisibilityState => pathway.visibility.overrides[organisation] ?? pathway.visibility.default;
+export const visibilitySummary = (pathway: Pathway | PathwayVisibility): string => {
+  const visibility = "visibility" in pathway ? pathway.visibility : pathway;
+  const entries = Object.entries(visibility.overrides);
+  const base = `${VISIBILITY_LABELS[visibility.default]}${entries.length ? "" : visibility.default === "visible" ? " to all" : " for all"}`;
+  if (!entries.length) return base;
+  const groupedStates = VISIBILITY_STATES.filter(state => state !== visibility.default && entries.some(([, value]) => value === state));
+  const parts = groupedStates.map(state => { const count = entries.filter(([, value]) => value === state).length; return `${VISIBILITY_LABELS[state]} for ${count} organisation${count === 1 ? "" : "s"}`; });
+  return [base, ...parts].join(" · ");
 };
 export type VisibilityScope = "all" | string[];
 export type GroupColorToken = "group-violet" | "group-fuchsia" | "group-rose" | "group-indigo" | "group-bronze";
@@ -35,8 +48,8 @@ export const NODE_LABELS = {
 } as const satisfies Record<keyof EvidenceNodes, string>;
 export const FIELD_LABELS: Record<string, string> = {
   status: "Status",
-  availability: "Availability",
   note: "Note",
+  visibility: "Visibility",
   visibility_scope: "Visibility",
   feedstock: "Feedstock",
   process_technology: "Process",
@@ -114,7 +127,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
-export type AuditOperation = "create" | "update" | "deactivate" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -131,9 +144,8 @@ export interface Pathway extends CommonRecord {
   product: string;
   application_market: string;
   status: ReviewStatus;
-  availability: PathwayAvailability;
   group_id: string | null;
-  visibility_scope: VisibilityScope;
+  visibility: PathwayVisibility;
 }
 export interface Group extends CommonRecord {
   name: string;
@@ -262,16 +274,16 @@ export const groupById = (groups: Group[], groupId: string | null) => groupId ? 
 export const pathwaysInGroup = (pathways: Pathway[], groupId: string) => pathways.filter(pathway => pathway.group_id === groupId);
 
 const seedPathways: Pathway[] = [
-  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", ...migratePathwayStatus("needs_approval"), group_id: "grp-005", visibility_scope: "all" },
-  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", ...migratePathwayStatus("approved"), group_id: "grp-002", visibility_scope: "all" },
-  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", ...migratePathwayStatus("needs_approval"), group_id: null, visibility_scope: ["VCG.AI"] },
-  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", ...migratePathwayStatus("locked"), group_id: "grp-003", visibility_scope: "all" },
-  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", ...migratePathwayStatus("approved"), group_id: "grp-002", visibility_scope: "all" },
-  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", ...migratePathwayStatus("hidden"), group_id: "grp-005", visibility_scope: ["VCG.AI", "BioCampus Straubing GmbH"] },
-  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", ...migratePathwayStatus("needs_approval"), group_id: "grp-001", visibility_scope: "all" },
-  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", ...migratePathwayStatus("deleted"), group_id: null, visibility_scope: "all" },
-  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", ...migratePathwayStatus("approved"), group_id: "grp-004", visibility_scope: "all" },
-  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", ...migratePathwayStatus("needs_approval"), group_id: null, visibility_scope: ["VCG.AI"] },
+  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", ...migratePathwayStatus("needs_approval", "all"), group_id: "grp-005" },
+  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", ...migratePathwayStatus("approved", "all"), group_id: "grp-002" },
+  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_id: null },
+  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", ...migratePathwayStatus("locked", "all"), group_id: "grp-003" },
+  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", ...migratePathwayStatus("approved", "all"), group_id: "grp-002" },
+  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", ...migratePathwayStatus("hidden", ["VCG.AI", "BioCampus Straubing GmbH"]), group_id: "grp-005" },
+  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", ...migratePathwayStatus("needs_approval", "all"), group_id: "grp-001" },
+  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", ...migratePathwayStatus("deleted", "all"), group_id: null },
+  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", ...migratePathwayStatus("approved", "all"), group_id: "grp-004" },
+  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_id: null },
 ];
 
 const companyRows = [
@@ -333,7 +345,7 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
 
 export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
   const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
-  pathways.filter(pathway => pathway.availability !== "deleted").forEach(pathway => pathwayNodePositions.forEach(position => {
+  pathways.forEach(pathway => pathwayNodePositions.forEach(position => {
     const value = pathway[position].trim(); const key = normalizedNode(value);
     if (!key) return;
     const current = values.get(key) ?? { value, pathwayIds: new Set<string>(), positions: new Map<PathwayNodePosition, Set<string>>() };
@@ -365,7 +377,7 @@ export function hasNoNodes(match: Pick<PaperPatentMatch, "nodes">): boolean { re
 export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
   const positions = filledPositions(match);
   if (!positions.length) return [];
-  return pathways.filter(pathway => pathway.availability !== "deleted" && positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
 }
 export interface PathwayScope { production: boolean; application: boolean; productionPositions: MatchNodePosition[]; applicationHit: boolean; }
 export function pathwayScope(match: Pick<PaperPatentMatch, "nodes">, pathway: Pathway): PathwayScope {
@@ -386,7 +398,7 @@ const rolePositions = {
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
 export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => pathway.availability !== "deleted" && normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
+  return pathways.filter(pathway => normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
 export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
@@ -444,7 +456,7 @@ export const targetValues = (iv: TargetedValue): string[] => filledTargetKeys(iv
 export function affectedPathwayIds(iv: TargetedValue, pathways: Pathway[]): string[] {
   const keys = filledTargetKeys(iv);
   if (keys.length !== SCOPE_TARGET_KEYS[iv.scope].length) return [];
-  return pathways.filter(pathway => pathway.availability !== "deleted" && keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => keys.every(key => normalizedNode(pathway[targetToPathwayPosition[key]]) === normalizedNode(iv.target[key]))).map(pathway => pathway.id);
 }
 export function targetLabel(iv: TargetedValue): string {
   const values = SCOPE_TARGET_KEYS[iv.scope].map(key => iv.target[key]?.trim() || "—");
@@ -552,11 +564,11 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
-  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "availability", "active", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
+  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "visibility", { default: "visible", overrides: {} }, { default: "locked", overrides: {} }, "update", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 1900, null, "update", { note: "Source no longer reports this value" }),
   auditSeed("audit-011", iso(10, 14), "Anže", "company", "co-004", "status", "review_pending", "rejected", "reject"),
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
-  auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility_scope", "all", ["VCG.AI"], "update"),
+  auditSeed("audit-013", iso(12, 11), "Anže", "pathway", "pw-003", "visibility", { default: "visible", overrides: {} }, { default: "visible", overrides: { "VCG.AI": "locked" } }, "update"),
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
   auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "approved", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
@@ -647,9 +659,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const record = getRecord(target.entity_type, target.entity_id);
     if (!record) return null;
     if (target.operation === "create" || target.operation === "link_add") {
-      const field = target.entity_type === "group" ? "is_archived" : target.entity_type === "pathway" ? "availability" : "status";
-      const status = target.entity_type === "pathway" ? "deleted" : target.entity_type === "group" ? true : "rejected";
-      return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: field in record ? record[field as keyof HitlRecord] : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: `Reverted ${target.operation} entry ${target.id}` });
+      const field = target.entity_type === "group" ? "is_archived" : target.entity_type === "pathway" ? "visibility" : "status";
+      const status: unknown = target.entity_type === "pathway" ? { default: "hidden", overrides: {} } : target.entity_type === "group" ? true : "rejected";
+      return recordChange({ entity_type: target.entity_type, entity_id: target.entity_id, field, prior_value: field in record ? record[field as keyof HitlRecord] : null, new_value: status, operation: "revert", reverts_entry_id: target.id, note: target.entity_type === "pathway" ? "reverted creation" : `Reverted ${target.operation} entry ${target.id}` });
     }
     const field = target.operation === "link_remove" ? "status" : target.field;
     if (!field) return null;

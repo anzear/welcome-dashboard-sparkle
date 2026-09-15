@@ -1,10 +1,10 @@
-import { Archive, Check, Clock, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
+import { Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AuditOperation, PathwayAvailability, ReviewStatus } from "@/lib/hitlStore";
+import type { AuditOperation, ReviewStatus, VisibilityState } from "@/lib/hitlStore";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
   review_pending: { label: "Review pending", icon: Clock, className: "border-border bg-muted text-muted-foreground" },
@@ -18,15 +18,14 @@ export function ReviewStatusChip({ status }: { status: ReviewStatus }) {
   return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
 }
 
-const availabilityConfig: Record<PathwayAvailability, { label: string; icon: typeof Check; className: string }> = {
-  active: { label: "Active", icon: Check, className: "border-primary/25 bg-primary/10 text-primary" },
+const visibilityConfig: Record<VisibilityState, { label: string; icon: typeof Check; className: string }> = {
+  visible: { label: "Visible", icon: Eye, className: "border-primary/25 bg-primary/10 text-primary" },
   locked: { label: "Locked", icon: Lock, className: "border-border bg-secondary text-secondary-foreground" },
   hidden: { label: "Hidden", icon: EyeOff, className: "border-border bg-secondary text-secondary-foreground" },
-  deleted: { label: "Deleted", icon: Archive, className: "border-destructive/25 bg-destructive/10 text-destructive" },
 };
 
-export function AvailabilityChip({ availability }: { availability: PathwayAvailability }) {
-  const config = availabilityConfig[availability];
+export function VisibilityChip({ state }: { state: VisibilityState }) {
+  const config = visibilityConfig[state];
   const Icon = config.icon;
   return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
 }
@@ -39,7 +38,6 @@ export function ValueCell({ value, unit }: { value: string | number | null | und
 const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus; className: string }> = {
   create: { label: "Create", icon: Plus, className: "border-border text-muted-foreground" },
   update: { label: "Update", icon: Pencil, className: "border-border text-muted-foreground" },
-  deactivate: { label: "Deactivate", icon: Archive, className: "border-border text-muted-foreground" },
   link_add: { label: "Link add", icon: Link, className: "border-border text-muted-foreground" },
   link_remove: { label: "Link remove", icon: Unlink, className: "border-border text-muted-foreground" },
   approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
