@@ -30,6 +30,10 @@ export function VisibilityChip({ state }: { state: VisibilityState }) {
   return <Badge variant="outline" className={cn("inline-flex h-6 items-center gap-1 whitespace-nowrap px-2 text-xs font-medium", config.className)}><Icon className="h-3 w-3 shrink-0" />{config.label}</Badge>;
 }
 
+export function ComputedChip() {
+  return <Badge variant="outline" className="inline-flex h-6 items-center gap-1 whitespace-nowrap border-border px-2 text-xs font-medium text-muted-foreground"><Calculator className="h-3 w-3 shrink-0" />Computed</Badge>;
+}
+
 export function ValueCell({ value, unit }: { value: string | number | null | undefined; unit?: string | null }) {
   if (value === null || value === undefined) return <span className="text-muted-foreground" title="null (no value)">—</span>;
   return <span>{value}{unit ? ` ${unit}` : ""}</span>;
