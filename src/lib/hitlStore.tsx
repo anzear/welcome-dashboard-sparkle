@@ -88,6 +88,7 @@ export const FIELD_LABELS: Record<string, string> = {
   justification: "Justification",
   method_tag: "Method",
   method_detail: "Method detail",
+  sources: "Sources",
 };
 export interface MatchNodes {
   feedstock: string | null;
@@ -188,6 +189,21 @@ export interface PaperPatentMatch extends CommonRecord {
   abstract: string | null;
   source: "Semantic Scholar" | "USPTO" | null;
 }
+export interface IndicatorSource { url: string; label: string | null; }
+export const sourceDomain = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
+export const sourceDisplay = (source: IndicatorSource): string => source.label?.trim() || sourceDomain(source.url);
+export const isValidSourceUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
+export const MAX_SOURCES = 10;
+// "https://a [Label] | https://b" → source list. Used by bulk import only.
+export function parseSourceList(raw: string): IndicatorSource[] {
+  return raw.split("|").map(part => part.trim()).filter(Boolean).map(part => {
+    const match = part.match(/^(\S+)\s*(?:\[(.*)\])?$/);
+    return { url: (match?.[1] ?? part).trim(), label: match?.[2]?.trim() || null };
+  });
+}
+export const formatSourceList = (sources: IndicatorSource[]): string => sources.map(source => source.label ? `${source.url} [${source.label}]` : source.url).join(" | ");
+export const sameSources = (a: IndicatorSource[], b: IndicatorSource[]): boolean => a.length === b.length && a.every((source, index) => source.url === b[index].url && (source.label ?? null) === (b[index].label ?? null));
+
 export interface IndicatorValue extends CommonRecord {
   indicator_key: string;
   scope: IndicatorScope;
@@ -201,6 +217,7 @@ export interface IndicatorValue extends CommonRecord {
   corrected_at: string | null;
   justification: string | null;
   method_tag: MethodTag | null;
+  sources: IndicatorSource[];
   method_detail: string | null;
 }
 
@@ -577,6 +594,14 @@ const seedJustifications: Record<string, string> = {
   application_ip_count: "Active patent families matching the pathway including its application.",
   application_research_count: "Peer-reviewed papers matching all pathway nodes and the application.",
 };
+// Plausible source pools; a few seed rows deliberately stay empty.
+const seedSourcePools: IndicatorSource[][] = [
+  [{ url: "https://ec.europa.eu/eurostat/databrowser/view/apro_cpsh1", label: "Eurostat crop statistics" }],
+  [{ url: "https://www.fao.org/faostat/en/#data/QCL", label: "FAOSTAT 2025" }, { url: "https://www.icis.com/explore/commodities/chemicals/pricing/", label: "ICIS pricing" }],
+  [{ url: "https://www.grandviewresearch.com/industry-analysis/lactic-acid-market", label: "Market research summary" }],
+  [{ url: "https://reports.example.com/annual-2025.pdf", label: "Company annual report" }, { url: "https://ec.europa.eu/eurostat/databrowser/view/ds-045409", label: "Eurostat trade data" }, { url: "https://www.iea.org/reports/bioenergy", label: "IEA bioenergy" }],
+  [],
+];
 const seedMethodTags: MethodTag[] = ["reported", "summed", "derived", "estimated", "expert_judgement"];
 const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
   const definition = indicatorDefinition(key);
@@ -590,6 +615,7 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
     corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null,
     justification: index % 7 === 6 ? null : seedJustifications[key] ?? null,
     method_tag: correction ? "reported" : index % 6 === 5 ? null : seedMethodTags[index % seedMethodTags.length],
+    sources: seedSourcePools[index % seedSourcePools.length],
     method_detail: index % 2 === 0 ? `${seedJustifications[key] ?? "Source observations were reviewed"} Reference period: 2024–2025.` : null,
   });
   return rows;
