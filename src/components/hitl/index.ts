@@ -10,3 +10,4 @@ export { CompanyDerivedPathwayList, CompanyRoleChip, DerivedPathwaysForCompany, 
 export { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 export { GroupChip } from "./GroupChip";
 export { SplitAddButton, type SplitAddButtonItem } from "./SplitAddButton";
+export { BulkActionsButton, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, type BulkActionItem } from "./SectionToolbar";
