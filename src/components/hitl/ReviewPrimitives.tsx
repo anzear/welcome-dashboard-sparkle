@@ -42,7 +42,7 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   deactivate: { label: "Deactivate", icon: Archive, className: "border-border text-muted-foreground" },
   link_add: { label: "Link add", icon: Link, className: "border-border text-muted-foreground" },
   link_remove: { label: "Link remove", icon: Unlink, className: "border-border text-muted-foreground" },
-  accept: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
+  approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
 };
