@@ -60,6 +60,10 @@ function DiffValue({ value }: { value: unknown }) {
   if (value === null || value === undefined || typeof value === "string" || typeof value === "number") return <ValueCell value={value as string | number | null | undefined} />;
   if (typeof value === "boolean") return <span>{String(value)}</span>;
   if (Array.isArray(value) && value.every(item => typeof item === "string")) return <span className="max-w-80 break-words text-[10px]">{value.length ? value.join(", ") : "—"}</span>;
+  if (Array.isArray(value) && value.every(item => item && typeof item === "object" && "url" in (item as object))) {
+    const sources = value as IndicatorSource[];
+    return <Tooltip><TooltipTrigger asChild><span className="text-[10px] underline decoration-dotted">{sources.length} {sources.length === 1 ? "source" : "sources"}</span></TooltipTrigger><TooltipContent className="max-w-sm space-y-1 break-all text-[10px]">{sources.length ? sources.map(source => <p key={source.url}>{sourceDisplay(source)} — {source.url}</p>) : <p>No sources</p>}</TooltipContent></Tooltip>;
+  }
   const full = jsonPreview(value as object);
   const preview = full.length > 80 ? `${full.slice(0, 77)}…` : full;
   return <Tooltip><TooltipTrigger asChild><code className="inline-block max-w-44 truncate font-mono text-[10px]">{preview}</code></TooltipTrigger><TooltipContent className="max-w-sm break-all font-mono text-[10px]">{full}</TooltipContent></Tooltip>;

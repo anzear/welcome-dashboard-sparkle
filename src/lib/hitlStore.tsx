@@ -594,6 +594,14 @@ const seedJustifications: Record<string, string> = {
   application_ip_count: "Active patent families matching the pathway including its application.",
   application_research_count: "Peer-reviewed papers matching all pathway nodes and the application.",
 };
+// Plausible source pools; a few seed rows deliberately stay empty.
+const seedSourcePools: IndicatorSource[][] = [
+  [{ url: "https://ec.europa.eu/eurostat/databrowser/view/apro_cpsh1", label: "Eurostat crop statistics" }],
+  [{ url: "https://www.fao.org/faostat/en/#data/QCL", label: "FAOSTAT 2025" }, { url: "https://www.icis.com/explore/commodities/chemicals/pricing/", label: "ICIS pricing" }],
+  [{ url: "https://www.grandviewresearch.com/industry-analysis/lactic-acid-market", label: "Market research summary" }],
+  [{ url: "https://reports.example.com/annual-2025.pdf", label: "Company annual report" }, { url: "https://ec.europa.eu/eurostat/databrowser/view/ds-045409", label: "Eurostat trade data" }, { url: "https://www.iea.org/reports/bioenergy", label: "IEA bioenergy" }],
+  [],
+];
 const seedMethodTags: MethodTag[] = ["reported", "summed", "derived", "estimated", "expert_judgement"];
 const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorValue[]>((rows, [id, key, pathwayIndex, value, status, day], index) => {
   const definition = indicatorDefinition(key);
@@ -607,6 +615,7 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
     corrected_value: correction?.value ?? null, correction_note: correction?.note ?? null, corrected_at: correction?.at ?? null,
     justification: index % 7 === 6 ? null : seedJustifications[key] ?? null,
     method_tag: correction ? "reported" : index % 6 === 5 ? null : seedMethodTags[index % seedMethodTags.length],
+    sources: seedSourcePools[index % seedSourcePools.length],
     method_detail: index % 2 === 0 ? `${seedJustifications[key] ?? "Source observations were reviewed"} Reference period: 2024–2025.` : null,
   });
   return rows;
