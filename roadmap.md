@@ -138,4 +138,4 @@
 
 - [x] Prompt 32 — Add direct row and bulk revert actions to Audit Log, complete field labels, and correct audit seeds.
 
-- [ ] Prompt 33 — Add indicator justification and edit-only method across tables, dialogs, review, and history.
+- [x] Prompt 33 — Add indicator justification and edit-only method across tables, dialogs, review, and history.
