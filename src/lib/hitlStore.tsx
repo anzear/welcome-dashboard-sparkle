@@ -518,7 +518,7 @@ type IndicatorSeed = [id: string, key: string, pathwayIndex: number, value: numb
 const indicatorSeeds: IndicatorSeed[] = [
   ["iv-001", "feedstock_price", 0, 82.5, "review_pending", 14],
   ["iv-002", "feedstock_availability", 0, 1250, "approved", 13],
-  ["iv-003", "production_ip_count", 0, 0, "review_pending", 12],
+  
   ["iv-004", "process_trl", 2, 7, "approved", 12],
   ["iv-005", "product_price", 2, 1480, "approved", 11],
   ["iv-006", "product_availability", 2, 310, "review_pending", 11],
