@@ -132,4 +132,4 @@
 
 - [x] Prompt 29 — Remove all trace UI while preserving trace_id data and dev writes
 
-- [ ] Prompt 30 — Editable company evidence across review, editing, and creation
+- [x] Prompt 30 — Editable company evidence across review, editing, and creation
