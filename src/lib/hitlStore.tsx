@@ -552,7 +552,7 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
-  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "status", "approved", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
+  auditSeed("audit-009", iso(9, 15), "Anže", "pathway", "pw-004", "availability", "active", "locked", "deactivate", { note: "Reserved for sales and marketing" }),
   auditSeed("audit-010", iso(10, 9), "Jon Goriup", "indicator_value", "iv-007", "value", 1900, null, "update", { note: "Source no longer reports this value" }),
   auditSeed("audit-011", iso(10, 14), "Anže", "company", "co-004", "status", "review_pending", "rejected", "reject"),
   auditSeed("audit-012", iso(11, 10), "Jon Goriup", "paper_match", "pp-001", "note", null, "Check pathway specificity", "update"),
