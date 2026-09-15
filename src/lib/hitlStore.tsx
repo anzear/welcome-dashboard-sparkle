@@ -130,7 +130,8 @@ export interface Pathway extends CommonRecord {
   process_technology: string;
   product: string;
   application_market: string;
-  status: PathwayStatus;
+  status: ReviewStatus;
+  availability: PathwayAvailability;
   group_id: string | null;
   visibility_scope: VisibilityScope;
 }
