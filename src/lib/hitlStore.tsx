@@ -167,7 +167,6 @@ export interface IndicatorValue extends CommonRecord {
   justification: string | null;
   method_tag: MethodTag | null;
   method_detail: string | null;
-  batch_id?: string | null;
 }
 
 export const displayedValue = (indicatorValue: IndicatorValue): number | null => {
