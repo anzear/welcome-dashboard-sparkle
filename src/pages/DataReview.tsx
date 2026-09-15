@@ -4,7 +4,7 @@ import { Building2, FileText, Gauge, Link2, ScrollText, ShieldCheck } from "luci
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, TraceSheet, TraceSheetProvider, useNodeFilter } from "@/components/hitl";
+import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, useNodeFilter } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
@@ -20,7 +20,7 @@ const sections: { value: Section; label: string; title: string; description: str
   { value: "papers", label: "Papers", title: "Papers", description: "Inspect publication matches proposed for each Pathway." },
   { value: "patents", label: "Patents", title: "Patents", description: "Inspect patent matches proposed for each Pathway." },
   { value: "indicators", label: "Indicators", title: "Indicators", description: "Check sourced indicator values, dates, units and human corrections." },
-  { value: "audit", label: "Audit Log", title: "Audit Log", description: "Trace every review action, field change and reverted operation." },
+  { value: "audit", label: "Audit Log", title: "Audit Log", description: "Review every action, field change and reverted operation." },
 ];
 const validSections = new Set(sections.map(section => section.value));
 
@@ -94,12 +94,11 @@ function DataReviewContent() {
           </CardContent>
         </Card>
         <RecordHistorySheet />
-        <TraceSheet />
       </div>
     </div>
   );
 }
 
 export default function DataReview() {
-  return <HistorySheetProvider><TraceSheetProvider><NodeFilterProvider><DataReviewContent /></NodeFilterProvider></TraceSheetProvider></HistorySheetProvider>;
+  return <HistorySheetProvider><NodeFilterProvider><DataReviewContent /></NodeFilterProvider></HistorySheetProvider>;
 }
