@@ -52,6 +52,7 @@ export const FIELD_LABELS: Record<string, string> = {
   value_date: "Value date",
   corrected_value: "Corrected value",
   correction_note: "Correction note",
+  corrected_at: "Corrected at",
 };
 export interface MatchNodes {
   feedstock: string | null;
