@@ -17,6 +17,7 @@ export const NODE_LABELS = {
   product: "Product",
   application_market: "Application",
 } as const satisfies Record<keyof EvidenceNodes, string>;
+export const FIELD_LABELS: Record<string, string> = { evidence: "Relevance" };
 export interface MatchNodes {
   feedstock: string | null;
   process: string | null;
