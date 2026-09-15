@@ -88,6 +88,7 @@ export const FIELD_LABELS: Record<string, string> = {
   justification: "Justification",
   method_tag: "Method",
   method_detail: "Method detail",
+  sources: "Sources",
 };
 export interface MatchNodes {
   feedstock: string | null;
@@ -188,6 +189,21 @@ export interface PaperPatentMatch extends CommonRecord {
   abstract: string | null;
   source: "Semantic Scholar" | "USPTO" | null;
 }
+export interface IndicatorSource { url: string; label: string | null; }
+export const sourceDomain = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
+export const sourceDisplay = (source: IndicatorSource): string => source.label?.trim() || sourceDomain(source.url);
+export const isValidSourceUrl = (url: string): boolean => /^https?:\/\//i.test(url.trim());
+export const MAX_SOURCES = 10;
+// "https://a [Label] | https://b" → source list. Used by bulk import only.
+export function parseSourceList(raw: string): IndicatorSource[] {
+  return raw.split("|").map(part => part.trim()).filter(Boolean).map(part => {
+    const match = part.match(/^(\S+)\s*(?:\[(.*)\])?$/);
+    return { url: (match?.[1] ?? part).trim(), label: match?.[2]?.trim() || null };
+  });
+}
+export const formatSourceList = (sources: IndicatorSource[]): string => sources.map(source => source.label ? `${source.url} [${source.label}]` : source.url).join(" | ");
+export const sameSources = (a: IndicatorSource[], b: IndicatorSource[]): boolean => a.length === b.length && a.every((source, index) => source.url === b[index].url && (source.label ?? null) === (b[index].label ?? null));
+
 export interface IndicatorValue extends CommonRecord {
   indicator_key: string;
   scope: IndicatorScope;
@@ -201,6 +217,7 @@ export interface IndicatorValue extends CommonRecord {
   corrected_at: string | null;
   justification: string | null;
   method_tag: MethodTag | null;
+  sources: IndicatorSource[];
   method_detail: string | null;
 }
 
