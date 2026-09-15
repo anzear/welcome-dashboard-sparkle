@@ -88,7 +88,7 @@ export function BulkAddIndicatorValuesDialog({ open, onClose, onOpenRecord }: { 
   const store = useHitlStore(); const inputRef = useRef<HTMLInputElement>(null);
   const [step, setStep] = useState(1); const [paste, setPaste] = useState(""); const [rows, setRows] = useState<BulkRow[]>([]); const [uploadRows, setUploadRows] = useState<RawRow[]>([]); const [uploadError, setUploadError] = useState(""); const [pendingReview, setPendingReview] = useState(false);
   const [batchId, setBatchId] = useState("");
-  const [allJustification, setAllJustification] = useState(""); const [allMethod, setAllMethod] = useState<MethodTag>("expert_judgement"); const [allMethodDetail, setAllMethodDetail] = useState(""); const [allDate, setAllDate] = useState(""); const [allNote, setAllNote] = useState("");
+  const [allJustification, setAllJustification] = useState(""); const [allMethod, setAllMethod] = useState<MethodTag>("expert_judgement"); const [allMethodDetail, setAllMethodDetail] = useState(""); const [allDate, setAllDate] = useState(""); const [allNote, setAllNote] = useState(""); const [allUnit, setAllUnit] = useState("");
   const sourceRows = uploadRows.length ? uploadRows : parsePaste(paste); const built = useMemo(() => buildRows(sourceRows, store.indicatorValues), [paste, uploadRows, store.indicatorValues]); const activeRows = rows.length ? rows : built.rows; const overLimit = sourceRows.length > 200;
   const reset = () => { setStep(1); setPaste(""); setRows([]); setUploadRows([]); setUploadError(""); setPendingReview(false); setBatchId(""); setAllJustification(""); setAllMethod("expert_judgement"); setAllMethodDetail(""); setAllDate(""); setAllNote(""); };
   useEffect(() => { if (open) reset(); }, [open]);
