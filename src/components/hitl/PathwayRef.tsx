@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { PathwayStatusChip } from "./ReviewPrimitives";
+import { AvailabilityChip } from "./ReviewPrimitives";
 import { NODE_LABELS, useHitlStore, type Pathway } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +34,7 @@ export function PathwayRef({ pathwayId, variant, emphasisNode, emphasisNodes, em
   if (variant === "card") return <div className="rounded-md border bg-background p-3 text-left">
     <div className="mb-3 flex items-center justify-between gap-2">
       {showId ? <code className="font-mono text-[10px] font-medium">{pathway.id}{pathway.status === "deleted" && <span className="ml-1 font-sans text-muted-foreground">(deleted)</span>}</code> : <span />}
-      {showStatus && <PathwayStatusChip status={pathway.status} />}
+      {showStatus && <AvailabilityChip availability={pathway.availability} />}
     </div>
     <div className="grid gap-2 sm:grid-cols-4">
       {nodeKeys.map(key => <div key={key} className={cn("min-w-0 pl-2", isEmphasised(key) && "border-l-2 border-l-foreground")}>
