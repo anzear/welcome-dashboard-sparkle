@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Building2, FileText, Gauge, Link2, ScrollText, ShieldCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, TraceSheet, TraceSheetProvider, useNodeFilter } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
@@ -30,7 +30,6 @@ function DataReviewContent() {
   const rawRequested = searchParams.get("section");
   const requested = rawRequested as Section | null;
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
-  const active = sections.find(section => section.value === activeSection) ?? sections[0];
   const nodeFilter = useNodeFilter();
   const evidencePassesFilter = (item: PaperPatentMatch) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || normalized(item.nodes.feedstock) === normalized(nodeFilter.feedstock)) && (!nodeFilter.product || normalized(item.nodes.product) === normalized(nodeFilter.product)); return direct || derivedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
   const companyPassesFilter = (item: Company) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const position = rolePosition(item.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && normalized(item.role_node) === normalized(nodeFilter.feedstock))) && (!nodeFilter.product || (position === "product" && normalized(item.role_node) === normalized(nodeFilter.product))); return direct || derivedCompanyPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
@@ -90,10 +89,6 @@ function DataReviewContent() {
         </div>
 
         <Card className="overflow-hidden rounded-xl border-border/40 shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between gap-3"><CardTitle className="text-sm">{active.title}</CardTitle>{activeSection === "indicators" && <span className="font-mono text-[10px] text-muted-foreground">staleness window: 180 d</span>}</div>
-            <p className="mt-0.5 text-xs text-muted-foreground">{active.description}</p>
-          </CardHeader>
           <CardContent className="p-0"> 
             {activeSection === "pathways" ? <PathwaysSection /> : activeSection === "companies" ? <CompaniesSection /> : activeSection === "papers" ? <MatchReviewSection kind="paper" /> : activeSection === "patents" ? <MatchReviewSection kind="patent" /> : activeSection === "indicators" ? <IndicatorsSection /> : <AuditLogSection />}
           </CardContent>
