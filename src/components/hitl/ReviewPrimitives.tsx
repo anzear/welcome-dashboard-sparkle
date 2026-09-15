@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import type { AuditOperation, ReviewStatus, VisibilityState } from "@/lib/hitlStore";
+import { sourceDisplay, type AuditOperation, type IndicatorSource, type ReviewStatus, type VisibilityState } from "@/lib/hitlStore";
 
 const reviewConfig: Record<ReviewStatus, { label: string; icon: typeof Check; className: string }> = {
   review_pending: { label: "Review pending", icon: Clock, className: "border-border bg-muted text-muted-foreground" },
