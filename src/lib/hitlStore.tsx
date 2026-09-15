@@ -33,8 +33,8 @@ export const FIELD_LABELS: Record<string, string> = {
   name: "Name",
   website: "Website",
   registry_id: "Registry ID",
-  hq_city: "HQ city",
-  country: "Country",
+  address: "Address",
+  source_url: "Source URL",
   role: "Role",
   role_node: "Role node",
   evidence: "Relevance",
@@ -43,7 +43,6 @@ export const FIELD_LABELS: Record<string, string> = {
   "secondary_nodes.product": "Secondary product",
   "secondary_nodes.application_market": "Secondary application",
   "profile_fields.employees": "Employees",
-  "profile_fields.founded": "Founded",
   color_token: "Colour",
   description: "Description",
   is_archived: "Archived",
@@ -130,8 +129,8 @@ export interface Company extends CommonRecord {
   name: string;
   website: string | null;
   registry_id: string | null;
-  hq_city: string | null;
-  country: string | null;
+  address: string | null;
+  source_url: string | null;
   profile_fields: Record<string, string | number | null>;
   role: CompanyRole;
   role_node: string;
@@ -258,14 +257,14 @@ const seedPathways: Pathway[] = [
 ];
 
 const companyRows = [
-  ["Nordic Enzymes", "https://nordic-enzymes.example", "DK-482910", "Copenhagen", "Denmark"],
-  ["Rhein BioCarbon", "https://rhein-biocarbon.example", "DE-HRB-77120", "Cologne", "Germany"],
-  ["Alpine Fermentation", "https://alpine-fermentation.example", null, "Graz", "Austria"],
-  ["Baltic Fibre Works", "https://baltic-fibre.example", "LV-402034", "Riga", "Latvia"],
-  ["Circular Oils Europe", null, "NL-908172", "Rotterdam", "Netherlands"],
-  ["GreenRoute Fuels", "https://greenroute.example", null, "Ghent", "Belgium"],
-  ["Danube Biopolymers", "https://danube-biopolymers.example", "HU-011829", null, "Hungary"],
-  ["Atlantic Algae", "https://atlantic-algae.example", "PT-521908", "Porto", "Portugal"],
+  ["Nordic Enzymes", "https://nordic-enzymes.example", "DK-482910", "Havnegade 12, 1058 Copenhagen, Denmark", "https://nordic-enzymes.example/about"],
+  ["Rhein BioCarbon", "https://rhein-biocarbon.example", "DE-HRB-77120", "Rheinuferstrasse 8, 50678 Cologne, Germany", "https://rhein-biocarbon.example/company"],
+  ["Alpine Fermentation", "https://alpine-fermentation.example", null, "Grazbachgasse 45, 8010 Graz, Austria", null],
+  ["Baltic Fibre Works", "https://baltic-fibre.example", "LV-402034", "Brivibas iela 103, 1001 Riga, Latvia", "https://baltic-fibre.example/contact"],
+  ["Circular Oils Europe", null, "NL-908172", "Waalhaven 22, 3087 Rotterdam, Netherlands", "https://registry.example/nl-908172"],
+  ["GreenRoute Fuels", "https://greenroute.example", null, "Havenlaan 17, 9000 Ghent, Belgium", null],
+  ["Danube Biopolymers", "https://danube-biopolymers.example", "HU-011829", null, "https://danube-biopolymers.example/imprint"],
+  ["Atlantic Algae", "https://atlantic-algae.example", "PT-521908", "Rua do Porto 210, 4050 Porto, Portugal", "https://atlantic-algae.example/about"],
 ] as const;
 const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewStatus; secondary_nodes: EvidenceNodes; evidence: string | null; note: string | null }[] = [
   { role: "feedstock_supplier", pathway: 0, status: "rejected", secondary_nodes: { feedstock: null, process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: null }, evidence: "Company product page and registry filing", note: "Confirm commercial activity in Europe" },
@@ -283,7 +282,7 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
   const allowed = new Set(allowedSecondaryPositions(assignment.role));
   const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => [key, allowed.has(key) ? assignment.secondary_nodes[key] : null])) as unknown as EvidenceNodes;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], hq_city: row[3], country: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18, founded: 2008 + index }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], source_url: row[4], profile_fields: { employees: index === 2 ? null : 45 + index * 18 }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "accepted", "review_pending", "rejected", "review_pending", "accepted", "accepted", "review_pending", "rejected", "review_pending", "accepted", "review_pending"];
