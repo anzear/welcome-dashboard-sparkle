@@ -29,7 +29,7 @@ import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDial
 import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
-import BriefAssessment from "@/components/materialRegister/BriefAssessment";
+import BriefAssessment, { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import BriefGate from "@/components/materialRegister/BriefGate";
 import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
@@ -1109,7 +1109,14 @@ export const MaterialBrief: React.FC<{
           </Section>
 
           <Section
-            title="Assessment"
+            title="Company data"
+            note="Spend, technical fit, and regulatory requirements."
+          >
+            <CompanyDataDetails material={m} />
+          </Section>
+
+          <Section
+            title="Drivers"
             note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
           >
             <BriefAssessment material={m} />
