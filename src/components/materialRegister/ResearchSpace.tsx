@@ -343,19 +343,8 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
   </ShortlistEntry>
 );
 
-const PathwayRow = ({ item }: { item: PathwayItem }) => (
-  <ShortlistEntry name={`${item.feedstock} → ${item.product}`}>
-    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-foreground">
-      <span>{item.feedstock}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.process}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.product}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.application}</span>
-    </div>
-  </ShortlistEntry>
-);
+
+
 
 const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
   <div className="flex items-center gap-0.5">
