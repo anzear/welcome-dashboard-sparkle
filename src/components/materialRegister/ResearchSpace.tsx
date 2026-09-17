@@ -369,6 +369,10 @@ const ResearchSpace: React.FC = () => {
     setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
   const removePaper = (id: string) =>
     setShortlistPapers((current) => current.filter((paper) => paper.id !== id));
+  const removePathway = (id: string) =>
+    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+  const removeCompany = (id: string) =>
+    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
 
 
   const addPathwayNote = (id: string, text: string) =>
