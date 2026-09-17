@@ -714,7 +714,7 @@ export const MaterialBrief: React.FC<{
               className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
               onClick={() => setCoverageOpen(true)}
             >
-              Request coverage
+              Request analysis
             </Button>
           </div>
         </div>
