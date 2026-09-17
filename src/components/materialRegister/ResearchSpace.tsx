@@ -1,8 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { Check, CheckCircle2, ChevronsUpDown, Minus, Plus, X } from "lucide-react";
+import { Check, CheckCircle2, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -60,6 +63,65 @@ const INITIAL_THRESHOLDS: Thresholds = {
   minimumProducers: 1,
   requiredVolume: "",
   volumeUnit: "tonnes/year",
+};
+
+type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
+
+const CRITERIA_EVALUATION: { label: string; status: EvaluationStatus; explanation: string }[] = [
+  { label: "Applications", status: "Match", explanation: "PLA packaging and food applications are represented in the available pathways." },
+  { label: "Production scale (TRL)", status: "Match", explanation: "Company needs TRL 6–8; supplier data shows TRL 7." },
+  { label: "Material supply geography", status: "Match", explanation: "Producers found in France and Germany." },
+  { label: "Feedstock supply geography", status: "No match", explanation: "No verified feedstock supplier was found in the selected region." },
+  { label: "Price ceiling per tonne", status: "No data", explanation: "No price data is available for this material." },
+  { label: "Minimum number of producers", status: "Match", explanation: "Four producers are identified against a minimum requirement of three." },
+  { label: "Required volume", status: "Not set", explanation: "Threshold not set." },
+];
+
+type ShortlistItem = { id: string; name: string; detail: string };
+type ShortlistGroup = { id: string; label: string; items: ShortlistItem[] };
+
+const SHORTLIST_GROUPS: ShortlistGroup[] = [
+  {
+    id: "pathways",
+    label: "Pathways",
+    items: [
+      { id: "pathway-1", name: "Whey permeate fermentation", detail: "Whey permeate → Lactic acid" },
+      { id: "pathway-2", name: "Corn stover bioconversion", detail: "Corn stover → Lactic acid" },
+      { id: "pathway-3", name: "Sugarcane molasses fermentation", detail: "Sugarcane molasses → Lactic acid" },
+    ],
+  },
+  {
+    id: "companies",
+    label: "Companies",
+    items: [
+      { id: "company-1", name: "Corbion", detail: "Producer · Gorinchem, Netherlands" },
+      { id: "company-2", name: "Jungbunzlauer", detail: "Producer · Basel, Switzerland" },
+      { id: "company-3", name: "Galactic", detail: "Producer · Brussels, Belgium" },
+    ],
+  },
+  {
+    id: "patents",
+    label: "Patents",
+    items: [
+      { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
+      { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
+    ],
+  },
+  {
+    id: "papers",
+    label: "Papers",
+    items: [
+      { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
+      { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+    ],
+  },
+];
+
+const statusClasses: Record<EvaluationStatus, string> = {
+  Match: "border-success/30 bg-success/10 text-success",
+  "No match": "border-destructive/30 bg-destructive/10 text-destructive",
+  "No data": "border-border bg-muted text-muted-foreground",
+  "Not set": "border-warning/30 bg-warning/10 text-warning",
 };
 
 const FieldHeading = ({ label, description }: { label: string; description: string }) => (
@@ -131,6 +193,53 @@ const MultiSelectChips = ({
           </Command>
         </PopoverContent>
       </Popover>
+    </div>
+  );
+};
+
+const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [note, setNote] = useState("");
+
+  const openEditor = () => {
+    setDraft(note);
+    setEditing(true);
+  };
+
+  const saveNote = () => {
+    setNote(draft.trim());
+    setEditing(false);
+  };
+
+  return (
+    <div className="border-t border-border px-4 py-3 first:border-t-0">
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="text-xs font-semibold text-foreground">{item.name}</div>
+          <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+        </div>
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${item.name}` : `Add note for ${item.name}`} title={note ? "Edit note" : "Add note"}>
+          {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+
+      {editing && (
+        <div className="mt-3 space-y-2">
+          <Textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Add a note…" className="min-h-20 text-xs" autoFocus />
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>Cancel</Button>
+            <Button type="button" size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90" onClick={saveNote}>Save note</Button>
+          </div>
+        </div>
+      )}
+
+      {note && !editing && (
+        <div className="mt-3 flex items-start justify-between gap-3 border-l-2 border-border pl-3">
+          <p className="text-xs text-muted-foreground">{note}</p>
+          <Button type="button" variant="link" className="h-auto shrink-0 p-0 text-[10px]" onClick={openEditor}>Edit</Button>
+        </div>
+      )}
     </div>
   );
 };
@@ -228,15 +337,35 @@ const ResearchSpace: React.FC = () => {
         )}
       </section>
 
-      <section className="rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
-        <p className="text-xs text-muted-foreground">Results will appear here once thresholds are set.</p>
+      <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Criteria evaluation">
+        {CRITERIA_EVALUATION.map((criterion) => (
+          <div key={criterion.label} className="flex items-start justify-between gap-6 border-b border-border px-5 py-4 last:border-b-0">
+            <div className="min-w-0">
+              <div className="text-xs font-semibold text-foreground">{criterion.label}</div>
+              <p className="mt-1 text-xs text-muted-foreground">{criterion.explanation}</p>
+            </div>
+            <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[criterion.status])}>{criterion.status}</Badge>
+          </div>
+        ))}
       </section>
 
       <section className="space-y-2">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
-        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-12 text-center">
-          <p className="text-xs text-muted-foreground">Pathways, companies, patents, and papers matching your thresholds will appear here.</p>
-        </div>
+        <Accordion type="multiple" defaultValue={["pathways"]} className="overflow-hidden rounded-lg border border-border bg-card">
+          {SHORTLIST_GROUPS.map((group) => (
+            <AccordionItem key={group.id} value={group.id} className="border-b border-border last:border-b-0">
+              <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
+                <span className="flex items-center gap-2">
+                  <span className="font-semibold text-foreground">{group.label}</span>
+                  <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
+                </span>
+              </AccordionTrigger>
+              <AccordionContent className="border-t border-border pb-0">
+                {group.items.map((item) => <ShortlistRow key={item.id} item={item} />)}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </section>
     </div>
   );
