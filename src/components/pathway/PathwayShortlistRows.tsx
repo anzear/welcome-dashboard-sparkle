@@ -9,6 +9,7 @@ import {
   PATHWAY_CHIP_ANCHOR,
   PATHWAY_CHIP_NEUTRAL,
   getViability,
+  getViabilityColor,
   hasTRL,
   pathwayChipCls,
 } from "./pathwayRowStyles";
@@ -33,10 +34,7 @@ export type PathwayNote = { id: string; author: string; timestamp: string; text:
 const COLS =
   "grid-cols-[24px_28px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_120px]";
 
-/**
- * Neutral badge treatment — the distinction between assessed statuses is carried by
- * border weight and label weight, never by hue. Green/blue are reserved elsewhere.
- */
+/** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
   if (!hasTRL(trl)) {
     return (
@@ -46,20 +44,13 @@ function StatusBadge({ trl }: { trl?: string }) {
     );
   }
   const viability = getViability(trl);
-  const weight =
-    viability === "Commercial"
-      ? "border-2 border-foreground/60 text-foreground"
-      : viability === "Pilot"
-        ? "border border-foreground/40 text-foreground"
-        : "border border-foreground/25 text-foreground/80";
-  const labelWeight =
-    viability === "Commercial" ? "font-bold" : viability === "Pilot" ? "font-semibold" : "font-medium";
+  const colors = getViabilityColor(viability);
   return (
-    <span className={`inline-flex flex-col items-center leading-tight rounded-md px-2 py-1 ${weight}`}>
-      <span className={`text-[9px] uppercase tracking-wider ${labelWeight}`}>
+    <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+      <span className="text-[9px] font-bold uppercase tracking-wider">
         {BAND_LABEL[viability as string] ?? viability}
       </span>
-      <span className="text-[8px] opacity-70">{trl}</span>
+      <span className="text-[8px] opacity-80">{trl}</span>
     </span>
   );
 }
