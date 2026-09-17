@@ -613,10 +613,11 @@ const ResearchSpace: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      <div className="px-1">
-        <p className={cn("text-base font-semibold", verdictClass)}>{verdict}</p>
-        {countLine && <p className="mt-1 text-sm text-muted-foreground">{countLine}</p>}
-      </div>
+      {countLine && (
+        <div className="px-1">
+          <p className="text-sm text-muted-foreground">{countLine}</p>
+        </div>
+      )}
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
         {rows.map((row, index) => (
           <div
