@@ -359,52 +359,8 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
 
 
 
-const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
-  <div className="flex items-center gap-0.5">
-    {[1, 2, 3, 4, 5].map((star) => (
-      <button
-        key={star}
-        type="button"
-        onClick={() => onChange(star)}
-        aria-label={`Rate ${name} ${star} of 5`}
-        className="p-0.5"
-      >
-        <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/50")} />
-      </button>
-    ))}
-  </div>
-);
 
-const CompanyRow = ({ item }: { item: CompanyItem }) => {
-  const [myRating, setMyRating] = useState(0);
 
-  return (
-    <ShortlistEntry name={item.name}>
-      <div className="text-xs font-semibold text-foreground">{item.name}</div>
-      <p className="mt-0.5 text-xs text-muted-foreground">{item.role} · {item.location}</p>
-      {item.size && <p className="mt-0.5 text-xs text-muted-foreground">{item.size}</p>}
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className="text-[10px] font-normal">{item.connectsTo}</Badge>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Your rating</span>
-          <RatingControl value={myRating} onChange={setMyRating} name={item.name} />
-          {myRating > 0 && <span className="text-[10px] text-muted-foreground">{CURRENT_REVIEWER}: {myRating}</span>}
-        </div>
-        {item.ratings.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {item.ratings.map((rating) => (
-              <span key={rating.user} className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
-                {rating.user}: {rating.value}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </ShortlistEntry>
-  );
-};
 
 const ShortlistCard = ({ label, count, children, defaultOpen = false }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean }) => (
   <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
