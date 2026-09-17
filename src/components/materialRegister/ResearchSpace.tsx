@@ -50,23 +50,24 @@ type Thresholds = {
   feedstockGeographies: string[];
   priceCeiling: string;
   currency: string;
-  minimumProducers: number;
+  minimumProducers: string;
   requiredVolume: string;
   volumeUnit: string;
 };
 
 const INITIAL_THRESHOLDS: Thresholds = {
   applications: [],
-  trlFrom: "1",
-  trlTo: "9",
+  trlFrom: "",
+  trlTo: "",
   materialGeographies: [],
   feedstockGeographies: [],
   priceCeiling: "",
   currency: "EUR",
-  minimumProducers: 1,
+  minimumProducers: "",
   requiredVolume: "",
   volumeUnit: "tonnes/year",
 };
+
 
 type EvaluationStatus = "Met" | "Not met" | "Not set";
 
@@ -263,33 +264,15 @@ const MultiSelectChips = ({
   };
 
   return (
-    <div className="space-y-2">
-      {values.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {values.map((value) => (
-            <span key={value} className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2.5 py-1 text-xs text-foreground">
-              {value}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-4 w-4 rounded-full"
-                onClick={() => toggle(value)}
-                aria-label={`Remove ${value}`}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </span>
-          ))}
-        </div>
-      )}
+    <div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-9 w-full justify-between text-xs font-normal">
-            {values.length > 0 ? `${values.length} selected` : `Select ${label.toLowerCase()}`}
+          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-9 w-full justify-between bg-background text-xs font-normal">
+            <span className="truncate">{values.length > 0 ? `${values.length} selected` : `Select ${label.toLowerCase()}`}</span>
             <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
+
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
             <CommandInput placeholder={`Search ${label.toLowerCase()}…`} />
@@ -446,7 +429,7 @@ const ResearchSpace: React.FC = () => {
   );
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
-  const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
 
@@ -469,8 +452,10 @@ const ResearchSpace: React.FC = () => {
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
+    setShowSaved(false);
     setThresholds((current) => ({ ...current, [key]: value }));
   };
+
 
   const EvidenceLink = ({ label, title, records }: { label: string; title: string; records: EvidenceRecord[] }) => (
     <Button
@@ -490,7 +475,13 @@ const ResearchSpace: React.FC = () => {
 
     const trlFrom = Number(thresholds.trlFrom);
     const trlTo = Number(thresholds.trlTo);
-    const trlSet = thresholds.trlFrom !== "" && thresholds.trlTo !== "" && !Number.isNaN(trlFrom) && !Number.isNaN(trlTo);
+    // A range covering the whole 1–9 span excludes nothing, so it is not a threshold.
+    const trlSet =
+      thresholds.trlFrom !== "" &&
+      thresholds.trlTo !== "" &&
+      !Number.isNaN(trlFrom) &&
+      !Number.isNaN(trlTo) &&
+      !(trlFrom <= 1 && trlTo >= 9);
     const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
 
     const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
@@ -508,7 +499,10 @@ const ResearchSpace: React.FC = () => {
     const ceilingEur = ceiling * (CURRENCY_TO_EUR[thresholds.currency] ?? 1);
     const priceBelow = INDICATIVE_PRICE_EUR <= ceilingEur;
 
-    const requiredProducers = thresholds.minimumProducers;
+    const requiredProducers = Number(thresholds.minimumProducers);
+    // A minimum of 1 excludes nothing.
+    const producersSet =
+      thresholds.minimumProducers !== "" && !Number.isNaN(requiredProducers) && requiredProducers > 1;
     const identifiedProducers = PRODUCER_RECORDS.length;
 
     const volume = Number(thresholds.requiredVolume);
@@ -520,17 +514,17 @@ const ResearchSpace: React.FC = () => {
       {
         label: "Applications",
         status: appCount > 0 ? "Met" : "Not set",
-        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
+        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : "Select an application to evaluate.",
       },
       {
-        label: "Technology readiness (TRL)",
+        label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
         line: trlSet
           ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
           : "Set a TRL range to evaluate.",
       },
       {
-        label: "Product supply geography",
+        label: "Product geography",
         status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
         line:
           thresholds.materialGeographies.length === 0 ? (
@@ -549,7 +543,7 @@ const ResearchSpace: React.FC = () => {
           ),
       },
       {
-        label: "Feedstock supply geography",
+        label: "Feedstock geography",
         status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
         line:
           thresholds.feedstockGeographies.length === 0 ? (
@@ -568,7 +562,7 @@ const ResearchSpace: React.FC = () => {
           ),
       },
       {
-        label: "Price ceiling per tonne",
+        label: "Price ceiling",
         status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
         line: priceSet ? (
           <>
@@ -584,24 +578,23 @@ const ResearchSpace: React.FC = () => {
         ),
       },
       {
-        label: "Minimum number of producers",
-        status: requiredProducers > 0 ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
-        line:
-          requiredProducers > 0 ? (
-            <>
-              <EvidenceLink
-                label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
-                title="Producers identified"
-                records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
-              />
-              {` identified — ${requiredProducers} required.`}
-            </>
-          ) : (
-            "Set a minimum to evaluate."
-          ),
+        label: "Producers",
+        status: producersSet ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
+        line: producersSet ? (
+          <>
+            <EvidenceLink
+              label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
+              title="Producers identified"
+              records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
+            />
+            {` identified — ${requiredProducers} required.`}
+          </>
+        ) : (
+          "Set a minimum to evaluate."
+        ),
       },
       {
-        label: "Required volume",
+        label: "Volume",
         status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
         line: volumeSet
           ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
@@ -609,6 +602,7 @@ const ResearchSpace: React.FC = () => {
       },
     ];
   })();
+
 
   const metCount = rows.filter((row) => row.status === "Met").length;
   const notMetCount = rows.filter((row) => row.status === "Not met").length;
@@ -621,48 +615,53 @@ const ResearchSpace: React.FC = () => {
         : "Meets your requirements";
   const verdictClass =
     notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
+  const countLine =
+    notSetCount === rows.length
+      ? null
+      : [
+          metCount > 0 ? `${metCount} met` : null,
+          notMetCount > 0 ? `${notMetCount} not met` : null,
+          notSetCount > 0 ? `${notSetCount} not set` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
 
   const renderInput = (label: string) => {
     switch (label) {
       case "Applications":
-        return <MultiSelectChips label="Applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
-      case "Technology readiness (TRL)":
+        return <MultiSelectChips label="applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
+      case "TRL range":
         return (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground" htmlFor="trl-from">From</label>
-              <Input id="trl-from" type="number" min={1} max={9} value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 w-16" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground" htmlFor="trl-to">To</label>
-              <Input id="trl-to" type="number" min={1} max={9} value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 w-16" />
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-9 bg-background text-xs" />
+            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-9 bg-background text-xs" />
           </div>
         );
-      case "Product supply geography":
-        return <MultiSelectChips label="Product supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
-      case "Feedstock supply geography":
-        return <MultiSelectChips label="Feedstock supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
-      case "Price ceiling per tonne":
+      case "Product geography":
+        return <MultiSelectChips label="product geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
+      case "Feedstock geography":
+        return <MultiSelectChips label="feedstock geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
+      case "Price ceiling":
         return (
-          <div className="grid w-full max-w-xs grid-cols-[1fr_90px] gap-2">
-            <Input type="number" min={0} placeholder="Enter amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-8" />
-            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-[1fr_88px] gap-2">
+            <Input type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-9 bg-background text-xs" />
+            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
           </div>
         );
-      case "Minimum number of producers":
+      case "Producers":
         return (
-          <div className="flex h-8 w-32 items-center rounded-md border border-input bg-background">
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-8 rounded-none" onClick={() => patch("minimumProducers", Math.max(0, thresholds.minimumProducers - 1))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
-            <Input aria-label="Minimum number of producers" type="number" min={0} value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", Math.max(0, Number(event.target.value)))} className="h-7 border-0 px-1 text-center shadow-none focus-visible:ring-0" />
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-8 rounded-none" onClick={() => patch("minimumProducers", thresholds.minimumProducers + 1)} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
+          <div className="flex h-9 items-center rounded-md border border-input bg-background">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
+            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-8 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         );
-      case "Required volume":
+      case "Volume":
         return (
-          <div className="grid w-full max-w-sm grid-cols-[1fr_130px] gap-2">
-            <Input type="number" min={0} placeholder="Enter volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-8" />
-            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-[1fr_118px] gap-2">
+            <Input type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-9 bg-background text-xs" />
+            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
           </div>
         );
       default:
@@ -670,61 +669,47 @@ const ResearchSpace: React.FC = () => {
     }
   };
 
-  const LONG_INPUT_LABELS = new Set(["Applications", "Product supply geography", "Feedstock supply geography"]);
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
+
   return (
-    <div className="mt-5 space-y-5">
-      <div className="flex items-center justify-between px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-        <span>Criterion</span>
-        <span>Result</span>
+    <div className="mt-5 space-y-6">
+      <div className="px-1">
+        <p className={cn("text-base font-semibold", verdictClass)}>{verdict}</p>
+        {countLine && <p className="mt-1 text-sm text-muted-foreground">{countLine}</p>}
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        <div className="border-b border-border bg-muted/40 px-5 py-3">
-          <p className={cn("text-sm font-semibold", verdictClass)}>{verdict}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {metCount} met · {notMetCount} not met · {notSetCount} not set
-          </p>
-        </div>
-        {rows.map((row, index) => {
-          const isLong = LONG_INPUT_LABELS.has(row.label);
-          return (
-            <div key={row.label} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-              {isLong ? (
-                <>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
-                    <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
-                  </div>
-                  <div className="mt-1.5">{renderInput(row.label)}</div>
-                  {row.line && <p className="mt-1 text-xs text-muted-foreground">{row.line}</p>}
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1.5">
-                      <div className="w-44 shrink-0 text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
-                      {renderInput(row.label)}
-                      {row.line && <p className="text-xs text-muted-foreground">{row.line}</p>}
-                    </div>
-                    <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-        <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-3">
-          {savedThresholds && <span className="text-xs text-muted-foreground">Thresholds saved.</span>}
-          <Button
-            disabled={!anyThresholdSet}
-            onClick={() => setSavedThresholds(thresholds)}
-            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+        {rows.map((row, index) => (
+          <div
+            key={row.label}
+            className={cn(
+              "grid min-h-[56px] grid-cols-[130px_264px_minmax(0,1fr)_84px] items-center gap-4 px-5 py-2",
+              index !== rows.length - 1 && "border-b border-border",
+            )}
           >
-            Save thresholds
-          </Button>
+            <div className="truncate whitespace-nowrap text-xs text-foreground">{row.label}</div>
+            <div>{renderInput(row.label)}</div>
+            <p className="text-xs text-muted-foreground">{row.line}</p>
+            <div className="flex justify-end">
+              <Badge variant="outline" className={cn("text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
+            </div>
+          </div>
+        ))}
+        <div className="flex items-center justify-end border-t border-border px-5 py-3">
+          {showSaved ? (
+            <span className="text-xs text-muted-foreground">Thresholds saved.</span>
+          ) : (
+            <Button
+              disabled={!anyThresholdSet}
+              onClick={() => setShowSaved(true)}
+              className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+            >
+              Save thresholds
+            </Button>
+          )}
         </div>
       </section>
+
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
