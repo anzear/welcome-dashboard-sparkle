@@ -42,7 +42,7 @@ const Inner: React.FC = () => {
 
   const tabs: { id: "brief" | "research"; label: string }[] = [
     { id: "brief", label: "Material brief" },
-    { id: "research", label: "Research space" },
+    { id: "research", label: "Material evaluation profile" },
   ];
 
   return (
@@ -72,10 +72,10 @@ const Inner: React.FC = () => {
         ) : (
           <div className="rounded-lg border bg-card px-6 py-16 text-center">
             <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Research space
+              Material Evaluation Profile
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              {name ? `Research space for ${name} is coming soon.` : "Coming soon."}
+              {name ? `Material Evaluation Profile for ${name} is coming soon.` : "Coming soon."}
             </p>
           </div>
         )}
