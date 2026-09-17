@@ -79,17 +79,8 @@ type ShortlistItem = { id: string; name: string; detail: string };
 
 
 
-type Rating = { user: string; value: number };
 
-type CompanyItem = {
-  id: string;
-  name: string;
-  role: string;
-  location: string;
-  size?: string;
-  connectsTo: string;
-  ratings: Rating[];
-};
+
 
 const CURRENT_REVIEWER = "A. Weber";
 
