@@ -635,52 +635,43 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
   }, [focusCriterionId, clearFocusCriterion]);
 
   return (
-    <div className="space-y-4">
-      {/* Company data now holds the figures row, technical fit and regulatory together. */}
-      <CompanyDataDetails material={material} />
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
+        <span>
+          <span className="tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
+          <span className="tabular-nums">{summary.criteriaTotal}</span> judged
+        </span>
+        <span className="text-border" aria-hidden>
+          ·
+        </span>
+        <span>
+          <span className="tabular-nums text-foreground">{summary.contributors.length}</span>{" "}
+          {summary.contributors.length === 1 ? "person" : "people"}
+        </span>
+        <button
+          type="button"
+          onClick={() => setCriteriaOpen(true)}
+          className={cn(LINK, "inline-flex items-center gap-1")}
+        >
+          <SlidersHorizontal className="h-3 w-3" />
+          {canEditCriteria ? "Edit criteria" : "View criteria"}
+        </button>
+      </div>
 
-      <section className="rounded-xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
-        <div className="border-b border-border/70 pb-1.5">
-          <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Assessment of drivers</h2>
-        </div>
+      <p className="text-[11px] leading-snug text-muted-foreground/80">
+        {ASSESSMENT_FRAMING[material.role]}
+      </p>
 
-        <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
-          <span>
-            <span className="tabular-nums text-foreground">{summary.criteriaAssessed}</span> of{" "}
-            <span className="tabular-nums">{summary.criteriaTotal}</span> judged
-          </span>
-          <span className="text-border" aria-hidden>
-            ·
-          </span>
-          <span>
-            <span className="tabular-nums text-foreground">{summary.contributors.length}</span>{" "}
-            {summary.contributors.length === 1 ? "person" : "people"}
-          </span>
-          <button
-            type="button"
-            onClick={() => setCriteriaOpen(true)}
-            className={cn(LINK, "inline-flex items-center gap-1")}
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            {canEditCriteria ? "Edit criteria" : "View criteria"}
-          </button>
-        </div>
-
-        <p className="text-[11px] leading-snug text-muted-foreground/80">
-          {ASSESSMENT_FRAMING[material.role]}
-        </p>
-
-        <div className="space-y-6">
-          {judged.map((c) => (
-            <JudgementRow
-              key={c.criterion_id}
-              criterion={c}
-              materialId={material.material_id}
-              role={material.role}
-            />
-          ))}
-        </div>
-      </section>
+      <div className="space-y-6">
+        {judged.map((c) => (
+          <JudgementRow
+            key={c.criterion_id}
+            criterion={c}
+            materialId={material.material_id}
+            role={material.role}
+          />
+        ))}
+      </div>
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
     </div>
