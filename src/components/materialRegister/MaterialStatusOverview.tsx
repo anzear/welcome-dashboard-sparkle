@@ -84,6 +84,21 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     ]);
   };
 
+  const commitStatus = (value: string) => {
+    const next = value as JourneyStatus;
+    if (next === material.journey_status) return;
+    updateMaterial(material.material_id, { journey_status: next }, ["journey_status"], [
+      {
+        material_id: material.material_id,
+        event_type: "status_change",
+        field: "journey_status",
+        from_value: material.journey_status,
+        to_value: next,
+        changed_by: CURRENT_USER,
+      },
+    ]);
+  };
+
   const commitPeriod = () => {
     const next = period.trim() ? period.trim() : null;
     if (next === material.priority_period) return;
