@@ -618,24 +618,60 @@ const ResearchSpace: React.FC = () => {
           <p className="text-sm text-muted-foreground">{countLine}</p>
         </div>
       )}
-      <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        {rows.map((row, index) => (
-          <div
-            key={row.label}
-            className={cn(
-              "grid min-h-[56px] grid-cols-[130px_264px_minmax(0,1fr)_84px] items-center gap-4 px-5 py-2",
-              index !== rows.length - 1 && "border-b border-border",
-            )}
+
+      {/* Desktop: two side-by-side boxes with locked row heights */}
+      <div className="relative hidden md:block" aria-label="Threshold criteria">
+        <div className="absolute inset-y-0 left-0 right-[calc(50%-8px)] rounded-lg border border-border bg-card" />
+        <div className="absolute inset-y-0 left-[calc(50%+8px)] right-0 rounded-lg border border-border bg-card" />
+        <div className="relative grid grid-cols-2 gap-4">
+          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
+          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
+          {rows.map((row, index) => (
+            <React.Fragment key={row.label}>
+              <div className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+                <div className="mb-1 text-xs text-foreground">{row.label}</div>
+                <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
+                <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
+              </div>
+              <div className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+                <div className="text-xs text-muted-foreground">
+                  {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
+                </div>
+                <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
+                  {row.hasData ? row.status : "No data"}
+                </Badge>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="relative hidden px-5 md:block">
+        {showSaved ? (
+          <span className="text-xs text-muted-foreground">Thresholds saved.</span>
+        ) : (
+          <Button
+            disabled={!anyThresholdSet}
+            onClick={() => setShowSaved(true)}
+            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
           >
-            <div className="truncate whitespace-nowrap text-xs text-foreground">{row.label}</div>
-            <div>{renderInput(row.label)}</div>
-            <p className="text-xs text-muted-foreground">{row.line}</p>
-            <div className="flex justify-end">
-              <Badge variant="outline" className={cn("text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
+            Save thresholds
+          </Button>
+        )}
+      </div>
+
+      {/* Mobile: stacked requirement box, save, then data box */}
+      <div className="space-y-4 md:hidden" aria-label="Threshold criteria">
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
+          {rows.map((row, index) => (
+            <div key={`req-${row.label}`} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+              <div className="mb-1 text-xs text-foreground">{row.label}</div>
+              <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
+              <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
             </div>
-          </div>
-        ))}
-        <div className="flex items-center justify-end border-t border-border px-5 py-3">
+          ))}
+        </section>
+        <div className="px-5">
           {showSaved ? (
             <span className="text-xs text-muted-foreground">Thresholds saved.</span>
           ) : (
@@ -648,7 +684,23 @@ const ResearchSpace: React.FC = () => {
             </Button>
           )}
         </div>
-      </section>
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
+          {rows.map((row, index) => (
+            <div key={`data-${row.label}`} className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+              <div>
+                <div className="mb-1 text-[10px] font-semibold text-foreground">{row.label}</div>
+                <div className="text-xs text-muted-foreground">
+                  {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
+                </div>
+              </div>
+              <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
+                {row.hasData ? row.status : "No data"}
+              </Badge>
+            </div>
+          ))}
+        </section>
+      </div>
 
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
