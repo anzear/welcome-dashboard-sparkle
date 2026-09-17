@@ -379,7 +379,7 @@ export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material 
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
