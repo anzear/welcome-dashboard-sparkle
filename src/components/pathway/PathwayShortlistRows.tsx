@@ -142,7 +142,35 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
     return (
       <div key={p.id} className="group hover:bg-muted/30 transition-colors">
         <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-...
+          <div className="flex items-center justify-center">
+            <Checkbox
+              className="h-3 w-3"
+              aria-label="Select pathway"
+              checked={selected.has(p.id)}
+              onCheckedChange={(v) => toggle([p.id], v === true)}
+            />
+          </div>
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => onRemove(p.id)}
+              title="Remove from shortlist"
+              className="text-foreground hover:text-muted-foreground transition-colors"
+            >
+              <Bookmark className="w-4 h-4 fill-foreground" />
+            </button>
+          </div>
+          <div className="flex justify-center">
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground">
+              {rowIndex.get(p.id)}
+            </span>
+          </div>
+          {chip(p.feedstock, PATHWAY_CHIP_NEUTRAL)}
+          {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
+          {chip(p.product, PATHWAY_CHIP_ANCHOR)}
+          {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
+          <div className="flex justify-center">
+            <StatusBadge trl={p.trl} />
+          </div>
           <div className="flex items-center justify-end gap-2">
             <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
           </div>
