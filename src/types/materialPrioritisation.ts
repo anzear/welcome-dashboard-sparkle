@@ -436,10 +436,10 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   material_added: "Material added",
   recommendation: "Recommendation",
   gate_condition: "Condition",
-  hold_trigger_event: "Hold trigger",
-  hold_review_date: "Hold review date",
-  no_go_reason: "No-go reason",
-  reopen: "Gate reopened",
+  hold_trigger_event: "Trigger event",
+  hold_review_date: "Review date",
+  no_go_reason: "Parking reason",
+  reopen: "Status reopened",
   decision_export: "Material profile export",
 };
 

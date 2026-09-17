@@ -59,8 +59,8 @@ export function eventSentence(e: MaterialEvent): string {
         : `Condition met: ${e.to_value}`;
     case "hold_change":
       return e.field === "hold_review_date"
-        ? `Hold review date set to ${e.to_value ?? "none"}`
-        : `Hold trigger set: ${e.to_value ?? "none"}`;
+        ? `Review date set to ${e.to_value ?? "none"}`
+        : `Trigger set: ${e.to_value ?? "none"}`;
     case "no_go_reason":
       return `Parking reason recorded`;
     case "reopen":
