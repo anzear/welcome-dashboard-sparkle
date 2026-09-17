@@ -149,19 +149,14 @@ export function CompanyShortlistTables({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {ROLE_SECTIONS.map(({ role, heading }) => {
-            const rows = companies.filter((company) => company.role === role);
-            // A role with no companies is omitted entirely — never an empty group or a count of 0.
-            if (rows.length === 0) return null;
-
-            return (
-              <Fragment key={role}>
-                <TableRow className="border-t border-border hover:bg-transparent">
-                  <TableCell colSpan={9} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {heading} · {rows.length}
-                  </TableCell>
-                </TableRow>
-                {rows.map((company) => {
+          {visibleRows.length === 0 && (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={9} className="h-11 py-0 text-[10px] text-muted-foreground">
+                No companies shortlisted in this group yet.
+              </TableCell>
+            </TableRow>
+          )}
+          {visibleRows.map((company) => {
                   const rating = ratings[company.id] ?? 0;
                   const teamNoteCount = company.teamNotes.length;
                   return (
