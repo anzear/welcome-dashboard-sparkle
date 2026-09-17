@@ -701,7 +701,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
               className="h-7 text-xs"
               onClick={() => setExportOpen(true)}
             >
-              Export material profile
+              Export material brief
             </Button>
             <Button
               size="sm"

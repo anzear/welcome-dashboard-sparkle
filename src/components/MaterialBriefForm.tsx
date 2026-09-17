@@ -712,7 +712,7 @@ const MaterialBriefForm: React.FC<Props> = ({ topic, category, headerless = fals
 
   // Listen for external requests to open the guided wizard (e.g. from the hero card)
   useEffect(() => {
-    const evtName = `openMaterialProfile:${category}:${topic}`;
+    const evtName = `openMaterialBrief:${category}:${topic}`;
     const handler = () => { setWizardStep(0); setSectionsHidden(false); };
     window.addEventListener(evtName, handler as EventListener);
     return () => window.removeEventListener(evtName, handler as EventListener);
@@ -840,7 +840,7 @@ const MaterialBriefForm: React.FC<Props> = ({ topic, category, headerless = fals
               <Icon className="w-3.5 h-3.5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-foreground">Material Profile</h2>
+              <h2 className="text-sm font-bold text-foreground">Material Brief</h2>
               <p className="text-[10px] text-muted-foreground">{topic} · {subtitle}</p>
             </div>
           </div>
@@ -908,7 +908,7 @@ const MaterialBriefForm: React.FC<Props> = ({ topic, category, headerless = fals
                     <div>
                       <DialogTitle className="text-sm font-bold flex items-center gap-1.5">
                         <Wand2 className="w-3.5 h-3.5 text-primary" />
-                        Material Profile · Guided Setup
+                        Material Brief · Guided Setup
                       </DialogTitle>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{topic} · Step {wizardStep + 1} of {steps.length} — {current.label}</p>
                     </div>

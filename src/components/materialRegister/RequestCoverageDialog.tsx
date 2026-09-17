@@ -1,5 +1,5 @@
 /**
- * The one coverage request flow. Used from the material profile and from the
+ * The one coverage request flow. Used from the material brief and from the
  * dashboard's "Available now" section — there is no second purchase path.
  * The questions themselves live in the shared coverage step.
  */
