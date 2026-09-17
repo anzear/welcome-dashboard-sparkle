@@ -42,7 +42,7 @@ const Inner: React.FC = () => {
 
   const tabs: { id: "brief" | "research"; label: string }[] = [
     { id: "brief", label: "Material brief" },
-    { id: "research", label: "Material evaluation profile" },
+    { id: "research", label: "Research space" },
   ];
 
   const toggle = (
@@ -78,11 +78,11 @@ const Inner: React.FC = () => {
               view === "research" ? (
                 <div className="mt-4 rounded-lg border bg-card px-6 py-16 text-center">
                   <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Material Evaluation Profile
+                    Research space
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     {name
-                      ? `Material Evaluation Profile for ${name} is coming soon.`
+                      ? `Research space for ${name} is coming soon.`
                       : "Coming soon."}
                   </p>
                 </div>
