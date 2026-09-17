@@ -203,9 +203,6 @@ const MaterialBriefHero: React.FC<{
               <p className="text-sm text-muted-foreground leading-relaxed max-w-3xl">
                 A naturally occurring organic acid widely used in food preservation, biodegradable plastics (PLA), pharmaceuticals, and cosmetics. Produced primarily via fermentation of carbohydrate-rich feedstocks.
               </p>
-              <div className="mt-4 -mx-5 -mb-5">
-                <MaterialStatusOverview materialName={decodedTopic || ''} />
-              </div>
             </div>
             <div className="flex items-center gap-3 rounded-lg border border-border/60 bg-muted/30 px-4 py-3 shrink-0">
               <Leaf className="w-5 h-5 text-emerald-600" />
