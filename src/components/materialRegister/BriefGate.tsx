@@ -258,7 +258,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   /** What the status that is actually set carries. Only ever the active one. */
   const activeDetail = (
     <>
-      {m.journey_status === "go_with_conditions" && (
+      {m.journey_status === "in_testing" && (
         <div className="space-y-2">
           {condOpen ? (
             <div className="space-y-2">
@@ -268,7 +268,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                   size="sm"
                   className="h-7 text-[11px]"
                   disabled={
-                    outcomeBlockers("go_with_conditions", {
+                    outcomeBlockers("in_testing", {
                       conditions: condDraft,
                       holdTrigger: "",
                       holdReview: "",
@@ -345,10 +345,10 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                 {complete && writable && (
                   <button
                     type="button"
-                    onClick={() => setGateOutcome(m.material_id, "go", {})}
+                    onClick={() => setGateOutcome(m.material_id, "in_development", {})}
                     className={LINK}
                   >
-                    All {m.gate_conditions.length} met — move to Go
+                    All {m.gate_conditions.length} met — move to In development
                   </button>
                 )}
               </div>
@@ -357,24 +357,28 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
         </div>
       )}
 
-      {m.journey_status === "hold" && (
-        <div className="space-y-0.5">
-          <p className="text-[11px] text-foreground">{m.hold_trigger_event ?? "No trigger recorded."}</p>
-          <p
-            className={cn(
-              "tabular-nums text-[10px]",
-              reviewLate ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
-            )}
-          >
-            Review {formatDate(m.hold_review_date)}
-            {reviewLate && " · overdue"}
-          </p>
-        </div>
-      )}
-
-      {m.journey_status === "no_go" && (
+      {m.journey_status === "parked" && (
         <div className="space-y-1">
-          <p className="text-[11px] leading-relaxed text-foreground">{m.no_go_reason ?? "No reason recorded."}</p>
+          {m.no_go_reason ? (
+            <p className="text-[11px] leading-relaxed text-foreground">{m.no_go_reason}</p>
+          ) : null}
+          {m.hold_trigger_event || m.hold_review_date ? (
+            <div className="space-y-0.5">
+              <p className="text-[11px] text-foreground">{m.hold_trigger_event ?? "No trigger recorded."}</p>
+              <p
+                className={cn(
+                  "tabular-nums text-[10px]",
+                  reviewLate ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
+                )}
+              >
+                Review {formatDate(m.hold_review_date)}
+                {reviewLate && " · overdue"}
+              </p>
+            </div>
+          ) : null}
+          {!m.no_go_reason && !m.hold_trigger_event && !m.hold_review_date && (
+            <p className="text-[11px] text-foreground">No reason recorded.</p>
+          )}
           {writable && (
             <button type="button" onClick={() => reopenGate(m.material_id, null)} className={LINK}>
               Reopen
