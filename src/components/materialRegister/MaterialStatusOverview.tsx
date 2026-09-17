@@ -13,7 +13,7 @@ import {
   UNASSIGNED_OWNER,
   useRegister,
 } from "@/components/materialRegister/registerStore";
-import { StatusPill } from "@/components/materialRegister/primitives";
+import { JOURNEY_STATUS_LABEL, type JourneyStatus } from "@/types/materialPrioritisation";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { blankMaterial } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
@@ -21,7 +21,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 /**
  * Status strip shown on the value-chain hero: the material's register status,
  * owner, priority period and position. Owner and priority period are editable
- * inline; the status itself is set in the Material Brief's Status panel.
+ * inline, and the status can be set straight from the dropdown.
  */
 const SummaryField: React.FC<{ label: string; children: React.ReactNode; hint?: React.ReactNode }> = ({
   label,
@@ -120,7 +120,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     : null;
 
   return (
-    <div className="grid sm:grid-cols-2 xl:grid-cols-[135px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
+    <div className="grid sm:grid-cols-2 xl:grid-cols-[170px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
       <SummaryField
         label="Status"
         hint={
