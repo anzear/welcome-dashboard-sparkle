@@ -621,6 +621,17 @@ const ResearchSpace: React.FC = () => {
         : "Meets your requirements";
   const verdictClass =
     notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
+  const countLine =
+    notSetCount === rows.length
+      ? null
+      : [
+          metCount > 0 ? `${metCount} met` : null,
+          notMetCount > 0 ? `${notMetCount} not met` : null,
+          notSetCount > 0 ? `${notSetCount} not set` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
 
   const renderInput = (label: string) => {
     switch (label) {
