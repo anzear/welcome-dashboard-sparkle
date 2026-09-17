@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
+import ResearchSpace from "@/components/materialRegister/ResearchSpace";
 import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
 import { blankMaterial } from "@/components/materialRegister/materialEntry";
 import {
@@ -41,8 +42,8 @@ const Inner: React.FC = () => {
   const [view, setView] = React.useState<"brief" | "research">("brief");
 
   const tabs: { id: "brief" | "research"; label: string }[] = [
-    { id: "brief", label: "Material brief" },
-    { id: "research", label: "Research space" },
+    { id: "brief", label: "Material Profile" },
+    { id: "research", label: "Research Space" },
   ];
 
   const toggle = (
@@ -76,16 +77,7 @@ const Inner: React.FC = () => {
             tabsSlot={toggle}
             bodyReplacement={
               view === "research" ? (
-                <div className="mt-4 rounded-lg border bg-card px-6 py-16 text-center">
-                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Research space
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    {name
-                      ? `Research space for ${name} is coming soon.`
-                      : "Coming soon."}
-                  </p>
-                </div>
+                <ResearchSpace />
               ) : undefined
             }
           />
