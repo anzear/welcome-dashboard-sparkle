@@ -31,6 +31,7 @@ import MaterialBriefForm, { loadBriefSummary } from '@/components/MaterialBriefF
 import MaterialBriefOutline from '@/components/MaterialBriefOutline';
 import WorldRegionMap from '@/components/WorldRegionMap';
 import CompanyBrief from '@/components/CompanyBrief';
+import MaterialStatusOverview from '@/components/materialRegister/MaterialStatusOverview';
 import { Tooltip as UiTooltip, TooltipContent as UiTooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type Objective = 'Source' | 'Produce' | 'Valorise';
@@ -4213,6 +4214,8 @@ const ValueChain = () => {
                   setShowProductBrief={setShowProductBrief}
                   topic={topic}
                 />
+
+                <MaterialStatusOverview materialName={decodeURIComponent(topic || '')} />
 
 
                 {/* Headless MaterialBriefForm — provides the guided wizard dialog; opened from the hero card above */}
