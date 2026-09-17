@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
+import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 
 
 
@@ -427,6 +428,8 @@ const ResearchSpace: React.FC = () => {
   const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
   const removePatent = (id: string) =>
     setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
+  const removePaper = (id: string) =>
+    setShortlistPapers((current) => current.filter((paper) => paper.id !== id));
 
 
   const addPathwayNote = (id: string, text: string) =>
@@ -751,8 +754,12 @@ const ResearchSpace: React.FC = () => {
           />
         </ShortlistCard>
 
-        <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
-          {PAPER_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        <ShortlistCard label="Papers" count={shortlistPapers.length}>
+          <PaperShortlistTable
+            papers={shortlistPapers}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removePaper}
+          />
         </ShortlistCard>
       </section>
 
