@@ -684,9 +684,6 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
             />
           ))}
         </div>
-
-        {/* VCG-derived signals sit at the foot: not live yet, clearly marked. */}
-        <VcgStrip />
       </section>
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
