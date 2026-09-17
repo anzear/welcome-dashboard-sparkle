@@ -27,6 +27,7 @@ import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
+import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 
 
 
@@ -77,7 +78,7 @@ type EvaluationStatus = "Met" | "Not met" | "Not set";
 type EvidenceRecord = { name: string; source: string };
 
 
-type ShortlistItem = { id: string; name: string; detail: string };
+
 
 
 
@@ -213,9 +214,26 @@ const SHORTLIST_PATENTS: ShortlistPatent[] = [
 ];
 
 
-const PAPER_ITEMS: ShortlistItem[] = [
-  { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
-  { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+const SHORTLIST_PAPERS: ShortlistPaper[] = [
+  {
+    id: "paper-1",
+    title: "Commercial-scale lactic acid fermentation: process yield and cost assessment across renewable feedstocks",
+    date: "1 Sept 2026",
+    authors: ["E. Shahsavari", "A. Mohammadi", "R. Ghazi Tabatabaei"],
+    savedBy: "K. Brandt",
+    teamNotes: [
+      { id: "ppn-1", author: "K. Brandt", timestamp: "12 Sept 2026", text: "Yield data at pilot scale matches our pathway assumptions." },
+      { id: "ppn-2", author: "M. Rossi", timestamp: "14 Sept 2026", text: "Cost model excludes downstream purification — verify before citing." },
+    ],
+  },
+  {
+    id: "paper-2",
+    title: "European lactic acid supply outlook: producer capacity, geography and market availability review",
+    date: "20 May 2026",
+    authors: ["J. Verhoeven", "L. Marchetti"],
+    savedBy: "A. Weber",
+    teamNotes: [],
+  },
 ];
 
 
@@ -311,67 +329,6 @@ const MultiSelectChips = ({
   );
 };
 
-const ShortlistEntry = ({
-  name,
-  right,
-  children,
-}: {
-  name: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [note, setNote] = useState("");
-
-  const openEditor = () => {
-    setDraft(note);
-    setEditing(true);
-  };
-
-  const saveNote = () => {
-    setNote(draft.trim());
-    setEditing(false);
-  };
-
-  return (
-    <div className="border-t border-border px-4 py-3 first:border-t-0">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">{children}</div>
-        <div className="flex shrink-0 items-start gap-2">
-          {right}
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${name}` : `Add note for ${name}`} title={note ? "Edit note" : "Add note"}>
-            {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-          </Button>
-        </div>
-      </div>
-
-      {editing && (
-        <div className="mt-3 space-y-2">
-          <Textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Add a note…" className="min-h-20 text-xs" autoFocus />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>Cancel</Button>
-            <Button type="button" size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90" onClick={saveNote}>Save note</Button>
-          </div>
-        </div>
-      )}
-
-      {note && !editing && (
-        <div className="mt-3 flex items-start justify-between gap-3 border-l-2 border-border pl-3">
-          <p className="text-xs text-muted-foreground">{note}</p>
-          <Button type="button" variant="link" className="h-auto shrink-0 p-0 text-[10px]" onClick={openEditor}>Edit</Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
-  <ShortlistEntry name={item.name}>
-    <div className="text-xs font-semibold text-foreground">{item.name}</div>
-    <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
-  </ShortlistEntry>
-);
 
 
 
@@ -407,15 +364,15 @@ const ResearchSpace: React.FC = () => {
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
   const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
-
-  const removePathway = (id: string) =>
-    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
-
-  const removeCompany = (id: string) =>
-    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
-
+  const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
   const removePatent = (id: string) =>
     setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
+  const removePaper = (id: string) =>
+    setShortlistPapers((current) => current.filter((paper) => paper.id !== id));
+  const removePathway = (id: string) =>
+    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+  const removeCompany = (id: string) =>
+    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
 
 
   const addPathwayNote = (id: string, text: string) =>
@@ -740,8 +697,12 @@ const ResearchSpace: React.FC = () => {
           />
         </ShortlistCard>
 
-        <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
-          {PAPER_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        <ShortlistCard label="Papers" count={shortlistPapers.length}>
+          <PaperShortlistTable
+            papers={shortlistPapers}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removePaper}
+          />
         </ShortlistCard>
       </section>
 
