@@ -625,44 +625,38 @@ const ResearchSpace: React.FC = () => {
   const renderInput = (label: string) => {
     switch (label) {
       case "Applications":
-        return <MultiSelectChips label="Applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
-      case "Technology readiness (TRL)":
+        return <MultiSelectChips label="applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
+      case "TRL range":
         return (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground" htmlFor="trl-from">From</label>
-              <Input id="trl-from" type="number" min={1} max={9} value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 w-16" />
-            </div>
-            <div className="flex items-center gap-1.5">
-              <label className="text-[10px] uppercase tracking-widest text-muted-foreground" htmlFor="trl-to">To</label>
-              <Input id="trl-to" type="number" min={1} max={9} value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 w-16" />
-            </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-9 bg-background text-xs" />
+            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-9 bg-background text-xs" />
           </div>
         );
-      case "Product supply geography":
-        return <MultiSelectChips label="Product supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
-      case "Feedstock supply geography":
-        return <MultiSelectChips label="Feedstock supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
-      case "Price ceiling per tonne":
+      case "Product geography":
+        return <MultiSelectChips label="product geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
+      case "Feedstock geography":
+        return <MultiSelectChips label="feedstock geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
+      case "Price ceiling":
         return (
-          <div className="grid w-full max-w-xs grid-cols-[1fr_90px] gap-2">
-            <Input type="number" min={0} placeholder="Enter amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-8" />
-            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-[1fr_88px] gap-2">
+            <Input type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-9 bg-background text-xs" />
+            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
           </div>
         );
-      case "Minimum number of producers":
+      case "Producers":
         return (
-          <div className="flex h-8 w-32 items-center rounded-md border border-input bg-background">
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-8 rounded-none" onClick={() => patch("minimumProducers", Math.max(0, thresholds.minimumProducers - 1))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
-            <Input aria-label="Minimum number of producers" type="number" min={0} value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", Math.max(0, Number(event.target.value)))} className="h-7 border-0 px-1 text-center shadow-none focus-visible:ring-0" />
-            <Button type="button" variant="ghost" size="icon" className="h-7 w-8 rounded-none" onClick={() => patch("minimumProducers", thresholds.minimumProducers + 1)} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
+          <div className="flex h-9 items-center rounded-md border border-input bg-background">
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
+            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-8 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
+            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         );
-      case "Required volume":
+      case "Volume":
         return (
-          <div className="grid w-full max-w-sm grid-cols-[1fr_130px] gap-2">
-            <Input type="number" min={0} placeholder="Enter volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-8" />
-            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-8"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-[1fr_118px] gap-2">
+            <Input type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-9 bg-background text-xs" />
+            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
           </div>
         );
       default:
@@ -670,8 +664,8 @@ const ResearchSpace: React.FC = () => {
     }
   };
 
-  const LONG_INPUT_LABELS = new Set(["Applications", "Product supply geography", "Feedstock supply geography"]);
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
+
 
   return (
     <div className="mt-5 space-y-6">
