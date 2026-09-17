@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bookmark, ChevronDown, MessageSquare, MessageSquarePlus } from "lucide-react";
+import { ChevronDown, MessageSquare, MessageSquarePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +32,7 @@ export type ShortlistPathway = {
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
 const COLS =
-  "grid-cols-[24px_28px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_120px]";
+  "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_120px]";
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
@@ -141,15 +141,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
               onCheckedChange={(v) => toggle([p.id], v === true)}
             />
           </div>
-          <div className="flex items-center justify-center">
-            <button
-              onClick={() => onRemove(p.id)}
-              title="Remove from shortlist"
-              className="text-foreground hover:text-muted-foreground transition-colors"
-            >
-              <Bookmark className="w-4 h-4 fill-foreground" />
-            </button>
-          </div>
           <div className="flex justify-center">
             <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground">
               {rowIndex.get(p.id)}
@@ -201,7 +192,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
                     onCheckedChange={(v) => toggle(ids, v === true)}
                   />
                 </div>
-                <span />
                 <span />
                 {chip(head.feedstock, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.process, PATHWAY_CHIP_NEUTRAL)}
