@@ -31,10 +31,11 @@ export type ShortlistCompany = {
   teamNotes: CompanyNote[];
 };
 
-const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
-  { role: "Producer", heading: "Producers" },
-  { role: "Supplier", heading: "Suppliers" },
-  { role: "Offtaker", heading: "Offtakers" },
+/** Same role vocabulary and order as the Market Players toggle. */
+const ROLE_TABS: { value: string; role: ShortlistCompany["role"]; label: string }[] = [
+  { value: "suppliers", role: "Supplier", label: "Feedstock Suppliers" },
+  { value: "producers", role: "Producer", label: "Product Producers" },
+  { value: "offtakers", role: "Offtaker", label: "Off-takers" },
 ];
 
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
