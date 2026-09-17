@@ -564,13 +564,11 @@ const ResearchSpace: React.FC = () => {
 
   const renderInput = (label: string) => {
     switch (label) {
-      case "Applications":
-        return <MultiSelectChips label="applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
       case "TRL range":
         return (
           <div className="grid grid-cols-2 gap-2">
-            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-9 bg-background text-xs" />
-            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-9 bg-background text-xs" />
+            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 bg-background text-xs" />
+            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 bg-background text-xs" />
           </div>
         );
       case "Product geography":
@@ -579,30 +577,31 @@ const ResearchSpace: React.FC = () => {
         return <MultiSelectChips label="feedstock geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
       case "Price ceiling":
         return (
-          <div className="grid grid-cols-[1fr_88px] gap-2">
-            <Input type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-9 bg-background text-xs" />
-            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="Price ceiling" type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-8 bg-background text-xs" />
+            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-8 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
           </div>
         );
       case "Producers":
         return (
-          <div className="flex h-9 items-center rounded-md border border-input bg-background">
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
-            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-8 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
+          <div className="flex h-8 items-center rounded-md border border-input bg-background">
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
+            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-7 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         );
       case "Volume":
         return (
-          <div className="grid grid-cols-[1fr_118px] gap-2">
-            <Input type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-9 bg-background text-xs" />
-            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="Volume" type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-8 bg-background text-xs" />
+            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-8 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
           </div>
         );
       default:
         return null;
     }
   };
+
 
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
