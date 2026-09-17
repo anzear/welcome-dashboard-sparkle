@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Bookmark, Check, ChevronDown, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
+import { Bookmark, Check, ChevronDown, ChevronsUpDown, Info, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, hasGroupableClusters, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
@@ -618,7 +619,21 @@ const ResearchSpace: React.FC = () => {
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
           <div className="grid grid-cols-[55%_1fr] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
-            <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">VCG.AI signal</div>
+            <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex cursor-help items-center gap-1">
+                      VCG.AI signal
+                      <Info className="h-3 w-3 text-muted-foreground" />
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <p>Shows how VCG.AI data compares against your requirements.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
 
           {rows.map((row) => (
