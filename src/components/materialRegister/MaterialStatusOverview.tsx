@@ -112,14 +112,22 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
           overdue ? (
             <span className="text-amber-600">{overdue}</span>
           ) : (
-            "Set in the Status panel"
+            "Details in the Status panel"
           )
         }
       >
-        <StatusPill
-          status={material.journey_status}
-          entered={material.provenance?.journey_status?.origin === "entered"}
-        />
+        <Select value={material.journey_status} onValueChange={commitStatus}>
+          <SelectTrigger className="h-8 w-full text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            {(Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((status) => (
+              <SelectItem key={status} value={status} className="text-xs">
+                {JOURNEY_STATUS_LABEL[status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </SummaryField>
 
       <SummaryField label="Owner">
