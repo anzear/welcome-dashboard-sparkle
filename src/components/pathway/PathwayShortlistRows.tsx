@@ -171,13 +171,7 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
             <div
               key={key}
               className="group cursor-pointer hover:bg-muted/30 transition-colors"
-              onClick={() =>
-                setCollapsed((prev) => {
-                  const next = new Set(prev);
-                  next.delete(key);
-                  return next;
-                })
-              }
+              onClick={() => setExpandedGroups((prev) => new Set(prev).add(key))}
             >
               <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
