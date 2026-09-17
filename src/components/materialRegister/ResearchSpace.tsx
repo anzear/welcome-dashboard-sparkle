@@ -496,24 +496,34 @@ const ResearchSpace: React.FC = () => {
         </div>
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
-        <Accordion type="multiple" defaultValue={["pathways"]} className="overflow-hidden rounded-lg border border-border bg-card">
-          {SHORTLIST_GROUPS.map((group) => (
-            <AccordionItem key={group.id} value={group.id} className="border-b border-border last:border-b-0">
-              <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
-                <span className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground">{group.label}</span>
-                  <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="border-t border-border pb-0">
-                {group.items.map((item) => <ShortlistRow key={item.id} item={item} />)}
-              </AccordionContent>
-            </AccordionItem>
+
+        <ShortlistCard label="Pathways" count={PATHWAY_ITEMS.length} defaultOpen>
+          {PATHWAY_ITEMS.map((item) => <PathwayRow key={item.id} item={item} />)}
+        </ShortlistCard>
+
+        <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
+          {COMPANY_GROUPS.map((group) => (
+            <div key={group.id} className="border-t border-border first:border-t-0">
+              <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{group.label}</span>
+                <Badge variant="secondary" className="h-4 min-w-4 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
+              </div>
+              {group.items.map((item) => <CompanyRow key={item.id} item={item} />)}
+            </div>
           ))}
-        </Accordion>
+        </ShortlistCard>
+
+        <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
+          {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        </ShortlistCard>
+
+        <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
+          {PAPER_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        </ShortlistCard>
       </section>
+
     </div>
   );
 };
