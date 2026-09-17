@@ -741,17 +741,14 @@ const ResearchSpace: React.FC = () => {
         </ShortlistCard>
 
 
-        <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
-          {COMPANY_GROUPS.map((group) => (
-            <div key={group.id} className="border-t border-border first:border-t-0">
-              <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{group.label}</span>
-                <Badge variant="secondary" className="h-4 min-w-4 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
-              </div>
-              {group.items.map((item) => <CompanyRow key={item.id} item={item} />)}
-            </div>
-          ))}
+        <ShortlistCard label="Companies" count={shortlistCompanies.length}>
+          <CompanyShortlistTables
+            companies={shortlistCompanies}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removeCompany}
+          />
         </ShortlistCard>
+
 
         <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
           {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
