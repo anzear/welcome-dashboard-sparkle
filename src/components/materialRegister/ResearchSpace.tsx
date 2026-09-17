@@ -50,23 +50,24 @@ type Thresholds = {
   feedstockGeographies: string[];
   priceCeiling: string;
   currency: string;
-  minimumProducers: number;
+  minimumProducers: string;
   requiredVolume: string;
   volumeUnit: string;
 };
 
 const INITIAL_THRESHOLDS: Thresholds = {
   applications: [],
-  trlFrom: "1",
-  trlTo: "9",
+  trlFrom: "",
+  trlTo: "",
   materialGeographies: [],
   feedstockGeographies: [],
   priceCeiling: "",
   currency: "EUR",
-  minimumProducers: 1,
+  minimumProducers: "",
   requiredVolume: "",
   volumeUnit: "tonnes/year",
 };
+
 
 type EvaluationStatus = "Met" | "Not met" | "Not set";
 
