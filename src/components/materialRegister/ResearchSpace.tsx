@@ -73,13 +73,8 @@ type EvidenceRecord = { name: string; source: string };
 
 type ShortlistItem = { id: string; name: string; detail: string };
 
-type PathwayItem = {
-  id: string;
-  feedstock: string;
-  process: string;
-  product: string;
-  application: string;
-};
+
+
 
 type Rating = { user: string; value: number };
 
