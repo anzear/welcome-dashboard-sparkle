@@ -299,7 +299,7 @@ const MultiSelectChips = ({
     <div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-9 w-full justify-between bg-background text-xs font-normal">
+          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-8 w-full justify-between bg-background text-xs font-normal">
             <span className="truncate">{values.length > 0 ? `${values.length} selected` : `Select ${label.toLowerCase()}`}</span>
             <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
