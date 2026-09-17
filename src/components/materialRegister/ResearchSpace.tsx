@@ -407,7 +407,13 @@ const ResearchSpace: React.FC = () => {
     </Button>
   );
 
-  type Row = { label: string; status: EvaluationStatus; line: React.ReactNode | null };
+  type Row = {
+    label: string;
+    status: EvaluationStatus;
+    helperText: React.ReactNode;
+    finding: React.ReactNode;
+    hasData: boolean;
+  };
 
   const rows: Row[] = (() => {
     const appCount = thresholds.applications.length;
