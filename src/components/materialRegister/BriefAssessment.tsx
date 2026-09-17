@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
   ASSESSMENT_FRAMING,
@@ -12,7 +12,9 @@ import CriterionRail from "@/components/materialRegister/CriterionRail";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
-import { Info, SlidersHorizontal, Pencil } from "lucide-react";
+import { ChevronDown, FileText, Info, SlidersHorizontal, Pencil, Upload, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type {
   AssessmentEntry,
   AssessmentCriterion,
@@ -52,6 +54,7 @@ const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }>
 const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   const { updateMaterial } = useRegister();
   const [editing, setEditing] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [vol, setVol] = useState(m.annual_volume?.toString() ?? "");
   const [price, setPrice] = useState(m.unit_price?.toString() ?? "");
   const [factor, setFactor] = useState(m.ghg_emission_factor?.toString() ?? "");
@@ -226,39 +229,170 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1 rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
-      {([
-        ["Spend", m.annual_spend, "EUR/yr"],
-        ["Volume", m.annual_volume, "t/yr"],
-        ["GHG", m.ghg_contribution, "tCO2e/yr"],
-      ] as const).map(([label, value, suffix]) => (
-        <div key={label} className="flex items-baseline gap-1.5">
-          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-            {label}
-          </span>
-          {value === null ? (
-            <Missing />
-          ) : (
-            <span className="text-sm font-semibold tabular-nums text-foreground">
-              {nf(0).format(value)} {suffix}
+    <Collapsible open={expanded} onOpenChange={setExpanded} className="rounded-lg border border-border/60 bg-muted/40">
+      <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1 px-3 py-2">
+        {([
+          ["Spend", m.annual_spend, "EUR/yr"],
+          ["Volume", m.annual_volume, "t/yr"],
+          ["GHG", m.ghg_contribution, "tCO2e/yr"],
+        ] as const).map(([label, value, suffix]) => (
+          <div key={label} className="flex items-baseline gap-1.5">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              {label}
             </span>
+            {value === null ? (
+              <Missing />
+            ) : (
+              <span className="text-sm font-semibold tabular-nums text-foreground">
+                {nf(0).format(value)} {suffix}
+              </span>
+            )}
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={() => setEditing(true)}
+          className="h-6 gap-1 px-1.5 text-[10px] opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100"
+        >
+          <Pencil className="h-3 w-3" />
+          Edit figures
+        </Button>
+        <CollapsibleTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="ml-auto h-6 gap-1.5 px-1.5 text-[9px] uppercase tracking-widest text-muted-foreground"
+          >
+            Company data
+            <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
+          </Button>
+        </CollapsibleTrigger>
+      </div>
+      <CollapsibleContent>
+        <CompanyDataDetails material={m} />
+      </CollapsibleContent>
+    </Collapsible>
+  );
+};
+
+const REGISTRATION_OPTIONS = [
+  "EU REACH",
+  "UK REACH",
+  "US TSCA inventory listing",
+  "K-REACH",
+  "No constraint",
+] as const;
+
+const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
+  const { updateMaterial } = useRegister();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const document = material.performance_targets_document ?? null;
+  const registrations = material.regulatory_registrations ?? [];
+
+  const record = (field: "performance_targets_document" | "regulatory_registrations", before: string | null, after: string | null) => ({
+    material_id: material.material_id,
+    event_type: "field_correction" as const,
+    field,
+    from_value: before,
+    to_value: after,
+  });
+
+  const setDocument = (next: Material["performance_targets_document"]) => {
+    updateMaterial(
+      material.material_id,
+      { performance_targets_document: next },
+      ["performance_targets_document"],
+      [record("performance_targets_document", document?.filename ?? null, next?.filename ?? null)],
+    );
+  };
+
+  const toggleRegistration = (option: string) => {
+    const next = option === "No constraint"
+      ? registrations.includes(option) ? [] : [option]
+      : registrations.includes(option)
+        ? registrations.filter((item) => item !== option)
+        : [...registrations.filter((item) => item !== "No constraint"), option];
+    updateMaterial(
+      material.material_id,
+      { regulatory_registrations: next },
+      ["regulatory_registrations"],
+      [record("regulatory_registrations", registrations.join(", ") || null, next.join(", ") || null)],
+    );
+  };
+
+  return (
+    <div className="space-y-4 border-t border-border/60 bg-background/60 px-3 py-4">
+      <section className="space-y-2">
+        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Technical fit</h3>
+        <div className="rounded-md border border-border/70 bg-background p-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Performance targets</span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const bytes = file.size;
+                const size = bytes >= 1_000_000
+                  ? `${(bytes / 1_048_576).toFixed(1)} MB`
+                  : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+                setDocument({ filename: file.name, size });
+                event.target.value = "";
+              }}
+            />
+            <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[10px]" onClick={() => fileInputRef.current?.click()}>
+              <Upload className="h-3.5 w-3.5" />
+              Upload
+            </Button>
+          </div>
+          {document ? (
+            <div className="mt-2 flex items-center gap-2 text-[11px]">
+              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="min-w-0 flex-1 truncate text-foreground" title={document.filename}>{document.filename}</span>
+              <span className="tabular-nums text-[10px] text-muted-foreground">{document.size}</span>
+              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Remove performance targets document" onClick={() => setDocument(null)}>
+                <X className="h-3 w-3" />
+              </Button>
+            </div>
+          ) : (
+            <p className="mt-1 text-[11px] text-muted-foreground">No document attached.</p>
           )}
         </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => setEditing(true)}
-        className={cn(
-          LINK,
-          "inline-flex items-center gap-1 opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100",
-        )}
-      >
-        <Pencil className="h-3 w-3" />
-        Edit
-      </button>
-      <span className="ml-auto text-[9px] uppercase tracking-widest text-muted-foreground/60">
-        Company data
-      </span>
+      </section>
+
+      <section className="space-y-2">
+        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Regulatory</h3>
+        <div className="rounded-md border border-border/70 bg-background p-3">
+          <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Registration needed</div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {REGISTRATION_OPTIONS.map((option) => {
+              const selected = registrations.includes(option);
+              return (
+                <Button
+                  key={option}
+                  type="button"
+                  variant={selected ? "secondary" : "outline"}
+                  size="sm"
+                  aria-pressed={selected}
+                  onClick={() => toggleRegistration(option)}
+                  className={cn("h-6 rounded-full px-2.5 text-[10px] font-normal", selected && "border border-foreground/20")}
+                >
+                  {option}
+                </Button>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {registrations.length > 0 ? `${registrations.length} selected.` : "No registration selected."}
+          </p>
+        </div>
+      </section>
     </div>
   );
 };
