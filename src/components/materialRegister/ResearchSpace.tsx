@@ -67,15 +67,6 @@ const INITIAL_THRESHOLDS: Thresholds = {
 
 type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
 
-const CRITERIA_EVALUATION: { label: string; status: EvaluationStatus; explanation: string }[] = [
-  { label: "Applications", status: "Match", explanation: "PLA packaging and food applications are represented in the available pathways." },
-  { label: "Production scale (TRL)", status: "Match", explanation: "Company needs TRL 6–8; supplier data shows TRL 7." },
-  { label: "Material supply geography", status: "Match", explanation: "Producers found in France and Germany." },
-  { label: "Feedstock supply geography", status: "No match", explanation: "No verified feedstock supplier was found in the selected region." },
-  { label: "Price ceiling per tonne", status: "No data", explanation: "No price data is available for this material." },
-  { label: "Minimum number of producers", status: "Match", explanation: "Four producers are identified against a minimum requirement of three." },
-  { label: "Required volume", status: "Not set", explanation: "Threshold not set." },
-];
 
 type ShortlistItem = { id: string; name: string; detail: string };
 type ShortlistGroup = { id: string; label: string; items: ShortlistItem[] };
