@@ -137,10 +137,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     linkedNode: "Lactic Acid",
     role: "Producer",
     savedBy: "K. Brandt",
-    teamRatings: [
-      { user: "K. Brandt", value: 4 },
-      { user: "M. Rossi", value: 5 },
-    ],
+    rating: 4,
     teamNotes: [
       { id: "cn-1", author: "K. Brandt", timestamp: "2026-08-12 09:30", text: "Food-grade capacity confirmed for Europe." },
       { id: "cn-2", author: "M. Rossi", timestamp: "2026-08-28 14:05", text: "Quoted above our target price — renegotiate at volume." },
@@ -154,7 +151,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     linkedNode: "Lactic Acid",
     role: "Producer",
     savedBy: "A. Weber",
-    teamRatings: [{ user: "K. Brandt", value: 3 }],
+    rating: 3,
     teamNotes: [],
   },
   {
@@ -166,7 +163,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     linkedNode: "Whey permeate",
     role: "Supplier",
     savedBy: "M. Rossi",
-    teamRatings: [{ user: "M. Rossi", value: 4 }],
+    rating: 4,
     teamNotes: [
       { id: "cn-3", author: "M. Rossi", timestamp: "2026-09-01 11:20", text: "Permeate volumes available from Q2 2027." },
     ],
@@ -180,7 +177,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     linkedNode: "PLA packaging",
     role: "Offtaker",
     savedBy: "K. Brandt",
-    teamRatings: [],
+    
     teamNotes: [],
   },
 ];
