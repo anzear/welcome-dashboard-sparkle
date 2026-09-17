@@ -268,7 +268,7 @@ const REGISTRATION_OPTIONS = [
   "No constraint",
 ] as const;
 
-const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
+export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
   const { updateMaterial } = useRegister();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const document = material.performance_targets_document ?? null;
