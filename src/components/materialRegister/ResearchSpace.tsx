@@ -95,11 +95,44 @@ type CompanyItem = {
 
 const CURRENT_REVIEWER = "A. Weber";
 
-const PATHWAY_ITEMS: PathwayItem[] = [
-  { id: "pathway-1", feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging" },
-  { id: "pathway-2", feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid", application: "Biodegradable films" },
-  { id: "pathway-3", feedstock: "Sugarcane molasses", process: "Fermentation", product: "Lactic Acid", application: "Food preservation" },
+/** Shortlisted pathways — node ids drive grouping, labels are display only. */
+const SHORTLIST_PATHWAYS: ShortlistPathway[] = [
+  {
+    id: "pathway-1",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-pla",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging",
+    trl: "TRL 9",
+  },
+  {
+    id: "pathway-2",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-food",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Food preservation",
+    trl: "TRL 7",
+  },
+  {
+    id: "pathway-3",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-skin",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Skin care (AHA)",
+  },
+  {
+    id: "pathway-4",
+    feedstockId: "fs-stover", processId: "pr-hydro-ferm", productId: "pd-la", applicationId: "ap-films",
+    feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid",
+    application: "Biodegradable films",
+    trl: "TRL 5",
+  },
 ];
+
+const INITIAL_PATHWAY_NOTES: Record<string, PathwayNote[]> = {
+  "pathway-1": [
+    { id: "note-1", author: "K. Brandt", timestamp: "2026-08-14 10:12", text: "Corbion confirmed food-grade capacity for this route." },
+    { id: "note-2", author: "M. Rossi", timestamp: "2026-08-21 15:40", text: "Ask about minimum order volumes before the next call." },
+  ],
+  "pathway-4": [
+    { id: "note-3", author: "A. Weber", timestamp: "2026-09-02 09:05", text: "Pilot only — revisit once a second supplier is verified." },
+  ],
+};
+
 
 const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
   {
