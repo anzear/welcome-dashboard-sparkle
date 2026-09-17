@@ -39,5 +39,5 @@ export const pathwayChipCls = (extra = "") =>
   `text-[10px] font-medium truncate border rounded-md px-2 py-2 text-center ${extra}`;
 
 export const PATHWAY_CHIP_NEUTRAL = "border-border bg-background text-foreground";
-/** Anchor node emphasis: neutral, heavier border and label weight (no reserved colour). */
-export const PATHWAY_CHIP_ANCHOR = "border-2 border-foreground/40 bg-background text-foreground font-semibold";
+/** Anchor (product) node: the explorer's reserved emerald fill. */
+export const PATHWAY_CHIP_ANCHOR = "border-emerald-300 bg-emerald-50 text-emerald-800";
