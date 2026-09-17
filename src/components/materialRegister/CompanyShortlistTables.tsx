@@ -43,16 +43,16 @@ const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking
  *  Team ratings and Notes are flexible so the table always fits its card without scrolling. */
 const Columns = () => (
   <colgroup>
-    <col style={{ width: "180px" }} />
-    <col style={{ width: "90px" }} />
+    <col style={{ width: "170px" }} />
+    <col style={{ width: "84px" }} />
+    <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
-    <col style={{ width: "130px" }} />
-    <col style={{ width: "105px" }} />
+    <col style={{ width: "100px" }} />
     <col />
     <col />
-    <col style={{ width: "80px" }} />
-    <col style={{ width: "90px" }} />
-    <col style={{ width: "36px" }} />
+    <col style={{ width: "76px" }} />
+    <col style={{ width: "84px" }} />
+    <col style={{ width: "32px" }} />
   </colgroup>
 );
 
