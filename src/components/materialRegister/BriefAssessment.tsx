@@ -11,7 +11,7 @@ import { Missing, nf, provenanceLine, shortDate } from "@/components/materialReg
 import CriterionRail from "@/components/materialRegister/CriterionRail";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
-import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
+
 import { FileText, Info, Pencil, SlidersHorizontal, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type {
@@ -388,29 +388,6 @@ const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
 };
 
 
-/**
- * VCG signals are not live yet. The strip is given its own surface so it reads
- * as a distinct block from the company figures above it, and the "Coming soon"
- * tag replaces the old "Not yet assessed" line so it cannot be mistaken for
- * missing data we hold.
- */
-const VcgStrip: React.FC = () => (
-  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-provenance-vcg/20 bg-provenance-vcg/[0.04] px-3 py-1.5">
-    <span className="text-[9px] font-semibold uppercase tracking-widest text-provenance-vcg/80">VCG data peek</span>
-    <span className="h-3 w-px bg-provenance-vcg/20" aria-hidden />
-    <span className="text-[10px] text-muted-foreground/80">Substitutability</span>
-    <Missing />
-    <span className="text-[10px] text-muted-foreground/80">Suppliers</span>
-    <Missing />
-    <span className="text-[10px] text-muted-foreground/80">Competitors</span>
-    <Missing />
-    <span className="ml-auto">
-      <ComingSoonTag />
-    </span>
-  </div>
-);
-
-
 /** Small split dot. A marker beside the count, never the word "split". */
 const SplitDot: React.FC = () => (
   <span
@@ -707,9 +684,6 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
             />
           ))}
         </div>
-
-        {/* VCG-derived signals sit at the foot: not live yet, clearly marked. */}
-        <VcgStrip />
       </section>
 
       <CriteriaSetDialog open={criteriaOpen} onOpenChange={setCriteriaOpen} />
