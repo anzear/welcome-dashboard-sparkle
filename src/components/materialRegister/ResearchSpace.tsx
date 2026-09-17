@@ -299,7 +299,7 @@ const MultiSelectChips = ({
     <div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-9 w-full justify-between bg-background text-xs font-normal">
+          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className="h-8 w-full justify-between bg-background text-xs font-normal">
             <span className="truncate">{values.length > 0 ? `${values.length} selected` : `Select ${label.toLowerCase()}`}</span>
             <ChevronsUpDown className="h-3.5 w-3.5 text-muted-foreground" />
           </Button>
@@ -415,8 +415,10 @@ const ResearchSpace: React.FC = () => {
     hasData: boolean;
   };
 
+  const scopeApplication = thresholds.applications[0] ?? "";
+
   const rows: Row[] = (() => {
-    const appCount = thresholds.applications.length;
+
 
     const trlFrom = Number(thresholds.trlFrom);
     const trlTo = Number(thresholds.trlTo);
@@ -457,13 +459,7 @@ const ResearchSpace: React.FC = () => {
 
     return [
       {
-        label: "Applications",
-        status: appCount > 0 ? "Met" : "Not set",
-        helperText: "Select an application to evaluate.",
-        finding: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
-        hasData: true,
-      },
-      {
+
         label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
         helperText: "Set a TRL range to evaluate.",
@@ -568,13 +564,11 @@ const ResearchSpace: React.FC = () => {
 
   const renderInput = (label: string) => {
     switch (label) {
-      case "Applications":
-        return <MultiSelectChips label="applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
       case "TRL range":
         return (
           <div className="grid grid-cols-2 gap-2">
-            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-9 bg-background text-xs" />
-            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-9 bg-background text-xs" />
+            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 bg-background text-xs" />
+            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 bg-background text-xs" />
           </div>
         );
       case "Product geography":
@@ -583,24 +577,24 @@ const ResearchSpace: React.FC = () => {
         return <MultiSelectChips label="feedstock geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
       case "Price ceiling":
         return (
-          <div className="grid grid-cols-[1fr_88px] gap-2">
-            <Input type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-9 bg-background text-xs" />
-            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="Price ceiling" type="number" min={0} placeholder="Amount" value={thresholds.priceCeiling} onChange={(event) => patch("priceCeiling", event.target.value)} className="h-8 bg-background text-xs" />
+            <Select value={thresholds.currency} onValueChange={(value) => patch("currency", value)}><SelectTrigger className="h-8 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="EUR">EUR</SelectItem><SelectItem value="USD">USD</SelectItem><SelectItem value="GBP">GBP</SelectItem></SelectContent></Select>
           </div>
         );
       case "Producers":
         return (
-          <div className="flex h-9 items-center rounded-md border border-input bg-background">
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
-            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-8 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
+          <div className="flex h-8 items-center rounded-md border border-input bg-background">
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none" onClick={() => patch("minimumProducers", String(Math.max(0, (Number(thresholds.minimumProducers) || 0) - 1)))} aria-label="Decrease minimum producers"><Minus className="h-3.5 w-3.5" /></Button>
+            <Input aria-label="Minimum number of producers" type="number" min={0} placeholder="Minimum" value={thresholds.minimumProducers} onChange={(event) => patch("minimumProducers", event.target.value)} className="h-7 border-0 bg-transparent px-1 text-center text-xs shadow-none focus-visible:ring-0" />
+            <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-none" onClick={() => patch("minimumProducers", String((Number(thresholds.minimumProducers) || 0) + 1))} aria-label="Increase minimum producers"><Plus className="h-3.5 w-3.5" /></Button>
           </div>
         );
       case "Volume":
         return (
-          <div className="grid grid-cols-[1fr_118px] gap-2">
-            <Input type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-9 bg-background text-xs" />
-            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-9 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
+          <div className="grid grid-cols-2 gap-2">
+            <Input aria-label="Volume" type="number" min={0} placeholder="Volume" value={thresholds.requiredVolume} onChange={(event) => patch("requiredVolume", event.target.value)} className="h-8 bg-background text-xs" />
+            <Select value={thresholds.volumeUnit} onValueChange={(value) => patch("volumeUnit", value)}><SelectTrigger className="h-8 bg-background text-xs"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="tonnes/year">tonnes/year</SelectItem><SelectItem value="kg/year">kg/year</SelectItem><SelectItem value="kt/year">kt/year</SelectItem></SelectContent></Select>
           </div>
         );
       default:
@@ -608,99 +602,86 @@ const ResearchSpace: React.FC = () => {
     }
   };
 
+
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
+  const verdict =
+    notMetCount > 0
+      ? "Does not meet your requirements"
+      : notSetCount > 0
+        ? "Incomplete — set remaining thresholds"
+        : "Meets your requirements";
 
   return (
     <div className="mt-5 space-y-6">
-      {countLine && (
-        <div className="px-1">
-          <p className="text-sm text-muted-foreground">{countLine}</p>
+      {/* Scope: application is the lens every criterion is evaluated through, not a criterion. */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs text-foreground">
+          <span>Evaluating for:</span>
+          <Select value={scopeApplication} onValueChange={(value) => patch("applications", [value])}>
+            <SelectTrigger className="h-8 w-[240px] bg-background text-xs" aria-label="Application">
+              <SelectValue placeholder="Select an application" />
+            </SelectTrigger>
+            <SelectContent>
+              {applications.map((application) => (
+                <SelectItem key={application} value={application}>{application}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      )}
 
-      {/* Desktop: two side-by-side boxes with locked row heights */}
-      <div className="relative hidden md:block" aria-label="Threshold criteria">
-        <div className="absolute inset-y-0 left-0 right-[calc(50%-8px)] rounded-lg border border-border bg-card" />
-        <div className="absolute inset-y-0 left-[calc(50%+8px)] right-0 rounded-lg border border-border bg-card" />
-        <div className="relative grid grid-cols-2 gap-4">
-          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
-          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
-          {rows.map((row, index) => (
-            <React.Fragment key={row.label}>
-              <div className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-                <div className="mb-1 text-xs text-foreground">{row.label}</div>
-                <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
-                <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
+        {scopeApplication && (
+          <div>
+            <p className="text-sm font-semibold text-foreground">{verdict}</p>
+            {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
+          </div>
+        )}
+      </div>
+
+      {!scopeApplication ? (
+        <div className="rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
+          Select an application to begin
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
+          <div className="grid grid-cols-[45%_1fr] border-b border-border">
+            <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
+            <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
+          </div>
+
+          {rows.map((row) => (
+            <div key={row.label} className="grid grid-cols-[45%_1fr] border-b border-border">
+              <div className="flex h-11 items-center gap-3 px-4">
+                <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
+                <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
               </div>
-              <div className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-                <div className="text-xs text-muted-foreground">
+              <div className="flex h-11 items-center justify-between gap-3 border-l border-border px-4">
+                <div className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
                   {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
                 </div>
                 <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
                   {row.hasData ? row.status : "No data"}
                 </Badge>
               </div>
-            </React.Fragment>
+            </div>
           ))}
-        </div>
-      </div>
-      <div className="relative hidden px-5 md:block">
-        {showSaved ? (
-          <span className="text-xs text-muted-foreground">Thresholds saved.</span>
-        ) : (
-          <Button
-            disabled={!anyThresholdSet}
-            onClick={() => setShowSaved(true)}
-            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
-          >
-            Save thresholds
-          </Button>
-        )}
-      </div>
 
-      {/* Mobile: stacked requirement box, save, then data box */}
-      <div className="space-y-4 md:hidden" aria-label="Threshold criteria">
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
-          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
-          {rows.map((row, index) => (
-            <div key={`req-${row.label}`} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-              <div className="mb-1 text-xs text-foreground">{row.label}</div>
-              <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
-              <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
-            </div>
-          ))}
-        </section>
-        <div className="px-5">
-          {showSaved ? (
-            <span className="text-xs text-muted-foreground">Thresholds saved.</span>
-          ) : (
-            <Button
-              disabled={!anyThresholdSet}
-              onClick={() => setShowSaved(true)}
-              className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
-            >
-              Save thresholds
-            </Button>
-          )}
+          <div className="flex h-11 items-center justify-end px-4">
+            {showSaved ? (
+              <span className="text-xs text-muted-foreground">Thresholds saved.</span>
+            ) : (
+              <Button
+                disabled={!anyThresholdSet}
+                onClick={() => setShowSaved(true)}
+                className="h-8 bg-foreground text-xs text-background hover:bg-foreground/90"
+              >
+                Save thresholds
+              </Button>
+            )}
+          </div>
         </div>
-        <section className="overflow-hidden rounded-lg border border-border bg-card">
-          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
-          {rows.map((row, index) => (
-            <div key={`data-${row.label}`} className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-              <div>
-                <div className="mb-1 text-[10px] font-semibold text-foreground">{row.label}</div>
-                <div className="text-xs text-muted-foreground">
-                  {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
-                </div>
-              </div>
-              <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
-                {row.hasData ? row.status : "No data"}
-              </Badge>
-            </div>
-          ))}
-        </section>
-      </div>
+      )}
+
 
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
