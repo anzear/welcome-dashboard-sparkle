@@ -40,7 +40,7 @@ const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
 
 /** Column widths — one grid for the whole table, group rows included.
- *  Team ratings and Notes are flexible so the table always fits its card without scrolling. */
+ *  Notes is flexible so the table always fits its card without scrolling. */
 const Columns = () => (
   <colgroup>
     <col style={{ width: "170px" }} />
@@ -48,7 +48,6 @@ const Columns = () => (
     <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
     <col style={{ width: "116px" }} />
-    <col />
     <col />
     <col style={{ width: "88px" }} />
     <col style={{ width: "84px" }} />
@@ -123,7 +122,6 @@ export function CompanyShortlistTables({
             <TableHead className={HEAD_CLS}>Sector</TableHead>
             <TableHead className={HEAD_CLS}>Linked node</TableHead>
             <TableHead className={HEAD_CLS}>Your rating</TableHead>
-            <TableHead className={HEAD_CLS}>Team ratings</TableHead>
             <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS} />
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
