@@ -40,7 +40,7 @@ const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
 
 /** Column widths — one grid for the whole table, group rows included.
- *  Team ratings and Notes are flexible so the table always fits its card without scrolling. */
+ *  Notes is flexible so the table always fits its card without scrolling. */
 const Columns = () => (
   <colgroup>
     <col style={{ width: "170px" }} />
@@ -48,7 +48,6 @@ const Columns = () => (
     <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
     <col style={{ width: "116px" }} />
-    <col />
     <col />
     <col style={{ width: "88px" }} />
     <col style={{ width: "84px" }} />
@@ -123,7 +122,6 @@ export function CompanyShortlistTables({
             <TableHead className={HEAD_CLS}>Sector</TableHead>
             <TableHead className={HEAD_CLS}>Linked node</TableHead>
             <TableHead className={HEAD_CLS}>Your rating</TableHead>
-            <TableHead className={HEAD_CLS}>Team ratings</TableHead>
             <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS} />
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
@@ -139,14 +137,13 @@ export function CompanyShortlistTables({
             return (
               <Fragment key={role}>
                 <TableRow className="border-t border-border hover:bg-transparent">
-                  <TableCell colSpan={10} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <TableCell colSpan={9} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     {heading} · {rows.length}
                   </TableCell>
                 </TableRow>
                 {rows.map((company) => {
                   const rating = ratings[company.id] ?? 0;
                   const teamNoteCount = company.teamNotes.length;
-                  const teamRatings = company.teamRatings ?? [];
                   return (
                     <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
                       <TableCell className="h-11 py-0">
@@ -176,19 +173,6 @@ export function CompanyShortlistTables({
                           name={company.name}
                           onChange={(next) => setRatings((current) => ({ ...current, [company.id]: next }))}
                         />
-                      </TableCell>
-                      <TableCell className="h-11 py-0">
-                        {/* Wrapping only kicks in from three colleagues onward. */}
-                        <div className="flex flex-wrap items-center gap-1">
-                          {teamRatings.map((entry) => (
-                            <span
-                              key={entry.author}
-                              className="whitespace-nowrap rounded-full border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground"
-                            >
-                              {entry.author} · {entry.value}
-                            </span>
-                          ))}
-                        </div>
                       </TableCell>
                       <TableCell className="h-11 py-0">
                         <Input
