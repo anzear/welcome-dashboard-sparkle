@@ -1,4 +1,5 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Star, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,10 +32,11 @@ export type ShortlistCompany = {
   teamNotes: CompanyNote[];
 };
 
-const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
-  { role: "Producer", heading: "Producers" },
-  { role: "Supplier", heading: "Suppliers" },
-  { role: "Offtaker", heading: "Offtakers" },
+/** Same role vocabulary and order as the Market Players toggle. */
+const ROLE_TABS: { value: string; role: ShortlistCompany["role"]; label: string }[] = [
+  { value: "suppliers", role: "Supplier", label: "Feedstock Suppliers" },
+  { value: "producers", role: "Producer", label: "Product Producers" },
+  { value: "offtakers", role: "Offtaker", label: "Off-takers" },
 ];
 
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
@@ -107,11 +109,30 @@ export function CompanyShortlistTables({
   );
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
+  const [activeTab, setActiveTab] = useState(ROLE_TABS[0].value);
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
+  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
+  const visibleRows = companies.filter((company) => company.role === activeRole);
 
   return (
     <>
+      <div className="mb-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="inline-flex h-8 w-auto items-center gap-0 rounded-lg bg-muted p-0.5">
+            {ROLE_TABS.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex h-7 items-center justify-center gap-1 rounded-md px-3 text-[10px] font-medium transition-all data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm"
+              >
+                {tab.label} ({companies.filter((company) => company.role === tab.role).length})
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       <div className="overflow-hidden">
       <Table className="table-fixed">
         <Columns />
@@ -129,19 +150,14 @@ export function CompanyShortlistTables({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {ROLE_SECTIONS.map(({ role, heading }) => {
-            const rows = companies.filter((company) => company.role === role);
-            // A role with no companies is omitted entirely — never an empty group or a count of 0.
-            if (rows.length === 0) return null;
-
-            return (
-              <Fragment key={role}>
-                <TableRow className="border-t border-border hover:bg-transparent">
-                  <TableCell colSpan={9} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    {heading} · {rows.length}
-                  </TableCell>
-                </TableRow>
-                {rows.map((company) => {
+          {visibleRows.length === 0 && (
+            <TableRow className="hover:bg-transparent">
+              <TableCell colSpan={9} className="h-11 py-0 text-[10px] text-muted-foreground">
+                No companies shortlisted in this group yet.
+              </TableCell>
+            </TableRow>
+          )}
+          {visibleRows.map((company) => {
                   const rating = ratings[company.id] ?? 0;
                   const teamNoteCount = company.teamNotes.length;
                   return (
@@ -213,9 +229,6 @@ export function CompanyShortlistTables({
                     </TableRow>
                   );
                 })}
-              </Fragment>
-            );
-          })}
         </TableBody>
       </Table>
       </div>
