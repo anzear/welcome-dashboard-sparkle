@@ -611,19 +611,11 @@ const ResearchSpace: React.FC = () => {
 
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
-  const verdict =
-    notMetCount > 0
-      ? "Does not meet your requirements"
-      : notSetCount > 0
-        ? "Incomplete — set remaining thresholds"
-        : "Meets your requirements";
-
   return (
     <div className="mt-5 space-y-6">
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
-      {(
-        <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
+      <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
           <div className="grid grid-cols-[45%_1fr] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
             <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
@@ -658,11 +650,8 @@ const ResearchSpace: React.FC = () => {
                 Save thresholds
               </Button>
             )}
-          </div>
         </div>
-      )}
-
-
+      </div>
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
