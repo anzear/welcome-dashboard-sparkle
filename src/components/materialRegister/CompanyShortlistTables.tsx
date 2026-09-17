@@ -108,11 +108,30 @@ export function CompanyShortlistTables({
   );
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
+  const [activeTab, setActiveTab] = useState(ROLE_TABS[0].value);
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
+  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
+  const visibleRows = companies.filter((company) => company.role === activeRole);
 
   return (
     <>
+      <div className="mb-2">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="inline-flex h-8 w-auto items-center gap-0 rounded-lg bg-muted p-0.5">
+            {ROLE_TABS.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex h-7 items-center justify-center gap-1 rounded-md px-3 text-[10px] font-medium transition-all data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-sm"
+              >
+                {tab.label} ({companies.filter((company) => company.role === tab.role).length})
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       <div className="overflow-hidden">
       <Table className="table-fixed">
         <Columns />
