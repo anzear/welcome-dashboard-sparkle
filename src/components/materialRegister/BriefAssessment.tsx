@@ -311,6 +311,8 @@ const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
         <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
       </div>
 
+      <FiguresStrip m={material} />
+
       <div className="space-y-4">
         <div className="space-y-2">
           <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Technical fit</h3>
