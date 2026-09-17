@@ -65,7 +65,9 @@ const INITIAL_THRESHOLDS: Thresholds = {
   volumeUnit: "tonnes/year",
 };
 
-type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
+type EvaluationStatus = "Met" | "Not met" | "Not set";
+
+type EvidenceRecord = { name: string; source: string };
 
 
 type ShortlistItem = { id: string; name: string; detail: string };
@@ -169,10 +171,47 @@ const PAPER_ITEMS: ShortlistItem[] = [
 
 
 const statusClasses: Record<EvaluationStatus, string> = {
-  Match: "border-success/30 bg-success/10 text-success",
-  "No match": "border-destructive/30 bg-destructive/10 text-destructive",
-  "No data": "border-border bg-muted text-muted-foreground",
-  "Not set": "border-warning/30 bg-warning/10 text-warning",
+  Met: "border-success/30 bg-success/10 text-success",
+  "Not met": "border-destructive/30 bg-destructive/10 text-destructive",
+  "Not set": "border-border bg-muted text-muted-foreground",
+};
+
+// ---- Mock evidence held by the platform ----
+const PATHWAY_TRL = 6;
+
+const PRODUCER_RECORDS: (EvidenceRecord & { country: string; regions: string[]; capacity: number })[] = [
+  { name: "Corbion", country: "Netherlands", regions: ["Europe", "European Union"], capacity: 4500, source: "corbion.com" },
+  { name: "NatureWorks", country: "United States", regions: ["North America", "United States"], capacity: 3500, source: "natureworksllc.com" },
+  { name: "Purac Americas", country: "United States", regions: ["North America", "United States"], capacity: 2500, source: "purac.com" },
+  { name: "Cargill Bioindustrial", country: "United States", regions: ["North America", "United States"], capacity: 1500, source: "cargill.com" },
+];
+
+const FEEDSTOCK_SUPPLIER_RECORDS: (EvidenceRecord & { regions: string[] })[] = [
+  { name: "Arla Foods Ingredients", regions: ["Europe", "European Union"], source: "arlafoodsingredients.com" },
+  { name: "Südzucker", regions: ["Europe", "European Union"], source: "suedzucker.de" },
+];
+
+const PRICE_RECORDS: EvidenceRecord[] = [
+  { name: "Spot quotation EUR 1,420/t — Q1 2026", source: "ICIS bio-acids report" },
+  { name: "Contract quotation EUR 1,480/t — Q1 2026", source: "Producer disclosure, Corbion" },
+];
+
+const INDICATIVE_PRICE_EUR = 1450;
+
+const CURRENCY_TO_EUR: Record<string, number> = { EUR: 1, USD: 0.92, GBP: 1.17 };
+
+const VOLUME_TO_TONNES: Record<string, number> = { "tonnes/year": 1, "kg/year": 0.001, "kt/year": 1000 };
+
+const IDENTIFIED_CAPACITY_TONNES = PRODUCER_RECORDS.reduce((total, record) => total + record.capacity, 0);
+
+const num = (value: number) => value.toLocaleString("en-US");
+
+const listGeographies = (values: string[]) =>
+  values.length <= 1 ? values[0] : `${values.slice(0, -1).join(", ")} and ${values[values.length - 1]}`;
+
+const volumeUnitLabel = (value: number, unit: string) => {
+  if (value !== 1) return unit;
+  return unit.replace("tonnes/year", "tonne/year").replace("kg/year", "kg/year").replace("kt/year", "kt/year");
 };
 
 const MultiSelectChips = ({
