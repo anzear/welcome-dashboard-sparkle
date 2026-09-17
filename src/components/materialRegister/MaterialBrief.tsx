@@ -1194,6 +1194,7 @@ export const MaterialBrief: React.FC<{
           <MaterialHistory materialId={m.material_id} />
         </Section>
       </div>
+      </>)}
 
     </div>
   );
