@@ -615,16 +615,16 @@ const ResearchSpace: React.FC = () => {
     <div className="mt-5 space-y-6">
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
-      <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-          <div className="grid grid-cols-[45%_1fr] border-b border-border">
+      <div className="max-w-[900px] overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
+          <div className="grid grid-cols-[40%_1fr] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
             <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">VCG.AI signal</div>
           </div>
 
           {rows.map((row) => (
-            <div key={row.label} className="grid grid-cols-[45%_1fr] border-b border-border">
+            <div key={row.label} className="grid grid-cols-[40%_1fr] border-b border-border">
               <div className="flex h-11 items-center gap-3 px-4">
-                <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
+                <span className="w-[130px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
                 <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
               </div>
               <div className="flex h-11 items-center justify-between gap-3 border-l border-border px-4">
