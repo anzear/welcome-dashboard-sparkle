@@ -381,9 +381,14 @@ const ResearchSpace: React.FC = () => {
   const [showSaved, setShowSaved] = useState(false);
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
+  const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
 
   const removePathway = (id: string) =>
     setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+
+  const removeCompany = (id: string) =>
+    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
+
 
   const addPathwayNote = (id: string, text: string) =>
     setPathwayNotes((current) => ({
