@@ -228,9 +228,6 @@ export function CompanyShortlistTables({
                     </TableRow>
                   );
                 })}
-              </Fragment>
-            );
-          })}
         </TableBody>
       </Table>
       </div>
