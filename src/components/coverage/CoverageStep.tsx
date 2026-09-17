@@ -1,7 +1,7 @@
 /**
  * THE SHARED COVERAGE STEP — one definition of what a coverage request asks.
  *
- * Wherever coverage is requested (the material profile, the dashboard's Add
+ * Wherever coverage is requested (the material brief, the dashboard's Add
  * Material modal, Available now), the same two questions are asked: Run as,
  * required, and an optional question the coverage should answer. Both places
  * import this rather than keeping their own version.
