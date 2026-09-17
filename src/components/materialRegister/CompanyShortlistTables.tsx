@@ -43,16 +43,16 @@ const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking
  *  Team ratings and Notes are flexible so the table always fits its card without scrolling. */
 const Columns = () => (
   <colgroup>
-    <col style={{ width: "180px" }} />
-    <col style={{ width: "90px" }} />
+    <col style={{ width: "170px" }} />
+    <col style={{ width: "84px" }} />
+    <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
-    <col style={{ width: "130px" }} />
-    <col style={{ width: "105px" }} />
+    <col style={{ width: "116px" }} />
     <col />
     <col />
-    <col style={{ width: "80px" }} />
-    <col style={{ width: "90px" }} />
-    <col style={{ width: "36px" }} />
+    <col style={{ width: "88px" }} />
+    <col style={{ width: "84px" }} />
+    <col style={{ width: "40px" }} />
   </colgroup>
 );
 
@@ -198,7 +198,7 @@ export function CompanyShortlistTables({
                           }
                           placeholder="Add your note…"
                           aria-label={`Your note on ${company.name}`}
-                          className="h-8 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
+                          className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
                         />
                       </TableCell>
                       <TableCell className="h-11 py-0">
