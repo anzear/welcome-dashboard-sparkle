@@ -232,6 +232,13 @@ export interface Material {
   ghg_contribution: number | null;
   ghg_boundary: string | null;
   ghg_data_basis: string | null;
+  /** Optional company-supplied technical-fit document. Demo stores metadata only. */
+  performance_targets_document?: {
+    filename: string;
+    size: string;
+  } | null;
+  /** Selected regulatory regimes; an empty array means none recorded. */
+  regulatory_registrations?: string[];
   /** VCG signals. Computed by us, never entered by the client. */
   substitutability_readiness: SubstitutabilityReadiness;
   supplier_availability: SupplierAvailability;
@@ -314,6 +321,8 @@ export const FIELD_PROVENANCE_CLASS: Record<string, ProvenanceClass> = {
   ghg_emission_factor: "company_entered",
   ghg_boundary: "company_entered",
   ghg_data_basis: "company_entered",
+  performance_targets_document: "company_entered",
+  regulatory_registrations: "company_entered",
   ghg_contribution: "vcg_computed",
   substitutability_readiness: "vcg_computed",
   supplier_availability: "vcg_computed",
