@@ -213,9 +213,26 @@ const SHORTLIST_PATENTS: ShortlistPatent[] = [
 ];
 
 
-const PAPER_ITEMS: ShortlistItem[] = [
-  { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
-  { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+const SHORTLIST_PAPERS: ShortlistPaper[] = [
+  {
+    id: "paper-1",
+    title: "Commercial-scale lactic acid fermentation: process yield and cost assessment across renewable feedstocks",
+    date: "1 Sept 2026",
+    authors: ["E. Shahsavari", "A. Mohammadi", "R. Ghazi Tabatabaei"],
+    savedBy: "K. Brandt",
+    teamNotes: [
+      { id: "ppn-1", author: "K. Brandt", timestamp: "12 Sept 2026", text: "Yield data at pilot scale matches our pathway assumptions." },
+      { id: "ppn-2", author: "M. Rossi", timestamp: "14 Sept 2026", text: "Cost model excludes downstream purification — verify before citing." },
+    ],
+  },
+  {
+    id: "paper-2",
+    title: "European lactic acid supply outlook: producer capacity, geography and market availability review",
+    date: "20 May 2026",
+    authors: ["J. Verhoeven", "L. Marchetti"],
+    savedBy: "A. Weber",
+    teamNotes: [],
+  },
 ];
 
 
@@ -407,13 +424,7 @@ const ResearchSpace: React.FC = () => {
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
   const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
-
-  const removePathway = (id: string) =>
-    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
-
-  const removeCompany = (id: string) =>
-    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
-
+  const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
   const removePatent = (id: string) =>
     setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
 
