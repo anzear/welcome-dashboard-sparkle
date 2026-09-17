@@ -306,11 +306,7 @@ export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material 
   };
 
   return (
-    <section className="rounded-xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
-      <div className="border-b border-border/70 pb-1.5">
-        <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
-      </div>
-
+    <div className="space-y-3">
       <FiguresStrip m={material} />
 
       <div className="space-y-4">
