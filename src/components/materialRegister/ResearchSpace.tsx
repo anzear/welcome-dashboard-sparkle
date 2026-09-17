@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -333,21 +333,18 @@ const MultiSelectChips = ({
 
 
 
-const ShortlistCard = ({ label, count, children, defaultOpen = false, headerAction }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean; headerAction?: React.ReactNode }) => (
-  <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
-    <AccordionItem value={label} className="border-b-0">
-      <div className="flex items-center pr-4">
-        <AccordionTrigger className="flex-1 px-4 py-3 pr-2 text-xs hover:no-underline">
-          <span className="flex items-center gap-2">
-            <span className="font-semibold text-foreground">{label}</span>
-            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
-          </span>
-        </AccordionTrigger>
-        {headerAction}
-      </div>
-      <AccordionContent className="border-t border-border pb-0">{children}</AccordionContent>
-    </AccordionItem>
-  </Accordion>
+/** Always expanded — shortlist sections never collapse. */
+const ShortlistCard = ({ label, count, children, headerAction }: { label: string; count: number; children: React.ReactNode; headerAction?: React.ReactNode }) => (
+  <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="flex items-center justify-between px-4 py-3 pr-4">
+      <span className="flex items-center gap-2 text-xs">
+        <span className="font-semibold text-foreground">{label}</span>
+        <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+      </span>
+      {headerAction}
+    </div>
+    <div className="border-t border-border">{children}</div>
+  </div>
 );
 
 
@@ -674,7 +671,6 @@ const ResearchSpace: React.FC = () => {
         <ShortlistCard
           label="Pathways"
           count={shortlistPathways.length}
-          defaultOpen
           headerAction={
             hasGroupableClusters(shortlistPathways) ? (
               <Button
