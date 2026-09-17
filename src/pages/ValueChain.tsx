@@ -254,7 +254,7 @@ const MaterialBriefHero: React.FC<{
         >
             <span className="flex items-center gap-2">
             <Target className="w-3.5 h-3.5 text-foreground" />
-            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Material Brief</span>
+            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Research Space</span>
           </span>
           <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
         </button>
