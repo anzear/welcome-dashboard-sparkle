@@ -231,6 +231,11 @@ const MaterialBriefHero: React.FC<{
             </div>
           </div>
         )}
+        {isLacticAcid && (
+          <div className="mt-4 -mx-5 -mb-5">
+            <MaterialStatusOverview materialName={decodedTopic || ''} />
+          </div>
+        )}
         <ProductBriefDialog
           isOpen={showProductBrief}
           onClose={() => setShowProductBrief(false)}
