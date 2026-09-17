@@ -48,11 +48,30 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
   // viewed material has no row yet, add a blank one so the strip stays live.
   useEffect(() => {
     if (!materialName.trim() || material) return;
-    addMaterials([{ ...blankMaterial(null, "existing"), name: materialName.trim() }], {
-      batchOrigin: "real_transition",
-      source: CURRENT_USER,
-    });
+    addMaterials(
+      [
+        {
+          ...blankMaterial(null, "existing"),
+          name: materialName.trim(),
+          // Prototype seed so the strip shows realistic values instead of blanks.
+          journey_status: "in_evaluation" as JourneyStatus,
+          owner: "S. Rautio",
+          priority_period: "H2 2026",
+          annual_volume: 1850,
+          unit_price: 1.68,
+          annual_spend: 1850 * 1.68,
+          ghg_emission_factor: 2.2,
+          ghg_contribution: 1850 * 2.2,
+          application_categories: ["Bakery preservative", "Beverages", "Personal care"],
+        },
+      ],
+      {
+        batchOrigin: "real_transition",
+        source: CURRENT_USER,
+      },
+    );
   }, [material, materialName, addMaterials]);
+
 
   const owners = useMemo(
     () => Array.from(new Set(allMaterials.map((m) => m.owner).filter(Boolean) as string[])).sort(),
