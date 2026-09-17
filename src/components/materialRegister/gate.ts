@@ -48,7 +48,7 @@ export const gateFlags = (m: Material): GateFlag[] => {
       tone: "warn",
     });
   }
-  if (holdReviewOverdue(m)) flags.push({ id: "hold_review", label: "Hold review overdue", tone: "warn" });
+  if (holdReviewOverdue(m)) flags.push({ id: "hold_review", label: "Park review overdue", tone: "warn" });
   if (allConditionsMet(m))
     flags.push({
       id: "conditions_complete",

@@ -978,7 +978,7 @@ export const MaterialBrief: React.FC<{
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
                 <span
                   className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
-                  title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
+                  title={hasOverdueCondition(m) ? "Condition overdue" : "Park review overdue"}
                 >
                   {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
                 </span>

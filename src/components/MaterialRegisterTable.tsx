@@ -532,7 +532,7 @@ export const MaterialRegisterTable: React.FC = () => {
                   title={
                     hasOverdueCondition(m)
                       ? `${overdueConditions(m).length} condition(s) overdue`
-                      : "Hold review overdue"
+                      : "Park review overdue"
                   }
                 >
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />

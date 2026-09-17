@@ -400,7 +400,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               {overdue.length} condition{overdue.length === 1 ? "" : "s"} overdue
             </Flag>
           )}
-          {reviewLate && <Flag>Hold review overdue</Flag>}
+          {reviewLate && <Flag>Park review overdue</Flag>}
           {m.reopened && (
             <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
               Reopened
