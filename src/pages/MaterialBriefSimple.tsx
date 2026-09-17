@@ -45,40 +45,51 @@ const Inner: React.FC = () => {
     { id: "research", label: "Material evaluation profile" },
   ];
 
+  const toggle = (
+    <div className="flex items-center justify-between gap-4">
+      <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setView(t.id)}
+            className={`rounded px-3 py-1.5 text-[10px] uppercase tracking-widest transition-colors ${
+              view === t.id
+                ? "bg-foreground text-background shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      <ViewingAsSwitcher />
+    </div>
+  );
+
   return (
     <div className="portfolio-type h-full w-full overflow-y-auto">
       <div className="mx-auto w-full max-w-[1400px] px-6 py-4">
-        <div className="mb-3 flex items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-1 rounded-md bg-muted p-1">
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setView(t.id)}
-                className={`rounded px-3 py-1.5 text-[10px] uppercase tracking-widest transition-colors ${
-                  view === t.id
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <ViewingAsSwitcher />
-        </div>
-        {view === "brief" ? (
-          openId ? <MaterialBrief onBack={() => navigate(-1)} /> : null
-        ) : (
-          <div className="rounded-lg border bg-card px-6 py-16 text-center">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Material Evaluation Profile
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              {name ? `Material Evaluation Profile for ${name} is coming soon.` : "Coming soon."}
-            </p>
-          </div>
-        )}
+        {openId ? (
+          <MaterialBrief
+            onBack={() => navigate(-1)}
+            tabsSlot={toggle}
+            bodyReplacement={
+              view === "research" ? (
+                <div className="mt-4 rounded-lg border bg-card px-6 py-16 text-center">
+                  <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    Material Evaluation Profile
+                  </div>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {name
+                      ? `Material Evaluation Profile for ${name} is coming soon.`
+                      : "Coming soon."}
+                  </p>
+                </div>
+              ) : undefined
+            }
+          />
+        ) : null}
       </div>
     </div>
   );
