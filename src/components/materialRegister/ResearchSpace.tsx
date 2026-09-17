@@ -365,6 +365,7 @@ const ResearchSpace: React.FC = () => {
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   /** Grouped-by-applications is an opt-in view, toggled from the card header. Flat is the default. */
   const [pathwaysGrouped, setPathwaysGrouped] = useState(false);
