@@ -47,12 +47,12 @@ const Columns = () => (
     <col style={{ width: "84px" }} />
     <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
-    <col style={{ width: "100px" }} />
+    <col style={{ width: "116px" }} />
     <col />
     <col />
-    <col style={{ width: "76px" }} />
+    <col style={{ width: "88px" }} />
     <col style={{ width: "84px" }} />
-    <col style={{ width: "32px" }} />
+    <col style={{ width: "40px" }} />
   </colgroup>
 );
 
