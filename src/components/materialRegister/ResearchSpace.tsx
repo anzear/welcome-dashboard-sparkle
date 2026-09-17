@@ -415,8 +415,10 @@ const ResearchSpace: React.FC = () => {
     hasData: boolean;
   };
 
+  const scopeApplication = thresholds.applications[0] ?? "";
+
   const rows: Row[] = (() => {
-    const appCount = thresholds.applications.length;
+
 
     const trlFrom = Number(thresholds.trlFrom);
     const trlTo = Number(thresholds.trlTo);
