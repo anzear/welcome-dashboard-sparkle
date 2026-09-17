@@ -309,76 +309,82 @@ const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
   };
 
   return (
-    <div className="space-y-4 border-t border-border/60 bg-background/60 px-3 py-4">
-      <section className="space-y-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Technical fit</h3>
-        <div className="rounded-md border border-border/70 bg-background p-3">
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Performance targets</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                const bytes = file.size;
-                const size = bytes >= 1_000_000
-                  ? `${(bytes / 1_048_576).toFixed(1)} MB`
-                  : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-                setDocument({ filename: file.name, size });
-                event.target.value = "";
-              }}
-            />
-            <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[10px]" onClick={() => fileInputRef.current?.click()}>
-              <Upload className="h-3.5 w-3.5" />
-              Upload
-            </Button>
-          </div>
-          {document ? (
-            <div className="mt-2 flex items-center gap-2 text-[11px]">
-              <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="min-w-0 flex-1 truncate text-foreground" title={document.filename}>{document.filename}</span>
-              <span className="tabular-nums text-[10px] text-muted-foreground">{document.size}</span>
-              <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Remove performance targets document" onClick={() => setDocument(null)}>
-                <X className="h-3 w-3" />
+    <section className="rounded-xl border border-border/70 bg-card p-4 shadow-sm space-y-3">
+      <div className="border-b border-border/70 pb-1.5">
+        <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
+      </div>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Technical fit</h3>
+          <div className="rounded-md border border-border/70 bg-background p-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Performance targets</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (!file) return;
+                  const bytes = file.size;
+                  const size = bytes >= 1_000_000
+                    ? `${(bytes / 1_048_576).toFixed(1)} MB`
+                    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+                  setDocument({ filename: file.name, size });
+                  event.target.value = "";
+                }}
+              />
+              <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 px-2 text-[10px]" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="h-3.5 w-3.5" />
+                Upload
               </Button>
             </div>
-          ) : (
-            <p className="mt-1 text-[11px] text-muted-foreground">No document attached.</p>
-          )}
-        </div>
-      </section>
-
-      <section className="space-y-2">
-        <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Regulatory</h3>
-        <div className="rounded-md border border-border/70 bg-background p-3">
-          <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Registration needed</div>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {REGISTRATION_OPTIONS.map((option) => {
-              const selected = registrations.includes(option);
-              return (
-                <Button
-                  key={option}
-                  type="button"
-                  variant={selected ? "secondary" : "outline"}
-                  size="sm"
-                  aria-pressed={selected}
-                  onClick={() => toggleRegistration(option)}
-                  className={cn("h-6 rounded-full px-2.5 text-[10px] font-normal", selected && "border border-foreground/20")}
-                >
-                  {option}
+            {document ? (
+              <div className="mt-2 flex items-center gap-2 text-[11px]">
+                <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="min-w-0 flex-1 truncate text-foreground" title={document.filename}>{document.filename}</span>
+                <span className="tabular-nums text-[10px] text-muted-foreground">{document.size}</span>
+                <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label="Remove performance targets document" onClick={() => setDocument(null)}>
+                  <X className="h-3 w-3" />
                 </Button>
-              );
-            })}
+              </div>
+            ) : (
+              <p className="mt-1 text-[11px] text-muted-foreground">No document attached.</p>
+            )}
           </div>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            {registrations.length > 0 ? `${registrations.length} selected.` : "No registration selected."}
-          </p>
         </div>
-      </section>
-    </div>
+
+        <div className="space-y-2">
+          <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Regulatory</h3>
+          <div className="rounded-md border border-border/70 bg-background p-3">
+            <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Registration needed</div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {REGISTRATION_OPTIONS.map((option) => {
+                const selected = registrations.includes(option);
+                return (
+                  <Button
+                    key={option}
+                    type="button"
+                    variant={selected ? "secondary" : "outline"}
+                    size="sm"
+                    aria-pressed={selected}
+                    onClick={() => toggleRegistration(option)}
+                    className={cn("h-6 rounded-full px-2.5 text-[10px] font-normal", selected && "border border-foreground/20")}
+                  >
+                    {option}
+                  </Button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              {registrations.length > 0 ? `${registrations.length} selected.` : "No registration selected."}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 };
 
