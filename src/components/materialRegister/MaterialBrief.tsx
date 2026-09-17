@@ -1109,7 +1109,14 @@ export const MaterialBrief: React.FC<{
           </Section>
 
           <Section
-            title="Assessment"
+            title="Company data"
+            note="Spend, technical fit, and regulatory requirements."
+          >
+            <CompanyDataDetails material={m} />
+          </Section>
+
+          <Section
+            title="Drivers"
             note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
           >
             <BriefAssessment material={m} />
