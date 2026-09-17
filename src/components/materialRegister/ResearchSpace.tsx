@@ -63,14 +63,14 @@ type Thresholds = {
 
 const INITIAL_THRESHOLDS: Thresholds = {
   applications: [],
-  trlFrom: "",
-  trlTo: "",
-  materialGeographies: [],
-  feedstockGeographies: [],
-  priceCeiling: "",
+  trlFrom: "4",
+  trlTo: "7",
+  materialGeographies: ["Europe", "North America"],
+  feedstockGeographies: ["Europe"],
+  priceCeiling: "2200",
   currency: "EUR",
-  minimumProducers: "",
-  requiredVolume: "",
+  minimumProducers: "3",
+  requiredVolume: "15000",
   volumeUnit: "tonnes/year",
 };
 
