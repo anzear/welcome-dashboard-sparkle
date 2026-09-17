@@ -338,6 +338,7 @@ const ShortlistCard = ({ label, count, children, headerAction }: { label: string
   <div className="overflow-hidden rounded-lg border border-border bg-card">
     <div className="flex items-center justify-between px-4 py-3 pr-4">
       <span className="flex items-center gap-2 text-xs">
+        <Bookmark className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
         <span className="font-semibold text-foreground">{label}</span>
         <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
       </span>
