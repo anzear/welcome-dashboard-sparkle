@@ -256,6 +256,57 @@ const ResearchSpace: React.FC = () => {
     setThresholds((current) => ({ ...current, [key]: value }));
   };
 
+  const evaluationRows = useMemo<{ label: string; status: EvaluationStatus; explanation: string }[]>(() => {
+    if (!saved) {
+      return [
+        { label: "Applications", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Production scale (TRL)", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Material supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Feedstock supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Price ceiling per tonne", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Minimum number of producers", status: "Not set", explanation: "Set threshold to evaluate." },
+        { label: "Required volume", status: "Not set", explanation: "Set threshold to evaluate." },
+      ];
+    }
+    return [
+      {
+        label: "Applications",
+        status: thresholds.applications.length > 0 ? "Match" : "Not set",
+        explanation: thresholds.applications.length > 0 ? `${thresholds.applications.join(", ")} selected for evaluation.` : "Set threshold to evaluate.",
+      },
+      {
+        label: "Production scale (TRL)",
+        status: thresholds.trlFrom && thresholds.trlTo ? "Match" : "Not set",
+        explanation: thresholds.trlFrom && thresholds.trlTo ? `Evaluating pathways between TRL ${thresholds.trlFrom} and TRL ${thresholds.trlTo}.` : "Set threshold to evaluate.",
+      },
+      {
+        label: "Material supply geography",
+        status: thresholds.materialGeographies.length > 0 ? "Match" : "Not set",
+        explanation: thresholds.materialGeographies.length > 0 ? `Producers found in ${thresholds.materialGeographies.slice(0, 2).join(" and ")}.` : "Set threshold to evaluate.",
+      },
+      {
+        label: "Feedstock supply geography",
+        status: thresholds.feedstockGeographies.length > 0 ? "No match" : "Not set",
+        explanation: thresholds.feedstockGeographies.length > 0 ? "No verified feedstock supplier was found in the selected region." : "Set threshold to evaluate.",
+      },
+      {
+        label: "Price ceiling per tonne",
+        status: thresholds.priceCeiling ? "No data" : "Not set",
+        explanation: thresholds.priceCeiling ? "No price data is available for this material." : "Set threshold to evaluate.",
+      },
+      {
+        label: "Minimum number of producers",
+        status: thresholds.minimumProducers > 0 ? "Match" : "Not set",
+        explanation: thresholds.minimumProducers > 0 ? `${thresholds.minimumProducers} producers required; four are identified.` : "Set threshold to evaluate.",
+      },
+      {
+        label: "Required volume",
+        status: thresholds.requiredVolume ? "Match" : "Not set",
+        explanation: thresholds.requiredVolume ? `Minimum required volume set to ${thresholds.requiredVolume} ${thresholds.volumeUnit}.` : "Set threshold to evaluate.",
+      },
+    ];
+  }, [saved, thresholds]);
+
   return (
     <div className="mt-5 space-y-5">
       <section className="rounded-lg border border-border bg-card">
