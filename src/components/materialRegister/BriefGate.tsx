@@ -19,6 +19,7 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   GATE_OUTCOME_LABEL,
+  GATE_OUTCOMES,
   JOURNEY_STATUS_LABEL,
   type GateCondition,
   type GateOutcome,
@@ -408,7 +409,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
         </div>
       )}
 
-      {/* The status is the headline. Five categories, one row, no order implied. */}
+      {/* The status is the headline. Seven stages, one row, in workflow order. */}
       <div className="space-y-1.5">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
@@ -451,10 +452,10 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
       {/* Detail belongs to a status, not to a section of its own. */}
       {pending !== null ? pendingDetail : activeDetail}
 
-      {/* A no-go that was reopened keeps its argument in plain sight. */}
+      {/* A parked decision that was reopened keeps its argument in plain sight. */}
       {m.previous_no_go && (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          <span className="font-medium text-foreground">Previously no-go:</span> {m.previous_no_go.reason}{" "}
+          <span className="font-medium text-foreground">Previously parked:</span> {m.previous_no_go.reason}{" "}
           <Stamp by={m.previous_no_go.author} date={m.previous_no_go.date} />
         </p>
       )}
@@ -468,7 +469,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               <SelectValue placeholder="What should happen?" />
             </SelectTrigger>
             <SelectContent className="portfolio-type">
-              {(["go", "go_with_conditions", "hold", "no_go"] as GateOutcome[]).map((o) => (
+              {GATE_OUTCOMES.map((o) => (
                 <SelectItem key={o} value={o} className="text-xs">
                   {GATE_OUTCOME_LABEL[o]}
                 </SelectItem>
