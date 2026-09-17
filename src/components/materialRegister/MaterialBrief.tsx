@@ -608,7 +608,7 @@ export const MaterialBrief: React.FC<{
           <div className="min-w-0 leading-tight">
             {!stuck && (
               <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Material profile
+                Material evaluation profile
               </div>
             )}
 
