@@ -459,22 +459,23 @@ const ResearchSpace: React.FC = () => {
       {
         label: "Applications",
         status: appCount > 0 ? "Met" : "Not set",
-        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : "Select an application to evaluate.",
+        helperText: "Select an application to evaluate.",
+        finding: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
+        hasData: true,
       },
       {
         label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
-        line: trlSet
-          ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
-          : "Set a TRL range to evaluate.",
+        helperText: "Set a TRL range to evaluate.",
+        finding: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : null,
+        hasData: true,
       },
       {
         label: "Product geography",
         status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
-        line:
-          thresholds.materialGeographies.length === 0 ? (
-            "Select a geography to evaluate."
-          ) : productMatches.length > 0 ? (
+        helperText: "Select a geography to evaluate.",
+        finding:
+          productMatches.length > 0 ? (
             <>
               <EvidenceLink
                 label={`${productMatches.length} producer${productMatches.length === 1 ? "" : "s"}`}
@@ -486,14 +487,14 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`
           ),
+        hasData: true,
       },
       {
         label: "Feedstock geography",
         status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
-        line:
-          thresholds.feedstockGeographies.length === 0 ? (
-            "Select a geography to evaluate."
-          ) : feedstockMatches.length > 0 ? (
+        helperText: "Select a geography to evaluate.",
+        finding:
+          feedstockMatches.length > 0 ? (
             <>
               <EvidenceLink
                 label={`${feedstockMatches.length} verified feedstock supplier${feedstockMatches.length === 1 ? "" : "s"}`}
@@ -505,11 +506,13 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`
           ),
+        hasData: true,
       },
       {
         label: "Price ceiling",
         status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
-        line: priceSet ? (
+        helperText: "Set a ceiling to evaluate.",
+        finding: (
           <>
             <EvidenceLink
               label={`Indicative price EUR ${num(INDICATIVE_PRICE_EUR)}/t`}
@@ -518,14 +521,14 @@ const ResearchSpace: React.FC = () => {
             />
             {` — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`}
           </>
-        ) : (
-          "Set a ceiling to evaluate."
         ),
+        hasData: true,
       },
       {
         label: "Producers",
         status: producersSet ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
-        line: producersSet ? (
+        helperText: "Set a minimum to evaluate.",
+        finding: (
           <>
             <EvidenceLink
               label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
@@ -534,16 +537,15 @@ const ResearchSpace: React.FC = () => {
             />
             {` identified — ${requiredProducers} required.`}
           </>
-        ) : (
-          "Set a minimum to evaluate."
         ),
+        hasData: true,
       },
       {
         label: "Volume",
         status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
-        line: volumeSet
-          ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
-          : "Set a volume to evaluate.",
+        helperText: "Set a volume to evaluate.",
+        finding: `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`,
+        hasData: true,
       },
     ];
   })();
