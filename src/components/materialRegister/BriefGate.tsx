@@ -124,25 +124,21 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
 
   const startPending = (o: GateOutcome) => {
     setPending(o);
-    setConditions(o === "go_with_conditions" ? [emptyCondition(0)] : []);
-    setHoldTrigger(o === "hold" ? (m.hold_trigger_event ?? "") : "");
-    setHoldReview(o === "hold" ? (m.hold_review_date ?? "") : "");
-    setNoGoReason("");
+    setConditions(o === "in_testing" ? (m.gate_conditions.length > 0 ? m.gate_conditions : [emptyCondition(0)]) : []);
+    setHoldTrigger(o === "parked" ? (m.hold_trigger_event ?? "") : "");
+    setHoldReview(o === "parked" ? (m.hold_review_date ?? "") : "");
+    setNoGoReason(o === "parked" ? (m.no_go_reason ?? "") : "");
   };
 
-  /** A click on a segment. Detail-carrying statuses draft first, then commit. */
+  /** A click on a segment. Detail-carrying stages draft first, then commit. */
   const pickStatus = (s: JourneyStatus) => {
     if (!writable || s === m.journey_status) return;
     setPending(null);
-    if (s === "under_evaluation") {
-      reopenGate(m.material_id, null);
+    if (DETAIL_STAGES.includes(s)) {
+      startPending(s as GateOutcome);
       return;
     }
-    if (s === "go") {
-      setGateOutcome(m.material_id, "go", {});
-      return;
-    }
-    startPending(s);
+    setGateOutcome(m.material_id, s, {});
   };
 
   const commitPending = () => {
@@ -219,10 +215,17 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   /** What the drafted status must carry, inline under the control. */
   const pendingDetail = pending && (
     <div className="space-y-2">
-      {pending === "go_with_conditions" && <ConditionEditor rows={conditions} setRows={setConditions} />}
+      {pending === "in_testing" && <ConditionEditor rows={conditions} setRows={setConditions} />}
 
-      {pending === "hold" && (
+      {pending === "parked" && (
         <div className="space-y-1.5">
+          <Textarea
+            value={noGoReason}
+            onChange={(e) => setNoGoReason(e.target.value)}
+            rows={2}
+            placeholder="Why this is parked. Specific enough that nobody re-litigates it in six months."
+            className="text-[11px]"
+          />
           <Input
             value={holdTrigger}
             onChange={(e) => setHoldTrigger(e.target.value)}
@@ -236,16 +239,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             className="h-7 w-40 tabular-nums text-[11px]"
           />
         </div>
-      )}
-
-      {pending === "no_go" && (
-        <Textarea
-          value={noGoReason}
-          onChange={(e) => setNoGoReason(e.target.value)}
-          rows={2}
-          placeholder="Why not. Specific enough that nobody re-litigates it in six months."
-          className="text-[11px]"
-        />
       )}
 
       <div className="flex flex-wrap items-center gap-2">
