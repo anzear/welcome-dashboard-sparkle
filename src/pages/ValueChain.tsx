@@ -215,6 +215,14 @@ const MaterialBriefHero: React.FC<{
             </div>
           </div>
         ) : (
+          <></>
+        )}
+        {isLacticAcid && (
+          <div className="mt-4 -mx-5 -mb-5">
+            <MaterialStatusOverview materialName={decodedTopic || ''} />
+          </div>
+        )}
+        {false && (
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5 mb-2.5">
