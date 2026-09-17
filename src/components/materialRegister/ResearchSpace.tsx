@@ -78,7 +78,7 @@ type EvaluationStatus = "Met" | "Not met" | "Not set";
 type EvidenceRecord = { name: string; source: string };
 
 
-type ShortlistItem = { id: string; name: string; detail: string };
+
 
 
 
@@ -329,67 +329,6 @@ const MultiSelectChips = ({
   );
 };
 
-const ShortlistEntry = ({
-  name,
-  right,
-  children,
-}: {
-  name: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [note, setNote] = useState("");
-
-  const openEditor = () => {
-    setDraft(note);
-    setEditing(true);
-  };
-
-  const saveNote = () => {
-    setNote(draft.trim());
-    setEditing(false);
-  };
-
-  return (
-    <div className="border-t border-border px-4 py-3 first:border-t-0">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">{children}</div>
-        <div className="flex shrink-0 items-start gap-2">
-          {right}
-          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${name}` : `Add note for ${name}`} title={note ? "Edit note" : "Add note"}>
-            {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-          </Button>
-        </div>
-      </div>
-
-      {editing && (
-        <div className="mt-3 space-y-2">
-          <Textarea value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="Add a note…" className="min-h-20 text-xs" autoFocus />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setEditing(false)}>Cancel</Button>
-            <Button type="button" size="sm" className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90" onClick={saveNote}>Save note</Button>
-          </div>
-        </div>
-      )}
-
-      {note && !editing && (
-        <div className="mt-3 flex items-start justify-between gap-3 border-l-2 border-border pl-3">
-          <p className="text-xs text-muted-foreground">{note}</p>
-          <Button type="button" variant="link" className="h-auto shrink-0 p-0 text-[10px]" onClick={openEditor}>Edit</Button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
-  <ShortlistEntry name={item.name}>
-    <div className="text-xs font-semibold text-foreground">{item.name}</div>
-    <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
-  </ShortlistEntry>
-);
 
 
 
