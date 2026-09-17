@@ -163,7 +163,7 @@ const ResearchSpace: React.FC = () => {
           {saved && (
             <div className="flex shrink-0 items-center gap-2">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-foreground">
-                <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Thresholds set
+                <CheckCircle2 className="h-4 w-4 text-primary" /> Thresholds set
               </span>
               <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setSaved(false)}>Edit</Button>
             </div>
