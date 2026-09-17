@@ -1,0 +1,181 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  CURRENT_USER,
+  RegisterProvider,
+  UNASSIGNED_OWNER,
+  useRegister,
+} from "@/components/materialRegister/registerStore";
+import { StatusPill } from "@/components/materialRegister/primitives";
+import PositionBlock from "@/components/materialRegister/PositionBlock";
+import { blankMaterial } from "@/components/materialRegister/materialEntry";
+import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
+
+/**
+ * Status strip shown on the value-chain hero: the material's register status,
+ * owner, priority period and position. Owner and priority period are editable
+ * inline; the status itself is set in the Material Brief's Status panel.
+ */
+const SummaryField: React.FC<{ label: string; children: React.ReactNode; hint?: React.ReactNode }> = ({
+  label,
+  children,
+  hint,
+}) => (
+  <div className="px-4 py-3">
+    <div className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest mb-1.5">{label}</div>
+    {children}
+    {hint ? <div className="mt-1.5 text-[10px] text-muted-foreground">{hint}</div> : null}
+  </div>
+);
+
+const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialName }) => {
+  const { allMaterials, addMaterials, updateMaterial } = useRegister();
+
+  const material = useMemo(
+    () =>
+      allMaterials.find((m) => m.name.toLowerCase() === materialName.trim().toLowerCase()) ?? null,
+    [allMaterials, materialName],
+  );
+
+  // The register is the source of truth for status/owner/period. When the
+  // viewed material has no row yet, add a blank one so the strip stays live.
+  useEffect(() => {
+    if (!materialName.trim() || material) return;
+    addMaterials([{ ...blankMaterial(null, "existing"), name: materialName.trim() }], {
+      batchOrigin: "real_transition",
+      source: CURRENT_USER,
+    });
+  }, [material, materialName, addMaterials]);
+
+  const owners = useMemo(
+    () => Array.from(new Set(allMaterials.map((m) => m.owner).filter(Boolean) as string[])).sort(),
+    [allMaterials],
+  );
+  const periods = useMemo(
+    () =>
+      Array.from(new Set(allMaterials.map((m) => m.priority_period).filter(Boolean) as string[])).sort(),
+    [allMaterials],
+  );
+
+  const [period, setPeriod] = useState(material?.priority_period ?? "");
+  useEffect(() => setPeriod(material?.priority_period ?? ""), [material?.material_id, material?.priority_period]);
+
+  if (!material) return null;
+
+  const commitOwner = (value: string) => {
+    const next = value === UNASSIGNED_OWNER ? null : value;
+    if (next === material.owner) return;
+    updateMaterial(material.material_id, { owner: next }, ["owner"], [
+      {
+        material_id: material.material_id,
+        event_type: "owner_change",
+        field: "owner",
+        from_value: material.owner,
+        to_value: next,
+        changed_by: CURRENT_USER,
+      },
+    ]);
+  };
+
+  const commitPeriod = () => {
+    const next = period.trim() ? period.trim() : null;
+    if (next === material.priority_period) return;
+    updateMaterial(material.material_id, { priority_period: next }, ["priority_period"], [
+      {
+        material_id: material.material_id,
+        event_type: "priority_change",
+        field: "priority_period",
+        from_value: material.priority_period,
+        to_value: next,
+        changed_by: CURRENT_USER,
+      },
+    ]);
+  };
+
+  const overdue =
+    hasOverdueCondition(material) ? "Condition overdue"
+    : holdReviewOverdue(material) ? "Review overdue"
+    : null;
+
+  return (
+    <div className="grid sm:grid-cols-2 xl:grid-cols-[135px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
+      <SummaryField
+        label="Status"
+        hint={
+          overdue ? (
+            <span className="text-amber-600">{overdue}</span>
+          ) : (
+            "Set in the Status panel"
+          )
+        }
+      >
+        <StatusPill
+          status={material.journey_status}
+          entered={material.provenance?.journey_status?.origin === "entered"}
+        />
+      </SummaryField>
+
+      <SummaryField label="Owner">
+        <Select value={material.owner ?? UNASSIGNED_OWNER} onValueChange={commitOwner}>
+          <SelectTrigger className="h-8 w-full text-xs">
+            <SelectValue placeholder="Unassigned" />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            <SelectItem value={UNASSIGNED_OWNER} className="text-xs">
+              Unassigned
+            </SelectItem>
+            {owners.map((o) => (
+              <SelectItem key={o} value={o} className="text-xs">
+                {o}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </SummaryField>
+
+      <SummaryField
+        label="Priority period"
+        hint={material.priority_period ? undefined : "Not prioritised"}
+      >
+        <Input
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          onBlur={commitPeriod}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              commitPeriod();
+            }
+          }}
+          placeholder="e.g. H2 2026"
+          list={`periods-${material.material_id}`}
+          className="h-8 text-xs"
+        />
+        <datalist id={`periods-${material.material_id}`}>
+          {periods.map((p) => (
+            <option key={p} value={p} />
+          ))}
+        </datalist>
+      </SummaryField>
+
+      <SummaryField label="Position">
+        <PositionBlock materialId={material.material_id} variant="inline" />
+      </SummaryField>
+    </div>
+  );
+};
+
+const MaterialStatusOverview: React.FC<{ materialName: string }> = ({ materialName }) => (
+  <RegisterProvider>
+    <StatusOverviewContent materialName={materialName} />
+  </RegisterProvider>
+);
+
+export default MaterialStatusOverview;
