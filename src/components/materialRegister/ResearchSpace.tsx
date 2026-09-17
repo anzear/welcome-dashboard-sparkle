@@ -546,14 +546,6 @@ const ResearchSpace: React.FC = () => {
   const metCount = rows.filter((row) => row.status === "Met").length;
   const notMetCount = rows.filter((row) => row.status === "Not met").length;
   const notSetCount = rows.filter((row) => row.status === "Not set").length;
-  const verdict =
-    notMetCount > 0
-      ? "Does not meet your requirements"
-      : notSetCount > 0
-        ? "Incomplete — set remaining thresholds"
-        : "Meets your requirements";
-  const verdictClass =
-    notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
   const countLine =
     notSetCount === rows.length
       ? null
