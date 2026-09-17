@@ -12,9 +12,8 @@ import CriterionRail from "@/components/materialRegister/CriterionRail";
 import CriterionDocuments from "@/components/materialRegister/CriterionDocuments";
 import CriteriaSetDialog from "@/components/materialRegister/CriteriaSetDialog";
 import { ComingSoonTag } from "@/components/materialRegister/vcgSignals";
-import { ChevronDown, FileText, Info, SlidersHorizontal, Pencil, Upload, X } from "lucide-react";
+import { FileText, Info, Pencil, SlidersHorizontal, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import type {
   AssessmentEntry,
   AssessmentCriterion,
