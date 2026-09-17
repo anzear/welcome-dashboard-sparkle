@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { Bookmark, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -135,8 +135,8 @@ export function CompanyShortlistTables({
             if (rows.length === 0) return null;
 
             return (
-              <>
-                <TableRow key={`group-${role}`} className="border-t border-border hover:bg-transparent">
+              <Fragment key={role}>
+                <TableRow className="border-t border-border hover:bg-transparent">
                   <TableCell colSpan={10} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     {heading} · {rows.length}
                   </TableCell>
@@ -226,7 +226,7 @@ export function CompanyShortlistTables({
                     </TableRow>
                   );
                 })}
-              </>
+              </Fragment>
             );
           })}
         </TableBody>
