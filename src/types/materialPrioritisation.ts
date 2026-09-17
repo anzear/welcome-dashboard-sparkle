@@ -322,11 +322,13 @@ export interface Material {
 
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
-  under_evaluation: "Under evaluation",
-  go: "Go",
-  go_with_conditions: "Go with conditions",
-  hold: "Hold",
-  no_go: "No-go",
+  not_started: "Not started",
+  in_evaluation: "In evaluation",
+  in_testing: "In testing",
+  in_development: "In development",
+  in_deployment: "In deployment",
+  adopted: "Adopted",
+  parked: "Parked",
 };
 
 /**
@@ -466,10 +468,11 @@ export const EMPTY_GATE = {
 >;
 
 export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
-  go: "Go",
-  go_with_conditions: "Go with conditions",
-  hold: "Hold",
-  no_go: "No-go",
+  in_testing: "In testing",
+  in_development: "In development",
+  in_deployment: "In deployment",
+  adopted: "Adopted",
+  parked: "Parked",
 };
 
 /** Teams that contribute judgements. */
