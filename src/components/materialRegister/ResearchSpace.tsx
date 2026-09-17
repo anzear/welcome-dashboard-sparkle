@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const GEOGRAPHY_OPTIONS = [
@@ -65,7 +66,9 @@ const INITIAL_THRESHOLDS: Thresholds = {
   volumeUnit: "tonnes/year",
 };
 
-type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
+type EvaluationStatus = "Met" | "Not met" | "Not set";
+
+type EvidenceRecord = { name: string; source: string };
 
 
 type ShortlistItem = { id: string; name: string; detail: string };
@@ -169,10 +172,47 @@ const PAPER_ITEMS: ShortlistItem[] = [
 
 
 const statusClasses: Record<EvaluationStatus, string> = {
-  Match: "border-success/30 bg-success/10 text-success",
-  "No match": "border-destructive/30 bg-destructive/10 text-destructive",
-  "No data": "border-border bg-muted text-muted-foreground",
-  "Not set": "border-warning/30 bg-warning/10 text-warning",
+  Met: "border-success/30 bg-success/10 text-success",
+  "Not met": "border-destructive/30 bg-destructive/10 text-destructive",
+  "Not set": "border-border bg-muted text-muted-foreground",
+};
+
+// ---- Mock evidence held by the platform ----
+const PATHWAY_TRL = 6;
+
+const PRODUCER_RECORDS: (EvidenceRecord & { country: string; regions: string[]; capacity: number })[] = [
+  { name: "Corbion", country: "Netherlands", regions: ["Europe", "European Union"], capacity: 4500, source: "corbion.com" },
+  { name: "NatureWorks", country: "United States", regions: ["North America", "United States"], capacity: 3500, source: "natureworksllc.com" },
+  { name: "Purac Americas", country: "United States", regions: ["North America", "United States"], capacity: 2500, source: "purac.com" },
+  { name: "Cargill Bioindustrial", country: "United States", regions: ["North America", "United States"], capacity: 1500, source: "cargill.com" },
+];
+
+const FEEDSTOCK_SUPPLIER_RECORDS: (EvidenceRecord & { regions: string[] })[] = [
+  { name: "Arla Foods Ingredients", regions: ["Europe", "European Union"], source: "arlafoodsingredients.com" },
+  { name: "Südzucker", regions: ["Europe", "European Union"], source: "suedzucker.de" },
+];
+
+const PRICE_RECORDS: EvidenceRecord[] = [
+  { name: "Spot quotation EUR 1,420/t — Q1 2026", source: "ICIS bio-acids report" },
+  { name: "Contract quotation EUR 1,480/t — Q1 2026", source: "Producer disclosure, Corbion" },
+];
+
+const INDICATIVE_PRICE_EUR = 1450;
+
+const CURRENCY_TO_EUR: Record<string, number> = { EUR: 1, USD: 0.92, GBP: 1.17 };
+
+const VOLUME_TO_TONNES: Record<string, number> = { "tonnes/year": 1, "kg/year": 0.001, "kt/year": 1000 };
+
+const IDENTIFIED_CAPACITY_TONNES = PRODUCER_RECORDS.reduce((total, record) => total + record.capacity, 0);
+
+const num = (value: number) => value.toLocaleString("en-US");
+
+const listGeographies = (values: string[]) =>
+  values.length <= 1 ? values[0] : `${values.slice(0, -1).join(", ")} and ${values[values.length - 1]}`;
+
+const volumeUnitLabel = (value: number, unit: string) => {
+  if (value !== 1) return unit;
+  return unit.replace("tonnes/year", "tonne/year").replace("kg/year", "kg/year").replace("kt/year", "kt/year");
 };
 
 const MultiSelectChips = ({
@@ -386,68 +426,168 @@ const ResearchSpace: React.FC = () => {
     [],
   );
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
-  const [saved, setSaved] = useState(false);
+  const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
+  const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setThresholds((current) => ({ ...current, [key]: value }));
   };
 
-  const evaluationRows = useMemo<{ label: string; status: EvaluationStatus; explanation: string }[]>(() => {
-    if (!saved) {
-      return [
-        { label: "Applications", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Production scale (TRL)", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Material supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Feedstock supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Price ceiling per tonne", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Minimum number of producers", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Required volume", status: "Not set", explanation: "Set threshold to evaluate." },
-      ];
-    }
+  const EvidenceLink = ({ label, title, records }: { label: string; title: string; records: EvidenceRecord[] }) => (
+    <Button
+      type="button"
+      variant="link"
+      className="h-auto p-0 text-xs font-semibold text-foreground underline"
+      onClick={() => setEvidence({ title, records })}
+    >
+      {label}
+    </Button>
+  );
+
+  type Row = { label: string; status: EvaluationStatus; line: React.ReactNode | null };
+
+  const rows: Row[] = (() => {
+    const appCount = thresholds.applications.length;
+
+    const trlFrom = Number(thresholds.trlFrom);
+    const trlTo = Number(thresholds.trlTo);
+    const trlSet = thresholds.trlFrom !== "" && thresholds.trlTo !== "" && !Number.isNaN(trlFrom) && !Number.isNaN(trlTo);
+    const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
+
+    const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
+      selected.some((geography) => regions.includes(geography) || country === geography);
+
+    const productMatches = PRODUCER_RECORDS.filter((record) =>
+      matchesGeography(record.regions, record.country, thresholds.materialGeographies),
+    );
+    const feedstockMatches = FEEDSTOCK_SUPPLIER_RECORDS.filter((record) =>
+      matchesGeography(record.regions, undefined, thresholds.feedstockGeographies),
+    );
+
+    const ceiling = Number(thresholds.priceCeiling);
+    const priceSet = thresholds.priceCeiling !== "" && !Number.isNaN(ceiling) && ceiling > 0;
+    const ceilingEur = ceiling * (CURRENCY_TO_EUR[thresholds.currency] ?? 1);
+    const priceBelow = INDICATIVE_PRICE_EUR <= ceilingEur;
+
+    const requiredProducers = thresholds.minimumProducers;
+    const identifiedProducers = PRODUCER_RECORDS.length;
+
+    const volume = Number(thresholds.requiredVolume);
+    const volumeSet = thresholds.requiredVolume !== "" && !Number.isNaN(volume) && volume > 0;
+    const requiredTonnes = volume * (VOLUME_TO_TONNES[thresholds.volumeUnit] ?? 1);
+    const volumeAbove = IDENTIFIED_CAPACITY_TONNES >= requiredTonnes;
+
     return [
       {
         label: "Applications",
-        status: thresholds.applications.length > 0 ? "Match" : "Not set",
-        explanation: thresholds.applications.length > 0 ? `${thresholds.applications.join(", ")} selected for evaluation.` : "Set threshold to evaluate.",
+        status: appCount > 0 ? "Met" : "Not set",
+        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
       },
       {
-        label: "Production scale (TRL)",
-        status: thresholds.trlFrom && thresholds.trlTo ? "Match" : "Not set",
-        explanation: thresholds.trlFrom && thresholds.trlTo ? `Evaluating pathways between TRL ${thresholds.trlFrom} and TRL ${thresholds.trlTo}.` : "Set threshold to evaluate.",
+        label: "Technology readiness (TRL)",
+        status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
+        line: trlSet
+          ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
+          : "Set a TRL range to evaluate.",
       },
       {
-        label: "Material supply geography",
-        status: thresholds.materialGeographies.length > 0 ? "Match" : "Not set",
-        explanation: thresholds.materialGeographies.length > 0 ? `Producers found in ${thresholds.materialGeographies.slice(0, 2).join(" and ")}.` : "Set threshold to evaluate.",
+        label: "Product supply geography",
+        status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
+        line:
+          thresholds.materialGeographies.length === 0 ? (
+            "Select a geography to evaluate."
+          ) : productMatches.length > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${productMatches.length} producer${productMatches.length === 1 ? "" : "s"}`}
+                title="Producers identified"
+                records={productMatches.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified in ${listGeographies(thresholds.materialGeographies)}.`}
+            </>
+          ) : (
+            `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`
+          ),
       },
       {
         label: "Feedstock supply geography",
-        status: thresholds.feedstockGeographies.length > 0 ? "No match" : "Not set",
-        explanation: thresholds.feedstockGeographies.length > 0 ? "No verified feedstock supplier was found in the selected region." : "Set threshold to evaluate.",
+        status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
+        line:
+          thresholds.feedstockGeographies.length === 0 ? (
+            "Select a geography to evaluate."
+          ) : feedstockMatches.length > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${feedstockMatches.length} verified feedstock supplier${feedstockMatches.length === 1 ? "" : "s"}`}
+                title="Verified feedstock suppliers"
+                records={feedstockMatches.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified in ${listGeographies(thresholds.feedstockGeographies)}.`}
+            </>
+          ) : (
+            `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`
+          ),
       },
       {
         label: "Price ceiling per tonne",
-        status: thresholds.priceCeiling ? "No data" : "Not set",
-        explanation: thresholds.priceCeiling ? "No price data is available for this material." : "Set threshold to evaluate.",
+        status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
+        line: priceSet ? (
+          <>
+            <EvidenceLink
+              label={`Indicative price EUR ${num(INDICATIVE_PRICE_EUR)}/t`}
+              title="Price points"
+              records={PRICE_RECORDS}
+            />
+            {` — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`}
+          </>
+        ) : (
+          "Set a ceiling to evaluate."
+        ),
       },
       {
         label: "Minimum number of producers",
-        status: thresholds.minimumProducers > 0 ? "Match" : "Not set",
-        explanation: thresholds.minimumProducers > 0 ? `${thresholds.minimumProducers} producers required; four are identified.` : "Set threshold to evaluate.",
+        status: requiredProducers > 0 ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
+        line:
+          requiredProducers > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
+                title="Producers identified"
+                records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified — ${requiredProducers} required.`}
+            </>
+          ) : (
+            "Set a minimum to evaluate."
+          ),
       },
       {
         label: "Required volume",
-        status: thresholds.requiredVolume ? "Match" : "Not set",
-        explanation: thresholds.requiredVolume ? `Minimum required volume set to ${thresholds.requiredVolume} ${thresholds.volumeUnit}.` : "Set threshold to evaluate.",
+        status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
+        line: volumeSet
+          ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
+          : "Set a volume to evaluate.",
       },
     ];
-  }, [saved, thresholds]);
+  })();
+
+  const metCount = rows.filter((row) => row.status === "Met").length;
+  const notMetCount = rows.filter((row) => row.status === "Not met").length;
+  const notSetCount = rows.filter((row) => row.status === "Not set").length;
+  const verdict =
+    notMetCount > 0
+      ? "Does not meet your requirements"
+      : notSetCount > 0
+        ? "Incomplete — set remaining thresholds"
+        : "Meets your requirements";
+  const verdictClass =
+    notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
 
   const renderInput = (label: string) => {
     switch (label) {
       case "Applications":
         return <MultiSelectChips label="Applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
-      case "Production scale (TRL)":
+      case "Technology readiness (TRL)":
         return (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -460,8 +600,8 @@ const ResearchSpace: React.FC = () => {
             </div>
           </div>
         );
-      case "Material supply geography":
-        return <MultiSelectChips label="Material supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
+      case "Product supply geography":
+        return <MultiSelectChips label="Product supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
       case "Feedstock supply geography":
         return <MultiSelectChips label="Feedstock supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
       case "Price ceiling per tonne":
@@ -491,7 +631,8 @@ const ResearchSpace: React.FC = () => {
     }
   };
 
-  const LONG_INPUT_LABELS = new Set(["Applications", "Material supply geography", "Feedstock supply geography"]);
+  const LONG_INPUT_LABELS = new Set(["Applications", "Product supply geography", "Feedstock supply geography"]);
+  const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
   return (
     <div className="mt-5 space-y-5">
@@ -500,38 +641,67 @@ const ResearchSpace: React.FC = () => {
         <span>Result</span>
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        {evaluationRows.map((row, index) => {
+        <div className="border-b border-border bg-muted/40 px-5 py-3">
+          <p className={cn("text-sm font-semibold", verdictClass)}>{verdict}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {metCount} met · {notMetCount} not met · {notSetCount} not set
+          </p>
+        </div>
+        {rows.map((row, index) => {
           const isLong = LONG_INPUT_LABELS.has(row.label);
           return (
-            <div key={row.label} className={cn("px-5 py-5", index !== evaluationRows.length - 1 && "border-b border-border")}>
+            <div key={row.label} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
               {isLong ? (
                 <>
                   <div className="flex items-center justify-between gap-4">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
                     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
                   </div>
-                  <div className="mt-2">{renderInput(row.label)}</div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{row.explanation}</p>
+                  <div className="mt-1.5">{renderInput(row.label)}</div>
+                  {row.line && <p className="mt-1 text-xs text-muted-foreground">{row.line}</p>}
                 </>
               ) : (
                 <>
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1.5">
                       <div className="w-44 shrink-0 text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
                       {renderInput(row.label)}
+                      {row.line && <p className="text-xs text-muted-foreground">{row.line}</p>}
                     </div>
                     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
                   </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{row.explanation}</p>
                 </>
               )}
             </div>
           );
         })}
-        <div className="flex justify-end border-t border-border px-5 py-4">
-          <Button onClick={() => setSaved(true)} className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90">Set thresholds</Button>
+        <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-3">
+          {savedThresholds && <span className="text-xs text-muted-foreground">Thresholds saved.</span>}
+          <Button
+            disabled={!anyThresholdSet}
+            onClick={() => setSavedThresholds(thresholds)}
+            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+          >
+            Save thresholds
+          </Button>
         </div>
       </section>
+
+      <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="text-sm">{evidence?.title}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 divide-y divide-border">
+            {evidence?.records.map((record) => (
+              <div key={record.name} className="py-3">
+                <div className="text-xs font-semibold text-foreground">{record.name}</div>
+                <p className="mt-0.5 text-xs text-muted-foreground">Source: {record.source}</p>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
