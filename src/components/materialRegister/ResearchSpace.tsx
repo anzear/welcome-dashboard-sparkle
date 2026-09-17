@@ -674,57 +674,43 @@ const ResearchSpace: React.FC = () => {
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
   return (
-    <div className="mt-5 space-y-5">
-      <div className="flex items-center justify-between px-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-        <span>Criterion</span>
-        <span>Result</span>
+    <div className="mt-5 space-y-6">
+      <div className="px-1">
+        <p className={cn("text-base font-semibold", verdictClass)}>{verdict}</p>
+        {countLine && <p className="mt-1 text-sm text-muted-foreground">{countLine}</p>}
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        <div className="border-b border-border bg-muted/40 px-5 py-3">
-          <p className={cn("text-sm font-semibold", verdictClass)}>{verdict}</p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {metCount} met · {notMetCount} not met · {notSetCount} not set
-          </p>
-        </div>
-        {rows.map((row, index) => {
-          const isLong = LONG_INPUT_LABELS.has(row.label);
-          return (
-            <div key={row.label} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
-              {isLong ? (
-                <>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
-                    <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
-                  </div>
-                  <div className="mt-1.5">{renderInput(row.label)}</div>
-                  {row.line && <p className="mt-1 text-xs text-muted-foreground">{row.line}</p>}
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1.5">
-                      <div className="w-44 shrink-0 text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
-                      {renderInput(row.label)}
-                      {row.line && <p className="text-xs text-muted-foreground">{row.line}</p>}
-                    </div>
-                    <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-        <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-3">
-          {savedThresholds && <span className="text-xs text-muted-foreground">Thresholds saved.</span>}
-          <Button
-            disabled={!anyThresholdSet}
-            onClick={() => setSavedThresholds(thresholds)}
-            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+        {rows.map((row, index) => (
+          <div
+            key={row.label}
+            className={cn(
+              "grid min-h-[56px] grid-cols-[130px_264px_minmax(0,1fr)_84px] items-center gap-4 px-5 py-2",
+              index !== rows.length - 1 && "border-b border-border",
+            )}
           >
-            Save thresholds
-          </Button>
+            <div className="truncate whitespace-nowrap text-xs text-foreground">{row.label}</div>
+            <div>{renderInput(row.label)}</div>
+            <p className="text-xs text-muted-foreground">{row.line}</p>
+            <div className="flex justify-end">
+              <Badge variant="outline" className={cn("text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
+            </div>
+          </div>
+        ))}
+        <div className="flex items-center justify-end border-t border-border px-5 py-3">
+          {showSaved ? (
+            <span className="text-xs text-muted-foreground">Thresholds saved.</span>
+          ) : (
+            <Button
+              disabled={!anyThresholdSet}
+              onClick={() => setShowSaved(true)}
+              className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+            >
+              Save thresholds
+            </Button>
+          )}
         </div>
       </section>
+
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
