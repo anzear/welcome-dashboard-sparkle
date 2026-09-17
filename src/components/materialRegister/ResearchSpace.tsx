@@ -241,7 +241,15 @@ const MultiSelectChips = ({
   );
 };
 
-const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
+const ShortlistEntry = ({
+  name,
+  right,
+  children,
+}: {
+  name: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
@@ -259,13 +267,13 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
   return (
     <div className="border-t border-border px-4 py-3 first:border-t-0">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-foreground">{item.name}</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+        <div className="min-w-0 flex-1">{children}</div>
+        <div className="flex shrink-0 items-start gap-2">
+          {right}
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${name}` : `Add note for ${name}`} title={note ? "Edit note" : "Add note"}>
+            {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
+          </Button>
         </div>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${item.name}` : `Add note for ${item.name}`} title={note ? "Edit note" : "Add note"}>
-          {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-        </Button>
       </div>
 
       {editing && (
@@ -287,6 +295,90 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
     </div>
   );
 };
+
+const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
+  <ShortlistEntry name={item.name}>
+    <div className="text-xs font-semibold text-foreground">{item.name}</div>
+    <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+  </ShortlistEntry>
+);
+
+const PathwayRow = ({ item }: { item: PathwayItem }) => (
+  <ShortlistEntry name={`${item.feedstock} → ${item.product}`}>
+    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-foreground">
+      <span>{item.feedstock}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.process}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.product}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.application}</span>
+    </div>
+  </ShortlistEntry>
+);
+
+const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
+  <div className="flex items-center gap-0.5">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <button
+        key={star}
+        type="button"
+        onClick={() => onChange(star)}
+        aria-label={`Rate ${name} ${star} of 5`}
+        className="p-0.5"
+      >
+        <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/50")} />
+      </button>
+    ))}
+  </div>
+);
+
+const CompanyRow = ({ item }: { item: CompanyItem }) => {
+  const [myRating, setMyRating] = useState(0);
+
+  return (
+    <ShortlistEntry name={item.name}>
+      <div className="text-xs font-semibold text-foreground">{item.name}</div>
+      <p className="mt-0.5 text-xs text-muted-foreground">{item.role} · {item.location}</p>
+      {item.size && <p className="mt-0.5 text-xs text-muted-foreground">{item.size}</p>}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="text-[10px] font-normal">{item.connectsTo}</Badge>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Your rating</span>
+          <RatingControl value={myRating} onChange={setMyRating} name={item.name} />
+          {myRating > 0 && <span className="text-[10px] text-muted-foreground">{CURRENT_REVIEWER}: {myRating}</span>}
+        </div>
+        {item.ratings.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {item.ratings.map((rating) => (
+              <span key={rating.user} className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+                {rating.user}: {rating.value}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </ShortlistEntry>
+  );
+};
+
+const ShortlistCard = ({ label, count, children, defaultOpen = false }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean }) => (
+  <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
+    <AccordionItem value={label} className="border-b-0">
+      <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
+        <span className="flex items-center gap-2">
+          <span className="font-semibold text-foreground">{label}</span>
+          <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+        </span>
+      </AccordionTrigger>
+      <AccordionContent className="border-t border-border pb-0">{children}</AccordionContent>
+    </AccordionItem>
+  </Accordion>
+);
+
+
 
 const ResearchSpace: React.FC = () => {
   const applications = useMemo(
