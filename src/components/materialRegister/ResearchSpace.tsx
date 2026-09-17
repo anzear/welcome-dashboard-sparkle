@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
+
 
 const GEOGRAPHY_OPTIONS = [
   "Europe",
