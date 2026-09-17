@@ -152,7 +152,8 @@ export function CompanyShortlistTables({
                       <TableCell className="h-11 py-0">
                         <a
                           href={company.profileUrl}
-                          className="text-[10px] font-semibold text-foreground underline-offset-2 hover:underline"
+                          title={company.name}
+                          className="block truncate text-[10px] font-semibold text-foreground underline-offset-2 hover:underline"
                         >
                           {company.name}
                         </a>
@@ -178,7 +179,7 @@ export function CompanyShortlistTables({
                       </TableCell>
                       <TableCell className="h-11 py-0">
                         {/* Wrapping only kicks in from three colleagues onward. */}
-                        <div className={cn("flex items-center gap-1", teamRatings.length >= 3 ? "flex-wrap" : "flex-nowrap")}>
+                        <div className="flex flex-wrap items-center gap-1">
                           {teamRatings.map((entry) => (
                             <span
                               key={entry.author}
