@@ -490,7 +490,13 @@ const ResearchSpace: React.FC = () => {
 
     const trlFrom = Number(thresholds.trlFrom);
     const trlTo = Number(thresholds.trlTo);
-    const trlSet = thresholds.trlFrom !== "" && thresholds.trlTo !== "" && !Number.isNaN(trlFrom) && !Number.isNaN(trlTo);
+    // A range covering the whole 1–9 span excludes nothing, so it is not a threshold.
+    const trlSet =
+      thresholds.trlFrom !== "" &&
+      thresholds.trlTo !== "" &&
+      !Number.isNaN(trlFrom) &&
+      !Number.isNaN(trlTo) &&
+      !(trlFrom <= 1 && trlTo >= 9);
     const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
 
     const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
@@ -508,7 +514,10 @@ const ResearchSpace: React.FC = () => {
     const ceilingEur = ceiling * (CURRENCY_TO_EUR[thresholds.currency] ?? 1);
     const priceBelow = INDICATIVE_PRICE_EUR <= ceilingEur;
 
-    const requiredProducers = thresholds.minimumProducers;
+    const requiredProducers = Number(thresholds.minimumProducers);
+    // A minimum of 1 excludes nothing.
+    const producersSet =
+      thresholds.minimumProducers !== "" && !Number.isNaN(requiredProducers) && requiredProducers > 1;
     const identifiedProducers = PRODUCER_RECORDS.length;
 
     const volume = Number(thresholds.requiredVolume);
@@ -520,17 +529,17 @@ const ResearchSpace: React.FC = () => {
       {
         label: "Applications",
         status: appCount > 0 ? "Met" : "Not set",
-        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
+        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : "Select an application to evaluate.",
       },
       {
-        label: "Technology readiness (TRL)",
+        label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
         line: trlSet
           ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
           : "Set a TRL range to evaluate.",
       },
       {
-        label: "Product supply geography",
+        label: "Product geography",
         status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
         line:
           thresholds.materialGeographies.length === 0 ? (
@@ -549,7 +558,7 @@ const ResearchSpace: React.FC = () => {
           ),
       },
       {
-        label: "Feedstock supply geography",
+        label: "Feedstock geography",
         status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
         line:
           thresholds.feedstockGeographies.length === 0 ? (
@@ -568,7 +577,7 @@ const ResearchSpace: React.FC = () => {
           ),
       },
       {
-        label: "Price ceiling per tonne",
+        label: "Price ceiling",
         status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
         line: priceSet ? (
           <>
@@ -584,24 +593,23 @@ const ResearchSpace: React.FC = () => {
         ),
       },
       {
-        label: "Minimum number of producers",
-        status: requiredProducers > 0 ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
-        line:
-          requiredProducers > 0 ? (
-            <>
-              <EvidenceLink
-                label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
-                title="Producers identified"
-                records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
-              />
-              {` identified — ${requiredProducers} required.`}
-            </>
-          ) : (
-            "Set a minimum to evaluate."
-          ),
+        label: "Producers",
+        status: producersSet ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
+        line: producersSet ? (
+          <>
+            <EvidenceLink
+              label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
+              title="Producers identified"
+              records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
+            />
+            {` identified — ${requiredProducers} required.`}
+          </>
+        ) : (
+          "Set a minimum to evaluate."
+        ),
       },
       {
-        label: "Required volume",
+        label: "Volume",
         status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
         line: volumeSet
           ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
@@ -609,6 +617,7 @@ const ResearchSpace: React.FC = () => {
       },
     ];
   })();
+
 
   const metCount = rows.filter((row) => row.status === "Met").length;
   const notMetCount = rows.filter((row) => row.status === "Not met").length;
