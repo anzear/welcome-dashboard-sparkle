@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { Bookmark, Star } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -211,7 +211,7 @@ export function CompanyShortlistTables({
                         )}
                       </TableCell>
                       <TableCell className="h-11 py-0 text-[10px] text-muted-foreground">{company.savedBy}</TableCell>
-                      <TableCell className="h-11 py-0">
+                      <TableCell className="h-11 py-0 text-right">
                         <Button
                           type="button"
                           variant="ghost"
@@ -221,7 +221,7 @@ export function CompanyShortlistTables({
                           aria-label={`Remove ${company.name} from shortlist`}
                           onClick={() => onRemove(company.id)}
                         >
-                          <Bookmark className="h-3.5 w-3.5 fill-emerald-600 text-emerald-600" />
+                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                         </Button>
                       </TableCell>
                     </TableRow>
