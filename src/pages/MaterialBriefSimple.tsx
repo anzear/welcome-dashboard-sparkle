@@ -42,8 +42,8 @@ const Inner: React.FC = () => {
   const [view, setView] = React.useState<"brief" | "research">("brief");
 
   const tabs: { id: "brief" | "research"; label: string }[] = [
-    { id: "brief", label: "Material brief" },
-    { id: "research", label: "Research space" },
+    { id: "brief", label: "Material Profile" },
+    { id: "research", label: "Research Space" },
   ];
 
   const toggle = (
