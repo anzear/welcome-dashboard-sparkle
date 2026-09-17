@@ -227,37 +227,35 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
-      <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1">
-        {([
-          ["Spend", m.annual_spend, "EUR/yr"],
-          ["Volume", m.annual_volume, "t/yr"],
-          ["GHG", m.ghg_contribution, "tCO2e/yr"],
-        ] as const).map(([label, value, suffix]) => (
-          <div key={label} className="flex items-baseline gap-1.5">
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              {label}
+    <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1 py-2">
+      {([
+        ["Spend", m.annual_spend, "EUR/yr"],
+        ["Volume", m.annual_volume, "t/yr"],
+        ["GHG", m.ghg_contribution, "tCO2e/yr"],
+      ] as const).map(([label, value, suffix]) => (
+        <div key={label} className="flex items-baseline gap-1.5">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+            {label}
+          </span>
+          {value === null ? (
+            <Missing />
+          ) : (
+            <span className="text-sm font-semibold tabular-nums text-foreground">
+              {nf(0).format(value)} {suffix}
             </span>
-            {value === null ? (
-              <Missing />
-            ) : (
-              <span className="text-sm font-semibold tabular-nums text-foreground">
-                {nf(0).format(value)} {suffix}
-              </span>
-            )}
-          </div>
-        ))}
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setEditing(true)}
-          className="ml-auto h-6 gap-1 px-1.5 text-[10px] opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100"
-        >
-          <Pencil className="h-3 w-3" />
-          Edit figures
-        </Button>
-      </div>
+          )}
+        </div>
+      ))}
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setEditing(true)}
+        className="ml-auto h-6 gap-1 px-1.5 text-[10px] opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100"
+      >
+        <Pencil className="h-3 w-3" />
+        Edit figures
+      </Button>
     </div>
   );
 };
