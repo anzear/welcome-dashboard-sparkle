@@ -707,7 +707,7 @@ export const MaterialBrief: React.FC<{
               className="h-7 text-xs"
               onClick={() => setExportOpen(true)}
             >
-              Export material brief
+              Export
             </Button>
             <Button
               size="sm"
