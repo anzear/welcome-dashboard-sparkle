@@ -26,6 +26,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
+import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 
 
 
@@ -405,12 +406,16 @@ const ResearchSpace: React.FC = () => {
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
+  const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
 
   const removePathway = (id: string) =>
     setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
 
   const removeCompany = (id: string) =>
     setShortlistCompanies((current) => current.filter((company) => company.id !== id));
+
+  const removePatent = (id: string) =>
+    setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
 
 
   const addPathwayNote = (id: string, text: string) =>
