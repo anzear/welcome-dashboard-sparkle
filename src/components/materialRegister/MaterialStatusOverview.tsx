@@ -123,13 +123,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     <div className="grid sm:grid-cols-2 xl:grid-cols-[170px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
       <SummaryField
         label="Status"
-        hint={
-          overdue ? (
-            <span className="text-amber-600">{overdue}</span>
-          ) : (
-            "Details in the Status panel"
-          )
-        }
+        hint={overdue ? <span className="text-amber-600">{overdue}</span> : null}
       >
         <Select value={material.journey_status} onValueChange={commitStatus}>
           <SelectTrigger className="h-8 w-full text-xs">
