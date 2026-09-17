@@ -446,7 +446,7 @@ const ResearchSpace: React.FC = () => {
   );
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
-  const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
+  const [showSaved, setShowSaved] = useState(false);
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
 
@@ -469,8 +469,10 @@ const ResearchSpace: React.FC = () => {
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
+    setShowSaved(false);
     setThresholds((current) => ({ ...current, [key]: value }));
   };
+
 
   const EvidenceLink = ({ label, title, records }: { label: string; title: string; records: EvidenceRecord[] }) => (
     <Button
