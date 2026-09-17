@@ -706,9 +706,16 @@ const ResearchSpace: React.FC = () => {
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
 
-        <ShortlistCard label="Pathways" count={PATHWAY_ITEMS.length} defaultOpen>
-          {PATHWAY_ITEMS.map((item) => <PathwayRow key={item.id} item={item} />)}
+        <ShortlistCard label="Pathways" count={shortlistPathways.length} defaultOpen>
+          <PathwayShortlistRows
+            pathways={shortlistPathways}
+            notes={pathwayNotes}
+            currentUser={CURRENT_REVIEWER}
+            onAddNote={addPathwayNote}
+            onRemove={removePathway}
+          />
         </ShortlistCard>
+
 
         <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
           {COMPANY_GROUPS.map((group) => (
