@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 import {
   EVENT_FIELD_LABEL,
   JOURNEY_STATUS_LABEL,
-  type JourneyStatus,
+  migrateJourneyStatus,
   type MaterialEvent,
 } from "@/types/materialPrioritisation";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { CRITERION_LABEL } from "@/config/assessmentCriteria";
 
 const statusLabel = (v: string | null) =>
-  v && v in JOURNEY_STATUS_LABEL ? JOURNEY_STATUS_LABEL[v as JourneyStatus] : (v ?? "—");
+  v ? JOURNEY_STATUS_LABEL[migrateJourneyStatus(v)] : "—";
 
 const fieldLabel = (f: string) => EVENT_FIELD_LABEL[f] ?? CRITERION_LABEL[f] ?? f;
 
@@ -62,9 +62,9 @@ export function eventSentence(e: MaterialEvent): string {
         ? `Hold review date set to ${e.to_value ?? "none"}`
         : `Hold trigger set: ${e.to_value ?? "none"}`;
     case "no_go_reason":
-      return `No-go reason recorded`;
+      return `Parking reason recorded`;
     case "reopen":
-      return `Reopened — gate back to Under evaluation`;
+      return `Reopened — status back to In evaluation`;
     case "decision_export":
       return e.batch_id ? "Material profile exported as part of a batch export" : "Material profile exported";
     case "tags_change":

@@ -78,7 +78,9 @@ const Contents: React.FC = () => (
 );
 
 const outcomeOf = (m: Material): GateOutcome | null =>
-  m.journey_status === "under_evaluation" ? null : (m.journey_status as GateOutcome);
+  m.journey_status === "not_started" || m.journey_status === "in_evaluation"
+    ? null
+    : (m.journey_status as GateOutcome);
 
 export const ExportDecisionDialog: React.FC<{
   open: boolean;
@@ -109,7 +111,7 @@ export const ExportDecisionDialog: React.FC<{
         event_type: "decision_export" as const,
         field: "decision_export",
         from_value: null,
-        to_value: outcomeOf(m) ? GATE_OUTCOME_LABEL[outcomeOf(m) as GateOutcome] : "Under evaluation",
+        to_value: outcomeOf(m) ? GATE_OUTCOME_LABEL[outcomeOf(m) as GateOutcome] : "Not started",
         batch_id: batchId,
       })),
     );
