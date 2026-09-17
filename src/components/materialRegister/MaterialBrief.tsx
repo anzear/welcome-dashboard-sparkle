@@ -361,7 +361,13 @@ const BarField: React.FC<{ label: string; children: React.ReactNode; className?:
 );
 
 
-export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
+export const MaterialBrief: React.FC<{
+  onBack?: () => void;
+  /** Rendered inside the header, directly below the material title line. */
+  tabsSlot?: React.ReactNode;
+  /** When given, replaces the brief body while the header stays in place. */
+  bodyReplacement?: React.ReactNode;
+}> = ({ onBack, tabsSlot, bodyReplacement }) => {
   const {
     data,
     allMaterials,
@@ -713,6 +719,9 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
           </div>
         </div>
 
+        {tabsSlot && <div className="mt-3">{tabsSlot}</div>}
+
+
         {exportNote && (
           <div className="mt-2 flex items-center gap-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-2 py-1.5 text-[11px] text-emerald-800">
             <span>{exportNote}</span>
@@ -957,7 +966,7 @@ export const MaterialBrief: React.FC<{ onBack?: () => void }> = ({ onBack }) => 
         onExported={() => setExportNote("Material profile exported · 1 material")}
       />
 
-
+      {bodyReplacement ?? (<>
       {/* Decision bar — the interactive layer above the reference material */}
       <div className="mt-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
 
