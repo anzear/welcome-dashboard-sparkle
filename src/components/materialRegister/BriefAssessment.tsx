@@ -663,10 +663,7 @@ const BriefAssessment: React.FC<{ material: Material }> = ({ material }) => {
 
   return (
     <div className="space-y-4">
-      {/* Company figures: the real business data, up top. */}
-      <FiguresStrip m={material} />
-
-      {/* Company data sits in its own card, always visible. */}
+      {/* Company data now holds the figures row, technical fit and regulatory together. */}
       <CompanyDataDetails material={material} />
 
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[10px] text-muted-foreground/70">
