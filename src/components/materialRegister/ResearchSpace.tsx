@@ -428,6 +428,26 @@ const ResearchSpace: React.FC = () => {
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
+  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
+  const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
+
+  const removePathway = (id: string) =>
+    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+
+  const addPathwayNote = (id: string, text: string) =>
+    setPathwayNotes((current) => ({
+      ...current,
+      [id]: [
+        ...(current[id] ?? []),
+        {
+          id: `note-${Date.now()}`,
+          author: CURRENT_REVIEWER,
+          timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
+          text,
+        },
+      ],
+    }));
+
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setThresholds((current) => ({ ...current, [key]: value }));
