@@ -39,19 +39,20 @@ const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
 
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
 
-/** Fixed column widths — one grid for the whole table, group rows included. */
+/** Column widths — one grid for the whole table, group rows included.
+ *  Team ratings and Notes are flexible so the table always fits its card without scrolling. */
 const Columns = () => (
   <colgroup>
-    <col style={{ width: "220px" }} />
-    <col style={{ width: "110px" }} />
-    <col style={{ width: "150px" }} />
-    <col style={{ width: "130px" }} />
-    <col style={{ width: "120px" }} />
-    <col />
-    <col style={{ width: "260px" }} />
+    <col style={{ width: "180px" }} />
     <col style={{ width: "90px" }} />
-    <col style={{ width: "110px" }} />
-    <col style={{ width: "40px" }} />
+    <col style={{ width: "120px" }} />
+    <col style={{ width: "130px" }} />
+    <col style={{ width: "105px" }} />
+    <col />
+    <col />
+    <col style={{ width: "80px" }} />
+    <col style={{ width: "90px" }} />
+    <col style={{ width: "36px" }} />
   </colgroup>
 );
 
@@ -112,8 +113,8 @@ export function CompanyShortlistTables({
 
   return (
     <>
-      <div className="overflow-x-auto">
-      <Table className="table-fixed min-w-[1400px]">
+      <div className="overflow-hidden">
+      <Table className="table-fixed">
         <Columns />
         <TableHeader className="bg-muted/20">
           <TableRow className="border-b border-border">
