@@ -84,7 +84,7 @@ function StarRating({
           <Star
             className={cn(
               "h-[14px] w-[14px]",
-              star <= value ? "fill-foreground/70 text-foreground/70" : "fill-none text-muted-foreground",
+              star <= value ? "fill-warning text-warning" : "fill-none text-muted-foreground",
             )}
           />
         </button>
