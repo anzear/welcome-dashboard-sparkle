@@ -113,7 +113,7 @@ export function CompanyShortlistTables({
   return (
     <>
       <div className="overflow-x-auto">
-      <Table className="table-fixed min-w-[1240px]">
+      <Table className="table-fixed min-w-[1400px]">
         <Columns />
         <TableHeader className="bg-muted/20">
           <TableRow className="border-b border-border">
