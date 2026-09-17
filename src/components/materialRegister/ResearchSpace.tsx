@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
+
 
 const GEOGRAPHY_OPTIONS = [
   "Europe",
@@ -73,13 +75,8 @@ type EvidenceRecord = { name: string; source: string };
 
 type ShortlistItem = { id: string; name: string; detail: string };
 
-type PathwayItem = {
-  id: string;
-  feedstock: string;
-  process: string;
-  product: string;
-  application: string;
-};
+
+
 
 type Rating = { user: string; value: number };
 
@@ -95,11 +92,44 @@ type CompanyItem = {
 
 const CURRENT_REVIEWER = "A. Weber";
 
-const PATHWAY_ITEMS: PathwayItem[] = [
-  { id: "pathway-1", feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging" },
-  { id: "pathway-2", feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid", application: "Biodegradable films" },
-  { id: "pathway-3", feedstock: "Sugarcane molasses", process: "Fermentation", product: "Lactic Acid", application: "Food preservation" },
+/** Shortlisted pathways — node ids drive grouping, labels are display only. */
+const SHORTLIST_PATHWAYS: ShortlistPathway[] = [
+  {
+    id: "pathway-1",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-pla",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging",
+    trl: "TRL 9",
+  },
+  {
+    id: "pathway-2",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-food",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Food preservation",
+    trl: "TRL 7",
+  },
+  {
+    id: "pathway-3",
+    feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-skin",
+    feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Skin care (AHA)",
+  },
+  {
+    id: "pathway-4",
+    feedstockId: "fs-stover", processId: "pr-hydro-ferm", productId: "pd-la", applicationId: "ap-films",
+    feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid",
+    application: "Biodegradable films",
+    trl: "TRL 5",
+  },
 ];
+
+const INITIAL_PATHWAY_NOTES: Record<string, PathwayNote[]> = {
+  "pathway-1": [
+    { id: "note-1", author: "K. Brandt", timestamp: "2026-08-14 10:12", text: "Corbion confirmed food-grade capacity for this route." },
+    { id: "note-2", author: "M. Rossi", timestamp: "2026-08-21 15:40", text: "Ask about minimum order volumes before the next call." },
+  ],
+  "pathway-4": [
+    { id: "note-3", author: "A. Weber", timestamp: "2026-09-02 09:05", text: "Pilot only — revisit once a second supplier is verified." },
+  ],
+};
+
 
 const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
   {
@@ -343,19 +373,8 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
   </ShortlistEntry>
 );
 
-const PathwayRow = ({ item }: { item: PathwayItem }) => (
-  <ShortlistEntry name={`${item.feedstock} → ${item.product}`}>
-    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-foreground">
-      <span>{item.feedstock}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.process}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.product}</span>
-      <span className="text-muted-foreground">→</span>
-      <span>{item.application}</span>
-    </div>
-  </ShortlistEntry>
-);
+
+
 
 const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
   <div className="flex items-center gap-0.5">
@@ -428,6 +447,26 @@ const ResearchSpace: React.FC = () => {
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
+  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
+  const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
+
+  const removePathway = (id: string) =>
+    setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+
+  const addPathwayNote = (id: string, text: string) =>
+    setPathwayNotes((current) => ({
+      ...current,
+      [id]: [
+        ...(current[id] ?? []),
+        {
+          id: `note-${Date.now()}`,
+          author: CURRENT_REVIEWER,
+          timestamp: new Date().toISOString().slice(0, 16).replace("T", " "),
+          text,
+        },
+      ],
+    }));
+
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setThresholds((current) => ({ ...current, [key]: value }));
@@ -706,9 +745,16 @@ const ResearchSpace: React.FC = () => {
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
 
-        <ShortlistCard label="Pathways" count={PATHWAY_ITEMS.length} defaultOpen>
-          {PATHWAY_ITEMS.map((item) => <PathwayRow key={item.id} item={item} />)}
+        <ShortlistCard label="Pathways" count={shortlistPathways.length} defaultOpen>
+          <PathwayShortlistRows
+            pathways={shortlistPathways}
+            notes={pathwayNotes}
+            currentUser={CURRENT_REVIEWER}
+            onAddNote={addPathwayNote}
+            onRemove={removePathway}
+          />
         </ShortlistCard>
+
 
         <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
           {COMPANY_GROUPS.map((group) => (
