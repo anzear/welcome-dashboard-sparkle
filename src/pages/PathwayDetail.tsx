@@ -402,13 +402,6 @@ const PathwayDetail = () => {
           ],
         },
         {
-          name: 'Process',
-          type: 'technology',
-          rows: [
-            { label: 'Process TRL', value: displayMetric(activeMetrics.metrics.trl), percentile: activeMetrics.radar.trlScore },
-          ],
-        },
-        {
           name: 'Product',
           type: 'product',
           rows: [
