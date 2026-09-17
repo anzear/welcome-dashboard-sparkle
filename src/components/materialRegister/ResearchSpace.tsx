@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
+import { Check, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, Star, X } from "lucide-react";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,44 +69,104 @@ type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
 
 
 type ShortlistItem = { id: string; name: string; detail: string };
-type ShortlistGroup = { id: string; label: string; items: ShortlistItem[] };
 
-const SHORTLIST_GROUPS: ShortlistGroup[] = [
+type PathwayItem = {
+  id: string;
+  feedstock: string;
+  process: string;
+  product: string;
+  application: string;
+};
+
+type Rating = { user: string; value: number };
+
+type CompanyItem = {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  size?: string;
+  connectsTo: string;
+  ratings: Rating[];
+};
+
+const CURRENT_REVIEWER = "A. Weber";
+
+const PATHWAY_ITEMS: PathwayItem[] = [
+  { id: "pathway-1", feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging" },
+  { id: "pathway-2", feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid", application: "Biodegradable films" },
+  { id: "pathway-3", feedstock: "Sugarcane molasses", process: "Fermentation", product: "Lactic Acid", application: "Food preservation" },
+];
+
+const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
   {
-    id: "pathways",
-    label: "Pathways",
+    id: "producer",
+    label: "Producer",
     items: [
-      { id: "pathway-1", name: "Whey permeate fermentation", detail: "Whey permeate → Lactic acid" },
-      { id: "pathway-2", name: "Corn stover bioconversion", detail: "Corn stover → Lactic acid" },
-      { id: "pathway-3", name: "Sugarcane molasses fermentation", detail: "Sugarcane molasses → Lactic acid" },
+      {
+        id: "company-1",
+        name: "Corbion",
+        role: "Producer",
+        location: "Gorinchem, Netherlands",
+        size: "250 employees",
+        connectsTo: "Lactic Acid",
+        ratings: [
+          { user: "K. Brandt", value: 4 },
+          { user: "M. Rossi", value: 5 },
+        ],
+      },
+      {
+        id: "company-2",
+        name: "Jungbunzlauer",
+        role: "Producer",
+        location: "Basel, Switzerland",
+        connectsTo: "Lactic Acid",
+        ratings: [{ user: "K. Brandt", value: 3 }],
+      },
     ],
   },
   {
-    id: "companies",
-    label: "Companies",
+    id: "supplier",
+    label: "Supplier",
     items: [
-      { id: "company-1", name: "Corbion", detail: "Producer · Gorinchem, Netherlands" },
-      { id: "company-2", name: "Jungbunzlauer", detail: "Producer · Basel, Switzerland" },
-      { id: "company-3", name: "Galactic", detail: "Producer · Brussels, Belgium" },
+      {
+        id: "company-3",
+        name: "Arla Foods Ingredients",
+        role: "Supplier",
+        location: "Viby, Denmark",
+        size: "1 200 employees",
+        connectsTo: "Whey permeate",
+        ratings: [{ user: "M. Rossi", value: 4 }],
+      },
     ],
   },
   {
-    id: "patents",
-    label: "Patents",
+    id: "offtaker",
+    label: "Offtaker",
     items: [
-      { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
-      { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
-    ],
-  },
-  {
-    id: "papers",
-    label: "Papers",
-    items: [
-      { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
-      { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+      {
+        id: "company-4",
+        name: "Amcor Flexibles",
+        role: "Offtaker",
+        location: "Zurich, Switzerland",
+        size: "400 employees",
+        connectsTo: "PLA packaging",
+        ratings: [],
+      },
     ],
   },
 ];
+
+const PATENT_ITEMS: ShortlistItem[] = [
+  { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
+  { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
+];
+
+const PAPER_ITEMS: ShortlistItem[] = [
+  { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
+  { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+];
+
 
 const statusClasses: Record<EvaluationStatus, string> = {
   Match: "border-success/30 bg-success/10 text-success",
@@ -181,7 +241,15 @@ const MultiSelectChips = ({
   );
 };
 
-const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
+const ShortlistEntry = ({
+  name,
+  right,
+  children,
+}: {
+  name: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
+}) => {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [note, setNote] = useState("");
@@ -199,13 +267,13 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
   return (
     <div className="border-t border-border px-4 py-3 first:border-t-0">
       <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="text-xs font-semibold text-foreground">{item.name}</div>
-          <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+        <div className="min-w-0 flex-1">{children}</div>
+        <div className="flex shrink-0 items-start gap-2">
+          {right}
+          <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${name}` : `Add note for ${name}`} title={note ? "Edit note" : "Add note"}>
+            {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
+          </Button>
         </div>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={openEditor} aria-label={note ? `Edit note for ${item.name}` : `Add note for ${item.name}`} title={note ? "Edit note" : "Add note"}>
-          {note ? <Pencil className="h-3.5 w-3.5" /> : <MessageSquarePlus className="h-3.5 w-3.5" />}
-        </Button>
       </div>
 
       {editing && (
@@ -227,6 +295,90 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => {
     </div>
   );
 };
+
+const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
+  <ShortlistEntry name={item.name}>
+    <div className="text-xs font-semibold text-foreground">{item.name}</div>
+    <p className="mt-0.5 text-xs text-muted-foreground">{item.detail}</p>
+  </ShortlistEntry>
+);
+
+const PathwayRow = ({ item }: { item: PathwayItem }) => (
+  <ShortlistEntry name={`${item.feedstock} → ${item.product}`}>
+    <div className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-foreground">
+      <span>{item.feedstock}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.process}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.product}</span>
+      <span className="text-muted-foreground">→</span>
+      <span>{item.application}</span>
+    </div>
+  </ShortlistEntry>
+);
+
+const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
+  <div className="flex items-center gap-0.5">
+    {[1, 2, 3, 4, 5].map((star) => (
+      <button
+        key={star}
+        type="button"
+        onClick={() => onChange(star)}
+        aria-label={`Rate ${name} ${star} of 5`}
+        className="p-0.5"
+      >
+        <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/50")} />
+      </button>
+    ))}
+  </div>
+);
+
+const CompanyRow = ({ item }: { item: CompanyItem }) => {
+  const [myRating, setMyRating] = useState(0);
+
+  return (
+    <ShortlistEntry name={item.name}>
+      <div className="text-xs font-semibold text-foreground">{item.name}</div>
+      <p className="mt-0.5 text-xs text-muted-foreground">{item.role} · {item.location}</p>
+      {item.size && <p className="mt-0.5 text-xs text-muted-foreground">{item.size}</p>}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <Badge variant="outline" className="text-[10px] font-normal">{item.connectsTo}</Badge>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Your rating</span>
+          <RatingControl value={myRating} onChange={setMyRating} name={item.name} />
+          {myRating > 0 && <span className="text-[10px] text-muted-foreground">{CURRENT_REVIEWER}: {myRating}</span>}
+        </div>
+        {item.ratings.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            {item.ratings.map((rating) => (
+              <span key={rating.user} className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
+                {rating.user}: {rating.value}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </ShortlistEntry>
+  );
+};
+
+const ShortlistCard = ({ label, count, children, defaultOpen = false }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean }) => (
+  <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
+    <AccordionItem value={label} className="border-b-0">
+      <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
+        <span className="flex items-center gap-2">
+          <span className="font-semibold text-foreground">{label}</span>
+          <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+        </span>
+      </AccordionTrigger>
+      <AccordionContent className="border-t border-border pb-0">{children}</AccordionContent>
+    </AccordionItem>
+  </Accordion>
+);
+
+
 
 const ResearchSpace: React.FC = () => {
   const applications = useMemo(
@@ -344,24 +496,34 @@ const ResearchSpace: React.FC = () => {
         </div>
       </section>
 
-      <section className="space-y-2">
+      <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
-        <Accordion type="multiple" defaultValue={["pathways"]} className="overflow-hidden rounded-lg border border-border bg-card">
-          {SHORTLIST_GROUPS.map((group) => (
-            <AccordionItem key={group.id} value={group.id} className="border-b border-border last:border-b-0">
-              <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
-                <span className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground">{group.label}</span>
-                  <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
-                </span>
-              </AccordionTrigger>
-              <AccordionContent className="border-t border-border pb-0">
-                {group.items.map((item) => <ShortlistRow key={item.id} item={item} />)}
-              </AccordionContent>
-            </AccordionItem>
+
+        <ShortlistCard label="Pathways" count={PATHWAY_ITEMS.length} defaultOpen>
+          {PATHWAY_ITEMS.map((item) => <PathwayRow key={item.id} item={item} />)}
+        </ShortlistCard>
+
+        <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
+          {COMPANY_GROUPS.map((group) => (
+            <div key={group.id} className="border-t border-border first:border-t-0">
+              <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{group.label}</span>
+                <Badge variant="secondary" className="h-4 min-w-4 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
+              </div>
+              {group.items.map((item) => <CompanyRow key={item.id} item={item} />)}
+            </div>
           ))}
-        </Accordion>
+        </ShortlistCard>
+
+        <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
+          {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        </ShortlistCard>
+
+        <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
+          {PAPER_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        </ShortlistCard>
       </section>
+
     </div>
   );
 };
