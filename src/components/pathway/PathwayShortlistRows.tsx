@@ -81,6 +81,23 @@ function NotesButton({ count, onClick }: { count: number; onClick: () => void })
   );
 }
 
+/** Consecutive clusters by node identity — grouping never matches on label text. */
+function clusterRuns(pathways: ShortlistPathway[]): { key: string; members: ShortlistPathway[] }[] {
+  const out: { key: string; members: ShortlistPathway[] }[] = [];
+  pathways.forEach((p) => {
+    const key = `${p.feedstockId}|${p.processId}|${p.productId}`;
+    const last = out[out.length - 1];
+    if (last && last.key === key) last.members.push(p);
+    else out.push({ key, members: [p] });
+  });
+  return out;
+}
+
+/** True when at least one cluster holds two or more pathways. */
+export function hasGroupableClusters(pathways: ShortlistPathway[]): boolean {
+  return clusterRuns(pathways).some((run) => run.members.length > 1);
+}
+
 type Props = {
   pathways: ShortlistPathway[];
   notes: Record<string, PathwayNote[]>;
@@ -88,12 +105,14 @@ type Props = {
   /** Removes the pathway from the shortlist (bookmark is always in the filled state here). */
   onRemove: (pathwayId: string) => void;
   currentUser: string;
+  /** Grouped is a secondary view the user opts into from the card header. Flat is the default. */
+  grouped: boolean;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser }: Props) {
+export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  /** Session-only set of collapsed cluster keys. Flat rendering is always the default. */
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  /** Groups the user expanded individually while the grouped view is on. Session-only. */
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notesFor, setNotesFor] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
 
@@ -101,16 +120,7 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
    * Consecutive clusters by node identity. Every pathway appears exactly once, in
    * order; clusters never span non-matching rows.
    */
-  const runs = useMemo(() => {
-    const out: { key: string; members: ShortlistPathway[] }[] = [];
-    pathways.forEach((p) => {
-      const key = `${p.feedstockId}|${p.processId}|${p.productId}`;
-      const last = out[out.length - 1];
-      if (last && last.key === key) last.members.push(p);
-      else out.push({ key, members: [p] });
-    });
-    return out;
-  }, [pathways]);
+  const runs = useMemo(() => clusterRuns(pathways), [pathways]);
 
   const toggle = (ids: string[], on: boolean) =>
     setSelected((prev) => {
@@ -127,7 +137,7 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
 
   const chip = (label: string, cls: string) => <div className={pathwayChipCls(cls)}>{label}</div>;
 
-  const flatRow = (p: ShortlistPathway, collapseKey?: string, clusterSize?: number) => {
+  const flatRow = (p: ShortlistPathway) => {
     const count = (notes[p.id] ?? []).length;
     return (
       <div key={p.id} className="group hover:bg-muted/30 transition-colors">
@@ -162,14 +172,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
             <StatusBadge trl={p.trl} />
           </div>
           <div className="flex items-center justify-end gap-2">
-            {collapseKey && clusterSize && clusterSize > 1 && (
-              <button
-                onClick={() => setCollapsed((prev) => new Set(prev).add(collapseKey))}
-                className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline whitespace-nowrap transition-colors"
-              >
-                Collapse {clusterSize} variants
-              </button>
-            )}
             <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
           </div>
         </div>
@@ -181,12 +183,9 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
     <>
       <div className="divide-y divide-border/50">
         {runs.map(({ key, members }) => {
-          if (members.length < 2 || !collapsed.has(key)) {
-            // Flat default: one row per pathway; the collapse control sits inline on
-            // the first row of a cluster and never occupies its own row.
-            return members.map((p, i) =>
-              flatRow(p, i === 0 && members.length > 1 ? key : undefined, members.length)
-            );
+          if (members.length < 2 || !grouped || expandedGroups.has(key)) {
+            // Flat default: one row per pathway.
+            return members.map((p) => flatRow(p));
           }
 
           // Collapsed cluster: shared three chips, summary chip in the fourth position.
@@ -200,13 +199,7 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
             <div
               key={key}
               className="group cursor-pointer hover:bg-muted/30 transition-colors"
-              onClick={() =>
-                setCollapsed((prev) => {
-                  const next = new Set(prev);
-                  next.delete(key);
-                  return next;
-                })
-              }
+              onClick={() => setExpandedGroups((prev) => new Set(prev).add(key))}
             >
               <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
                 <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
