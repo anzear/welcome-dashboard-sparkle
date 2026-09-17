@@ -732,8 +732,12 @@ const ResearchSpace: React.FC = () => {
         </ShortlistCard>
 
 
-        <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
-          {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        <ShortlistCard label="Patents" count={shortlistPatents.length}>
+          <PatentShortlistTable
+            patents={shortlistPatents}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removePatent}
+          />
         </ShortlistCard>
 
         <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
