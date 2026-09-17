@@ -59,13 +59,7 @@ export const BLOCKER_CATEGORIES = [
   "Internal capacity",
 ];
 
-const STATUS_ORDER: JourneyStatus[] = [
-  "under_evaluation",
-  "go",
-  "go_with_conditions",
-  "hold",
-  "no_go",
-];
+const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 
 export interface BulkPayload {
   kind: BulkKind;
@@ -230,7 +224,7 @@ export const BulkActionDialog: React.FC<Props> = ({
   }, [kind, materials]);
 
   const clearingType = kind === "entry_type" && value === CLEAR_ENTRY_TYPE;
-  const requiresBlocker = kind === "status" && (value === "hold" || value === "no_go");
+  const requiresBlocker = kind === "status" && value === "parked";
   const canApply =
     kind === "intelligence"
       ? materials.length > 0

@@ -19,6 +19,7 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   GATE_OUTCOME_LABEL,
+  GATE_OUTCOMES,
   JOURNEY_STATUS_LABEL,
   type GateCondition,
   type GateOutcome,
@@ -36,16 +37,29 @@ import {
  * suggested. The recommendation sits at the foot, read after the call.
  */
 
-/** The five gate values, in a fixed reading order that carries no ranking. */
-const STATUSES: JourneyStatus[] = ["under_evaluation", "hold", "go_with_conditions", "go", "no_go"];
+/** The seven stages, in workflow order. */
+const STATUSES: JourneyStatus[] = [
+  "not_started",
+  "in_evaluation",
+  "in_testing",
+  "in_development",
+  "in_deployment",
+  "adopted",
+  "parked",
+];
+
+/** Stages that carry detail and draft first: conditions, or a parking note. */
+const DETAIL_STAGES: JourneyStatus[] = ["in_testing", "parked"];
 
 /** Categorical colour. Solid when set, quiet when not — never a gradient. */
 const STATUS_FILL: Record<JourneyStatus, string> = {
-  under_evaluation: "bg-muted-foreground text-background border-muted-foreground",
-  hold: "bg-amber-500 text-white border-amber-500",
-  go_with_conditions: "bg-provenance-judgement text-white border-provenance-judgement",
-  go: "bg-emerald-600 text-white border-emerald-600",
-  no_go: "bg-destructive text-destructive-foreground border-destructive",
+  not_started: "bg-muted-foreground text-background border-muted-foreground",
+  in_evaluation: "bg-provenance-judgement text-white border-provenance-judgement",
+  in_testing: "bg-violet-600 text-white border-violet-600",
+  in_development: "bg-emerald-600 text-white border-emerald-600",
+  in_deployment: "bg-sky-600 text-white border-sky-600",
+  adopted: "bg-foreground text-background border-foreground",
+  parked: "bg-amber-500 text-white border-amber-500",
 };
 
 const LINK =
@@ -111,25 +125,21 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
 
   const startPending = (o: GateOutcome) => {
     setPending(o);
-    setConditions(o === "go_with_conditions" ? [emptyCondition(0)] : []);
-    setHoldTrigger(o === "hold" ? (m.hold_trigger_event ?? "") : "");
-    setHoldReview(o === "hold" ? (m.hold_review_date ?? "") : "");
-    setNoGoReason("");
+    setConditions(o === "in_testing" ? (m.gate_conditions.length > 0 ? m.gate_conditions : [emptyCondition(0)]) : []);
+    setHoldTrigger(o === "parked" ? (m.hold_trigger_event ?? "") : "");
+    setHoldReview(o === "parked" ? (m.hold_review_date ?? "") : "");
+    setNoGoReason(o === "parked" ? (m.no_go_reason ?? "") : "");
   };
 
-  /** A click on a segment. Detail-carrying statuses draft first, then commit. */
+  /** A click on a segment. Detail-carrying stages draft first, then commit. */
   const pickStatus = (s: JourneyStatus) => {
     if (!writable || s === m.journey_status) return;
     setPending(null);
-    if (s === "under_evaluation") {
-      reopenGate(m.material_id, null);
+    if (DETAIL_STAGES.includes(s)) {
+      startPending(s as GateOutcome);
       return;
     }
-    if (s === "go") {
-      setGateOutcome(m.material_id, "go", {});
-      return;
-    }
-    startPending(s);
+    setGateOutcome(m.material_id, s, {});
   };
 
   const commitPending = () => {
@@ -206,10 +216,17 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   /** What the drafted status must carry, inline under the control. */
   const pendingDetail = pending && (
     <div className="space-y-2">
-      {pending === "go_with_conditions" && <ConditionEditor rows={conditions} setRows={setConditions} />}
+      {pending === "in_testing" && <ConditionEditor rows={conditions} setRows={setConditions} />}
 
-      {pending === "hold" && (
+      {pending === "parked" && (
         <div className="space-y-1.5">
+          <Textarea
+            value={noGoReason}
+            onChange={(e) => setNoGoReason(e.target.value)}
+            rows={2}
+            placeholder="Why this is parked. Specific enough that nobody re-litigates it in six months."
+            className="text-[11px]"
+          />
           <Input
             value={holdTrigger}
             onChange={(e) => setHoldTrigger(e.target.value)}
@@ -223,16 +240,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             className="h-7 w-40 tabular-nums text-[11px]"
           />
         </div>
-      )}
-
-      {pending === "no_go" && (
-        <Textarea
-          value={noGoReason}
-          onChange={(e) => setNoGoReason(e.target.value)}
-          rows={2}
-          placeholder="Why not. Specific enough that nobody re-litigates it in six months."
-          className="text-[11px]"
-        />
       )}
 
       <div className="flex flex-wrap items-center gap-2">
@@ -252,7 +259,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   /** What the status that is actually set carries. Only ever the active one. */
   const activeDetail = (
     <>
-      {m.journey_status === "go_with_conditions" && (
+      {m.journey_status === "in_testing" && (
         <div className="space-y-2">
           {condOpen ? (
             <div className="space-y-2">
@@ -262,7 +269,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                   size="sm"
                   className="h-7 text-[11px]"
                   disabled={
-                    outcomeBlockers("go_with_conditions", {
+                    outcomeBlockers("in_testing", {
                       conditions: condDraft,
                       holdTrigger: "",
                       holdReview: "",
@@ -339,10 +346,10 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                 {complete && writable && (
                   <button
                     type="button"
-                    onClick={() => setGateOutcome(m.material_id, "go", {})}
+                    onClick={() => setGateOutcome(m.material_id, "in_development", {})}
                     className={LINK}
                   >
-                    All {m.gate_conditions.length} met — move to Go
+                    All {m.gate_conditions.length} met — move to In development
                   </button>
                 )}
               </div>
@@ -351,24 +358,28 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
         </div>
       )}
 
-      {m.journey_status === "hold" && (
-        <div className="space-y-0.5">
-          <p className="text-[11px] text-foreground">{m.hold_trigger_event ?? "No trigger recorded."}</p>
-          <p
-            className={cn(
-              "tabular-nums text-[10px]",
-              reviewLate ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
-            )}
-          >
-            Review {formatDate(m.hold_review_date)}
-            {reviewLate && " · overdue"}
-          </p>
-        </div>
-      )}
-
-      {m.journey_status === "no_go" && (
+      {m.journey_status === "parked" && (
         <div className="space-y-1">
-          <p className="text-[11px] leading-relaxed text-foreground">{m.no_go_reason ?? "No reason recorded."}</p>
+          {m.no_go_reason ? (
+            <p className="text-[11px] leading-relaxed text-foreground">{m.no_go_reason}</p>
+          ) : null}
+          {m.hold_trigger_event || m.hold_review_date ? (
+            <div className="space-y-0.5">
+              <p className="text-[11px] text-foreground">{m.hold_trigger_event ?? "No trigger recorded."}</p>
+              <p
+                className={cn(
+                  "tabular-nums text-[10px]",
+                  reviewLate ? "text-amber-700 dark:text-amber-400" : "text-muted-foreground",
+                )}
+              >
+                Review {formatDate(m.hold_review_date)}
+                {reviewLate && " · overdue"}
+              </p>
+            </div>
+          ) : null}
+          {!m.no_go_reason && !m.hold_trigger_event && !m.hold_review_date && (
+            <p className="text-[11px] text-foreground">No reason recorded.</p>
+          )}
           {writable && (
             <button type="button" onClick={() => reopenGate(m.material_id, null)} className={LINK}>
               Reopen
@@ -389,7 +400,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               {overdue.length} condition{overdue.length === 1 ? "" : "s"} overdue
             </Flag>
           )}
-          {reviewLate && <Flag>Hold review overdue</Flag>}
+          {reviewLate && <Flag>Park review overdue</Flag>}
           {m.reopened && (
             <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
               Reopened
@@ -398,7 +409,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
         </div>
       )}
 
-      {/* The status is the headline. Five categories, one row, no order implied. */}
+      {/* The status is the headline. Seven stages, one row, in workflow order. */}
       <div className="space-y-1.5">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
@@ -441,10 +452,10 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
       {/* Detail belongs to a status, not to a section of its own. */}
       {pending !== null ? pendingDetail : activeDetail}
 
-      {/* A no-go that was reopened keeps its argument in plain sight. */}
+      {/* A parked decision that was reopened keeps its argument in plain sight. */}
       {m.previous_no_go && (
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          <span className="font-medium text-foreground">Previously no-go:</span> {m.previous_no_go.reason}{" "}
+          <span className="font-medium text-foreground">Previously parked:</span> {m.previous_no_go.reason}{" "}
           <Stamp by={m.previous_no_go.author} date={m.previous_no_go.date} />
         </p>
       )}
@@ -458,7 +469,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
               <SelectValue placeholder="What should happen?" />
             </SelectTrigger>
             <SelectContent className="portfolio-type">
-              {(["go", "go_with_conditions", "hold", "no_go"] as GateOutcome[]).map((o) => (
+              {GATE_OUTCOMES.map((o) => (
                 <SelectItem key={o} value={o} className="text-xs">
                   {GATE_OUTCOME_LABEL[o]}
                 </SelectItem>

@@ -170,7 +170,7 @@ export function blankMaterial(
     supplier_availability: { value: null, capped: false, assessed: false },
     competitor_activity: "not_assessed" as const,
     vcg_data_date: null,
-    journey_status: "under_evaluation" as JourneyStatus,
+    journey_status: "not_started" as JourneyStatus,
     requirements: null,
     blocker_category: null,
     blocker_detail: null,
@@ -274,7 +274,7 @@ export const CSV_COLUMNS: CsvColumn[] = [
     example2: "",
   },
   { field: "ghg_data_basis", label: "GHG data basis", kind: "text", example1: "Supplier-specific", example2: "" },
-  { field: "journey_status", label: "Status", kind: "status", example1: "under_evaluation", example2: "" },
+  { field: "journey_status", label: "Status", kind: "status", example1: "in_evaluation", example2: "" },
   { field: "owner", label: "Owner", kind: "text", example1: "L. Haugen", example2: "" },
   { field: "target_volume", label: "Target volume (t/yr)", kind: "number", example1: "1000", example2: "" },
   { field: "price_ceiling", label: "Price ceiling (EUR/kg)", kind: "number", example1: "1.80", example2: "" },
@@ -365,11 +365,13 @@ export function autoMatch(headers: string[]): (string | null)[] {
 }
 
 export const STATUS_VALUES: JourneyStatus[] = [
-  "under_evaluation",
-  "go",
-  "go_with_conditions",
-  "hold",
-  "no_go",
+  "not_started",
+  "in_evaluation",
+  "in_testing",
+  "in_development",
+  "in_deployment",
+  "adopted",
+  "parked",
 ];
 
 export type CellState = "clean" | "warning" | "error";
@@ -492,7 +494,7 @@ export function rowToMaterial(row: ParsedRow, filename: string): Omit<Material, 
   const statusRaw = (v.journey_status ?? "").trim();
   const journey_status: JourneyStatus = STATUS_VALUES.includes(statusRaw as JourneyStatus)
     ? (statusRaw as JourneyStatus)
-    : "under_evaluation";
+    : "not_started";
 
   const annual_volume = num("annual_volume");
   const unit_price = num("unit_price");

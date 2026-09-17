@@ -2,6 +2,8 @@
 // No new storage is introduced here — this only projects the data we already
 // have (portfolio entries + material_brief_v2_* state) into row shapes.
 
+import { migrateJourneyStatus } from "@/types/materialPrioritisation";
+
 export type PipelineCategory = "Feedstock" | "Product";
 export type EntryType = "Source" | "Produce" | "Valorise";
 
@@ -60,13 +62,12 @@ export type MaterialRow = {
 
 export const JOURNEY_STATUS_META: Record<string, { label: string; chip: string }> = {
   not_started: { label: "Not started", chip: "bg-muted text-muted-foreground border-border" },
-  under_evaluation: { label: "Under evaluation", chip: "bg-sky-500/10 text-sky-700 border-sky-500/30" },
+  in_evaluation: { label: "In evaluation", chip: "bg-sky-500/10 text-sky-700 border-sky-500/30" },
   in_testing: { label: "In testing", chip: "bg-violet-500/10 text-violet-700 border-violet-500/30" },
-  qualified: { label: "Qualified", chip: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
-  sourcing: { label: "Sourcing", chip: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
-  in_use: { label: "In-use", chip: "bg-teal-500/10 text-teal-700 border-teal-500/30" },
+  in_development: { label: "In development", chip: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
+  in_deployment: { label: "In deployment", chip: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+  adopted: { label: "Adopted", chip: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
   parked: { label: "Parked", chip: "bg-muted text-muted-foreground border-border" },
-  rejected: { label: "Rejected", chip: "bg-rose-500/10 text-rose-700 border-rose-500/30" },
 };
 
 const num = (v: unknown): number | null => {
@@ -164,7 +165,7 @@ function projectRow(raw: any, category: PipelineCategory): MaterialRow | null {
     ghgContribution,
     ghgContributionComputed,
     supplierCount: num(scoring.supplierCount),
-    journeyStatus: typeof brief.workStatus === "string" ? brief.workStatus : "not_started",
+    journeyStatus: migrateJourneyStatus(brief.workStatus),
     owner,
     prioritySelected: brief.prioritySelected === "yes",
     priorityPeriod: typeof brief.priorityPeriod === "string" ? brief.priorityPeriod : "",

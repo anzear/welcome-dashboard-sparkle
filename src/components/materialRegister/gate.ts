@@ -13,21 +13,21 @@ export const datePassed = (date: string | null, now: string = todayIso()) =>
   date !== null && date < now;
 
 export const overdueConditions = (m: Material): GateCondition[] =>
-  m.journey_status === "go_with_conditions"
+  m.journey_status === "in_testing"
     ? m.gate_conditions.filter((c) => !c.met && datePassed(c.due_date))
     : [];
 
 export const hasOverdueCondition = (m: Material) => overdueConditions(m).length > 0;
 
 export const holdReviewOverdue = (m: Material) =>
-  m.journey_status === "hold" && datePassed(m.hold_review_date);
+  m.journey_status === "parked" && datePassed(m.hold_review_date);
 
 /**
  * True when every condition is met. This never flips the gate on its own — it
  * only earns the owner a prompt. Flipping a gate is a decision.
  */
 export const allConditionsMet = (m: Material) =>
-  m.journey_status === "go_with_conditions" &&
+  m.journey_status === "in_testing" &&
   m.gate_conditions.length > 0 &&
   m.gate_conditions.every((c) => c.met);
 
@@ -48,7 +48,7 @@ export const gateFlags = (m: Material): GateFlag[] => {
       tone: "warn",
     });
   }
-  if (holdReviewOverdue(m)) flags.push({ id: "hold_review", label: "Hold review overdue", tone: "warn" });
+  if (holdReviewOverdue(m)) flags.push({ id: "hold_review", label: "Park review overdue", tone: "warn" });
   if (allConditionsMet(m))
     flags.push({
       id: "conditions_complete",
@@ -79,22 +79,22 @@ export const outcomeBlockers = (
   },
 ): string[] => {
   const blockers: string[] = [];
-  if (outcome === "go_with_conditions") {
+  if (outcome === "in_testing") {
     if (draft.conditions.length === 0) blockers.push("Add at least one condition.");
     if (draft.conditions.some((c) => !c.text.trim())) blockers.push("Every condition needs text.");
     if (draft.conditions.some((c) => !c.due_date)) blockers.push("Every condition needs a due date.");
     if (draft.conditions.some((c) => !c.owner)) blockers.push("Every condition needs an owner.");
   }
-  if (outcome === "hold") {
-    if (!draft.holdTrigger.trim()) blockers.push("State what has to happen.");
-    if (!draft.holdReview) blockers.push("Set a review date.");
+  if (outcome === "parked") {
+    if (!draft.holdTrigger.trim() && !draft.noGoReason.trim())
+      blockers.push("Say why this is parked or what has to happen before it moves.");
+    if (draft.holdTrigger.trim() && !draft.holdReview) blockers.push("Set a review date.");
   }
-  if (outcome === "no_go" && !draft.noGoReason.trim()) blockers.push("State the reason.");
   return blockers;
 };
 
-/** The gate status an outcome sets. The two vocabularies line up one-to-one. */
-export const statusForOutcome = (o: GateOutcome): JourneyStatus => o;
+/** The stage a decision sets. The two vocabularies line up one-to-one. */
+export const statusForOutcome = (o: JourneyStatus): JourneyStatus => o;
 
 export const formatDate = (d: string | null) => {
   if (!d) return "—";

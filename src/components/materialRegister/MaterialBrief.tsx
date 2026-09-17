@@ -478,7 +478,7 @@ export const MaterialBrief: React.FC<{
 
 
 
-  const draftNeedsBlocker = draftStatus === "hold" || draftStatus === "no_go";
+  const draftNeedsBlocker = draftStatus === "parked";
   const canSaveStatus = draftStatus !== null && (!draftNeedsBlocker || draftBlockerCategory !== "");
 
   const beginStatusChange = (next: JourneyStatus) => {
@@ -488,7 +488,7 @@ export const MaterialBrief: React.FC<{
     }
     setDraftStatus(next);
     setStatusReason("");
-    setDraftBlockerCategory(next === "hold" || next === "no_go" ? (m.blocker_category ?? "") : "");
+    setDraftBlockerCategory(next === "parked" ? (m.blocker_category ?? "") : "");
     setDraftBlockerDetail(m.blocker_detail ?? "");
     setDraftBlockerCondition(m.blocker_condition ?? "");
   };
@@ -978,7 +978,7 @@ export const MaterialBrief: React.FC<{
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
                 <span
                   className="text-[10px] font-medium text-amber-700 dark:text-amber-400"
-                  title={hasOverdueCondition(m) ? "Condition overdue" : "Hold review overdue"}
+                  title={hasOverdueCondition(m) ? "Condition overdue" : "Park review overdue"}
                 >
                   {hasOverdueCondition(m) ? "Condition overdue" : "Review overdue"}
                 </span>

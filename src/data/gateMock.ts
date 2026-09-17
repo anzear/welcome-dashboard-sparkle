@@ -1,4 +1,5 @@
 import { DEMO_USER_NAMES } from "@/config/assessmentCriteria";
+import { GATE_OUTCOMES } from "@/types/materialPrioritisation";
 import type {
   GateCondition,
   GateOutcome,
@@ -59,22 +60,28 @@ const ROLES: Role[] = [
 ];
 
 const RECOMMENDATION_TEXT: Record<GateOutcome, string[]> = {
-  go: [
+  in_development: [
     "Two suppliers hold the spec at our volume and the cost gap is under 4%. Nothing left to wait for.",
     "Trial batches held the foam profile and the claim survives a marketing review. Worth committing.",
     "Drop-in on the current line, and the emissions cut carries the 2027 target on its own.",
   ],
-  go_with_conditions: [
+  in_testing: [
     "The route works technically, but I want a second source and a stability read before we commit volume.",
-    "Cost holds at current volume only. Go, provided procurement locks a 24-month price.",
+    "Cost holds at current volume only. Proceed, provided procurement locks a 24-month price.",
     "Strong fit, but the claim wording has to clear legal before we put it on a pack.",
   ],
-  hold: [
-    "Nothing wrong with it — we simply do not know whether the claim sells. That answer is not ours to give.",
-    "Only one qualified supplier and all of it out of one region. Hold until that is not true.",
-    "Regulatory review lands next spring and would rewrite the whole case. Hold until then.",
+  in_deployment: [
+    "Development batches are stable; time to line up supply contracts and a rollout plan.",
+    "Performance is proven at pilot scale — move it into deployment planning.",
   ],
-  no_go: [
+  adopted: [
+    "Running on two product lines without issues. Make it the standard grade.",
+    "Supply, cost and claims all hold in production. Adopt it fully.",
+  ],
+  parked: [
+    "Nothing wrong with it — we simply do not know whether the claim sells. That answer is not ours to give.",
+    "Only one qualified supplier and all of it out of one region. Park until that is not true.",
+    "Regulatory review lands next spring and would rewrite the whole case. Park until then.",
     "Attempted twice, no supplier interest at our volume, and the cost gap is structural rather than temporary.",
     "The only available grade fails the sensory panel and reformulating the line costs more than it saves.",
   ],
@@ -225,30 +232,30 @@ export function applyGateSeed(rows: Material[]): GateSeed {
 
     switch (role) {
       case "recommended": {
-        // Written, deliberately not decided. The gate stays under evaluation.
-        recordRec(pickRec((["go", "go_with_conditions", "hold", "no_go"] as GateOutcome[])[i % 4]));
+        // Written, deliberately not decided. The stage stays in evaluation.
+        recordRec(pickRec(GATE_OUTCOMES[i % GATE_OUTCOMES.length]));
         break;
       }
       case "go": {
-        recordRec(pickRec("go"));
-        decide("go");
-        write(m, "gate_outcome", "journey_status", row.journey_status, "go", owner, decDate);
+        recordRec(pickRec("in_development"));
+        decide("in_development");
+        write(m, "gate_outcome", "journey_status", row.journey_status, "in_development", owner, decDate);
         break;
       }
       case "go_overturned": {
-        // Recommendation said Hold, the decision was Go. Both stay visible.
-        recordRec(pickRec("hold"));
-        decide("go");
-        write(m, "gate_outcome", "journey_status", row.journey_status, "go", owner, decDate);
+        // Recommendation said Park, the decision was In development. Both stay visible.
+        recordRec(pickRec("parked"));
+        decide("in_development");
+        write(m, "gate_outcome", "journey_status", row.journey_status, "in_development", owner, decDate);
         break;
       }
       case "conditions_open":
       case "conditions_partial":
       case "conditions_complete":
       case "conditions_overdue": {
-        recordRec(pickRec("go_with_conditions"));
-        decide("go_with_conditions");
-        write(m, "gate_outcome", "journey_status", row.journey_status, "go_with_conditions", owner, decDate);
+        recordRec(pickRec("in_testing"));
+        decide("in_testing");
+        write(m, "gate_outcome", "journey_status", row.journey_status, "in_testing", owner, decDate);
         const [a, b, c] = conditionPool(3, i);
         if (role === "conditions_open") addConditions([[a, 34, false], [b, 61, false]]);
         if (role === "conditions_partial") addConditions([[a, -12, true], [b, 27, false], [c, 55, false]]);
@@ -259,9 +266,9 @@ export function applyGateSeed(rows: Material[]): GateSeed {
       }
       case "hold":
       case "hold_overdue": {
-        recordRec(pickRec("hold"));
-        decide("hold");
-        write(m, "gate_outcome", "journey_status", row.journey_status, "hold", owner, decDate);
+        recordRec(pickRec("parked"));
+        decide("parked");
+        write(m, "gate_outcome", "journey_status", row.journey_status, "parked", owner, decDate);
         m.hold_trigger_event = HOLD_TRIGGERS[i % HOLD_TRIGGERS.length];
         m.hold_review_date = role === "hold_overdue" ? shiftDays(NOW, -26) : shiftDays(NOW, 45 + (i % 60));
         write(m, "hold_change", "hold_trigger_event", null, m.hold_trigger_event, owner, decDate);
@@ -269,25 +276,25 @@ export function applyGateSeed(rows: Material[]): GateSeed {
         break;
       }
       case "no_go": {
-        recordRec(pickRec("no_go"));
-        decide("no_go");
-        write(m, "gate_outcome", "journey_status", row.journey_status, "no_go", owner, decDate);
+        recordRec(pickRec("parked"));
+        decide("parked");
+        write(m, "gate_outcome", "journey_status", row.journey_status, "parked", owner, decDate);
         m.no_go_reason = NO_GO_REASONS[i % NO_GO_REASONS.length];
         write(m, "no_go_reason", "no_go_reason", null, m.no_go_reason, owner, decDate);
         break;
       }
       case "reopened": {
-        // No-go, then reopened. The old reason is kept, never deleted.
+        // Parked, then reopened. The old reason is kept, never deleted.
         const previousReason = NO_GO_REASONS[0];
         const noGoDate = shiftDays(recDate, 2);
-        recordRec(pickRec("no_go"));
-        write(m, "gate_outcome", "journey_status", row.journey_status, "no_go", owner, noGoDate);
+        recordRec(pickRec("parked"));
+        write(m, "gate_outcome", "journey_status", row.journey_status, "parked", owner, noGoDate);
         write(m, "no_go_reason", "no_go_reason", null, previousReason, owner, noGoDate);
         m.previous_no_go = { reason: previousReason, author: owner, date: noGoDate };
         m.no_go_reason = null;
         m.reopened = true;
-        decide("under_evaluation");
-        write(m, "reopen", "reopen", "no_go", "under_evaluation", owner, decDate, "New route surfaced in the VCG signals.");
+        decide("in_evaluation");
+        write(m, "reopen", "reopen", "parked", "in_evaluation", owner, decDate, "New route surfaced in the VCG signals.");
         break;
       }
       default:

@@ -70,23 +70,50 @@ export interface MaterialRequirements {
   notes: string | null;
 }
 
-/** Gate status — the decision position, not a workflow stage. */
-export type JourneyStatus = "under_evaluation" | "go" | "go_with_conditions" | "hold" | "no_go";
+/**
+ * Workflow stage — where the material sits on the way into use. One shared
+ * vocabulary across the material profile and the material portfolio.
+ */
+export type JourneyStatus =
+  | "not_started"
+  | "in_evaluation"
+  | "in_testing"
+  | "in_development"
+  | "in_deployment"
+  | "adopted"
+  | "parked";
 
-/** Legacy status values seen in stored/mock data. */
+/**
+ * Legacy status values seen in stored/mock data. Both older vocabularies fold
+ * onto the seven stages: the gate outcomes (go, go_with_conditions, hold,
+ * no_go) and the portfolio stages (under_evaluation, qualified, sourcing,
+ * in_use, rejected).
+ */
 export const migrateJourneyStatus = (v: unknown): JourneyStatus => {
   switch (v) {
-    case "go":
-      return "go";
+    case "in_evaluation":
+    case "under_evaluation":
+      return "in_evaluation";
+    case "in_testing":
     case "go_with_conditions":
-      return "go_with_conditions";
-    case "hold":
+      return "in_testing";
+    case "in_development":
+    case "go":
+    case "qualified":
+      return "in_development";
+    case "in_deployment":
+    case "sourcing":
+      return "in_deployment";
+    case "adopted":
+    case "in_use":
+      return "adopted";
     case "parked":
-      return "hold";
+    case "hold":
     case "no_go":
-      return "no_go";
+    case "rejected":
+      return "parked";
     default:
-      return "under_evaluation";
+      return "not_started";
   }
 };
 
@@ -165,9 +192,15 @@ export const formatSupplierAvailability = (s: SupplierAvailability | undefined):
  * The outcome is the decision. It can overturn the recommendation, and when it
  * does both stay visible.
  */
-export type GateOutcome = "go" | "go_with_conditions" | "hold" | "no_go";
+export type GateOutcome = "in_testing" | "in_development" | "in_deployment" | "adopted" | "parked";
 
-export const GATE_OUTCOMES: GateOutcome[] = ["go", "go_with_conditions", "hold", "no_go"];
+export const GATE_OUTCOMES: GateOutcome[] = ["in_testing", "in_development", "in_deployment", "adopted", "parked"];
+
+/** Stored recommendations carry legacy outcomes; fold them onto the stages. */
+export const migrateGateOutcome = (v: unknown): GateOutcome => {
+  const s = migrateJourneyStatus(v);
+  return s === "not_started" || s === "in_evaluation" ? "parked" : s;
+};
 
 export interface GateRecommendation {
   outcome: GateOutcome;
@@ -289,11 +322,13 @@ export interface Material {
 
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
-  under_evaluation: "Under evaluation",
-  go: "Go",
-  go_with_conditions: "Go with conditions",
-  hold: "Hold",
-  no_go: "No-go",
+  not_started: "Not started",
+  in_evaluation: "In evaluation",
+  in_testing: "In testing",
+  in_development: "In development",
+  in_deployment: "In deployment",
+  adopted: "Adopted",
+  parked: "Parked",
 };
 
 /**
@@ -401,10 +436,10 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   material_added: "Material added",
   recommendation: "Recommendation",
   gate_condition: "Condition",
-  hold_trigger_event: "Hold trigger",
-  hold_review_date: "Hold review date",
-  no_go_reason: "No-go reason",
-  reopen: "Gate reopened",
+  hold_trigger_event: "Trigger event",
+  hold_review_date: "Review date",
+  no_go_reason: "Parking reason",
+  reopen: "Status reopened",
   decision_export: "Material profile export",
 };
 
@@ -433,10 +468,11 @@ export const EMPTY_GATE = {
 >;
 
 export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
-  go: "Go",
-  go_with_conditions: "Go with conditions",
-  hold: "Hold",
-  no_go: "No-go",
+  in_testing: "In testing",
+  in_development: "In development",
+  in_deployment: "In deployment",
+  adopted: "Adopted",
+  parked: "Parked",
 };
 
 /** Teams that contribute judgements. */

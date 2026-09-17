@@ -461,10 +461,10 @@ interface Store {
   canSetGate: (m: Material) => boolean;
   /** Writes or rewrites the recommendation. Blocked when the text is empty. */
   saveRecommendation: (materialId: string, outcome: GateOutcome, text: string) => void;
-  /** Records the decision and whatever that outcome has to carry with it. */
+  /** Records the decision and whatever that stage has to carry with it. */
   setGateOutcome: (
     materialId: string,
-    outcome: GateOutcome,
+    outcome: JourneyStatus,
     payload: {
       conditions?: GateCondition[];
       holdTrigger?: string | null;
@@ -476,7 +476,7 @@ interface Store {
   toggleCondition: (materialId: string, conditionId: string, met: boolean) => void;
   /** Owner-only condition edits on a live gate. */
   saveConditions: (materialId: string, conditions: GateCondition[]) => void;
-  /** Sends a no-go material back to under evaluation. The old reason survives. */
+  /** Sends a parked material back to in evaluation. The old reason survives. */
   reopenGate: (materialId: string, note: string | null) => void;
   /**
    * People who have put at least one thing on the record for this material:
@@ -1624,10 +1624,10 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
       journey_status: statusForOutcome(outcome),
       gate_decided_by: currentUser.name,
       gate_decided_date: stamp,
-      gate_conditions: outcome === "go_with_conditions" ? (payload.conditions ?? prev.gate_conditions) : prev.gate_conditions,
-      hold_trigger_event: outcome === "hold" ? (payload.holdTrigger ?? null) : prev.hold_trigger_event,
-      hold_review_date: outcome === "hold" ? (payload.holdReview ?? null) : prev.hold_review_date,
-      no_go_reason: outcome === "no_go" ? (payload.noGoReason ?? null) : prev.no_go_reason,
+      gate_conditions: outcome === "in_testing" ? (payload.conditions ?? prev.gate_conditions) : prev.gate_conditions,
+      hold_trigger_event: outcome === "parked" ? (payload.holdTrigger ?? null) : prev.hold_trigger_event,
+      hold_review_date: outcome === "parked" ? (payload.holdReview ?? null) : prev.hold_review_date,
+      no_go_reason: outcome === "parked" ? (payload.noGoReason ?? null) : prev.no_go_reason,
       provenance: { ...prev.provenance, journey_status: enteredProvenance() },
     }));
 
@@ -1641,7 +1641,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         changed_by: currentUser.name,
       },
     ];
-    if (outcome === "go_with_conditions") {
+    if (outcome === "in_testing") {
       (payload.conditions ?? []).forEach((c) => {
         const existing = m.gate_conditions.find((x) => x.condition_id === c.condition_id);
         if (existing && existing.text === c.text && existing.due_date === c.due_date && existing.owner === c.owner)
@@ -1669,7 +1669,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           }),
         );
     }
-    if (outcome === "hold") {
+    if (outcome === "parked") {
       if ((payload.holdTrigger ?? null) !== m.hold_trigger_event)
         written.push({
           material_id: materialId,
@@ -1689,7 +1689,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
           changed_by: currentUser.name,
         });
     }
-    if (outcome === "no_go" && (payload.noGoReason ?? null) !== m.no_go_reason)
+    if (outcome === "parked" && (payload.noGoReason ?? null) !== m.no_go_reason)
       written.push({
         material_id: materialId,
         event_type: "no_go_reason",
@@ -1730,21 +1730,21 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
   const saveConditions = (materialId: string, conditions: GateCondition[]) => {
     const m = data.find((x) => x.material_id === materialId);
     if (!m || !gateWritable(m)) return;
-    setGateOutcome(materialId, "go_with_conditions", { conditions });
+    setGateOutcome(materialId, "in_testing", { conditions });
   };
 
   /**
-   * Back to under evaluation. From a no-go this clears the live reason but keeps
-   * the argument on the record; from any other status it simply reopens.
+   * Back to in evaluation. From a parked material this clears the live reason
+   * but keeps the argument on the record; from any other stage it simply reopens.
    */
   const reopenGate = (materialId: string, note: string | null) => {
     const m = data.find((x) => x.material_id === materialId);
-    if (!m || !gateWritable(m) || m.journey_status === "under_evaluation") return;
+    if (!m || !gateWritable(m) || m.journey_status === "in_evaluation" || m.journey_status === "not_started") return;
     const stamp = todayIso();
     patchMaterial(materialId, (prev) => ({
       ...prev,
-      journey_status: "under_evaluation",
-      reopened: prev.journey_status === "no_go" ? true : prev.reopened,
+      journey_status: "in_evaluation",
+      reopened: prev.journey_status === "parked" && prev.no_go_reason ? true : prev.reopened,
       previous_no_go: prev.no_go_reason
         ? {
             reason: prev.no_go_reason,
@@ -1763,7 +1763,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         event_type: "reopen",
         field: "reopen",
         from_value: m.journey_status,
-        to_value: "under_evaluation",
+        to_value: "in_evaluation",
         reason: note?.trim() ? note.trim() : null,
         changed_by: currentUser.name,
       },
