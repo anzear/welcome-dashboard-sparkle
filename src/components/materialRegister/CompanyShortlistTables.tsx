@@ -198,7 +198,7 @@ export function CompanyShortlistTables({
                           }
                           placeholder="Add your note…"
                           aria-label={`Your note on ${company.name}`}
-                          className="h-8 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
+                          className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
                         />
                       </TableCell>
                       <TableCell className="h-11 py-0">
