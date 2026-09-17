@@ -93,8 +93,8 @@ export const outcomeBlockers = (
   return blockers;
 };
 
-/** The gate status an outcome sets. The two vocabularies line up one-to-one. */
-export const statusForOutcome = (o: GateOutcome): JourneyStatus => o;
+/** The stage a decision sets. The two vocabularies line up one-to-one. */
+export const statusForOutcome = (o: JourneyStatus): JourneyStatus => o;
 
 export const formatDate = (d: string | null) => {
   if (!d) return "—";
