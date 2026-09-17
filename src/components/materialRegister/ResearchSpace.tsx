@@ -361,6 +361,8 @@ const ResearchSpace: React.FC = () => {
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
+  /** Grouped-by-applications is an opt-in view, toggled from the card header. Flat is the default. */
+  const [pathwaysGrouped, setPathwaysGrouped] = useState(false);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
   const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
