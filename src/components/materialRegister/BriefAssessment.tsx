@@ -228,8 +228,8 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   }
 
   return (
-    <Collapsible open={expanded} onOpenChange={setExpanded} className="rounded-lg border border-border/60 bg-muted/40">
-      <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1 px-3 py-2">
+    <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2">
+      <div className="group/figs flex flex-wrap items-center gap-x-5 gap-y-1">
         {([
           ["Spend", m.annual_spend, "EUR/yr"],
           ["Volume", m.annual_volume, "t/yr"],
@@ -253,27 +253,13 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
           variant="ghost"
           size="sm"
           onClick={() => setEditing(true)}
-          className="h-6 gap-1 px-1.5 text-[10px] opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100"
+          className="ml-auto h-6 gap-1 px-1.5 text-[10px] opacity-0 transition-opacity focus:opacity-100 group-hover/figs:opacity-100"
         >
           <Pencil className="h-3 w-3" />
           Edit figures
         </Button>
-        <CollapsibleTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="ml-auto h-6 gap-1.5 px-1.5 text-[9px] uppercase tracking-widest text-muted-foreground"
-          >
-            Company data
-            <ChevronDown className={cn("h-3 w-3 transition-transform", expanded && "rotate-180")} />
-          </Button>
-        </CollapsibleTrigger>
       </div>
-      <CollapsibleContent>
-        <CompanyDataDetails material={m} />
-      </CollapsibleContent>
-    </Collapsible>
+    </div>
   );
 };
 
