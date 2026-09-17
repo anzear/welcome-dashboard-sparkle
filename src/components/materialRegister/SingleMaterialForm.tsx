@@ -44,13 +44,7 @@ import {
 } from "@/components/materialRegister/materialEntry";
 import { X } from "lucide-react";
 
-const STATUS_ORDER: JourneyStatus[] = [
-  "under_evaluation",
-  "go",
-  "go_with_conditions",
-  "hold",
-  "no_go",
-];
+const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 
 interface Props {
   onDone: (savedName: string, again: boolean) => void;
@@ -73,7 +67,7 @@ export const SingleMaterialForm: React.FC<Props> = ({ onDone }) => {
   const [applications, setApplications] = useState<string[]>([]);
   const [products, setProducts] = useState<string[]>([]);
   const [owner, setOwner] = useState<string | null>(null);
-  const [status, setStatus] = useState<JourneyStatus>("under_evaluation");
+  const [status, setStatus] = useState<JourneyStatus>("not_started");
 
   // Panel A — the material being replaced
   const [volume, setVolume] = useState<number | null>(null);
