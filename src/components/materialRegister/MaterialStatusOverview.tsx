@@ -77,7 +77,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
   return (
     <div className="space-y-3">
       <div className="overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm">
-        <div className="grid grid-cols-1 divide-y divide-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-[190px_190px_325px_1fr]">
+        <div className="grid grid-cols-1 divide-y divide-border/60 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-[135px_160px_200px_minmax(280px,1fr)]">
           <SummaryField label="Status" hint="Set in the Status panel">
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill
