@@ -138,6 +138,10 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     role: "Producer",
     savedBy: "K. Brandt",
     rating: 4,
+    teamRatings: [
+      { author: "M. Rossi", value: 3 },
+      { author: "A. Weber", value: 5 },
+    ],
     teamNotes: [
       { id: "cn-1", author: "K. Brandt", timestamp: "2026-08-12 09:30", text: "Food-grade capacity confirmed for Europe." },
       { id: "cn-2", author: "M. Rossi", timestamp: "2026-08-28 14:05", text: "Quoted above our target price — renegotiate at volume." },
@@ -152,6 +156,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     role: "Producer",
     savedBy: "A. Weber",
     rating: 3,
+    teamRatings: [{ author: "K. Brandt", value: 4 }],
     teamNotes: [],
   },
   {
@@ -164,6 +169,7 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
     role: "Supplier",
     savedBy: "M. Rossi",
     rating: 4,
+    teamRatings: [{ author: "K. Brandt", value: 4 }],
     teamNotes: [
       { id: "cn-3", author: "M. Rossi", timestamp: "2026-09-01 11:20", text: "Permeate volumes available from Q2 2027." },
     ],
