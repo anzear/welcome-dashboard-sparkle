@@ -1,0 +1,241 @@
+import { useState } from "react";
+import { Star, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+export type CompanyRating = { user: string; value: number };
+export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
+
+export type ShortlistCompany = {
+  id: string;
+  name: string;
+  profileUrl: string;
+  country: string;
+  /** Absent means unclassified — the cell reads "Not classified". */
+  sector?: string;
+  /** Node chip tying the company to the pathway. */
+  linkedNode: string;
+  role: "Producer" | "Supplier" | "Offtaker";
+  savedBy: string;
+  /** Colleagues' ratings only — never aggregated. */
+  teamRatings: CompanyRating[];
+  /** Colleagues' notes only — read-only for the current user. */
+  teamNotes: CompanyNote[];
+};
+
+const ROLE_SECTIONS: { role: ShortlistCompany["role"]; heading: string }[] = [
+  { role: "Producer", heading: "Shortlisted producers" },
+  { role: "Supplier", heading: "Shortlisted suppliers" },
+  { role: "Offtaker", heading: "Shortlisted offtakers" },
+];
+
+const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
+
+/** Fixed column widths, identical across all three role tables. */
+const Columns = () => (
+  <colgroup>
+    <col style={{ width: "160px" }} />
+    <col style={{ width: "90px" }} />
+    <col style={{ width: "120px" }} />
+    <col style={{ width: "120px" }} />
+    <col style={{ width: "100px" }} />
+    <col style={{ width: "120px" }} />
+    <col />
+    <col style={{ width: "100px" }} />
+    <col style={{ width: "44px" }} />
+  </colgroup>
+);
+
+function StarRating({
+  value,
+  onChange,
+  name,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+  name: string;
+}) {
+  return (
+    <div className="flex items-center gap-0.5" role="group" aria-label={`Your rating for ${name}`}>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          // Clicking the current rating clears it back to unrated.
+          onClick={() => onChange(value === star ? 0 : star)}
+          aria-label={`Rate ${name} ${star} of 5`}
+          className="p-0.5"
+        >
+          <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/40")} />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function CompanyShortlistTables({
+  companies,
+  currentUser,
+  onRemove,
+}: {
+  companies: ShortlistCompany[];
+  currentUser: string;
+  onRemove: (id: string) => void;
+}) {
+  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+  const [myNotes, setMyNotes] = useState<Record<string, string>>({});
+  const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
+
+  const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
+
+  return (
+    <>
+      <div className="divide-y divide-border">
+        {ROLE_SECTIONS.map(({ role, heading }) => {
+          const rows = companies.filter((company) => company.role === role);
+          // A role with no companies is omitted entirely — never an empty table or a count of 0.
+          if (rows.length === 0) return null;
+
+          return (
+            <div key={role}>
+              <div className="flex items-center gap-1.5 bg-muted/40 px-4 py-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{heading}</span>
+                <span className="text-[10px] text-muted-foreground">· {rows.length} saved</span>
+              </div>
+              <Table className="table-fixed">
+                <Columns />
+                <TableHeader className="bg-muted/20">
+                  <TableRow className="border-b border-border">
+                    <TableHead className={HEAD_CLS}>Company</TableHead>
+                    <TableHead className={HEAD_CLS}>Country</TableHead>
+                    <TableHead className={HEAD_CLS}>Sector</TableHead>
+                    <TableHead className={HEAD_CLS}>Linked node</TableHead>
+                    <TableHead className={HEAD_CLS}>Your rating</TableHead>
+                    <TableHead className={HEAD_CLS}>Team ratings</TableHead>
+                    <TableHead className={HEAD_CLS}>Notes</TableHead>
+                    <TableHead className={HEAD_CLS}>Saved by</TableHead>
+                    <TableHead className={HEAD_CLS} />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((company) => {
+                    const myRating = myRatings[company.id] ?? 0;
+                    const teamNoteCount = company.teamNotes.length;
+                    return (
+                      <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
+                        <TableCell className="py-2">
+                          <a
+                            href={company.profileUrl}
+                            className="text-[10px] font-semibold text-foreground underline-offset-2 hover:underline"
+                          >
+                            {company.name}
+                          </a>
+                        </TableCell>
+                        <TableCell className="py-2 text-[10px] text-muted-foreground">{company.country}</TableCell>
+                        <TableCell className="py-2 text-[10px] text-muted-foreground">
+                          {company.sector ?? "Not classified"}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <Badge variant="outline" className="max-w-full truncate text-[10px] font-normal">
+                            {company.linkedNode}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <StarRating
+                            value={myRating}
+                            name={company.name}
+                            onChange={(next) => setMyRatings((current) => ({ ...current, [company.id]: next }))}
+                          />
+                        </TableCell>
+                        <TableCell className="py-2">
+                          {company.teamRatings.length > 0 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {company.teamRatings.map((rating) => (
+                                <span
+                                  key={rating.user}
+                                  className="rounded-full border border-border px-2 py-0.5 text-[9px] text-muted-foreground"
+                                >
+                                  {rating.user}: {rating.value}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-[9px] italic text-muted-foreground/70">None</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-2">
+                          <div className="flex items-center gap-1.5">
+                            <Input
+                              value={myNotes[company.id] ?? ""}
+                              onChange={(event) =>
+                                setMyNotes((current) => ({ ...current, [company.id]: event.target.value }))
+                              }
+                              placeholder="Add your note…"
+                              aria-label={`Your note on ${company.name}`}
+                              className="h-7 bg-background text-[10px]"
+                            />
+                            {teamNoteCount > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setTeamPanel(company)}
+                                className="shrink-0 whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[9px] text-muted-foreground hover:text-foreground"
+                              >
+                                {teamNoteCount} from team
+                              </button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-2 text-[10px] text-muted-foreground">{company.savedBy}</TableCell>
+                        <TableCell className="py-2 text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            title="Remove from shortlist"
+                            onClick={() => onRemove(company.id)}
+                          >
+                            <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          );
+        })}
+      </div>
+
+      <Sheet open={teamPanel !== null} onOpenChange={(open) => !open && setTeamPanel(null)}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="text-sm">
+              {teamPanel?.name} — {teamPanel?.role}
+            </SheetTitle>
+          </SheetHeader>
+          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team notes · read only</p>
+          <div className="mt-3 space-y-2">
+            {panelNotes.map((note) => (
+              <div key={note.id} className="rounded-md border border-border/60 bg-muted/40 px-3 py-2">
+                <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground">
+                  <span>{note.author}</span>
+                  <span>{note.timestamp}</span>
+                </div>
+                <p className="mt-1 text-xs text-foreground/85 leading-relaxed">{note.text}</p>
+              </div>
+            ))}
+          </div>
+          <p className="mt-4 text-[10px] text-muted-foreground">
+            Signed in as {currentUser}. Your own note stays editable in the row.
+          </p>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}

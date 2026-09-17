@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, Star, X } from "lucide-react";
+import { Check, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
+import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
+
 
 
 const GEOGRAPHY_OPTIONS = [
@@ -79,17 +81,8 @@ type ShortlistItem = { id: string; name: string; detail: string };
 
 
 
-type Rating = { user: string; value: number };
 
-type CompanyItem = {
-  id: string;
-  name: string;
-  role: string;
-  location: string;
-  size?: string;
-  connectsTo: string;
-  ratings: Rating[];
-};
+
 
 const CURRENT_REVIEWER = "A. Weber";
 
@@ -132,64 +125,64 @@ const INITIAL_PATHWAY_NOTES: Record<string, PathwayNote[]> = {
 };
 
 
-const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
+const SHORTLIST_COMPANIES: ShortlistCompany[] = [
   {
-    id: "producer",
-    label: "Producer",
-    items: [
-      {
-        id: "company-1",
-        name: "Corbion",
-        role: "Producer",
-        location: "Gorinchem, Netherlands",
-        size: "250 employees",
-        connectsTo: "Lactic Acid",
-        ratings: [
-          { user: "K. Brandt", value: 4 },
-          { user: "M. Rossi", value: 5 },
-        ],
-      },
-      {
-        id: "company-2",
-        name: "Jungbunzlauer",
-        role: "Producer",
-        location: "Basel, Switzerland",
-        connectsTo: "Lactic Acid",
-        ratings: [{ user: "K. Brandt", value: 3 }],
-      },
+    id: "company-1",
+    name: "Corbion",
+    profileUrl: "#company-corbion",
+    country: "Netherlands",
+    sector: "Bio-based chemicals",
+    linkedNode: "Lactic Acid",
+    role: "Producer",
+    savedBy: "K. Brandt",
+    teamRatings: [
+      { user: "K. Brandt", value: 4 },
+      { user: "M. Rossi", value: 5 },
+    ],
+    teamNotes: [
+      { id: "cn-1", author: "K. Brandt", timestamp: "2026-08-12 09:30", text: "Food-grade capacity confirmed for Europe." },
+      { id: "cn-2", author: "M. Rossi", timestamp: "2026-08-28 14:05", text: "Quoted above our target price — renegotiate at volume." },
     ],
   },
   {
-    id: "supplier",
-    label: "Supplier",
-    items: [
-      {
-        id: "company-3",
-        name: "Arla Foods Ingredients",
-        role: "Supplier",
-        location: "Viby, Denmark",
-        size: "1 200 employees",
-        connectsTo: "Whey permeate",
-        ratings: [{ user: "M. Rossi", value: 4 }],
-      },
+    id: "company-2",
+    name: "Jungbunzlauer",
+    profileUrl: "#company-jungbunzlauer",
+    country: "Switzerland",
+    linkedNode: "Lactic Acid",
+    role: "Producer",
+    savedBy: "A. Weber",
+    teamRatings: [{ user: "K. Brandt", value: 3 }],
+    teamNotes: [],
+  },
+  {
+    id: "company-3",
+    name: "Arla Foods Ingredients",
+    profileUrl: "#company-arla",
+    country: "Denmark",
+    sector: "Dairy ingredients",
+    linkedNode: "Whey permeate",
+    role: "Supplier",
+    savedBy: "M. Rossi",
+    teamRatings: [{ user: "M. Rossi", value: 4 }],
+    teamNotes: [
+      { id: "cn-3", author: "M. Rossi", timestamp: "2026-09-01 11:20", text: "Permeate volumes available from Q2 2027." },
     ],
   },
   {
-    id: "offtaker",
-    label: "Offtaker",
-    items: [
-      {
-        id: "company-4",
-        name: "Amcor Flexibles",
-        role: "Offtaker",
-        location: "Zurich, Switzerland",
-        size: "400 employees",
-        connectsTo: "PLA packaging",
-        ratings: [],
-      },
-    ],
+    id: "company-4",
+    name: "Amcor Flexibles",
+    profileUrl: "#company-amcor",
+    country: "Switzerland",
+    sector: "Packaging",
+    linkedNode: "PLA packaging",
+    role: "Offtaker",
+    savedBy: "K. Brandt",
+    teamRatings: [],
+    teamNotes: [],
   },
 ];
+
 
 const PATENT_ITEMS: ShortlistItem[] = [
   { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
@@ -359,52 +352,8 @@ const ShortlistRow = ({ item }: { item: ShortlistItem }) => (
 
 
 
-const RatingControl = ({ value, onChange, name }: { value: number; onChange: (value: number) => void; name: string }) => (
-  <div className="flex items-center gap-0.5">
-    {[1, 2, 3, 4, 5].map((star) => (
-      <button
-        key={star}
-        type="button"
-        onClick={() => onChange(star)}
-        aria-label={`Rate ${name} ${star} of 5`}
-        className="p-0.5"
-      >
-        <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/50")} />
-      </button>
-    ))}
-  </div>
-);
 
-const CompanyRow = ({ item }: { item: CompanyItem }) => {
-  const [myRating, setMyRating] = useState(0);
 
-  return (
-    <ShortlistEntry name={item.name}>
-      <div className="text-xs font-semibold text-foreground">{item.name}</div>
-      <p className="mt-0.5 text-xs text-muted-foreground">{item.role} · {item.location}</p>
-      {item.size && <p className="mt-0.5 text-xs text-muted-foreground">{item.size}</p>}
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge variant="outline" className="text-[10px] font-normal">{item.connectsTo}</Badge>
-      </div>
-      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Your rating</span>
-          <RatingControl value={myRating} onChange={setMyRating} name={item.name} />
-          {myRating > 0 && <span className="text-[10px] text-muted-foreground">{CURRENT_REVIEWER}: {myRating}</span>}
-        </div>
-        {item.ratings.length > 0 && (
-          <div className="flex flex-wrap items-center gap-2">
-            {item.ratings.map((rating) => (
-              <span key={rating.user} className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted-foreground">
-                {rating.user}: {rating.value}
-              </span>
-            ))}
-          </div>
-        )}
-      </div>
-    </ShortlistEntry>
-  );
-};
 
 const ShortlistCard = ({ label, count, children, defaultOpen = false }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean }) => (
   <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
@@ -432,9 +381,14 @@ const ResearchSpace: React.FC = () => {
   const [showSaved, setShowSaved] = useState(false);
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
+  const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
 
   const removePathway = (id: string) =>
     setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
+
+  const removeCompany = (id: string) =>
+    setShortlistCompanies((current) => current.filter((company) => company.id !== id));
+
 
   const addPathwayNote = (id: string, text: string) =>
     setPathwayNotes((current) => ({
@@ -741,17 +695,14 @@ const ResearchSpace: React.FC = () => {
         </ShortlistCard>
 
 
-        <ShortlistCard label="Companies" count={COMPANY_GROUPS.reduce((total, group) => total + group.items.length, 0)}>
-          {COMPANY_GROUPS.map((group) => (
-            <div key={group.id} className="border-t border-border first:border-t-0">
-              <div className="flex items-center gap-2 bg-muted/40 px-4 py-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{group.label}</span>
-                <Badge variant="secondary" className="h-4 min-w-4 justify-center px-1.5 text-[10px]">{group.items.length}</Badge>
-              </div>
-              {group.items.map((item) => <CompanyRow key={item.id} item={item} />)}
-            </div>
-          ))}
+        <ShortlistCard label="Companies" count={shortlistCompanies.length}>
+          <CompanyShortlistTables
+            companies={shortlistCompanies}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removeCompany}
+          />
         </ShortlistCard>
+
 
         <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
           {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
