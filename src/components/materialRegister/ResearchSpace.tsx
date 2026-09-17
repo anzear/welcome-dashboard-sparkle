@@ -546,14 +546,6 @@ const ResearchSpace: React.FC = () => {
   const metCount = rows.filter((row) => row.status === "Met").length;
   const notMetCount = rows.filter((row) => row.status === "Not met").length;
   const notSetCount = rows.filter((row) => row.status === "Not set").length;
-  const verdict =
-    notMetCount > 0
-      ? "Does not meet your requirements"
-      : notSetCount > 0
-        ? "Incomplete — set remaining thresholds"
-        : "Meets your requirements";
-  const verdictClass =
-    notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
   const countLine =
     notSetCount === rows.length
       ? null
@@ -613,10 +605,11 @@ const ResearchSpace: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      <div className="px-1">
-        <p className={cn("text-base font-semibold", verdictClass)}>{verdict}</p>
-        {countLine && <p className="mt-1 text-sm text-muted-foreground">{countLine}</p>}
-      </div>
+      {countLine && (
+        <div className="px-1">
+          <p className="text-sm text-muted-foreground">{countLine}</p>
+        </div>
+      )}
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
         {rows.map((row, index) => (
           <div
