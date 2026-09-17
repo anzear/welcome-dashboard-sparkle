@@ -132,64 +132,64 @@ const INITIAL_PATHWAY_NOTES: Record<string, PathwayNote[]> = {
 };
 
 
-const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
+const SHORTLIST_COMPANIES: ShortlistCompany[] = [
   {
-    id: "producer",
-    label: "Producer",
-    items: [
-      {
-        id: "company-1",
-        name: "Corbion",
-        role: "Producer",
-        location: "Gorinchem, Netherlands",
-        size: "250 employees",
-        connectsTo: "Lactic Acid",
-        ratings: [
-          { user: "K. Brandt", value: 4 },
-          { user: "M. Rossi", value: 5 },
-        ],
-      },
-      {
-        id: "company-2",
-        name: "Jungbunzlauer",
-        role: "Producer",
-        location: "Basel, Switzerland",
-        connectsTo: "Lactic Acid",
-        ratings: [{ user: "K. Brandt", value: 3 }],
-      },
+    id: "company-1",
+    name: "Corbion",
+    profileUrl: "#company-corbion",
+    country: "Netherlands",
+    sector: "Bio-based chemicals",
+    linkedNode: "Lactic Acid",
+    role: "Producer",
+    savedBy: "K. Brandt",
+    teamRatings: [
+      { user: "K. Brandt", value: 4 },
+      { user: "M. Rossi", value: 5 },
+    ],
+    teamNotes: [
+      { id: "cn-1", author: "K. Brandt", timestamp: "2026-08-12 09:30", text: "Food-grade capacity confirmed for Europe." },
+      { id: "cn-2", author: "M. Rossi", timestamp: "2026-08-28 14:05", text: "Quoted above our target price — renegotiate at volume." },
     ],
   },
   {
-    id: "supplier",
-    label: "Supplier",
-    items: [
-      {
-        id: "company-3",
-        name: "Arla Foods Ingredients",
-        role: "Supplier",
-        location: "Viby, Denmark",
-        size: "1 200 employees",
-        connectsTo: "Whey permeate",
-        ratings: [{ user: "M. Rossi", value: 4 }],
-      },
+    id: "company-2",
+    name: "Jungbunzlauer",
+    profileUrl: "#company-jungbunzlauer",
+    country: "Switzerland",
+    linkedNode: "Lactic Acid",
+    role: "Producer",
+    savedBy: "A. Weber",
+    teamRatings: [{ user: "K. Brandt", value: 3 }],
+    teamNotes: [],
+  },
+  {
+    id: "company-3",
+    name: "Arla Foods Ingredients",
+    profileUrl: "#company-arla",
+    country: "Denmark",
+    sector: "Dairy ingredients",
+    linkedNode: "Whey permeate",
+    role: "Supplier",
+    savedBy: "M. Rossi",
+    teamRatings: [{ user: "M. Rossi", value: 4 }],
+    teamNotes: [
+      { id: "cn-3", author: "M. Rossi", timestamp: "2026-09-01 11:20", text: "Permeate volumes available from Q2 2027." },
     ],
   },
   {
-    id: "offtaker",
-    label: "Offtaker",
-    items: [
-      {
-        id: "company-4",
-        name: "Amcor Flexibles",
-        role: "Offtaker",
-        location: "Zurich, Switzerland",
-        size: "400 employees",
-        connectsTo: "PLA packaging",
-        ratings: [],
-      },
-    ],
+    id: "company-4",
+    name: "Amcor Flexibles",
+    profileUrl: "#company-amcor",
+    country: "Switzerland",
+    sector: "Packaging",
+    linkedNode: "PLA packaging",
+    role: "Offtaker",
+    savedBy: "K. Brandt",
+    teamRatings: [],
+    teamNotes: [],
   },
 ];
+
 
 const PATENT_ITEMS: ShortlistItem[] = [
   { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
