@@ -39,11 +39,11 @@ const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking
 const Columns = () => (
   <colgroup>
     <col style={{ width: "160px" }} />
-    <col style={{ width: "110px" }} />
-    <col style={{ width: "130px" }} />
-    <col style={{ width: "130px" }} />
-    <col style={{ width: "110px" }} />
-    <col style={{ width: "150px" }} />
+    <col style={{ width: "90px" }} />
+    <col style={{ width: "120px" }} />
+    <col style={{ width: "120px" }} />
+    <col style={{ width: "100px" }} />
+    <col style={{ width: "120px" }} />
     <col />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />
@@ -73,7 +73,6 @@ function StarRating({
           <Star className={cn("h-3.5 w-3.5", star <= value ? "fill-foreground text-foreground" : "text-muted-foreground/40")} />
         </button>
       ))}
-      {value === 0 && <span className="ml-1 text-[9px] italic text-muted-foreground/70">Not rated</span>}
     </div>
   );
 }
@@ -165,7 +164,7 @@ export function CompanyShortlistTables({
                               ))}
                             </div>
                           ) : (
-                            <span className="text-[9px] italic text-muted-foreground/70">No team ratings</span>
+                            <span className="text-[9px] italic text-muted-foreground/70">None</span>
                           )}
                         </TableCell>
                         <TableCell className="py-2">
