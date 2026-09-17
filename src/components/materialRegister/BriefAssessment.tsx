@@ -53,7 +53,6 @@ const Num: React.FC<{ value: number | null; suffix: string; decimals?: number }>
 const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   const { updateMaterial } = useRegister();
   const [editing, setEditing] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const [vol, setVol] = useState(m.annual_volume?.toString() ?? "");
   const [price, setPrice] = useState(m.unit_price?.toString() ?? "");
   const [factor, setFactor] = useState(m.ghg_emission_factor?.toString() ?? "");
