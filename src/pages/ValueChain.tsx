@@ -57,7 +57,7 @@ const objectiveBadgeClasses = (objective: Objective | null) => {
   }
 };
 
-const MaterialProfileHero: React.FC<{
+const MaterialBriefHero: React.FC<{
   decodedTopic: string;
   cat: string;
   objective: Objective | null;
@@ -119,7 +119,7 @@ const MaterialProfileHero: React.FC<{
     : readiness.status === 'Partially defined' ? 'text-orange-600 bg-orange-500/10 border-orange-500/20'
     : 'text-muted-foreground bg-muted border-border';
   const launchWizard = () => {
-    window.dispatchEvent(new Event(`openMaterialProfile:${cat}:${decodedTopic}`));
+    window.dispatchEvent(new Event(`openMaterialBrief:${cat}:${decodedTopic}`));
   };
   const cta =
     completion === 0 ? 'Start guided setup'
@@ -248,7 +248,7 @@ const MaterialProfileHero: React.FC<{
         >
             <span className="flex items-center gap-2">
             <Target className="w-3.5 h-3.5 text-foreground" />
-            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Material Profile</span>
+            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Material Brief</span>
           </span>
           <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
         </button>
@@ -4204,7 +4204,7 @@ const ValueChain = () => {
               ) : (<>
               {/* Outer white card wrapping Hero + Pathway Readiness + Opportunity Map */}
               <div className="space-y-4">
-                <MaterialProfileHero
+                <MaterialBriefHero
                   decodedTopic={decodeURIComponent(topic || '')}
                   cat={category || 'Product'}
                   objective={objective}

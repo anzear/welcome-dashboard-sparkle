@@ -1006,7 +1006,7 @@ export const MaterialRegisterTable: React.FC = () => {
               onClick={() => setExportOpen(true)}
               className="rounded-sm border border-border bg-background px-2 py-0.5 font-medium text-foreground hover:bg-muted"
             >
-              Export material profiles
+              Export material briefs
             </button>
             <button
               type="button"

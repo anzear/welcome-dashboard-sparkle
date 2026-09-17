@@ -160,7 +160,7 @@ const HeaderBreadcrumb = () => {
   } else if (isInnovationProjects) {
     segments.push({ label: 'Pathway Innovation Projects' });
   } else if (isMaterialBrief) {
-    segments.push({ label: 'Material Profile' });
+    segments.push({ label: 'Material Brief' });
   }
 
   return (
