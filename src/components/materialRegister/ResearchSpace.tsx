@@ -407,7 +407,13 @@ const ResearchSpace: React.FC = () => {
     </Button>
   );
 
-  type Row = { label: string; status: EvaluationStatus; line: React.ReactNode | null };
+  type Row = {
+    label: string;
+    status: EvaluationStatus;
+    helperText: React.ReactNode;
+    finding: React.ReactNode;
+    hasData: boolean;
+  };
 
   const rows: Row[] = (() => {
     const appCount = thresholds.applications.length;
@@ -453,22 +459,23 @@ const ResearchSpace: React.FC = () => {
       {
         label: "Applications",
         status: appCount > 0 ? "Met" : "Not set",
-        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : "Select an application to evaluate.",
+        helperText: "Select an application to evaluate.",
+        finding: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
+        hasData: true,
       },
       {
         label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
-        line: trlSet
-          ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
-          : "Set a TRL range to evaluate.",
+        helperText: "Set a TRL range to evaluate.",
+        finding: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : null,
+        hasData: true,
       },
       {
         label: "Product geography",
         status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
-        line:
-          thresholds.materialGeographies.length === 0 ? (
-            "Select a geography to evaluate."
-          ) : productMatches.length > 0 ? (
+        helperText: "Select a geography to evaluate.",
+        finding:
+          productMatches.length > 0 ? (
             <>
               <EvidenceLink
                 label={`${productMatches.length} producer${productMatches.length === 1 ? "" : "s"}`}
@@ -480,14 +487,14 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`
           ),
+        hasData: true,
       },
       {
         label: "Feedstock geography",
         status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
-        line:
-          thresholds.feedstockGeographies.length === 0 ? (
-            "Select a geography to evaluate."
-          ) : feedstockMatches.length > 0 ? (
+        helperText: "Select a geography to evaluate.",
+        finding:
+          feedstockMatches.length > 0 ? (
             <>
               <EvidenceLink
                 label={`${feedstockMatches.length} verified feedstock supplier${feedstockMatches.length === 1 ? "" : "s"}`}
@@ -499,11 +506,13 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`
           ),
+        hasData: true,
       },
       {
         label: "Price ceiling",
         status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
-        line: priceSet ? (
+        helperText: "Set a ceiling to evaluate.",
+        finding: (
           <>
             <EvidenceLink
               label={`Indicative price EUR ${num(INDICATIVE_PRICE_EUR)}/t`}
@@ -512,14 +521,14 @@ const ResearchSpace: React.FC = () => {
             />
             {` — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`}
           </>
-        ) : (
-          "Set a ceiling to evaluate."
         ),
+        hasData: true,
       },
       {
         label: "Producers",
         status: producersSet ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
-        line: producersSet ? (
+        helperText: "Set a minimum to evaluate.",
+        finding: (
           <>
             <EvidenceLink
               label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
@@ -528,16 +537,15 @@ const ResearchSpace: React.FC = () => {
             />
             {` identified — ${requiredProducers} required.`}
           </>
-        ) : (
-          "Set a minimum to evaluate."
         ),
+        hasData: true,
       },
       {
         label: "Volume",
         status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
-        line: volumeSet
-          ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
-          : "Set a volume to evaluate.",
+        helperText: "Set a volume to evaluate.",
+        finding: `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`,
+        hasData: true,
       },
     ];
   })();
@@ -610,24 +618,60 @@ const ResearchSpace: React.FC = () => {
           <p className="text-sm text-muted-foreground">{countLine}</p>
         </div>
       )}
-      <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        {rows.map((row, index) => (
-          <div
-            key={row.label}
-            className={cn(
-              "grid min-h-[56px] grid-cols-[130px_264px_minmax(0,1fr)_84px] items-center gap-4 px-5 py-2",
-              index !== rows.length - 1 && "border-b border-border",
-            )}
+
+      {/* Desktop: two side-by-side boxes with locked row heights */}
+      <div className="relative hidden md:block" aria-label="Threshold criteria">
+        <div className="absolute inset-y-0 left-0 right-[calc(50%-8px)] rounded-lg border border-border bg-card" />
+        <div className="absolute inset-y-0 left-[calc(50%+8px)] right-0 rounded-lg border border-border bg-card" />
+        <div className="relative grid grid-cols-2 gap-4">
+          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
+          <div className="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
+          {rows.map((row, index) => (
+            <React.Fragment key={row.label}>
+              <div className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+                <div className="mb-1 text-xs text-foreground">{row.label}</div>
+                <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
+                <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
+              </div>
+              <div className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+                <div className="text-xs text-muted-foreground">
+                  {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
+                </div>
+                <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
+                  {row.hasData ? row.status : "No data"}
+                </Badge>
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      <div className="relative hidden px-5 md:block">
+        {showSaved ? (
+          <span className="text-xs text-muted-foreground">Thresholds saved.</span>
+        ) : (
+          <Button
+            disabled={!anyThresholdSet}
+            onClick={() => setShowSaved(true)}
+            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
           >
-            <div className="truncate whitespace-nowrap text-xs text-foreground">{row.label}</div>
-            <div>{renderInput(row.label)}</div>
-            <p className="text-xs text-muted-foreground">{row.line}</p>
-            <div className="flex justify-end">
-              <Badge variant="outline" className={cn("text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
+            Save thresholds
+          </Button>
+        )}
+      </div>
+
+      {/* Mobile: stacked requirement box, save, then data box */}
+      <div className="space-y-4 md:hidden" aria-label="Threshold criteria">
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
+          {rows.map((row, index) => (
+            <div key={`req-${row.label}`} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+              <div className="mb-1 text-xs text-foreground">{row.label}</div>
+              <div className="w-full max-w-[264px]">{renderInput(row.label)}</div>
+              <div className="mt-1.5 text-[10px] text-muted-foreground">{row.helperText}</div>
             </div>
-          </div>
-        ))}
-        <div className="flex items-center justify-end border-t border-border px-5 py-3">
+          ))}
+        </section>
+        <div className="px-5">
           {showSaved ? (
             <span className="text-xs text-muted-foreground">Thresholds saved.</span>
           ) : (
@@ -640,7 +684,23 @@ const ResearchSpace: React.FC = () => {
             </Button>
           )}
         </div>
-      </section>
+        <section className="overflow-hidden rounded-lg border border-border bg-card">
+          <div className="border-b border-border px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-foreground">Our data</div>
+          {rows.map((row, index) => (
+            <div key={`data-${row.label}`} className={cn("flex items-center justify-between gap-4 px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
+              <div>
+                <div className="mb-1 text-[10px] font-semibold text-foreground">{row.label}</div>
+                <div className="text-xs text-muted-foreground">
+                  {!row.hasData ? "No data available" : row.status === "Not set" ? "Awaiting threshold" : row.finding}
+                </div>
+              </div>
+              <Badge variant="outline" className={cn("shrink-0 text-[10px]", row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground")}>
+                {row.hasData ? row.status : "No data"}
+              </Badge>
+            </div>
+          ))}
+        </section>
+      </div>
 
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
