@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const GEOGRAPHY_OPTIONS = [
@@ -586,7 +587,7 @@ const ResearchSpace: React.FC = () => {
     switch (label) {
       case "Applications":
         return <MultiSelectChips label="Applications" options={applications} values={thresholds.applications} onChange={(value) => patch("applications", value)} />;
-      case "Production scale (TRL)":
+      case "Technology readiness (TRL)":
         return (
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5">
@@ -599,8 +600,8 @@ const ResearchSpace: React.FC = () => {
             </div>
           </div>
         );
-      case "Material supply geography":
-        return <MultiSelectChips label="Material supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
+      case "Product supply geography":
+        return <MultiSelectChips label="Product supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
       case "Feedstock supply geography":
         return <MultiSelectChips label="Feedstock supply geography" options={GEOGRAPHY_OPTIONS} values={thresholds.feedstockGeographies} onChange={(value) => patch("feedstockGeographies", value)} />;
       case "Price ceiling per tonne":
@@ -630,7 +631,8 @@ const ResearchSpace: React.FC = () => {
     }
   };
 
-  const LONG_INPUT_LABELS = new Set(["Applications", "Material supply geography", "Feedstock supply geography"]);
+  const LONG_INPUT_LABELS = new Set(["Applications", "Product supply geography", "Feedstock supply geography"]);
+  const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
   return (
     <div className="mt-5 space-y-5">
@@ -639,38 +641,67 @@ const ResearchSpace: React.FC = () => {
         <span>Result</span>
       </div>
       <section className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-        {evaluationRows.map((row, index) => {
+        <div className="border-b border-border bg-muted/40 px-5 py-3">
+          <p className={cn("text-sm font-semibold", verdictClass)}>{verdict}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {metCount} met · {notMetCount} not met · {notSetCount} not set
+          </p>
+        </div>
+        {rows.map((row, index) => {
           const isLong = LONG_INPUT_LABELS.has(row.label);
           return (
-            <div key={row.label} className={cn("px-5 py-5", index !== evaluationRows.length - 1 && "border-b border-border")}>
+            <div key={row.label} className={cn("px-5 py-3", index !== rows.length - 1 && "border-b border-border")}>
               {isLong ? (
                 <>
                   <div className="flex items-center justify-between gap-4">
                     <div className="text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
                     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
                   </div>
-                  <div className="mt-2">{renderInput(row.label)}</div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{row.explanation}</p>
+                  <div className="mt-1.5">{renderInput(row.label)}</div>
+                  {row.line && <p className="mt-1 text-xs text-muted-foreground">{row.line}</p>}
                 </>
               ) : (
                 <>
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
+                    <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1.5">
                       <div className="w-44 shrink-0 text-[10px] font-bold uppercase tracking-widest text-foreground">{row.label}</div>
                       {renderInput(row.label)}
+                      {row.line && <p className="text-xs text-muted-foreground">{row.line}</p>}
                     </div>
                     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[row.status])}>{row.status}</Badge>
                   </div>
-                  <p className="mt-1.5 text-xs text-muted-foreground">{row.explanation}</p>
                 </>
               )}
             </div>
           );
         })}
-        <div className="flex justify-end border-t border-border px-5 py-4">
-          <Button onClick={() => setSaved(true)} className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90">Set thresholds</Button>
+        <div className="flex items-center justify-end gap-3 border-t border-border px-5 py-3">
+          {savedThresholds && <span className="text-xs text-muted-foreground">Thresholds saved.</span>}
+          <Button
+            disabled={!anyThresholdSet}
+            onClick={() => setSavedThresholds(thresholds)}
+            className="h-9 bg-foreground text-xs text-background hover:bg-foreground/90"
+          >
+            Save thresholds
+          </Button>
         </div>
       </section>
+
+      <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
+        <SheetContent className="w-full sm:max-w-md">
+          <SheetHeader>
+            <SheetTitle className="text-sm">{evidence?.title}</SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 divide-y divide-border">
+            {evidence?.records.map((record) => (
+              <div key={record.name} className="py-3">
+                <div className="text-xs font-semibold text-foreground">{record.name}</div>
+                <p className="mt-0.5 text-xs text-muted-foreground">Source: {record.source}</p>
+              </div>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
