@@ -26,6 +26,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
+import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 
 
 
@@ -184,10 +185,33 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
 ];
 
 
-const PATENT_ITEMS: ShortlistItem[] = [
-  { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
-  { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
+const SHORTLIST_PATENTS: ShortlistPatent[] = [
+  {
+    id: "patent-1",
+    title: "CONTINUOUS PURIFICATION OF FERMENTATION-DERIVED LACTIC ACID",
+    applicant: "Corbion N.V.",
+    filedDate: "16 Dec 2025",
+    grantedDate: "04 Aug 2026",
+    status: "Granted",
+    jurisdictions: 3,
+    savedBy: "K. Brandt",
+    teamNotes: [
+      { id: "pn-1", author: "K. Brandt", timestamp: "12 Sep 2026", text: "Covers the separation step our target pathway relies on." },
+      { id: "pn-2", author: "M. Rossi", timestamp: "14 Sep 2026", text: "Check the EP claim scope before we approach Corbion." },
+    ],
+  },
+  {
+    id: "patent-2",
+    title: "Low-carbon lactic acid from agricultural residues",
+    applicant: "Jungbunzlauer Austria AG",
+    filedDate: "04 Sept 2025",
+    status: "Filed",
+    jurisdictions: 1,
+    savedBy: "A. Weber",
+    teamNotes: [],
+  },
 ];
+
 
 const PAPER_ITEMS: ShortlistItem[] = [
   { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
@@ -382,12 +406,16 @@ const ResearchSpace: React.FC = () => {
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
+  const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
 
   const removePathway = (id: string) =>
     setShortlistPathways((current) => current.filter((pathway) => pathway.id !== id));
 
   const removeCompany = (id: string) =>
     setShortlistCompanies((current) => current.filter((company) => company.id !== id));
+
+  const removePatent = (id: string) =>
+    setShortlistPatents((current) => current.filter((patent) => patent.id !== id));
 
 
   const addPathwayNote = (id: string, text: string) =>
@@ -704,8 +732,12 @@ const ResearchSpace: React.FC = () => {
         </ShortlistCard>
 
 
-        <ShortlistCard label="Patents" count={PATENT_ITEMS.length}>
-          {PATENT_ITEMS.map((item) => <ShortlistRow key={item.id} item={item} />)}
+        <ShortlistCard label="Patents" count={shortlistPatents.length}>
+          <PatentShortlistTable
+            patents={shortlistPatents}
+            currentUser={CURRENT_REVIEWER}
+            onRemove={removePatent}
+          />
         </ShortlistCard>
 
         <ShortlistCard label="Papers" count={PAPER_ITEMS.length}>
