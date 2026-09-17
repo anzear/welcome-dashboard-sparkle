@@ -112,7 +112,8 @@ export function CompanyShortlistTables({
 
   return (
     <>
-      <Table className="table-fixed">
+      <div className="overflow-x-auto">
+      <Table className="table-fixed min-w-[1240px]">
         <Columns />
         <TableHeader className="bg-muted/20">
           <TableRow className="border-b border-border">
@@ -231,6 +232,7 @@ export function CompanyShortlistTables({
           })}
         </TableBody>
       </Table>
+      </div>
 
       <Sheet open={teamPanel !== null} onOpenChange={(open) => !open && setTeamPanel(null)}>
         <SheetContent className="w-full sm:max-w-md">
