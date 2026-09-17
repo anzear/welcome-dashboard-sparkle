@@ -13,7 +13,7 @@ import {
   UNASSIGNED_OWNER,
   useRegister,
 } from "@/components/materialRegister/registerStore";
-import { StatusPill } from "@/components/materialRegister/primitives";
+import { JOURNEY_STATUS_LABEL, type JourneyStatus } from "@/types/materialPrioritisation";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { blankMaterial } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
@@ -21,7 +21,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 /**
  * Status strip shown on the value-chain hero: the material's register status,
  * owner, priority period and position. Owner and priority period are editable
- * inline; the status itself is set in the Material Brief's Status panel.
+ * inline, and the status can be set straight from the dropdown.
  */
 const SummaryField: React.FC<{ label: string; children: React.ReactNode; hint?: React.ReactNode }> = ({
   label,
@@ -84,6 +84,21 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     ]);
   };
 
+  const commitStatus = (value: string) => {
+    const next = value as JourneyStatus;
+    if (next === material.journey_status) return;
+    updateMaterial(material.material_id, { journey_status: next }, ["journey_status"], [
+      {
+        material_id: material.material_id,
+        event_type: "status_change",
+        field: "journey_status",
+        from_value: material.journey_status,
+        to_value: next,
+        changed_by: CURRENT_USER,
+      },
+    ]);
+  };
+
   const commitPeriod = () => {
     const next = period.trim() ? period.trim() : null;
     if (next === material.priority_period) return;
@@ -105,21 +120,29 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     : null;
 
   return (
-    <div className="grid sm:grid-cols-2 xl:grid-cols-[135px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
+    <div className="grid sm:grid-cols-2 xl:grid-cols-[170px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
       <SummaryField
         label="Status"
         hint={
           overdue ? (
             <span className="text-amber-600">{overdue}</span>
           ) : (
-            "Set in the Status panel"
+            "Details in the Status panel"
           )
         }
       >
-        <StatusPill
-          status={material.journey_status}
-          entered={material.provenance?.journey_status?.origin === "entered"}
-        />
+        <Select value={material.journey_status} onValueChange={commitStatus}>
+          <SelectTrigger className="h-8 w-full text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="z-50 bg-popover">
+            {(Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((status) => (
+              <SelectItem key={status} value={status} className="text-xs">
+                {JOURNEY_STATUS_LABEL[status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </SummaryField>
 
       <SummaryField label="Owner">
