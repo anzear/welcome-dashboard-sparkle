@@ -555,9 +555,12 @@ const ResearchSpace: React.FC = () => {
   })();
 
 
-  const metCount = rows.filter((row) => row.status === "Met").length;
-  const notMetCount = rows.filter((row) => row.status === "Not met").length;
-  const notSetCount = rows.filter((row) => row.status === "Not set").length;
+  const effectiveStatus = (row: { label: string; status: EvaluationStatus }) =>
+    overrides[row.label] ?? row.status;
+
+  const metCount = rows.filter((row) => effectiveStatus(row) === "Met").length;
+  const notMetCount = rows.filter((row) => effectiveStatus(row) === "Not met").length;
+  const notSetCount = rows.filter((row) => effectiveStatus(row) === "Not set").length;
   const countLine =
     notSetCount === rows.length
       ? null
