@@ -425,62 +425,162 @@ const ResearchSpace: React.FC = () => {
     [],
   );
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
-  const [saved, setSaved] = useState(false);
+  const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
+  const [savedThresholds, setSavedThresholds] = useState<Thresholds | null>(null);
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setThresholds((current) => ({ ...current, [key]: value }));
   };
 
-  const evaluationRows = useMemo<{ label: string; status: EvaluationStatus; explanation: string }[]>(() => {
-    if (!saved) {
-      return [
-        { label: "Applications", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Production scale (TRL)", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Material supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Feedstock supply geography", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Price ceiling per tonne", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Minimum number of producers", status: "Not set", explanation: "Set threshold to evaluate." },
-        { label: "Required volume", status: "Not set", explanation: "Set threshold to evaluate." },
-      ];
-    }
+  const EvidenceLink = ({ label, title, records }: { label: string; title: string; records: EvidenceRecord[] }) => (
+    <Button
+      type="button"
+      variant="link"
+      className="h-auto p-0 text-xs font-semibold text-foreground underline"
+      onClick={() => setEvidence({ title, records })}
+    >
+      {label}
+    </Button>
+  );
+
+  type Row = { label: string; status: EvaluationStatus; line: React.ReactNode | null };
+
+  const rows: Row[] = (() => {
+    const appCount = thresholds.applications.length;
+
+    const trlFrom = Number(thresholds.trlFrom);
+    const trlTo = Number(thresholds.trlTo);
+    const trlSet = thresholds.trlFrom !== "" && thresholds.trlTo !== "" && !Number.isNaN(trlFrom) && !Number.isNaN(trlTo);
+    const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
+
+    const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
+      selected.some((geography) => regions.includes(geography) || country === geography);
+
+    const productMatches = PRODUCER_RECORDS.filter((record) =>
+      matchesGeography(record.regions, record.country, thresholds.materialGeographies),
+    );
+    const feedstockMatches = FEEDSTOCK_SUPPLIER_RECORDS.filter((record) =>
+      matchesGeography(record.regions, undefined, thresholds.feedstockGeographies),
+    );
+
+    const ceiling = Number(thresholds.priceCeiling);
+    const priceSet = thresholds.priceCeiling !== "" && !Number.isNaN(ceiling) && ceiling > 0;
+    const ceilingEur = ceiling * (CURRENCY_TO_EUR[thresholds.currency] ?? 1);
+    const priceBelow = INDICATIVE_PRICE_EUR <= ceilingEur;
+
+    const requiredProducers = thresholds.minimumProducers;
+    const identifiedProducers = PRODUCER_RECORDS.length;
+
+    const volume = Number(thresholds.requiredVolume);
+    const volumeSet = thresholds.requiredVolume !== "" && !Number.isNaN(volume) && volume > 0;
+    const requiredTonnes = volume * (VOLUME_TO_TONNES[thresholds.volumeUnit] ?? 1);
+    const volumeAbove = IDENTIFIED_CAPACITY_TONNES >= requiredTonnes;
+
     return [
       {
         label: "Applications",
-        status: thresholds.applications.length > 0 ? "Match" : "Not set",
-        explanation: thresholds.applications.length > 0 ? `${thresholds.applications.join(", ")} selected for evaluation.` : "Set threshold to evaluate.",
+        status: appCount > 0 ? "Met" : "Not set",
+        line: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
       },
       {
-        label: "Production scale (TRL)",
-        status: thresholds.trlFrom && thresholds.trlTo ? "Match" : "Not set",
-        explanation: thresholds.trlFrom && thresholds.trlTo ? `Evaluating pathways between TRL ${thresholds.trlFrom} and TRL ${thresholds.trlTo}.` : "Set threshold to evaluate.",
+        label: "Technology readiness (TRL)",
+        status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
+        line: trlSet
+          ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.`
+          : "Set a TRL range to evaluate.",
       },
       {
-        label: "Material supply geography",
-        status: thresholds.materialGeographies.length > 0 ? "Match" : "Not set",
-        explanation: thresholds.materialGeographies.length > 0 ? `Producers found in ${thresholds.materialGeographies.slice(0, 2).join(" and ")}.` : "Set threshold to evaluate.",
+        label: "Product supply geography",
+        status: thresholds.materialGeographies.length === 0 ? "Not set" : productMatches.length > 0 ? "Met" : "Not met",
+        line:
+          thresholds.materialGeographies.length === 0 ? (
+            "Select a geography to evaluate."
+          ) : productMatches.length > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${productMatches.length} producer${productMatches.length === 1 ? "" : "s"}`}
+                title="Producers identified"
+                records={productMatches.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified in ${listGeographies(thresholds.materialGeographies)}.`}
+            </>
+          ) : (
+            `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`
+          ),
       },
       {
         label: "Feedstock supply geography",
-        status: thresholds.feedstockGeographies.length > 0 ? "No match" : "Not set",
-        explanation: thresholds.feedstockGeographies.length > 0 ? "No verified feedstock supplier was found in the selected region." : "Set threshold to evaluate.",
+        status: thresholds.feedstockGeographies.length === 0 ? "Not set" : feedstockMatches.length > 0 ? "Met" : "Not met",
+        line:
+          thresholds.feedstockGeographies.length === 0 ? (
+            "Select a geography to evaluate."
+          ) : feedstockMatches.length > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${feedstockMatches.length} verified feedstock supplier${feedstockMatches.length === 1 ? "" : "s"}`}
+                title="Verified feedstock suppliers"
+                records={feedstockMatches.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified in ${listGeographies(thresholds.feedstockGeographies)}.`}
+            </>
+          ) : (
+            `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`
+          ),
       },
       {
         label: "Price ceiling per tonne",
-        status: thresholds.priceCeiling ? "No data" : "Not set",
-        explanation: thresholds.priceCeiling ? "No price data is available for this material." : "Set threshold to evaluate.",
+        status: priceSet ? (priceBelow ? "Met" : "Not met") : "Not set",
+        line: priceSet ? (
+          <>
+            <EvidenceLink
+              label={`Indicative price EUR ${num(INDICATIVE_PRICE_EUR)}/t`}
+              title="Price points"
+              records={PRICE_RECORDS}
+            />
+            {` — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`}
+          </>
+        ) : (
+          "Set a ceiling to evaluate."
+        ),
       },
       {
         label: "Minimum number of producers",
-        status: thresholds.minimumProducers > 0 ? "Match" : "Not set",
-        explanation: thresholds.minimumProducers > 0 ? `${thresholds.minimumProducers} producers required; four are identified.` : "Set threshold to evaluate.",
+        status: requiredProducers > 0 ? (identifiedProducers >= requiredProducers ? "Met" : "Not met") : "Not set",
+        line:
+          requiredProducers > 0 ? (
+            <>
+              <EvidenceLink
+                label={`${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"}`}
+                title="Producers identified"
+                records={PRODUCER_RECORDS.map(({ name, source }) => ({ name, source }))}
+              />
+              {` identified — ${requiredProducers} required.`}
+            </>
+          ) : (
+            "Set a minimum to evaluate."
+          ),
       },
       {
         label: "Required volume",
-        status: thresholds.requiredVolume ? "Match" : "Not set",
-        explanation: thresholds.requiredVolume ? `Minimum required volume set to ${thresholds.requiredVolume} ${thresholds.volumeUnit}.` : "Set threshold to evaluate.",
+        status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
+        line: volumeSet
+          ? `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`
+          : "Set a volume to evaluate.",
       },
     ];
-  }, [saved, thresholds]);
+  })();
+
+  const metCount = rows.filter((row) => row.status === "Met").length;
+  const notMetCount = rows.filter((row) => row.status === "Not met").length;
+  const notSetCount = rows.filter((row) => row.status === "Not set").length;
+  const verdict =
+    notMetCount > 0
+      ? "Does not meet your requirements"
+      : notSetCount > 0
+        ? "Incomplete — set remaining thresholds"
+        : "Meets your requirements";
+  const verdictClass =
+    notMetCount > 0 ? "text-destructive" : notSetCount > 0 ? "text-muted-foreground" : "text-success";
 
   const renderInput = (label: string) => {
     switch (label) {
