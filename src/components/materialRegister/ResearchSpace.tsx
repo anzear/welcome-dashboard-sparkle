@@ -184,10 +184,33 @@ const SHORTLIST_COMPANIES: ShortlistCompany[] = [
 ];
 
 
-const PATENT_ITEMS: ShortlistItem[] = [
-  { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
-  { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
+const SHORTLIST_PATENTS: ShortlistPatent[] = [
+  {
+    id: "patent-1",
+    title: "CONTINUOUS PURIFICATION OF FERMENTATION-DERIVED LACTIC ACID",
+    applicant: "Corbion N.V.",
+    filedDate: "16 Dec 2025",
+    grantedDate: "04 Aug 2026",
+    status: "Granted",
+    jurisdictions: 3,
+    savedBy: "K. Brandt",
+    teamNotes: [
+      { id: "pn-1", author: "K. Brandt", timestamp: "12 Sep 2026", text: "Covers the separation step our target pathway relies on." },
+      { id: "pn-2", author: "M. Rossi", timestamp: "14 Sep 2026", text: "Check the EP claim scope before we approach Corbion." },
+    ],
+  },
+  {
+    id: "patent-2",
+    title: "Low-carbon lactic acid from agricultural residues",
+    applicant: "Jungbunzlauer Austria AG",
+    filedDate: "04 Sept 2025",
+    status: "Filed",
+    jurisdictions: 1,
+    savedBy: "A. Weber",
+    teamNotes: [],
+  },
 ];
+
 
 const PAPER_ITEMS: ShortlistItem[] = [
   { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
