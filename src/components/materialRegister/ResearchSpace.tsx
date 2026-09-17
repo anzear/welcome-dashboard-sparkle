@@ -459,13 +459,7 @@ const ResearchSpace: React.FC = () => {
 
     return [
       {
-        label: "Applications",
-        status: appCount > 0 ? "Met" : "Not set",
-        helperText: "Select an application to evaluate.",
-        finding: appCount > 0 ? `Evaluated against ${appCount} selected application${appCount === 1 ? "" : "s"}.` : null,
-        hasData: true,
-      },
-      {
+
         label: "TRL range",
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
         helperText: "Set a TRL range to evaluate.",
