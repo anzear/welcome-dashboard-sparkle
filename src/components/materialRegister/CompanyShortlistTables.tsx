@@ -7,7 +7,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-export type CompanyRating = { user: string; value: number };
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
 
 export type ShortlistCompany = {
@@ -21,8 +20,8 @@ export type ShortlistCompany = {
   linkedNode: string;
   role: "Producer" | "Supplier" | "Offtaker";
   savedBy: string;
-  /** Colleagues' ratings only — never aggregated. */
-  teamRatings: CompanyRating[];
+  /** A single 1–5 rating per company — absent means unrated. */
+  rating?: number;
   /** Colleagues' notes only — read-only for the current user. */
   teamNotes: CompanyNote[];
 };
@@ -43,7 +42,6 @@ const Columns = () => (
     <col style={{ width: "120px" }} />
     <col style={{ width: "120px" }} />
     <col style={{ width: "100px" }} />
-    <col style={{ width: "120px" }} />
     <col />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />
@@ -86,7 +84,9 @@ export function CompanyShortlistTables({
   currentUser: string;
   onRemove: (id: string) => void;
 }) {
-  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+  const [ratings, setRatings] = useState<Record<string, number>>(() =>
+    Object.fromEntries(companies.filter((company) => company.rating).map((company) => [company.id, company.rating as number])),
+  );
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
 
@@ -114,8 +114,7 @@ export function CompanyShortlistTables({
                     <TableHead className={HEAD_CLS}>Country</TableHead>
                     <TableHead className={HEAD_CLS}>Sector</TableHead>
                     <TableHead className={HEAD_CLS}>Linked node</TableHead>
-                    <TableHead className={HEAD_CLS}>Your rating</TableHead>
-                    <TableHead className={HEAD_CLS}>Team ratings</TableHead>
+                    <TableHead className={HEAD_CLS}>Rating</TableHead>
                     <TableHead className={HEAD_CLS}>Notes</TableHead>
                     <TableHead className={HEAD_CLS}>Saved by</TableHead>
                     <TableHead className={HEAD_CLS} />
@@ -123,7 +122,7 @@ export function CompanyShortlistTables({
                 </TableHeader>
                 <TableBody>
                   {rows.map((company) => {
-                    const myRating = myRatings[company.id] ?? 0;
+                    const rating = ratings[company.id] ?? 0;
                     const teamNoteCount = company.teamNotes.length;
                     return (
                       <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
@@ -146,26 +145,10 @@ export function CompanyShortlistTables({
                         </TableCell>
                         <TableCell className="py-2">
                           <StarRating
-                            value={myRating}
+                            value={rating}
                             name={company.name}
-                            onChange={(next) => setMyRatings((current) => ({ ...current, [company.id]: next }))}
+                            onChange={(next) => setRatings((current) => ({ ...current, [company.id]: next }))}
                           />
-                        </TableCell>
-                        <TableCell className="py-2">
-                          {company.teamRatings.length > 0 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {company.teamRatings.map((rating) => (
-                                <span
-                                  key={rating.user}
-                                  className="rounded-full border border-border px-2 py-0.5 text-[9px] text-muted-foreground"
-                                >
-                                  {rating.user}: {rating.value}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <span className="text-[9px] italic text-muted-foreground/70">None</span>
-                          )}
                         </TableCell>
                         <TableCell className="py-2">
                           <div className="flex items-center gap-1.5">
