@@ -115,13 +115,6 @@ const statusClasses: Record<EvaluationStatus, string> = {
   "Not set": "border-warning/30 bg-warning/10 text-warning",
 };
 
-const FieldHeading = ({ label, description }: { label: string; description: string }) => (
-  <div className="space-y-1">
-    <div className="text-xs font-semibold text-foreground">{label}</div>
-    <p className="text-xs text-muted-foreground">{description}</p>
-  </div>
-);
-
 const MultiSelectChips = ({
   label,
   options,
