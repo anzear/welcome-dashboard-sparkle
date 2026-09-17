@@ -31,6 +31,7 @@ import MaterialBriefForm, { loadBriefSummary } from '@/components/MaterialBriefF
 import MaterialBriefOutline from '@/components/MaterialBriefOutline';
 import WorldRegionMap from '@/components/WorldRegionMap';
 import CompanyBrief from '@/components/CompanyBrief';
+import MaterialStatusOverview from '@/components/materialRegister/MaterialStatusOverview';
 
 import { Tooltip as UiTooltip, TooltipContent as UiTooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -229,6 +230,11 @@ const MaterialBriefHero: React.FC<{
               </h1>
               <ValueChainOverview topic={topic} />
             </div>
+          </div>
+        )}
+        {isLacticAcid && (
+          <div className="mt-4 -mx-5 -mb-5">
+            <MaterialStatusOverview materialName={decodedTopic || ''} />
           </div>
         )}
         <ProductBriefDialog
