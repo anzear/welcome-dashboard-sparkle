@@ -258,11 +258,6 @@ const ResearchSpace: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-5">
-      <header>
-        <h2 className="text-lg font-semibold text-foreground">Research Space</h2>
-        <p className="mt-1 text-xs text-muted-foreground">Set thresholds to evaluate this material against available data.</p>
-      </header>
-
       <section className="rounded-lg border border-border bg-card">
         <div className="flex items-start justify-between gap-6 border-b border-border px-5 py-4">
           <div>
