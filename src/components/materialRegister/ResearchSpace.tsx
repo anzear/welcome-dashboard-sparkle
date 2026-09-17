@@ -620,35 +620,9 @@ const ResearchSpace: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
-      {/* Scope: application is the lens every criterion is evaluated through, not a criterion. */}
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-xs text-foreground">
-          <span>Evaluating for:</span>
-          <Select value={scopeApplication} onValueChange={(value) => patch("applications", [value])}>
-            <SelectTrigger className="h-8 w-[240px] bg-background text-xs" aria-label="Application">
-              <SelectValue placeholder="Select an application" />
-            </SelectTrigger>
-            <SelectContent>
-              {applications.map((application) => (
-                <SelectItem key={application} value={application}>{application}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
-        {scopeApplication && (
-          <div>
-            <p className="text-sm font-semibold text-foreground">{verdict}</p>
-            {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
-          </div>
-        )}
-      </div>
-
-      {!scopeApplication ? (
-        <div className="rounded-lg border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
-          Select an application to begin
-        </div>
-      ) : (
+      {(
         <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
           <div className="grid grid-cols-[45%_1fr] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
