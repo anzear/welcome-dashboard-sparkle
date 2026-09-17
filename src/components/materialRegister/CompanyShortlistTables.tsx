@@ -137,14 +137,13 @@ export function CompanyShortlistTables({
             return (
               <Fragment key={role}>
                 <TableRow className="border-t border-border hover:bg-transparent">
-                  <TableCell colSpan={10} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <TableCell colSpan={9} className="h-8 py-0 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     {heading} · {rows.length}
                   </TableCell>
                 </TableRow>
                 {rows.map((company) => {
                   const rating = ratings[company.id] ?? 0;
                   const teamNoteCount = company.teamNotes.length;
-                  const teamRatings = company.teamRatings ?? [];
                   return (
                     <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
                       <TableCell className="h-11 py-0">
@@ -174,19 +173,6 @@ export function CompanyShortlistTables({
                           name={company.name}
                           onChange={(next) => setRatings((current) => ({ ...current, [company.id]: next }))}
                         />
-                      </TableCell>
-                      <TableCell className="h-11 py-0">
-                        {/* Wrapping only kicks in from three colleagues onward. */}
-                        <div className="flex flex-wrap items-center gap-1">
-                          {teamRatings.map((entry) => (
-                            <span
-                              key={entry.author}
-                              className="whitespace-nowrap rounded-full border border-border px-1.5 py-0.5 text-[9px] text-muted-foreground"
-                            >
-                              {entry.author} · {entry.value}
-                            </span>
-                          ))}
-                        </div>
                       </TableCell>
                       <TableCell className="h-11 py-0">
                         <Input
