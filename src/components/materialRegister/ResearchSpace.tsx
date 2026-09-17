@@ -69,44 +69,104 @@ type EvaluationStatus = "Match" | "No match" | "No data" | "Not set";
 
 
 type ShortlistItem = { id: string; name: string; detail: string };
-type ShortlistGroup = { id: string; label: string; items: ShortlistItem[] };
 
-const SHORTLIST_GROUPS: ShortlistGroup[] = [
+type PathwayItem = {
+  id: string;
+  feedstock: string;
+  process: string;
+  product: string;
+  application: string;
+};
+
+type Rating = { user: string; value: number };
+
+type CompanyItem = {
+  id: string;
+  name: string;
+  role: string;
+  location: string;
+  size?: string;
+  connectsTo: string;
+  ratings: Rating[];
+};
+
+const CURRENT_REVIEWER = "A. Weber";
+
+const PATHWAY_ITEMS: PathwayItem[] = [
+  { id: "pathway-1", feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging" },
+  { id: "pathway-2", feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid", application: "Biodegradable films" },
+  { id: "pathway-3", feedstock: "Sugarcane molasses", process: "Fermentation", product: "Lactic Acid", application: "Food preservation" },
+];
+
+const COMPANY_GROUPS: { id: string; label: string; items: CompanyItem[] }[] = [
   {
-    id: "pathways",
-    label: "Pathways",
+    id: "producer",
+    label: "Producer",
     items: [
-      { id: "pathway-1", name: "Whey permeate fermentation", detail: "Whey permeate → Lactic acid" },
-      { id: "pathway-2", name: "Corn stover bioconversion", detail: "Corn stover → Lactic acid" },
-      { id: "pathway-3", name: "Sugarcane molasses fermentation", detail: "Sugarcane molasses → Lactic acid" },
+      {
+        id: "company-1",
+        name: "Corbion",
+        role: "Producer",
+        location: "Gorinchem, Netherlands",
+        size: "250 employees",
+        connectsTo: "Lactic Acid",
+        ratings: [
+          { user: "K. Brandt", value: 4 },
+          { user: "M. Rossi", value: 5 },
+        ],
+      },
+      {
+        id: "company-2",
+        name: "Jungbunzlauer",
+        role: "Producer",
+        location: "Basel, Switzerland",
+        connectsTo: "Lactic Acid",
+        ratings: [{ user: "K. Brandt", value: 3 }],
+      },
     ],
   },
   {
-    id: "companies",
-    label: "Companies",
+    id: "supplier",
+    label: "Supplier",
     items: [
-      { id: "company-1", name: "Corbion", detail: "Producer · Gorinchem, Netherlands" },
-      { id: "company-2", name: "Jungbunzlauer", detail: "Producer · Basel, Switzerland" },
-      { id: "company-3", name: "Galactic", detail: "Producer · Brussels, Belgium" },
+      {
+        id: "company-3",
+        name: "Arla Foods Ingredients",
+        role: "Supplier",
+        location: "Viby, Denmark",
+        size: "1 200 employees",
+        connectsTo: "Whey permeate",
+        ratings: [{ user: "M. Rossi", value: 4 }],
+      },
     ],
   },
   {
-    id: "patents",
-    label: "Patents",
+    id: "offtaker",
+    label: "Offtaker",
     items: [
-      { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
-      { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
-    ],
-  },
-  {
-    id: "papers",
-    label: "Papers",
-    items: [
-      { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
-      { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+      {
+        id: "company-4",
+        name: "Amcor Flexibles",
+        role: "Offtaker",
+        location: "Zurich, Switzerland",
+        size: "400 employees",
+        connectsTo: "PLA packaging",
+        ratings: [],
+      },
     ],
   },
 ];
+
+const PATENT_ITEMS: ShortlistItem[] = [
+  { id: "patent-1", name: "EP 3 412 789 B1", detail: "Continuous purification of fermentation-derived lactic acid" },
+  { id: "patent-2", name: "WO 2024/118632 A1", detail: "Low-carbon lactic acid from agricultural residues" },
+];
+
+const PAPER_ITEMS: ShortlistItem[] = [
+  { id: "paper-1", name: "Commercial-scale lactic acid fermentation", detail: "Process yield and cost assessment across renewable feedstocks" },
+  { id: "paper-2", name: "European lactic acid supply outlook", detail: "Producer capacity, geography and market availability review" },
+];
+
 
 const statusClasses: Record<EvaluationStatus, string> = {
   Match: "border-success/30 bg-success/10 text-success",
