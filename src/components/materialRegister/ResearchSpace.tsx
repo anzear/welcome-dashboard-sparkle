@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Check, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, MessageSquarePlus, Minus, Pencil, Plus, X } from "lucide-react";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { PathwayShortlistRows, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
+import { PathwayShortlistRows, hasGroupableClusters, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
@@ -333,15 +333,18 @@ const MultiSelectChips = ({
 
 
 
-const ShortlistCard = ({ label, count, children, defaultOpen = false }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean }) => (
+const ShortlistCard = ({ label, count, children, defaultOpen = false, headerAction }: { label: string; count: number; children: React.ReactNode; defaultOpen?: boolean; headerAction?: React.ReactNode }) => (
   <Accordion type="single" collapsible defaultValue={defaultOpen ? label : undefined} className="overflow-hidden rounded-lg border border-border bg-card">
     <AccordionItem value={label} className="border-b-0">
-      <AccordionTrigger className="px-4 py-3 text-xs hover:no-underline">
-        <span className="flex items-center gap-2">
-          <span className="font-semibold text-foreground">{label}</span>
-          <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
-        </span>
-      </AccordionTrigger>
+      <div className="flex items-center pr-4">
+        <AccordionTrigger className="flex-1 px-4 py-3 pr-2 text-xs hover:no-underline">
+          <span className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">{label}</span>
+            <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+          </span>
+        </AccordionTrigger>
+        {headerAction}
+      </div>
       <AccordionContent className="border-t border-border pb-0">{children}</AccordionContent>
     </AccordionItem>
   </Accordion>
@@ -666,13 +669,32 @@ const ResearchSpace: React.FC = () => {
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
 
-        <ShortlistCard label="Pathways" count={shortlistPathways.length} defaultOpen>
+        <ShortlistCard
+          label="Pathways"
+          count={shortlistPathways.length}
+          defaultOpen
+          headerAction={
+            hasGroupableClusters(shortlistPathways) ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 gap-1.5 text-[10px] font-normal"
+                onClick={() => setPathwaysGrouped((current) => !current)}
+              >
+                <ChevronDown className={pathwaysGrouped ? "h-3 w-3 -rotate-90" : "h-3 w-3"} />
+                {pathwaysGrouped ? "Expand applications" : "Collapse applications"}
+              </Button>
+            ) : undefined
+          }
+        >
           <PathwayShortlistRows
             pathways={shortlistPathways}
             notes={pathwayNotes}
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
+            grouped={pathwaysGrouped}
           />
         </ShortlistCard>
 
