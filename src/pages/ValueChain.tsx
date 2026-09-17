@@ -245,30 +245,18 @@ const MaterialBriefHero: React.FC<{
         />
       </div>
 
-      {/* ── Band 2 — Material Brief & Research space entry tiles ─────────── */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* ── Band 2 — Material Brief entry tile ───────────────────────────── */}
+      <div>
         <button
           type="button"
           onClick={() => navHero(`/landscape/${category}/${topic}/material-brief-simple`)}
-          className="flex items-center justify-between px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
+          className="flex items-center justify-between w-full px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
         >
             <span className="flex items-center gap-2">
             <Target className="w-3.5 h-3.5 text-foreground" />
             <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Material Brief</span>
           </span>
           <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Coming soon"
-          className="flex items-center justify-between px-5 py-3 text-left group opacity-60 cursor-not-allowed"
-        >
-            <span className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-foreground" />
-            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Research Space</span>
-          </span>
-          <span className="text-[10px] text-muted-foreground" aria-hidden>→</span>
         </button>
       </div>
 
