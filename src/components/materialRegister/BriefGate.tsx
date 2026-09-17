@@ -36,16 +36,29 @@ import {
  * suggested. The recommendation sits at the foot, read after the call.
  */
 
-/** The five gate values, in a fixed reading order that carries no ranking. */
-const STATUSES: JourneyStatus[] = ["under_evaluation", "hold", "go_with_conditions", "go", "no_go"];
+/** The seven stages, in workflow order. */
+const STATUSES: JourneyStatus[] = [
+  "not_started",
+  "in_evaluation",
+  "in_testing",
+  "in_development",
+  "in_deployment",
+  "adopted",
+  "parked",
+];
+
+/** Stages that carry detail and draft first: conditions, or a parking note. */
+const DETAIL_STAGES: JourneyStatus[] = ["in_testing", "parked"];
 
 /** Categorical colour. Solid when set, quiet when not — never a gradient. */
 const STATUS_FILL: Record<JourneyStatus, string> = {
-  under_evaluation: "bg-muted-foreground text-background border-muted-foreground",
-  hold: "bg-amber-500 text-white border-amber-500",
-  go_with_conditions: "bg-provenance-judgement text-white border-provenance-judgement",
-  go: "bg-emerald-600 text-white border-emerald-600",
-  no_go: "bg-destructive text-destructive-foreground border-destructive",
+  not_started: "bg-muted-foreground text-background border-muted-foreground",
+  in_evaluation: "bg-provenance-judgement text-white border-provenance-judgement",
+  in_testing: "bg-violet-600 text-white border-violet-600",
+  in_development: "bg-emerald-600 text-white border-emerald-600",
+  in_deployment: "bg-sky-600 text-white border-sky-600",
+  adopted: "bg-foreground text-background border-foreground",
+  parked: "bg-amber-500 text-white border-amber-500",
 };
 
 const LINK =
