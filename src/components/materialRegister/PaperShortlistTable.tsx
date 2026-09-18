@@ -70,7 +70,7 @@ export function PaperShortlistTable({
             <TableHead className={HEAD_CLS}>Publication</TableHead>
             <TableHead className={HEAD_CLS}>Date</TableHead>
             <TableHead className={HEAD_CLS}>Authors</TableHead>
-            <TableHead className={HEAD_CLS}>Comments</TableHead>
+            <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
@@ -92,8 +92,8 @@ export function PaperShortlistTable({
                     <Input
                       value={myNotes[paper.id] ?? ""}
                       onChange={(event) => setMyNotes((current) => ({ ...current, [paper.id]: event.target.value }))}
-                      placeholder="Add your comment…"
-                      aria-label={`Your comment on ${paper.title}`}
+                      placeholder="Add your note…"
+                      aria-label={`Your note on ${paper.title}`}
                       className="h-7 bg-background text-[10px]"
                     />
                     {teamNoteCount > 0 && (

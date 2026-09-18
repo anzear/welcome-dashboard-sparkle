@@ -77,7 +77,7 @@ export function PatentShortlistTable({
             <TableHead className={HEAD_CLS}>Granted date</TableHead>
             <TableHead className={HEAD_CLS}>Status</TableHead>
             <TableHead className={HEAD_CLS}>Jurisdiction</TableHead>
-            <TableHead className={HEAD_CLS}>Comments</TableHead>
+            <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
@@ -101,8 +101,8 @@ export function PatentShortlistTable({
                     <Input
                       value={myNotes[patent.id] ?? ""}
                       onChange={(event) => setMyNotes((current) => ({ ...current, [patent.id]: event.target.value }))}
-                      placeholder="Add your comment…"
-                      aria-label={`Your comment on ${patent.title}`}
+                      placeholder="Add your note…"
+                      aria-label={`Your note on ${patent.title}`}
                       className="h-7 bg-background text-[10px]"
                     />
                     {teamNoteCount > 0 && (
