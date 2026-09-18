@@ -238,11 +238,6 @@ export function prototypeBriefSeed(name: string): Omit<Material, "material_id"> 
       date: "2026-09-12",
     },
     stage_goals: {
-      in_evaluation: {
-        text: "Confirm that at least three qualified EU bio-based producers can meet the H2 2026 volume target and stay within the €1.85/kg ceiling.",
-        author: "S. Rautio",
-        date: "2026-09-09",
-      },
       in_testing: {
         text: "Run a 500 t pilot with the two shortlisted EU producers and validate material conformance against Persil and Somat specifications.",
         author: "S. Rautio",
