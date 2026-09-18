@@ -112,3 +112,30 @@ export function readPathwayValidationStatus(
   } catch {}
   return 'TBD';
 }
+
+export function writePathwayValidationStatus(
+  topic: string | undefined,
+  pathwayId: string,
+  status: PathwayValidationStatus,
+) {
+  try {
+    localStorage.setItem(validationStatusKey(topic, pathwayId), status);
+    window.dispatchEvent(new Event('pathway-validation-comments-changed'));
+  } catch {}
+}
+
+/** Seed diverse statuses for demo shortlists without overwriting user-set values. */
+export function seedPathwayValidationStatuses(
+  topic: string | undefined,
+  pathwayIds: string[],
+  statuses: PathwayValidationStatus[],
+) {
+  pathwayIds.forEach((id, i) => {
+    try {
+      const key = validationStatusKey(topic, id);
+      if (localStorage.getItem(key) === null) {
+        localStorage.setItem(key, statuses[i % statuses.length]);
+      }
+    } catch {}
+  });
+}
