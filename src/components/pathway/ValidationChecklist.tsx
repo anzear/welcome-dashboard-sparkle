@@ -1,23 +1,30 @@
 import { useEffect, useState } from "react";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
-  FUNCTION_SUBITEMS,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   VALIDATION_CHANGED_EVENT,
   VALIDATION_CURRENT_USER,
   VALIDATION_FUNCTIONS,
-  functionConfirmation,
+  VALIDATION_STATUSES,
+  VALIDATION_STATUS_CLASS,
+  functionStatus,
   readValidationChecklist,
-  subItemsDone,
-  toggleSubItem,
+  setFunctionStatus,
   writeValidationChecklist,
   type ValidationChecklist as Checklist,
   type ValidationFunction,
+  type ValidationStatus,
 } from "@/lib/pathwayValidationChecklist";
 
 /**
- * The function checklist. One component, used by both the Pathway Profile
+ * Jira-style function statuses. One component, used by both the Pathway Profile
  * Validation card and the Workspace Status card — they share the same store, so
- * a tick on either surface shows on the other.
+ * a change on either surface shows on the other.
  */
 export function ValidationChecklist({
   pathwayId,
@@ -37,8 +44,8 @@ export function ValidationChecklist({
     return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
   }, [topic, pathwayId]);
 
-  const toggle = (fn: ValidationFunction, subItem: string, checked: boolean) => {
-    const next = toggleSubItem(checklist, fn, subItem, checked, VALIDATION_CURRENT_USER);
+  const update = (fn: ValidationFunction, status: ValidationStatus) => {
+    const next = setFunctionStatus(checklist, fn, status, VALIDATION_CURRENT_USER);
     setChecklist(next);
     writeValidationChecklist(topic, pathwayId, next);
   };
@@ -46,49 +53,37 @@ export function ValidationChecklist({
   return (
     <div className="divide-y divide-border/40">
       {VALIDATION_FUNCTIONS.map((fn) => {
-        const confirmation = functionConfirmation(checklist, fn);
-        const done = subItemsDone(checklist, fn);
+        const status = functionStatus(checklist, fn);
+        const state = checklist[fn];
+        const id = `${idPrefix}-${pathwayId}-${fn}`.replace(/[^a-zA-Z0-9-]/g, "-");
         return (
-          <div key={fn} className="py-1.5">
-            <div className="flex flex-wrap items-baseline gap-2 px-3">
-              <span className="text-[11px] font-semibold text-foreground">{fn}</span>
-              {confirmation ? (
-                <span className="text-[10px] text-foreground/70">
-                  Confirmed by {confirmation.by} · {confirmation.date}
-                </span>
-              ) : (
-                <span className="text-[10px] text-muted-foreground">
-                  {done} of {FUNCTION_SUBITEMS[fn].length} done
-                </span>
-              )}
-            </div>
+          <div key={fn} className="flex h-10 items-center gap-3 px-3">
+            <span className="w-28 shrink-0 text-[11px] font-semibold text-foreground">{fn}</span>
 
-            <div className="mt-0.5">
-              {FUNCTION_SUBITEMS[fn].map((sub) => {
-                const stamp = checklist[fn]?.[sub];
-                const id = `${idPrefix}-${pathwayId}-${fn}-${sub}`.replace(/\s+/g, "-");
-                return (
-                  <div key={sub} className="flex h-8 items-center gap-2.5 pl-8 pr-3">
-                    <Checkbox
-                      className="h-3.5 w-3.5"
-                      id={id}
-                      checked={!!stamp}
-                      onCheckedChange={(value) => toggle(fn, sub, value === true)}
-                    />
-                    <label htmlFor={id} className="cursor-pointer text-[11px] text-foreground">
-                      {sub}
-                    </label>
-                    {stamp ? (
-                      <span className="text-[10px] text-foreground/70">
-                        {stamp.by} · {stamp.date}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">Not confirmed</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <Select value={status} onValueChange={(value) => update(fn, value as ValidationStatus)}>
+              <SelectTrigger
+                id={id}
+                aria-label={`${fn} status`}
+                className={`h-6 w-[130px] shrink-0 rounded-full border px-2.5 text-[10px] font-medium ${VALIDATION_STATUS_CLASS[status]}`}
+              >
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {VALIDATION_STATUSES.map((option) => (
+                  <SelectItem key={option} value={option} className="text-[11px]">
+                    {option}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {state ? (
+              <span className="truncate text-[10px] text-muted-foreground">
+                {state.by} · {state.date}
+              </span>
+            ) : (
+              <span className="text-[10px] text-muted-foreground">Not set</span>
+            )}
           </div>
         );
       })}
