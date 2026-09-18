@@ -158,18 +158,26 @@ export function DocumentAttachControl({
 }
 
 /**
- * Workspace level documents — general research files for the whole material,
- * not scoped to any shortlisted item.
+ * All documents for the material. Files uploaded here are tagged "General";
+ * files uploaded anywhere else (pathway, company, patent, paper, validation)
+ * appear with a tag naming where they were uploaded.
  */
 export function WorkSpaceDocumentsCard({
   currentUser,
-  seed = [],
+  seed: _seed = [],
 }: {
   currentUser: string;
   seed?: ItemDocument[];
 }) {
-  const [documents, setDocuments] = useState<ItemDocument[]>(seed);
+  const [documents, setDocuments] = useState(() => readDocumentRegistry());
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const refresh = () => setDocuments(readDocumentRegistry());
+    refresh();
+    window.addEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
+  }, []);
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -177,7 +185,9 @@ export function WorkSpaceDocumentsCard({
         <span className="flex items-center gap-2 text-xs">
           <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-semibold text-foreground">Documents</span>
-          <span className="text-[10px] text-muted-foreground">General files for this material</span>
+          <span className="text-[10px] text-muted-foreground">
+            Every file uploaded for this material, tagged with where it was uploaded
+          </span>
         </span>
         <input
           ref={inputRef}
@@ -185,12 +195,10 @@ export function WorkSpaceDocumentsCard({
           multiple
           className="hidden"
           onChange={(event) => {
-            const files = Array.from(event.target.files ?? []);
-            if (files.length > 0) {
-              setDocuments((current) => [
-                ...current,
-                ...files.map((file) => makeDocument(file.name, currentUser)),
-              ]);
+            const names = Array.from(event.target.files ?? []).map((file) => file.name);
+            if (names.length > 0) {
+              registerDocuments(names, currentUser, GENERAL_SOURCE);
+              setDocuments(readDocumentRegistry());
             }
             event.target.value = "";
           }}
@@ -218,6 +226,16 @@ export function WorkSpaceDocumentsCard({
                 <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-foreground" title={document.name}>
                   {document.name}
                 </span>
+                <span
+                  className={`max-w-[240px] shrink-0 truncate rounded-full border px-2 py-0.5 text-[9px] font-medium ${
+                    document.source === GENERAL_SOURCE
+                      ? "border-border bg-muted/50 text-muted-foreground"
+                      : "border-border bg-background text-foreground"
+                  }`}
+                  title={document.source}
+                >
+                  {document.source}
+                </span>
                 <span className="w-24 shrink-0 text-[10px] text-muted-foreground">{document.date}</span>
                 <span className="w-24 shrink-0 truncate text-[10px] text-muted-foreground">{document.uploader}</span>
                 <Button
@@ -227,7 +245,10 @@ export function WorkSpaceDocumentsCard({
                   className="h-6 w-6 shrink-0"
                   title="Delete document"
                   aria-label={`Delete ${document.name}`}
-                  onClick={() => setDocuments((current) => current.filter((item) => item.id !== document.id))}
+                  onClick={() => {
+                    unregisterDocument(document.id);
+                    setDocuments(readDocumentRegistry());
+                  }}
                 >
                   <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                 </Button>
@@ -238,6 +259,7 @@ export function WorkSpaceDocumentsCard({
       </div>
     </div>
   );
+
 }
 
 /**
