@@ -140,8 +140,6 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   /** A click on a segment. Detail-carrying stages draft first, then commit. */
   const pickStatus = (s: JourneyStatus) => {
     if (!writable || s === m.journey_status) return;
-    setGoalOpen(false);
-    setGoalText("");
     setPending(null);
     if (DETAIL_STAGES.includes(s)) {
       startPending(s as GateOutcome);
