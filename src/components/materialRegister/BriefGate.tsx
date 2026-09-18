@@ -86,13 +86,13 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
    * Function progression. Each of the four functions is worth exactly
    * 100 / 4 = 25%, and counts only when BOTH its sub-items are ticked — no
    * partial credit. The bar reads ONLY the shared validation checklist; the
-   * status stage never moves it. Exception: "Material integrated" is a manual
-   * display override at 100%, leaving the checkboxes untouched.
+   * status stage never moves it. The checklist is shown only under
+   * "In evaluation".
    */
-  const integrated = m.journey_status === "adopted";
   const evaluating = m.journey_status === "in_evaluation";
 
   const [confirmed, setConfirmed] = useState(() =>
+
     validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
   );
 
@@ -106,10 +106,10 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   }, [validation?.topic, validation?.pathwayId]);
 
   const total = VALIDATION_FUNCTIONS.length;
-  const progressPercent = integrated ? 100 : Math.round((confirmed * 100) / total);
-
+  const progressPercent = Math.round((confirmed * 100) / total);
 
   const writable = canSetGate(m, currentUser.name);
+
 
   /** The status being drafted. Never seeded from a score or a recommendation. */
   const [pending, setPending] = useState<GateOutcome | null>(null);
@@ -337,21 +337,8 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       )}
 
-      {/* Material integrated is a manual display override: bar only, at 100%. */}
-      {validation && integrated && (
-        <div className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            Evaluation checklist
-          </span>
-          <div className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-full rounded-full bg-emerald-600" />
-          </div>
-          <span className="shrink-0 tabular-nums text-[10px] font-semibold text-foreground">100%</span>
-        </div>
-      )}
-
-
       {/* Detail belongs to a status, not to a section of its own. */}
+
       {pending !== null ? pendingDetail : activeDetail}
 
       {/* A parked decision that was reopened keeps its argument in plain sight. */}
