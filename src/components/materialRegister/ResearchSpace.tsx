@@ -953,6 +953,7 @@ type Row = {
         <ShortlistCard
           label="Pathways"
           count={shortlistPathways.length}
+          total={analysedPathwayTotal}
           headerAction={
             hasGroupableClusters(shortlistPathways) ? (
               <Button
