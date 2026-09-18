@@ -430,6 +430,16 @@ const ResearchSpace: React.FC = () => {
     };
   }, []);
 
+  /** Seed diverse Validation Space statuses for the demo shortlist on first load. */
+  useEffect(() => {
+    if (!material?.name) return;
+    const indices = shortlistPathways
+      .map((p) => shortlistIdToPathwayIndex(p.id))
+      .filter((i): i is string => i !== null);
+    seedPathwayValidationStatuses(material.name, indices, ['Go', 'Uncertain', 'No-Go', 'TBD']);
+    setCommentTick((n) => n + 1);
+  }, [material?.name]);
+
   const mergedPathwayNotes = useMemo(() => {
     void commentTick;
     const merged: Record<string, PathwayNote[]> = { ...pathwayNotes };
