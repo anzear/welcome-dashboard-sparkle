@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import ResearchSpace from "@/components/materialRegister/ResearchSpace";
 import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
-import { blankMaterial } from "@/components/materialRegister/materialEntry";
+import { prototypeBriefSeed } from "@/components/materialRegister/materialEntry";
 import {
   CURRENT_USER,
   RegisterProvider,
@@ -20,7 +20,7 @@ const Inner: React.FC = () => {
   const navigate = useNavigate();
   const { topic } = useParams();
   const name = topic ? decodeURIComponent(topic).trim() : "";
-  const { data, openId, openBrief, addMaterials } = useRegister();
+  const { data, openId, openBrief, addMaterials, updateMaterial } = useRegister();
   const bootstrapped = useRef(false);
 
   useEffect(() => {
@@ -28,16 +28,22 @@ const Inner: React.FC = () => {
     const hit = data.find((m) => m.name.trim().toLowerCase() === name.toLowerCase());
     if (hit) {
       bootstrapped.current = true;
+      // Prototype: a row that was created blank (e.g. by an earlier visit) gets
+      // the worked-example profile so the brief never reads empty.
+      if (!hit.material_class) {
+        const { name: _n, ...seedPatch } = prototypeBriefSeed(hit.name);
+        updateMaterial(hit.material_id, seedPatch);
+      }
       openBrief(hit.material_id);
       return;
     }
     bootstrapped.current = true;
-    const [id] = addMaterials([{ ...blankMaterial(), name }], {
+    const [id] = addMaterials([prototypeBriefSeed(name)], {
       batchOrigin: "real_transition",
       source: CURRENT_USER,
     });
     if (id) openBrief(id);
-  }, [name, data, openBrief, addMaterials]);
+  }, [name, data, openBrief, addMaterials, updateMaterial]);
 
   const [view, setView] = React.useState<"brief" | "research">("research");
 
