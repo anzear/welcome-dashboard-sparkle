@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -58,7 +57,7 @@ function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
 }
 
 const COLS =
-  "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
@@ -131,7 +130,6 @@ type Props = {
 };
 
 export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
@@ -157,13 +155,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
    * order; clusters never span non-matching rows.
    */
   const runs = useMemo(() => clusterRuns(pathways), [pathways]);
-
-  const toggle = (ids: string[], on: boolean) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
-      return next;
-    });
 
   /** Moves the dragged pathway to the drop target's position and reports the new order. */
   const commitDrop = (targetId: string) => {
@@ -213,14 +204,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
         }`}
       >
         <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-          <div className="flex items-center justify-center">
-            <Checkbox
-              className="h-3 w-3"
-              aria-label="Select pathway"
-              checked={selected.has(p.id)}
-              onCheckedChange={(v) => toggle([p.id], v === true)}
-            />
-          </div>
           <div className="flex justify-center">
             <span
               title="Drag to change priority — top row is highest"
@@ -264,9 +247,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
 
           // Collapsed cluster: shared three chips, summary chip in the fourth position.
           const head = members[0];
-          const ids = members.map((m) => m.id);
-          const allSelected = ids.every((id) => selected.has(id));
-          const someSelected = !allSelected && ids.some((id) => selected.has(id));
           const aggregateNotes = members.reduce((sum, m) => sum + (notes[m.id] ?? []).length, 0);
 
           return (
@@ -276,15 +256,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
               onClick={() => setExpandedGroups((prev) => new Set(prev).add(key))}
             >
               <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    className="h-3 w-3"
-                    aria-label="Select all pathways in this group"
-                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                    onCheckedChange={(v) => toggle(ids, v === true)}
-                  />
-                </div>
-                <span />
                 {chip(head.feedstock, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.process, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.product, PATHWAY_CHIP_ANCHOR)}
