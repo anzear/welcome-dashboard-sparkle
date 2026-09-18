@@ -24,6 +24,25 @@ const MOCK_DOCUMENTS: ItemDocument[] = [
   { id: "pv-doc-2", name: "Lab-conformance-results.xlsx", uploader: "M. Feld", date: "11 Sept 2026" },
 ];
 
+/** Shared so other views (Work Space status card) can read the same source. */
+export const VALIDATION_FUNCTIONS = FUNCTIONS;
+
+export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId: string) =>
+  `pathway-validation-confirmations:${topic || "default"}:${pathwayId}`;
+
+/** Read-only mirror of the checkboxes; never writes, never alters them. */
+export const readPathwayConfirmations = (
+  topic: string | undefined,
+  pathwayId: string,
+): Confirmations => {
+  try {
+    const stored = localStorage.getItem(pathwayValidationStorageKey(topic, pathwayId));
+    return stored ? (JSON.parse(stored) as Confirmations) : MOCK_CONFIRMATIONS;
+  } catch {
+    return MOCK_CONFIRMATIONS;
+  }
+};
+
 const todayLabel = () =>
   new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
