@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, MessageSquare, MessageSquarePlus } from "lucide-react";
+import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -121,10 +121,14 @@ type Props = {
   grouped: boolean;
   /** Validation Space status per pathway id; absent id renders as TBD. */
   statuses?: Record<string, ValidationStatus>;
+  /** Drag-to-reorder: row order is the priority order, top row highest. */
+  onReorder?: (orderedIds: string[]) => void;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses }: Props) {
+export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notesFor, setNotesFor] = useState<string | null>(null);
@@ -143,8 +147,19 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
       return next;
     });
 
-  const rowIndex = new Map<string, number>();
-  pathways.forEach((p, i) => rowIndex.set(p.id, i + 1));
+  /** Moves the dragged pathway to the drop target's position and reports the new order. */
+  const commitDrop = (targetId: string) => {
+    const sourceId = dragId;
+    setDragId(null);
+    setOverId(null);
+    if (!sourceId || !onReorder || sourceId === targetId) return;
+    const ids = pathways.map((p) => p.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    onReorder(ids);
+  };
 
   const sheetPathway = pathways.find((p) => p.id === notesFor) ?? null;
   const sheetNotes = notesFor ? [...(notes[notesFor] ?? [])].reverse() : [];
@@ -154,7 +169,31 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
   const flatRow = (p: ShortlistPathway) => {
     const count = (notes[p.id] ?? []).length;
     return (
-      <div key={p.id} className="group hover:bg-muted/30 transition-colors">
+      <div
+        key={p.id}
+        draggable={!!onReorder}
+        onDragStart={(e) => {
+          setDragId(p.id);
+          e.dataTransfer.effectAllowed = "move";
+        }}
+        onDragOver={(e) => {
+          if (!onReorder || !dragId) return;
+          e.preventDefault();
+          setOverId(p.id);
+        }}
+        onDragLeave={() => setOverId((current) => (current === p.id ? null : current))}
+        onDrop={(e) => {
+          e.preventDefault();
+          commitDrop(p.id);
+        }}
+        onDragEnd={() => {
+          setDragId(null);
+          setOverId(null);
+        }}
+        className={`group transition-colors hover:bg-muted/30 ${dragId === p.id ? "opacity-50" : ""} ${
+          overId === p.id && dragId && dragId !== p.id ? "bg-muted/50" : ""
+        }`}
+      >
         <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
           <div className="flex items-center justify-center">
             <Checkbox
@@ -165,8 +204,11 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
             />
           </div>
           <div className="flex justify-center">
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded text-[10px] font-semibold tabular-nums bg-muted text-muted-foreground">
-              {rowIndex.get(p.id)}
+            <span
+              title="Drag to change priority — top row is highest"
+              className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground cursor-grab active:cursor-grabbing hover:bg-muted hover:text-foreground"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
             </span>
           </div>
           {chip(p.feedstock, PATHWAY_CHIP_NEUTRAL)}

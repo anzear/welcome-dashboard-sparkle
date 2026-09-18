@@ -353,13 +353,15 @@ const MultiSelectChips = ({
 
 
 /** Always expanded — shortlist sections never collapse. */
-const ShortlistCard = ({ label, count, children, headerAction }: { label: string; count: number; children: React.ReactNode; headerAction?: React.ReactNode }) => (
+const ShortlistCard = ({ label, count, total, children, headerAction }: { label: string; count: number; /** When given, the badge reads "count of total". */ total?: number; children: React.ReactNode; headerAction?: React.ReactNode }) => (
   <div className="overflow-hidden rounded-lg border border-border bg-card">
     <div className="flex items-center justify-between px-4 py-3 pr-4">
       <span className="flex items-center gap-2 text-xs">
         <Bookmark className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
         <span className="font-semibold text-foreground">{label}</span>
-        <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+        <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px] tabular-nums">
+          {total === undefined ? count : `${count} of ${total}`}
+        </Badge>
       </span>
       {headerAction}
     </div>
@@ -368,6 +370,33 @@ const ShortlistCard = ({ label, count, children, headerAction }: { label: string
 );
 
 
+
+const PATHWAY_ORDER_KEY = "vcg.workspace.pathwayPriorityOrder";
+
+/** Reorders the shortlist to the stored priority order; unknown/new ids keep their place at the end. */
+function applyStoredPathwayOrder(pathways: ShortlistPathway[]): ShortlistPathway[] {
+  try {
+    const raw = localStorage.getItem(PATHWAY_ORDER_KEY);
+    if (!raw) return pathways;
+    const order: string[] = JSON.parse(raw);
+    if (!Array.isArray(order)) return pathways;
+    const ranked = order.filter((id) => pathways.some((pathway) => pathway.id === id));
+    return [
+      ...ranked.map((id) => pathways.find((pathway) => pathway.id === id)!),
+      ...pathways.filter((pathway) => !ranked.includes(pathway.id)),
+    ];
+  } catch {
+    return pathways;
+  }
+}
+
+function savePathwayOrder(orderedIds: string[]) {
+  try {
+    localStorage.setItem(PATHWAY_ORDER_KEY, JSON.stringify(orderedIds));
+  } catch {
+    /* storage unavailable — order stays session-only */
+  }
+}
 
 const ResearchSpace: React.FC = () => {
   const { allMaterials, openId } = useRegister();
@@ -380,7 +409,27 @@ const ResearchSpace: React.FC = () => {
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
-  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
+  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(() =>
+    applyStoredPathwayOrder(SHORTLIST_PATHWAYS),
+  );
+  /** Row order is the priority order, top row highest. Persisted across visits. */
+  const reorderPathways = (orderedIds: string[]) => {
+    setShortlistPathways((current) =>
+      orderedIds
+        .map((id) => current.find((pathway) => pathway.id === id))
+        .filter((pathway): pathway is ShortlistPathway => !!pathway),
+    );
+    savePathwayOrder(orderedIds);
+  };
+  /** All pathways analysed for this material, shortlisted or not. */
+  const analysedPathwayTotal = useMemo(() => {
+    const name = material?.name?.trim().toLowerCase();
+    if (!name) return shortlistPathways.length;
+    const matching = PREDEFINED_PATHWAYS.filter(
+      (pathway) => pathway.product.trim().toLowerCase() === name,
+    ).length;
+    return Math.max(matching, shortlistPathways.length);
+  }, [material?.name, shortlistPathways.length]);
   /** Grouped-by-applications is an opt-in view, toggled from the card header. Flat is the default. */
   const [pathwaysGrouped, setPathwaysGrouped] = useState(false);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
@@ -904,6 +953,7 @@ type Row = {
         <ShortlistCard
           label="Pathways"
           count={shortlistPathways.length}
+          total={analysedPathwayTotal}
           headerAction={
             hasGroupableClusters(shortlistPathways) ? (
               <Button
@@ -926,6 +976,7 @@ type Row = {
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
+            onReorder={reorderPathways}
             grouped={pathwaysGrouped}
           />
         </ShortlistCard>
