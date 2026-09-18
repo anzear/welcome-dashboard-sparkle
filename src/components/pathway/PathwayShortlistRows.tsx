@@ -20,7 +20,6 @@ import {
   pathwayChipCls,
 } from "./pathwayRowStyles";
 import {
-  FUNCTION_STATUSES,
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
   countConfirmedFunctions,
