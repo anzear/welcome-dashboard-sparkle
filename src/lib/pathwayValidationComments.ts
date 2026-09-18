@@ -96,21 +96,52 @@ export function shortlistIdToPathwayIndex(shortlistId: string): string | null {
   return String(Number(match[1]) - 1);
 }
 
-export type PathwayValidationStatus = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
+/**
+ * The five pathway statuses. NOT a sequence — a pathway can move between any
+ * two directly (e.g. Not evaluated → Parked) without passing through others.
+ */
+export type PathwayValidationStatus =
+  | 'Not evaluated'
+  | 'Lab testing'
+  | 'Piloting'
+  | 'Integrated'
+  | 'Parked';
+
+export const PATHWAY_VALIDATION_STATUSES: PathwayValidationStatus[] = [
+  'Not evaluated',
+  'Lab testing',
+  'Piloting',
+  'Integrated',
+  'Parked',
+];
+
+/** Migration for values stored before the rename: TBD/Go/Uncertain/No-Go. */
+const LEGACY_STATUS_MAP: Record<string, PathwayValidationStatus> = {
+  TBD: 'Not evaluated',
+  Go: 'Piloting',
+  Uncertain: 'Lab testing',
+  'No-Go': 'Parked',
+};
 
 export const validationStatusKey = (topic: string | undefined, pathwayId: string) =>
   `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
 
-/** 4-level pathway status set in the Validation Space on the pathway profile. */
+/**
+ * Pathway status set in the Validation Space on the pathway profile.
+ * Legacy values are migrated to the new five on read. Default: Not evaluated.
+ */
 export function readPathwayValidationStatus(
   topic: string | undefined,
   pathwayId: string,
 ): PathwayValidationStatus {
   try {
     const s = localStorage.getItem(validationStatusKey(topic, pathwayId));
-    if (s === 'TBD' || s === 'Go' || s === 'Uncertain' || s === 'No-Go') return s;
+    if (s && (PATHWAY_VALIDATION_STATUSES as string[]).includes(s)) {
+      return s as PathwayValidationStatus;
+    }
+    if (s && LEGACY_STATUS_MAP[s]) return LEGACY_STATUS_MAP[s];
   } catch {}
-  return 'TBD';
+  return 'Not evaluated';
 }
 
 export function writePathwayValidationStatus(
