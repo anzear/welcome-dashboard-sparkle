@@ -200,7 +200,6 @@ export function PathwayShortlistRows({
   onRemove,
   currentUser,
   grouped,
-  statuses,
   onReorder,
   category,
   topic,
@@ -322,7 +321,7 @@ export function PathwayShortlistRows({
           </div>
           <ValidationProgress topic={topic} pathwayId={p.id} />
           <div className="flex items-center justify-between gap-2">
-            <ValidationStatusBadge status={statuses?.[p.id] ?? "Not evaluated"} />
+            <EvaluationStatusBadges topic={topic} pathwayId={p.id} />
             <div className="flex items-center gap-2" data-row-control>
               <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
               <DocumentAttachControl
