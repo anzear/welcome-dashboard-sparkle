@@ -877,6 +877,32 @@ const PathwayDetail = () => {
                     topic={topic ? decodeURIComponent(topic) : undefined}
                   />
                   </>
+                ) : evaluationTab === 'shortlist' ? (
+                  <div className="space-y-3">
+                    <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
+                      <CompanyShortlistTables
+                        companies={shortlistCompanies}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+
+                    <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
+                      <PatentShortlistTable
+                        patents={shortlistPatents}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+
+                    <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
+                      <PaperShortlistTable
+                        papers={shortlistPapers}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+                  </div>
                 ) : null}
                 </div>
 
