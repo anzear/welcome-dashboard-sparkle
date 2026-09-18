@@ -173,11 +173,11 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
           {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
           {chip(p.product, PATHWAY_CHIP_ANCHOR)}
           {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
-          <div className="flex flex-col items-center justify-center gap-1">
+          <div className="flex items-center justify-center">
             <StatusBadge trl={p.trl} />
-            <ValidationStatusBadge status={statuses?.[p.id] ?? "TBD"} />
           </div>
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <ValidationStatusBadge status={statuses?.[p.id] ?? "TBD"} />
             <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
           </div>
         </div>
