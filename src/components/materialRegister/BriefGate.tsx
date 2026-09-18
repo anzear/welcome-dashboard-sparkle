@@ -70,11 +70,9 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
-  const { currentUser, saveRecommendation, saveStageGoal, setGateOutcome, reopenGate } =
-    useRegister();
+  const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
 
   const writable = canSetGate(m, currentUser.name);
-  const rec = m.recommendation;
 
   /** The status being drafted. Never seeded from a score or a recommendation. */
   const [pending, setPending] = useState<GateOutcome | null>(null);
@@ -82,8 +80,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
 
-  const [recOpen, setRecOpen] = useState(false);
-  const [recText, setRecText] = useState("");
   const [goalOpen, setGoalOpen] = useState(false);
   const [goalText, setGoalText] = useState("");
 
