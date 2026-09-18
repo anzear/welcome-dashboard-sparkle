@@ -391,7 +391,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Active flags first. Visual only — nothing here sends a notification. */}
       {(overdue.length > 0 || reviewLate || m.reopened) && (
         <div className="flex flex-wrap items-center gap-1.5">
