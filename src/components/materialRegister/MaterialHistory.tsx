@@ -66,7 +66,7 @@ export function eventSentence(e: MaterialEvent): string {
     case "no_go_reason":
       return `Parking reason recorded`;
     case "reopen":
-      return `Reopened — status back to In evaluation`;
+      return `Reopened — status back to R&D testing`;
     case "decision_export":
       return e.batch_id ? "Material profile exported as part of a batch export" : "Material profile exported";
     case "tags_change":
