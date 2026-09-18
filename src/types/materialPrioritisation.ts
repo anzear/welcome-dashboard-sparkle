@@ -333,11 +333,11 @@ export interface Material {
 
 export const JOURNEY_STATUS_LABEL: Record<JourneyStatus, string> = {
   not_started: "Not started",
-  in_evaluation: "In evaluation",
-  in_testing: "In testing",
-  in_development: "In development",
-  in_deployment: "In deployment",
-  adopted: "Adopted",
+  in_evaluation: "R&D testing",
+  in_testing: "Procurement checking",
+  in_development: "Sustainability review",
+  in_deployment: "Regulatory check",
+  adopted: "Material integrated",
   parked: "Parked",
 };
 
@@ -482,10 +482,10 @@ export const EMPTY_GATE = {
 >;
 
 export const GATE_OUTCOME_LABEL: Record<GateOutcome, string> = {
-  in_testing: "In testing",
-  in_development: "In development",
-  in_deployment: "In deployment",
-  adopted: "Adopted",
+  in_testing: "Procurement checking",
+  in_development: "Sustainability review",
+  in_deployment: "Regulatory check",
+  adopted: "Material integrated",
   parked: "Parked",
 };
 

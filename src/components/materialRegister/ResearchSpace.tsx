@@ -32,6 +32,7 @@ import { WorkSpaceDocumentsCard } from "@/components/materialRegister/itemDocume
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import { VALIDATION_FUNCTIONS, readPathwayConfirmations } from "@/components/pathway/PathwayValidationCard";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import {
@@ -519,6 +520,25 @@ const ResearchSpace: React.FC = () => {
     return map;
   }, [shortlistPathways, material?.name, commentTick]);
 
+  /**
+   * Function progression for the Status card. Read from the primary (top
+   * priority) shortlisted pathway's Validation card checkboxes — read-only.
+   */
+  const validationProgress = useMemo(() => {
+    void commentTick;
+    const primary = shortlistPathways[0];
+    if (!primary) return undefined;
+    const confirmations = readPathwayConfirmations(
+      material?.name,
+      shortlistIdToPathwayIndex(primary.id) ?? primary.id,
+    );
+    return {
+      pathwayLabel: `${primary.feedstock} → ${primary.product}`,
+      confirmed: VALIDATION_FUNCTIONS.filter((fn) => !!confirmations[fn]).length,
+      total: VALIDATION_FUNCTIONS.length,
+    };
+  }, [shortlistPathways, material?.name, commentTick]);
+
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setShowSaved(false);
@@ -796,7 +816,7 @@ type Row = {
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Status</h2>
             <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
           </div>
-          <BriefGate material={material} />
+          <BriefGate material={material} validation={validationProgress} />
         </section>
       )}
 

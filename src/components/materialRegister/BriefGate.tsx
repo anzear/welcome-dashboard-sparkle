@@ -69,8 +69,26 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
+/** Read-only summary of one pathway's validation checkboxes. */
+export interface GateValidationProgress {
+  pathwayLabel: string;
+  confirmed: number;
+  total: number;
+}
+
+const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
+  material: m,
+  validation,
+}) => {
   const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
+
+  /** "Material integrated" is a manual override: the bar reads 100%, the checkboxes do not change. */
+  const integrated = m.journey_status === "adopted";
+  const progressPercent = integrated
+    ? 100
+    : validation && validation.total > 0
+      ? Math.round((validation.confirmed / validation.total) * 100)
+      : 0;
 
   const writable = canSetGate(m, currentUser.name);
 
@@ -319,6 +337,38 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
           {!writable && <span className="text-[10px] text-muted-foreground">{gateLockNote(m)}</span>}
         </div>
       </div>
+
+      {/* Function progression, read from the pathway validation checkboxes. */}
+      {validation && (
+        <div className="space-y-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Function progression
+            </span>
+            <span className="tabular-nums text-[11px] font-semibold text-foreground">
+              {progressPercent}%
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn("h-full rounded-full transition-all", integrated ? "bg-emerald-600" : "bg-foreground/70")}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+          <p className="text-[10px] leading-snug text-muted-foreground">
+            {integrated ? (
+              <>
+                Forced to 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. Checkboxes unchanged:{" "}
+                {validation.confirmed} of {validation.total} confirmed on {validation.pathwayLabel}.
+              </>
+            ) : (
+              <>
+                {validation.confirmed} of {validation.total} functions confirmed on {validation.pathwayLabel}.
+              </>
+            )}
+          </p>
+        </div>
+      )}
 
       {/* Detail belongs to a status, not to a section of its own. */}
       {pending !== null ? pendingDetail : activeDetail}

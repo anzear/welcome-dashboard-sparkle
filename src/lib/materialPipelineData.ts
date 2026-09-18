@@ -62,11 +62,11 @@ export type MaterialRow = {
 
 export const JOURNEY_STATUS_META: Record<string, { label: string; chip: string }> = {
   not_started: { label: "Not started", chip: "bg-muted text-muted-foreground border-border" },
-  in_evaluation: { label: "In evaluation", chip: "bg-sky-500/10 text-sky-700 border-sky-500/30" },
-  in_testing: { label: "In testing", chip: "bg-violet-500/10 text-violet-700 border-violet-500/30" },
-  in_development: { label: "In development", chip: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
-  in_deployment: { label: "In deployment", chip: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
-  adopted: { label: "Adopted", chip: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
+  in_evaluation: { label: "R&D testing", chip: "bg-sky-500/10 text-sky-700 border-sky-500/30" },
+  in_testing: { label: "Procurement checking", chip: "bg-violet-500/10 text-violet-700 border-violet-500/30" },
+  in_development: { label: "Sustainability review", chip: "bg-blue-500/10 text-blue-700 border-blue-500/30" },
+  in_deployment: { label: "Regulatory check", chip: "bg-amber-500/10 text-amber-700 border-amber-500/30" },
+  adopted: { label: "Material integrated", chip: "bg-emerald-500/10 text-emerald-700 border-emerald-500/30" },
   parked: { label: "Parked", chip: "bg-muted text-muted-foreground border-border" },
 };
 
