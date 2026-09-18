@@ -231,6 +231,12 @@ export function prototypeBriefSeed(name: string): Omit<Material, "material_id"> 
     journey_status: "in_evaluation",
     owner: "S. Rautio",
     priority_period: "H2 2026",
+    recommendation: {
+      outcome: "in_testing",
+      text: "Strong sustainability and supply case, but current bio-based quotes still sit above the €1.85/kg ceiling. Recommend moving to In testing: run a 500 t pilot with the two EU producers and re-check pricing before committing to deployment.",
+      author: "S. Rautio",
+      date: "2026-09-12",
+    },
     last_status_change_date: "2026-09-08",
     last_status_user: "S. Rautio",
     provenance: {

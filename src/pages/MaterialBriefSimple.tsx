@@ -49,9 +49,12 @@ const Inner: React.FC = () => {
       bootstrapped.current = true;
       // Prototype: a row that was created blank (e.g. by an earlier visit) gets
       // the worked-example profile so the brief never reads empty.
+      const { name: _n, ...seedPatch } = prototypeBriefSeed(hit.name);
       if (!hit.material_class) {
-        const { name: _n, ...seedPatch } = prototypeBriefSeed(hit.name);
         updateMaterial(hit.material_id, seedPatch);
+      } else if (!hit.recommendation) {
+        // Existing seeded row predates the mock recommendation — add just that.
+        updateMaterial(hit.material_id, { recommendation: seedPatch.recommendation });
       }
       seedDrivers(hit.material_id);
       openBrief(hit.material_id);
