@@ -118,7 +118,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
     : null;
 
   return (
-    <div className="grid sm:grid-cols-2 xl:grid-cols-[170px_180px_200px_minmax(280px,1fr)] divide-x divide-border/60 border-t border-border/60">
+    <div className="grid sm:grid-cols-2 divide-x divide-border/60 border-t border-border/60">
       <SummaryField
         label="Status"
         hint={overdue ? <span className="text-amber-600">{overdue}</span> : null}
@@ -131,24 +131,6 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
             {(Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((status) => (
               <SelectItem key={status} value={status} className="text-xs">
                 {JOURNEY_STATUS_LABEL[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </SummaryField>
-
-      <SummaryField label="Owner">
-        <Select value={material.owner ?? UNASSIGNED_OWNER} onValueChange={commitOwner}>
-          <SelectTrigger className="h-8 w-full text-xs">
-            <SelectValue placeholder="Unassigned" />
-          </SelectTrigger>
-          <SelectContent className="z-50 bg-popover">
-            <SelectItem value={UNASSIGNED_OWNER} className="text-xs">
-              Unassigned
-            </SelectItem>
-            {owners.map((o) => (
-              <SelectItem key={o} value={o} className="text-xs">
-                {o}
               </SelectItem>
             ))}
           </SelectContent>
@@ -178,10 +160,6 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
             <option key={p} value={p} />
           ))}
         </datalist>
-      </SummaryField>
-
-      <SummaryField label="Position">
-        <PositionBlock materialId={material.material_id} variant="inline" />
       </SummaryField>
     </div>
   );
