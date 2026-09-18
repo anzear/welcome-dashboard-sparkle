@@ -14,7 +14,6 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   JOURNEY_STATUS_LABEL,
-  migrateGateOutcome,
   type GateOutcome,
   type GoalStage,
   type JourneyStatus,
@@ -24,11 +23,9 @@ import {
 /**
  * THE GATE.
  *
- * The status is the headline: a segmented control of five categories. They are
- * categories, not a scale — a material can go straight from Under evaluation to
- * Go, and No-go is not the far end of anything. Nothing here is derived from the
- * assessment: every status is set by the owner, and detail is typed, not
- * suggested. The recommendation sits at the foot, read after the call.
+ * The status is the headline: seven workflow stages. Nothing here is derived
+ * from the assessment: every status is set by the owner, and detail is typed,
+ * not suggested. The current stage carries one editable goal.
  */
 
 /** The seven stages, in workflow order. */
