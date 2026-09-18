@@ -382,7 +382,27 @@ const ResearchSpace: React.FC = () => {
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
-  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(SHORTLIST_PATHWAYS);
+  const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(() =>
+    applyStoredPathwayOrder(SHORTLIST_PATHWAYS),
+  );
+  /** Row order is the priority order, top row highest. Persisted across visits. */
+  const reorderPathways = (orderedIds: string[]) => {
+    setShortlistPathways((current) =>
+      orderedIds
+        .map((id) => current.find((pathway) => pathway.id === id))
+        .filter((pathway): pathway is ShortlistPathway => !!pathway),
+    );
+    savePathwayOrder(orderedIds);
+  };
+  /** All pathways analysed for this material, shortlisted or not. */
+  const analysedPathwayTotal = useMemo(() => {
+    const name = material?.name?.trim().toLowerCase();
+    if (!name) return shortlistPathways.length;
+    const matching = PREDEFINED_PATHWAYS.filter(
+      (pathway) => pathway.product.trim().toLowerCase() === name,
+    ).length;
+    return Math.max(matching, shortlistPathways.length);
+  }, [material?.name, shortlistPathways.length]);
   /** Grouped-by-applications is an opt-in view, toggled from the card header. Flat is the default. */
   const [pathwaysGrouped, setPathwaysGrouped] = useState(false);
   const [pathwayNotes, setPathwayNotes] = useState<Record<string, PathwayNote[]>>(INITIAL_PATHWAY_NOTES);
