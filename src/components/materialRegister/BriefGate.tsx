@@ -203,74 +203,9 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
     </div>
   );
 
-  /** What the status that is actually set carries. Only ever the active one. */
-  const currentGoal = m.journey_status === "parked" ? undefined : m.stage_goals?.[m.journey_status];
-
   const activeDetail = (
     <>
-      {m.journey_status !== "parked" &&
-        (goalOpen ? (
-          <div className="space-y-2">
-            <Textarea
-              value={goalText}
-              onChange={(e) => setGoalText(e.target.value)}
-              rows={3}
-              placeholder="What's the goal for this stage."
-              className="text-[11px]"
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                size="sm"
-                className="h-7 text-[11px]"
-                disabled={goalText.trim() === ""}
-                onClick={() => {
-                  saveStageGoal(m.material_id, m.journey_status as GoalStage, goalText.trim());
-                  setGoalOpen(false);
-                }}
-              >
-                Save goal
-              </Button>
-              <button type="button" onClick={() => setGoalOpen(false)} className={LINK}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : currentGoal ? (
-          <div className="space-y-1">
-            <p
-              role={writable ? "button" : undefined}
-              tabIndex={writable ? 0 : undefined}
-              onClick={() => {
-                if (!writable) return;
-                setGoalText(currentGoal.text);
-                setGoalOpen(true);
-              }}
-              className={cn(
-                "text-[11px] leading-relaxed text-foreground",
-                writable && "cursor-text hover:text-foreground/80",
-              )}
-            >
-              {currentGoal.text}
-            </p>
-            <Stamp by={currentGoal.author} date={currentGoal.date} />
-          </div>
-        ) : (
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-[11px] text-muted-foreground">No goal set for this stage.</span>
-            {writable && (
-              <button
-                type="button"
-                onClick={() => {
-                  setGoalText("");
-                  setGoalOpen(true);
-                }}
-                className={LINK}
-              >
-                Add
-              </button>
-            )}
-          </div>
-        ))}
+
 
       {m.journey_status === "parked" && (
         <div className="space-y-1">
