@@ -19,8 +19,9 @@ import {
  */
 const Inner: React.FC = () => {
   const navigate = useNavigate();
-  const { topic } = useParams();
+  const { category, topic } = useParams<{ category?: string; topic?: string }>();
   const name = topic ? decodeURIComponent(topic).trim() : "";
+
   const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment } = useRegister();
   const bootstrapped = useRef(false);
 
@@ -160,7 +161,8 @@ const Inner: React.FC = () => {
             tabsSlot={toggle}
             bodyReplacement={
               view === "research" ? (
-                <ResearchSpace />
+              <ResearchSpace category={category} topic={topic ? decodeURIComponent(topic) : undefined} />
+
               ) : undefined
             }
           />
