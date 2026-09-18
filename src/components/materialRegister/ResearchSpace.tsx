@@ -28,7 +28,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { cn } from "@/lib/utils";
 import { PathwayShortlistRows, hasGroupableClusters, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
-import { WorkSpaceDocumentsCard } from "@/components/materialRegister/itemDocuments";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
@@ -967,15 +966,6 @@ type Row = {
           </div>
         </SheetContent>
       </Sheet>
-
-      <WorkSpaceDocumentsCard
-        currentUser={CURRENT_REVIEWER}
-        seed={[
-          { id: "ws-doc-1", name: "Lactic-acid-market-scan-2026.pdf", uploader: "K. Brandt", date: "2 Sept 2026" },
-          { id: "ws-doc-2", name: "Internal-substitution-brief.docx", uploader: "A. Novak", date: "8 Sept 2026" },
-          { id: "ws-doc-3", name: "Supplier-longlist.xlsx", uploader: "M. Feld", date: "14 Sept 2026" },
-        ]}
-      />
 
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>

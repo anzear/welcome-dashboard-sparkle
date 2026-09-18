@@ -30,6 +30,7 @@ import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment, { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
+import { WorkSpaceDocumentsCard } from "@/components/materialRegister/itemDocuments";
 import BriefGate from "@/components/materialRegister/BriefGate";
 import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
@@ -55,6 +56,7 @@ import {
 
 const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 const UNASSIGNED = "__unassigned__";
+const CURRENT_REVIEWER = "A. Weber";
 
 /* ------------------------------------------------------------------ type scale
  * Three data tiers only: value (text-sm mono tabular), label (text-[11px] muted),
@@ -1126,6 +1128,17 @@ export const MaterialBrief: React.FC<{
             note="A link records candidacy only. Scores and decisions on each side stay independent."
           >
             <BriefLinks material={m} />
+          </Section>
+
+          <Section title="Documents" note="General files for this material.">
+            <WorkSpaceDocumentsCard
+              currentUser={CURRENT_REVIEWER}
+              seed={[
+                { id: "ws-doc-1", name: "Lactic-acid-market-scan-2026.pdf", uploader: "K. Brandt", date: "2 Sept 2026" },
+                { id: "ws-doc-2", name: "Internal-substitution-brief.docx", uploader: "A. Novak", date: "8 Sept 2026" },
+                { id: "ws-doc-3", name: "Supplier-longlist.xlsx", uploader: "M. Feld", date: "14 Sept 2026" },
+              ]}
+            />
           </Section>
 
         </div>
