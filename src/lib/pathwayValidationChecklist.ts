@@ -18,11 +18,10 @@ export type ValidationFunction = (typeof VALIDATION_FUNCTIONS)[number];
 export const NOT_FIT_STATUS = "Not fit for function" as const;
 export const TO_DO_STATUS = "To do" as const;
 
-/** Department-specific ladders; index 4 is the positive final state, index 5 is "Not fit". */
+/** Department-specific ladders; index 3 is the positive final state, index 4 is "Not fit". */
 export const FUNCTION_STATUSES = {
   "R&D": [
     TO_DO_STATUS,
-    "Not assessed",
     "Concept identified",
     "Lab/pilot validated",
     "Production-ready",
@@ -30,7 +29,6 @@ export const FUNCTION_STATUSES = {
   ],
   Procurement: [
     TO_DO_STATUS,
-    "No supplier identified",
     "Candidates scoped",
     "Supplier engaged (samples/quotes)",
     "Supply agreement signed",
@@ -38,7 +36,6 @@ export const FUNCTION_STATUSES = {
   ],
   Sustainability: [
     TO_DO_STATUS,
-    "Not assessed",
     "Assessment in progress",
     "Fits roadmap / reduction target",
     "Compliance confirmed",
@@ -46,7 +43,6 @@ export const FUNCTION_STATUSES = {
   ],
   Regulatory: [
     TO_DO_STATUS,
-    "Not assessed",
     "Pathway identified",
     "Compliance check in progress",
     "Approved for use",
@@ -62,12 +58,12 @@ export const statusesFor = (fn: ValidationFunction): readonly ValidationStatus[]
 /** Position 1 — "To do", nothing picked up yet. */
 export const initialStatus = (fn: ValidationFunction): ValidationStatus => FUNCTION_STATUSES[fn][0];
 
-/** Positions 1-2 — nothing started yet. */
+/** Position 1 — nothing started yet. */
 export const isNotStartedStatus = (fn: ValidationFunction, status: ValidationStatus) =>
-  status === FUNCTION_STATUSES[fn][0] || status === FUNCTION_STATUSES[fn][1];
+  status === FUNCTION_STATUSES[fn][0];
 
-/** Position 5 — the positive final state that counts as confirmed. */
-export const finalStatus = (fn: ValidationFunction): ValidationStatus => FUNCTION_STATUSES[fn][4];
+/** Position 4 — the positive final state that counts as confirmed. */
+export const finalStatus = (fn: ValidationFunction): ValidationStatus => FUNCTION_STATUSES[fn][3];
 
 
 /** Who set the status, and when. */
