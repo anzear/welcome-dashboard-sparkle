@@ -204,14 +204,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
         }`}
       >
         <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-          <div className="flex items-center justify-center">
-            <Checkbox
-              className="h-3 w-3"
-              aria-label="Select pathway"
-              checked={selected.has(p.id)}
-              onCheckedChange={(v) => toggle([p.id], v === true)}
-            />
-          </div>
           <div className="flex justify-center">
             <span
               title="Drag to change priority — top row is highest"
