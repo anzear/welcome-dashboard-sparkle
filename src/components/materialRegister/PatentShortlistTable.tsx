@@ -19,7 +19,7 @@ export type ShortlistPatent = {
   status: "Filed" | "Granted" | "Withdrawn";
   jurisdictions: number;
   savedBy: string;
-  /** Colleagues' comments only — read-only for the current user. */
+  /** Colleagues' notes only — read-only for the current user. */
   teamNotes: PatentNote[];
 };
 
