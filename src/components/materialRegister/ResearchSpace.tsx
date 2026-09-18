@@ -846,7 +846,7 @@ const ResearchSpace: React.FC = () => {
         >
           <PathwayShortlistRows
             pathways={shortlistPathways}
-            notes={pathwayNotes}
+            notes={mergedPathwayNotes}
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
