@@ -4,6 +4,7 @@
  * Validation card show the same attachments and notes. Prototype: localStorage.
  */
 import type { ItemDocument } from "@/components/materialRegister/itemDocuments";
+import { registerDocuments, unregisterDocument } from "./documentRegistry";
 import { VALIDATION_FUNCTIONS, todayLabel, type ValidationFunction } from "./pathwayValidationChecklist";
 
 export type ValidationNote = { id: string; author: string; date: string; text: string };
