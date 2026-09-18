@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -154,6 +154,12 @@ export function PathwayShortlistRows({
   topic,
 }: Props) {
 
+  const navigate = useNavigate();
+  const pathwayHref = (id: string) =>
+    category && topic
+      ? `/landscape/${encodeURIComponent(category)}/${encodeURIComponent(topic)}/value-chain/pathways/${id}`
+      : null;
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
@@ -223,12 +229,20 @@ export function PathwayShortlistRows({
           setDragId(null);
           setOverId(null);
         }}
-        className={`group transition-colors hover:bg-muted/30 ${dragId === p.id ? "opacity-50" : ""} ${
-          overId === p.id && dragId && dragId !== p.id ? "bg-muted/50" : ""
-        }`}
+        onClick={(e) => {
+          // Whole row opens the pathway profile; drag handle and row controls opt out.
+          const href = pathwayHref(p.id);
+          if (!href) return;
+          if ((e.target as HTMLElement).closest("[data-row-control]")) return;
+          navigate(href);
+        }}
+        title={pathwayHref(p.id) ? "Open pathway profile" : undefined}
+        className={`group transition-colors hover:bg-muted/30 ${pathwayHref(p.id) ? "cursor-pointer" : ""} ${
+          dragId === p.id ? "opacity-50" : ""
+        } ${overId === p.id && dragId && dragId !== p.id ? "bg-muted/50" : ""}`}
       >
         <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-          <div className="flex justify-center">
+          <div className="flex justify-center" data-row-control>
             <span
               title="Drag to change priority — top row is highest"
               className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground cursor-grab active:cursor-grabbing hover:bg-muted hover:text-foreground"
@@ -238,9 +252,9 @@ export function PathwayShortlistRows({
           </div>
           {chip(p.feedstock, PATHWAY_CHIP_NEUTRAL)}
           {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
-          {category && topic ? (
+          {pathwayHref(p.id) ? (
             <Link
-              to={`/landscape/${encodeURIComponent(category)}/${encodeURIComponent(topic)}/value-chain/pathways/${p.id}`}
+              to={pathwayHref(p.id)!}
               className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} hover:ring-1 hover:ring-emerald-300`}
               title="Open pathway profile"
             >
@@ -256,7 +270,7 @@ export function PathwayShortlistRows({
           </div>
           <div className="flex items-center justify-between gap-2">
             <ValidationStatusBadge status={statuses?.[p.id] ?? "Not evaluated"} />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" data-row-control>
               <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
               <DocumentAttachControl
                 itemLabel={`${p.feedstock} → ${p.product}`}
