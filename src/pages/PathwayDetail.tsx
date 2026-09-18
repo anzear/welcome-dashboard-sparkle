@@ -548,15 +548,15 @@ const PathwayDetail = () => {
               <PathwayProfileGroups pathwayIndex={pathwayIndex} feedstock={currentFeedstock} />
               <div className="border border-border rounded-lg bg-card shadow-sm">
                 {/* Header row */}
-                <div className="px-3 py-1.5 border-b border-border bg-muted/50 rounded-t-lg grid grid-cols-[28px_50px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_75px] items-center gap-2">
+                <div className="px-3 py-1.5 border-b border-border bg-muted/50 rounded-t-lg grid grid-cols-[28px_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.5fr)_75px] items-center gap-2">
                   <span></span>
-                  <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center flex items-center justify-center gap-0.5">VCG Score <Info className="w-2.5 h-2.5 text-muted-foreground/50" /></span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Feedstock</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Process</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Product</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">Application</span>
                   <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest text-center">TRL</span>
                 </div>
+
                 {/* Single row matching table format */}
                 {(() => {
                   const score = Math.max(20, 95 - (parseInt(pathwayId || "0")) * 3);
