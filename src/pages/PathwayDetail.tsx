@@ -14,6 +14,25 @@ import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { NODE_LABELS } from '@/lib/hitlStore';
+import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
+import { PatentShortlistTable, type ShortlistPatent } from '@/components/materialRegister/PatentShortlistTable';
+import { PaperShortlistTable, type ShortlistPaper } from '@/components/materialRegister/PaperShortlistTable';
+import { SHORTLIST_COMPANIES, SHORTLIST_PATENTS, SHORTLIST_PAPERS } from '@/components/materialRegister/shortlistMockData';
+
+const CURRENT_REVIEWER = "A. Weber";
+
+/** Compact shortlist card matching the Workspace "Shortlisted items" pattern. */
+const PathwayShortlistCard = ({ label, count, children }: { label: string; count: number; children: React.ReactNode }) => (
+  <div className="rounded-lg border border-border bg-card shadow-sm">
+    <div className="flex items-center justify-between border-b border-border px-4 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">{label}</span>
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-muted-foreground">{count}</span>
+      </div>
+    </div>
+    <div className="p-2">{children}</div>
+  </div>
+);
 
 
 const PathwayDetail = () => {
@@ -27,6 +46,11 @@ const PathwayDetail = () => {
   const [isFavorited, setIsFavorited] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+
+  // Shortlisted companies / patents / papers linked to this pathway (shared mock data with the Workspace).
+  const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
+  const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
+  const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
   const subscriptionKey = `${topic || ''}_${pathwayId || ''}`;
   const readUpdatesKey = `pathwayReadUpdates_${subscriptionKey}`;
 
@@ -857,6 +881,35 @@ const PathwayDetail = () => {
               <PathwayResourcesTab productName={topic ? decodeURIComponent(topic) : "Product"} pathwayNumber={pathwayNumber} showFooter={true} />
             </div>
           </div>
+
+          {/* Shortlisted items linked to this pathway — same lists as the Workspace */}
+          <section className="mt-4 space-y-3">
+            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
+
+            <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
+              <CompanyShortlistTables
+                companies={shortlistCompanies}
+                currentUser={CURRENT_REVIEWER}
+                onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
+              />
+            </PathwayShortlistCard>
+
+            <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
+              <PatentShortlistTable
+                patents={shortlistPatents}
+                currentUser={CURRENT_REVIEWER}
+                onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
+              />
+            </PathwayShortlistCard>
+
+            <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
+              <PaperShortlistTable
+                papers={shortlistPapers}
+                currentUser={CURRENT_REVIEWER}
+                onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
+              />
+            </PathwayShortlistCard>
+          </section>
         </div>
       </div>
   );
