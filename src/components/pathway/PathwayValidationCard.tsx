@@ -24,7 +24,7 @@ const MOCK_DOCUMENTS: ItemDocument[] = [
   { id: "pv-doc-2", name: "Lab-conformance-results.xlsx", uploader: "M. Feld", date: "11 Sept 2026" },
 ];
 
-/** Shared so other views (Work Space status card) can read the same source. */
+/** Shared so other views (Workspace status card) can read the same source. */
 export const VALIDATION_FUNCTIONS = FUNCTIONS;
 
 export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId: string) =>
