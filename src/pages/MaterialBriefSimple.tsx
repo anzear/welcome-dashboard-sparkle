@@ -52,9 +52,15 @@ const Inner: React.FC = () => {
       const { name: _n, ...seedPatch } = prototypeBriefSeed(hit.name);
       if (!hit.material_class) {
         updateMaterial(hit.material_id, seedPatch);
-      } else if (!hit.recommendation) {
-        // Existing seeded row predates the mock recommendation — add just that.
-        updateMaterial(hit.material_id, { recommendation: seedPatch.recommendation });
+      } else {
+        if (!hit.recommendation) {
+          // Existing seeded row predates the mock recommendation — add just that.
+          updateMaterial(hit.material_id, { recommendation: seedPatch.recommendation });
+        }
+        if (!hit.stage_goals || Object.keys(hit.stage_goals).length === 0) {
+          // Existing seeded row predates the mock stage goals — add them.
+          updateMaterial(hit.material_id, { stage_goals: seedPatch.stage_goals });
+        }
       }
       seedDrivers(hit.material_id);
       openBrief(hit.material_id);
