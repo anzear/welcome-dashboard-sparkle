@@ -328,10 +328,6 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
                 topic={validation.topic}
                 idPrefix="gate-validation"
               />
-              <p className="px-2.5 pb-2 text-[10px] leading-snug text-muted-foreground">
-                {confirmed} of {total} functions confirmed on {validation.pathwayLabel}. A function counts only when
-                both of its sub-items are ticked.
-              </p>
             </div>
           )}
         </div>
