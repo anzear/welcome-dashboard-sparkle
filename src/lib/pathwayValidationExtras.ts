@@ -90,20 +90,11 @@ export function addFunctionDocuments(
   uploader: string,
 ): ValidationExtras {
   const current = extrasFor(extras, fn);
+  // Uploads here also land in the material-wide registry, tagged with the function.
+  const created = registerDocuments(names, uploader, `Validation · ${fn}`);
   return {
     ...extras,
-    [fn]: {
-      ...current,
-      documents: [
-        ...current.documents,
-        ...names.map((name, index) => ({
-          id: `vdoc-${Date.now()}-${index}`,
-          name,
-          uploader,
-          date: todayLabel(),
-        })),
-      ],
-    },
+    [fn]: { ...current, documents: [...current.documents, ...created] },
   };
 }
 
