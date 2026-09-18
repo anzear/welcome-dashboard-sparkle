@@ -12,7 +12,7 @@ import {
   RegisterProvider,
   useRegister,
 } from "@/components/materialRegister/registerStore";
-import { JOURNEY_STATUS_LABEL, type JourneyStatus } from "@/types/materialPrioritisation";
+import { JOURNEY_STATUS_LABEL, JOURNEY_STATUSES, type JourneyStatus } from "@/types/materialPrioritisation";
 import { prototypeBriefSeed } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 
