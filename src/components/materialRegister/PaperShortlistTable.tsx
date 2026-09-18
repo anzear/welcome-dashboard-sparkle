@@ -15,7 +15,7 @@ export type ShortlistPaper = {
   date?: string;
   authors: string[];
   savedBy: string;
-  /** Colleagues' comments only — read-only for the current user. */
+  /** Colleagues' notes only — read-only for the current user. */
   teamNotes: PaperNote[];
 };
 
