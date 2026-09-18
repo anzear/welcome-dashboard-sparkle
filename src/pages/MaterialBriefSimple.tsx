@@ -20,8 +20,27 @@ const Inner: React.FC = () => {
   const navigate = useNavigate();
   const { topic } = useParams();
   const name = topic ? decodeURIComponent(topic).trim() : "";
-  const { data, openId, openBrief, addMaterials, updateMaterial } = useRegister();
+  const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment } = useRegister();
   const bootstrapped = useRef(false);
+
+  // Prototype: seed one set of driver judgements so the Drivers card reads as
+  // evaluated. Skipped the moment anyone has judged a criterion themselves.
+  const seedDrivers = (materialId: string) => {
+    const scores: [string, number, string][] = [
+      ["regulatory_pressure", 3, "EU pressure is steady but not forcing a switch this year."],
+      ["market_pull", 4, "Two beverage customers have asked for a bio-based grade."],
+      ["competitive_advantage", 3, "Comparable to incumbents; no clear edge yet."],
+      ["economic_case", 2, "Current bio-based quotes sit above the price ceiling."],
+      ["supply_security", 3, "Three qualified producers in Europe; single-source risk remains."],
+      ["sustainability_impact", 5, "Cradle-to-gate figures clearly beat the incumbent."],
+      ["product_performance", 4, "Bench trials hold viscosity within spec; stability run pending."],
+    ];
+    scores.forEach(([criterionId, score, note]) => {
+      if (assessmentState(materialId, criterionId).scoredCount === 0) {
+        saveAssessment(materialId, criterionId, score, note);
+      }
+    });
+  };
 
   useEffect(() => {
     if (bootstrapped.current || !name) return;
