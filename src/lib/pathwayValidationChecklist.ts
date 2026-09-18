@@ -97,16 +97,18 @@ const isStatus = (value: unknown, fn: ValidationFunction): value is ValidationSt
  * the new ladder by position where possible.
  */
 const LEGACY_POSITIONS: Record<string, number> = {
-  "To do": 0,
-  "In progress": 1,
-  Tested: 2,
-  "Suppliers engaged": 2,
-  "Data reviewed": 2,
-  "Compliance reviewed": 2,
-  Approved: 3,
-  "Suppliers confirmed": 3,
-  Cleared: 3,
+  "In progress": 2,
+  Tested: 3,
+  "Suppliers engaged": 3,
+  "Data reviewed": 3,
+  "Compliance reviewed": 3,
+  Approved: 4,
+  "Suppliers confirmed": 4,
+  Cleared: 4,
+  "Not assessed": 1,
+  "No supplier identified": 1,
 };
+
 
 const migrate = (raw: unknown): ValidationChecklist => {
   if (!raw || typeof raw !== "object") return {};
