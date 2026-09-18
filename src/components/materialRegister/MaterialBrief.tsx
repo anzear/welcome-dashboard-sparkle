@@ -986,39 +986,6 @@ export const MaterialBrief: React.FC<{
           </BarField>
 
 
-          <BarField label="Owner" className="w-[190px] border-l border-border/60 px-5">
-            <Select
-              value={m.owner ?? UNASSIGNED}
-              onValueChange={(v) => {
-                const next = v === UNASSIGNED ? null : v;
-                if (next === m.owner) return;
-                updateMaterial(m.material_id, { owner: next }, ["owner"], [
-                  {
-                    material_id: m.material_id,
-                    event_type: "owner_change",
-                    field: "owner",
-                    from_value: m.owner,
-                    to_value: next,
-                  },
-                ]);
-              }}
-            >
-              <SelectTrigger className="h-8 w-full bg-background text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="portfolio-type">
-                {ownerNames.map((o) => (
-                  <SelectItem key={o} value={o} className="text-xs">
-                    {o}
-                  </SelectItem>
-                ))}
-                <SelectItem value={UNASSIGNED} className="text-xs">
-                  Unassigned
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </BarField>
-
           <BarField
             label="Priority period"
             className="w-[210px] border-l border-border/60 px-5"
@@ -1056,41 +1023,6 @@ export const MaterialBrief: React.FC<{
               )}
             </div>
           </BarField>
-
-          {draftStatus === null && (
-            <div
-              className="ml-auto border-border/60 pl-5 sm:border-l"
-              title="Calculated by the platform from the figures. Four separate positions, never combined into one score."
-            >
-              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-                Position
-              </div>
-              <div className="flex h-8 items-center">
-                <PositionBlock
-                  materialId={m.material_id}
-                  gapMeasure={row?.gapMeasure ?? null}
-                  gapSize={row?.gapSize ?? 0}
-                  variant="inline"
-                />
-              </div>
-            </div>
-          )}
-
-          {draftStatus !== null && (
-            <div className="ml-auto self-center border-border/60 pl-5 sm:border-l">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-muted-foreground">
-                  {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
-                </span>
-                <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
-                  Save changes
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
-                  Discard
-                </Button>
-              </div>
-            </div>
-          )}
 
         </div>
 
