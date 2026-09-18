@@ -76,8 +76,8 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   const addComment = () => {
     if (!draftText.trim()) return;
-    setComments(prev => [
-      ...prev,
+    persist([
+      ...comments,
       {
         id: crypto.randomUUID(),
         categoryId: draftCategory,
@@ -199,7 +199,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
                     <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{c.text}</p>
                   </div>
                   <button
-                    onClick={() => setComments(prev => prev.filter(x => x.id !== c.id))}
+                    onClick={() => persist(comments.filter(x => x.id !== c.id))}
                     className="text-muted-foreground hover:text-foreground"
                     title="Remove comment"
                   >
