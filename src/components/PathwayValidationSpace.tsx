@@ -121,7 +121,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
               return (
                 <button
                   key={s}
-                  onClick={() => setOverallStatus(s)}
+                  onClick={() => pickStatus(s)}
                   className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold border transition-colors ${selected ? activeCls : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
                 >
                   {s}
