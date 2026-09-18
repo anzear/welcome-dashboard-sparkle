@@ -106,13 +106,13 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   return (
     <div className="mt-1 flex-1 min-h-0 flex flex-col">
-      {/* Header row: guidance + pathway status (5 values, no fixed order) */}
-      <div className="flex items-start justify-between gap-4 mb-3">
-        <p className="text-xs text-muted-foreground leading-relaxed max-w-[560px]">
+      {/* Header: guidance and pathway status as two cleaner rows */}
+      <div className="mb-3 space-y-2">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           Leave notes on this pathway. Tag each note with one of the seven evaluation categories and filter the
           discussion by category.
         </p>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center justify-end gap-2">
           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pathway Status</span>
           <div className="flex items-center gap-1">
             {STATUSES.map(s => {
