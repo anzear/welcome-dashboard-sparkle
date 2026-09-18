@@ -12,8 +12,16 @@ import {
   holdReviewOverdue,
   outcomeBlockers,
 } from "@/components/materialRegister/gate";
+import ValidationChecklist from "@/components/pathway/ValidationChecklist";
+import {
+  VALIDATION_CHANGED_EVENT,
+  VALIDATION_FUNCTIONS,
+  countConfirmedFunctions,
+  readValidationChecklist,
+} from "@/lib/pathwayValidationChecklist";
 import {
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type GateOutcome,
   type GoalStage,
   type JourneyStatus,
