@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -133,9 +135,25 @@ type Props = {
   statuses?: Record<string, ValidationStatus>;
   /** Drag-to-reorder: row order is the priority order, top row highest. */
   onReorder?: (orderedIds: string[]) => void;
+  /** Landscape context used to link each row to its pathway profile. */
+  category?: string;
+  topic?: string;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
+
+export function PathwayShortlistRows({
+  pathways,
+  notes,
+  onAddNote,
+  onRemove,
+  currentUser,
+  grouped,
+  statuses,
+  onReorder,
+  category,
+  topic,
+}: Props) {
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
