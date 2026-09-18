@@ -32,6 +32,7 @@ import { WorkSpaceDocumentsCard } from "@/components/materialRegister/itemDocume
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import { VALIDATION_FUNCTIONS, readPathwayConfirmations } from "@/components/pathway/PathwayValidationCard";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import {
