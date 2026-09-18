@@ -20,10 +20,15 @@ import {
   pathwayChipCls,
 } from "./pathwayRowStyles";
 import {
+  FUNCTION_STATUSES,
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
   countConfirmedFunctions,
+  functionStatus,
+  finalStatus,
   readValidationChecklist,
+  type ValidationChecklist,
+  type ValidationFunction,
 } from "@/lib/pathwayValidationChecklist";
 
 export type ShortlistPathway = {
@@ -43,29 +48,49 @@ export type ShortlistPathway = {
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
-export type ValidationStatus =
-  | "Not evaluated"
-  | "Lab testing"
-  | "Piloting"
-  | "Integrated"
-  | "Parked";
+/** Live-reads the pathway's validation checklist, re-rendering on every change. */
+function useValidationChecklist(topic: string | undefined, pathwayId: string): ValidationChecklist {
+  const [checklist, setChecklist] = useState(() => readValidationChecklist(topic, pathwayId));
+  useEffect(() => {
+    const sync = () => setChecklist(readValidationChecklist(topic, pathwayId));
+    sync();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [topic, pathwayId]);
+  return checklist;
+}
 
-const VALIDATION_STATUS_CLS: Record<ValidationStatus, string> = {
-  Integrated: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  Piloting: "bg-sky-100 text-sky-700 border-sky-300",
-  "Lab testing": "bg-amber-100 text-amber-700 border-amber-300",
-  Parked: "bg-red-100 text-red-700 border-red-300",
-  "Not evaluated": "bg-muted/60 text-muted-foreground border-border",
-};
+/**
+ * Pathway status derived from the Validation checklist: each function that is
+ * past "To do" but not yet at its final stage renders an "<fn> evaluation"
+ * pill. When no function is in progress, no status is shown.
+ */
+function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFunction[] {
+  return VALIDATION_FUNCTIONS.filter((fn) => {
+    const status = functionStatus(checklist, fn);
+    return status !== "To do" && status !== finalStatus(fn);
+  });
+}
 
-/** Mirrors the pathway status set in the pathway's Validation Space. */
-function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
+function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
+  const checklist = useValidationChecklist(topic, pathwayId);
+  const active = inEvaluationFunctions(checklist);
+  if (active.length === 0) return null;
   return (
-    <span
-      title="Pathway status set in the Validation Space"
-      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${VALIDATION_STATUS_CLS[status]}`}
-    >
-      {status}
+    <span className="flex flex-wrap items-center gap-1">
+      {active.map((fn) => (
+        <span
+          key={fn}
+          title={`${fn} is mid-review in the pathway Validation card (${functionStatus(checklist, fn)})`}
+          className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600"
+        >
+          {fn} evaluation
+        </span>
+      ))}
     </span>
   );
 }
