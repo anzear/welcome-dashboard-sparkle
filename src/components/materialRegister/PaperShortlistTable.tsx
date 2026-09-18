@@ -15,7 +15,7 @@ export type ShortlistPaper = {
   date?: string;
   authors: string[];
   savedBy: string;
-  /** Colleagues' comments only — read-only for the current user. */
+  /** Colleagues' notes only — read-only for the current user. */
   teamNotes: PaperNote[];
 };
 
@@ -70,7 +70,7 @@ export function PaperShortlistTable({
             <TableHead className={HEAD_CLS}>Publication</TableHead>
             <TableHead className={HEAD_CLS}>Date</TableHead>
             <TableHead className={HEAD_CLS}>Authors</TableHead>
-            <TableHead className={HEAD_CLS}>Comments</TableHead>
+            <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
@@ -92,8 +92,8 @@ export function PaperShortlistTable({
                     <Input
                       value={myNotes[paper.id] ?? ""}
                       onChange={(event) => setMyNotes((current) => ({ ...current, [paper.id]: event.target.value }))}
-                      placeholder="Add your comment…"
-                      aria-label={`Your comment on ${paper.title}`}
+                      placeholder="Add your note…"
+                      aria-label={`Your note on ${paper.title}`}
                       className="h-7 bg-background text-[10px]"
                     />
                     {teamNoteCount > 0 && (
@@ -140,7 +140,7 @@ export function PaperShortlistTable({
             <SheetTitle className="text-sm">{teamPanel?.title}</SheetTitle>
           </SheetHeader>
           <p className="mt-1 text-[10px] text-muted-foreground">{teamPanel?.authors.join(", ")}</p>
-          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team comments · read only</p>
+          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team notes · read only</p>
           <div className="mt-3 space-y-2">
             {panelNotes.map((note) => (
               <div key={note.id} className="rounded-md border border-border/60 bg-muted/40 px-3 py-2">
@@ -153,7 +153,7 @@ export function PaperShortlistTable({
             ))}
           </div>
           <p className="mt-4 text-[10px] text-muted-foreground">
-            Signed in as {currentUser}. Your own comment stays editable in the row.
+            Signed in as {currentUser}. Your own note stays editable in the row.
           </p>
         </SheetContent>
       </Sheet>
