@@ -18,6 +18,7 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   JOURNEY_STATUS_LABEL,
+  migrateGateOutcome,
   type GateCondition,
   type GateOutcome,
   type JourneyStatus,
