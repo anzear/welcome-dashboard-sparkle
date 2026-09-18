@@ -35,16 +35,22 @@ export type ShortlistPathway = {
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
-export type ValidationStatus = "TBD" | "Go" | "Uncertain" | "No-Go";
+export type ValidationStatus =
+  | "Not evaluated"
+  | "Lab testing"
+  | "Piloting"
+  | "Integrated"
+  | "Parked";
 
 const VALIDATION_STATUS_CLS: Record<ValidationStatus, string> = {
-  Go: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  Uncertain: "bg-amber-100 text-amber-700 border-amber-300",
-  "No-Go": "bg-red-100 text-red-700 border-red-300",
-  TBD: "bg-muted/60 text-muted-foreground border-border",
+  Integrated: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  Piloting: "bg-sky-100 text-sky-700 border-sky-300",
+  "Lab testing": "bg-amber-100 text-amber-700 border-amber-300",
+  Parked: "bg-red-100 text-red-700 border-red-300",
+  "Not evaluated": "bg-muted/60 text-muted-foreground border-border",
 };
 
-/** Mirrors the 4-level status set in the pathway's Validation Space. */
+/** Mirrors the pathway status set in the pathway's Validation Space. */
 function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
   return (
     <span

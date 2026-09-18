@@ -103,7 +103,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   return (
     <div className="mt-1 flex-1 min-h-0 flex flex-col">
-      {/* Header row: guidance + 4-level pathway status */}
+      {/* Header row: guidance + pathway status (5 values, no fixed order) */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <p className="text-xs text-muted-foreground leading-relaxed max-w-[560px]">
           Leave comments on this pathway. Tag each comment with one of the seven evaluation categories and filter the
@@ -114,11 +114,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
           <div className="flex items-center gap-1">
             {STATUSES.map(s => {
               const selected = overallStatus === s;
-              const activeCls =
-                s === 'Go' ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                : s === 'Uncertain' ? 'bg-amber-100 text-amber-700 border-amber-300'
-                : s === 'No-Go' ? 'bg-red-100 text-red-700 border-red-300'
-                : 'bg-foreground text-background border-foreground';
+              const activeCls = STATUS_ACTIVE_CLS[s];
               return (
                 <button
                   key={s}
