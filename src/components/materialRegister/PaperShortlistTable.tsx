@@ -56,7 +56,9 @@ export function PaperShortlistTable({
         ],
       },
     ),
+    (itemId) => `Paper · ${papers.find((paper) => paper.id === itemId)?.title ?? itemId}`,
   );
+
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
 

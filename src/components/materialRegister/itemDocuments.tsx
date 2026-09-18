@@ -1,7 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DOCUMENT_REGISTRY_CHANGED_EVENT,
+  GENERAL_SOURCE,
+  readDocumentRegistry,
+  registerDocuments,
+  unregisterDocument,
+} from "@/lib/documentRegistry";
 
 /** One attached file. Prototype only — nothing is stored server-side. */
 export type ItemDocument = {
@@ -23,25 +30,37 @@ export function makeDocument(name: string, uploader: string): ItemDocument {
 
 /**
  * Per-item document state for one shortlist table. Keyed by item id; documents
- * live alongside notes and never replace them.
+ * live alongside notes and never replace them. When `sourceLabel` is given,
+ * uploads are also registered in the material-wide document registry with that
+ * source tag, so they show up in the general Documents card.
  */
-export function useItemDocuments(seed: DocumentMap = {}) {
+export function useItemDocuments(
+  seed: DocumentMap = {},
+  sourceLabel?: (itemId: string) => string,
+) {
   const [documents, setDocuments] = useState<DocumentMap>(seed);
 
-  const addDocuments = (itemId: string, names: string[], uploader: string) =>
+  const addDocuments = (itemId: string, names: string[], uploader: string) => {
+    const created = sourceLabel
+      ? registerDocuments(names, uploader, sourceLabel(itemId))
+      : names.map((name) => makeDocument(name, uploader));
     setDocuments((current) => ({
       ...current,
-      [itemId]: [...(current[itemId] ?? []), ...names.map((name) => makeDocument(name, uploader))],
+      [itemId]: [...(current[itemId] ?? []), ...created],
     }));
+  };
 
-  const removeDocument = (itemId: string, documentId: string) =>
+  const removeDocument = (itemId: string, documentId: string) => {
+    unregisterDocument(documentId);
     setDocuments((current) => ({
       ...current,
       [itemId]: (current[itemId] ?? []).filter((document) => document.id !== documentId),
     }));
+  };
 
   return { documents, addDocuments, removeDocument };
 }
+
 
 /**
  * Compact attach control: paperclip with a count, opening the attached file list
@@ -139,18 +158,26 @@ export function DocumentAttachControl({
 }
 
 /**
- * Workspace level documents — general research files for the whole material,
- * not scoped to any shortlisted item.
+ * All documents for the material. Files uploaded here are tagged "General";
+ * files uploaded anywhere else (pathway, company, patent, paper, validation)
+ * appear with a tag naming where they were uploaded.
  */
 export function WorkSpaceDocumentsCard({
   currentUser,
-  seed = [],
+  seed: _seed = [],
 }: {
   currentUser: string;
   seed?: ItemDocument[];
 }) {
-  const [documents, setDocuments] = useState<ItemDocument[]>(seed);
+  const [documents, setDocuments] = useState(() => readDocumentRegistry());
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const refresh = () => setDocuments(readDocumentRegistry());
+    refresh();
+    window.addEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
+  }, []);
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -158,7 +185,9 @@ export function WorkSpaceDocumentsCard({
         <span className="flex items-center gap-2 text-xs">
           <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-semibold text-foreground">Documents</span>
-          <span className="text-[10px] text-muted-foreground">General files for this material</span>
+          <span className="text-[10px] text-muted-foreground">
+            Every file uploaded for this material, tagged with where it was uploaded
+          </span>
         </span>
         <input
           ref={inputRef}
@@ -166,12 +195,10 @@ export function WorkSpaceDocumentsCard({
           multiple
           className="hidden"
           onChange={(event) => {
-            const files = Array.from(event.target.files ?? []);
-            if (files.length > 0) {
-              setDocuments((current) => [
-                ...current,
-                ...files.map((file) => makeDocument(file.name, currentUser)),
-              ]);
+            const names = Array.from(event.target.files ?? []).map((file) => file.name);
+            if (names.length > 0) {
+              registerDocuments(names, currentUser, GENERAL_SOURCE);
+              setDocuments(readDocumentRegistry());
             }
             event.target.value = "";
           }}
@@ -199,6 +226,16 @@ export function WorkSpaceDocumentsCard({
                 <span className="min-w-0 flex-1 truncate text-[10px] font-medium text-foreground" title={document.name}>
                   {document.name}
                 </span>
+                <span
+                  className={`max-w-[240px] shrink-0 truncate rounded-full border px-2 py-0.5 text-[9px] font-medium ${
+                    document.source === GENERAL_SOURCE
+                      ? "border-border bg-muted/50 text-muted-foreground"
+                      : "border-border bg-background text-foreground"
+                  }`}
+                  title={document.source}
+                >
+                  {document.source}
+                </span>
                 <span className="w-24 shrink-0 text-[10px] text-muted-foreground">{document.date}</span>
                 <span className="w-24 shrink-0 truncate text-[10px] text-muted-foreground">{document.uploader}</span>
                 <Button
@@ -208,7 +245,10 @@ export function WorkSpaceDocumentsCard({
                   className="h-6 w-6 shrink-0"
                   title="Delete document"
                   aria-label={`Delete ${document.name}`}
-                  onClick={() => setDocuments((current) => current.filter((item) => item.id !== document.id))}
+                  onClick={() => {
+                    unregisterDocument(document.id);
+                    setDocuments(readDocumentRegistry());
+                  }}
                 >
                   <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                 </Button>
@@ -219,6 +259,7 @@ export function WorkSpaceDocumentsCard({
       </div>
     </div>
   );
+
 }
 
 /**

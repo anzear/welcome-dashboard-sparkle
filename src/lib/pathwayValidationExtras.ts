@@ -4,6 +4,7 @@
  * Validation card show the same attachments and notes. Prototype: localStorage.
  */
 import type { ItemDocument } from "@/components/materialRegister/itemDocuments";
+import { registerDocuments, unregisterDocument } from "./documentRegistry";
 import { VALIDATION_FUNCTIONS, todayLabel, type ValidationFunction } from "./pathwayValidationChecklist";
 
 export type ValidationNote = { id: string; author: string; date: string; text: string };
@@ -90,20 +91,11 @@ export function addFunctionDocuments(
   uploader: string,
 ): ValidationExtras {
   const current = extrasFor(extras, fn);
+  // Uploads here also land in the material-wide registry, tagged with the function.
+  const created = registerDocuments(names, uploader, `Validation · ${fn}`);
   return {
     ...extras,
-    [fn]: {
-      ...current,
-      documents: [
-        ...current.documents,
-        ...names.map((name, index) => ({
-          id: `vdoc-${Date.now()}-${index}`,
-          name,
-          uploader,
-          date: todayLabel(),
-        })),
-      ],
-    },
+    [fn]: { ...current, documents: [...current.documents, ...created] },
   };
 }
 
@@ -113,6 +105,7 @@ export function removeFunctionDocument(
   documentId: string,
 ): ValidationExtras {
   const current = extrasFor(extras, fn);
+  unregisterDocument(documentId);
   return {
     ...extras,
     [fn]: { ...current, documents: current.documents.filter((doc) => doc.id !== documentId) },

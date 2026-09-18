@@ -125,7 +125,9 @@ export function CompanyShortlistTables({
         2: [{ name: "Offtake-term-sheet-draft.docx", uploader: "L. Weiss", date: "9 Sept 2026" }],
       },
     ),
+    (itemId) => `Company · ${companies.find((company) => company.id === itemId)?.name ?? itemId}`,
   );
+
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
   const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
