@@ -4,15 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import {
+  readValidationComments,
+  writeValidationComments,
+  type ValidationComment,
+} from '@/lib/pathwayValidationComments';
+
 type Status = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
 
-interface Comment {
-  id: string;
-  categoryId: string;
-  author: string;
-  text: string;
-  createdAt: string;
-}
+type Comment = ValidationComment;
+
 
 const CATEGORIES = [
   { id: 'feedstock', label: 'Feedstock Availability & Security', Icon: Sprout },
@@ -32,7 +33,6 @@ interface Props {
 }
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
-  const storageKey = `pathway-validation-comments:${topic || 'default'}:${pathwayId}`;
   const statusKey = `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
 
   const [comments, setComments] = useState<Comment[]>([]);
@@ -42,17 +42,19 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
+    setComments(readValidationComments(topic, pathwayId));
     try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) setComments(JSON.parse(raw));
       const s = localStorage.getItem(statusKey) as Status | null;
       if (s) setOverallStatus(s);
     } catch {}
-  }, [storageKey, statusKey]);
+  }, [topic, pathwayId, statusKey]);
 
-  useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(comments)); } catch {}
-  }, [comments, storageKey]);
+  /** Single writer: persist and notify other views (Research Space) of the change. */
+  const persist = (next: Comment[]) => {
+    setComments(next);
+    writeValidationComments(topic, pathwayId, next);
+  };
+
 
   useEffect(() => {
     try { localStorage.setItem(statusKey, overallStatus); } catch {}
@@ -74,8 +76,8 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   const addComment = () => {
     if (!draftText.trim()) return;
-    setComments(prev => [
-      ...prev,
+    persist([
+      ...comments,
       {
         id: crypto.randomUUID(),
         categoryId: draftCategory,
@@ -197,7 +199,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
                     <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{c.text}</p>
                   </div>
                   <button
-                    onClick={() => setComments(prev => prev.filter(x => x.id !== c.id))}
+                    onClick={() => persist(comments.filter(x => x.id !== c.id))}
                     className="text-muted-foreground hover:text-foreground"
                     title="Remove comment"
                   >

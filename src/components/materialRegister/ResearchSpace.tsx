@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Bookmark, Check, ChevronDown, ChevronsUpDown, Info, MessageSquarePlus, Minus, Pencil, PenLine, Plus, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
@@ -33,6 +33,11 @@ import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialR
 import BriefGate from "@/components/materialRegister/BriefGate";
 import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import {
+  categoryLabel,
+  readValidationComments,
+  shortlistIdToPathwayIndex,
+} from "@/lib/pathwayValidationComments";
 
 
 
@@ -402,6 +407,42 @@ const ResearchSpace: React.FC = () => {
         },
       ],
     }));
+
+  /**
+   * Validation Space comments on the pathway detail page show up here too, for
+   * pathways that are on this shortlist. Read-only mirror, refreshed when a
+   * comment is posted or the tab regains focus.
+   */
+  const [commentTick, setCommentTick] = useState(0);
+  useEffect(() => {
+    const refresh = () => setCommentTick((n) => n + 1);
+    window.addEventListener("pathway-validation-comments-changed", refresh);
+    window.addEventListener("storage", refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener("pathway-validation-comments-changed", refresh);
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("focus", refresh);
+    };
+  }, []);
+
+  const mergedPathwayNotes = useMemo(() => {
+    void commentTick;
+    const merged: Record<string, PathwayNote[]> = { ...pathwayNotes };
+    shortlistPathways.forEach((pathway) => {
+      const index = shortlistIdToPathwayIndex(pathway.id);
+      if (index === null) return;
+      const validation = readValidationComments(material?.name, index).map((comment) => ({
+        id: `validation-${comment.id}`,
+        author: comment.author,
+        timestamp: comment.createdAt.slice(0, 16).replace("T", " "),
+        text: `[${categoryLabel(comment.categoryId)}] ${comment.text}`,
+      }));
+      if (validation.length === 0) return;
+      merged[pathway.id] = [...(merged[pathway.id] ?? []), ...validation];
+    });
+    return merged;
+  }, [pathwayNotes, shortlistPathways, material?.name, commentTick]);
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
@@ -805,7 +846,7 @@ const ResearchSpace: React.FC = () => {
         >
           <PathwayShortlistRows
             pathways={shortlistPathways}
-            notes={pathwayNotes}
+            notes={mergedPathwayNotes}
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
