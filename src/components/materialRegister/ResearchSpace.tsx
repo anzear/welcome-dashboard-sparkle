@@ -463,13 +463,14 @@ const ResearchSpace: React.FC = () => {
     </Button>
   );
 
-  type Row = {
-    label: string;
-    status: EvaluationStatus;
-    helperText: React.ReactNode;
-    finding: React.ReactNode;
-    hasData: boolean;
-  };
+type Row = {
+  label: string;
+  status: EvaluationStatus;
+  helperText: React.ReactNode;
+  finding: React.ReactNode;
+  findingText: string;
+  hasData: boolean;
+};
 
   const scopeApplication = thresholds.applications[0] ?? "";
 
@@ -539,6 +540,9 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`
           ),
+        findingText: productMatches.length > 0
+          ? `${productMatches.length} producer${productMatches.length === 1 ? "" : "s"} identified in ${listGeographies(thresholds.materialGeographies)}.`
+          : `No producer identified in ${listGeographies(thresholds.materialGeographies)}.`,
         hasData: true,
       },
       {
@@ -558,6 +562,9 @@ const ResearchSpace: React.FC = () => {
           ) : (
             `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`
           ),
+        findingText: feedstockMatches.length > 0
+          ? `${feedstockMatches.length} verified feedstock supplier${feedstockMatches.length === 1 ? "" : "s"} identified in ${listGeographies(thresholds.feedstockGeographies)}.`
+          : `No verified feedstock supplier identified in ${listGeographies(thresholds.feedstockGeographies)}.`,
         hasData: true,
       },
       {
@@ -574,6 +581,7 @@ const ResearchSpace: React.FC = () => {
             {` — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`}
           </>
         ),
+        findingText: `Indicative price EUR ${num(INDICATIVE_PRICE_EUR)}/t — ${priceBelow ? "below" : "above"} your ceiling of ${thresholds.currency} ${num(ceiling)}/t.`,
         hasData: true,
       },
       {
@@ -590,6 +598,7 @@ const ResearchSpace: React.FC = () => {
             {` identified — ${requiredProducers} required.`}
           </>
         ),
+        findingText: `${identifiedProducers} producer${identifiedProducers === 1 ? "" : "s"} identified — ${requiredProducers} required.`,
         hasData: true,
       },
       {
@@ -597,6 +606,7 @@ const ResearchSpace: React.FC = () => {
         status: volumeSet ? (volumeAbove ? "Met" : "Not met") : "Not set",
         helperText: "Set a volume to evaluate.",
         finding: `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`,
+        findingText: `Combined identified capacity ${num(IDENTIFIED_CAPACITY_TONNES)} t/yr — ${volumeAbove ? "above" : "below"} your minimum of ${num(volume)} ${volumeUnitLabel(volume, thresholds.volumeUnit)}.`,
         hasData: true,
       },
     ];
@@ -728,9 +738,9 @@ const ResearchSpace: React.FC = () => {
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-          <div className="grid grid-cols-[55%_1fr] border-b border-border">
+          <div className="grid grid-cols-[55%_1fr_150px] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
-            <div className="border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
+            <div className="col-span-2 border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
               <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -750,89 +760,99 @@ const ResearchSpace: React.FC = () => {
           {rows.map((row) => {
             const overridden = overrides[row.label] !== undefined;
             const shown = overrides[row.label] ?? row.status;
+            const displayText = overridden
+              ? "Manually overridden"
+              : !row.hasData
+                ? "No data available"
+                : row.status === "Not set"
+                  ? "Awaiting threshold"
+                  : row.findingText;
+            const displayNode = overridden
+              ? "Manually overridden"
+              : !row.hasData
+                ? "No data available"
+                : row.status === "Not set"
+                  ? "Awaiting threshold"
+                  : row.finding;
             return (
-            <div key={row.label} className="grid grid-cols-[55%_1fr] border-b border-border">
-              <div className="flex h-11 items-center gap-3 px-4">
-                <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
-                <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
-              </div>
-              <div className="flex h-11 items-center justify-between gap-3 border-l border-border px-4">
-                <div className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-                  {overridden
-                    ? "Manually overridden"
-                    : !row.hasData
-                      ? "No data available"
-                      : row.status === "Not set"
-                        ? "Awaiting threshold"
-                        : row.finding}
+              <div key={row.label} className="grid grid-cols-[55%_1fr_150px] border-b border-border">
+                <div className="flex h-11 items-center gap-3 px-4">
+                  <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
+                  <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "shrink-0 text-[10px]",
-                    overridden
-                      ? cn(statusClasses[shown], "border-dashed")
-                      : row.hasData
-                        ? statusClasses[row.status]
-                        : "border-border bg-muted text-muted-foreground",
-                  )}
-                >
-                  {overridden || row.hasData ? shown : "No data"}
-                </Badge>
-                <DropdownMenu>
-                  <TooltipProvider delayDuration={100}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 shrink-0"
-                            aria-label={`Manual override for ${row.label}`}
-                          >
-                            <PenLine className={cn("h-3.5 w-3.5", overridden ? "text-primary" : "text-muted-foreground")} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                      </TooltipTrigger>
-                      <TooltipContent side="top">
-                        <p>{overridden ? "Manually overridden — click to change" : "Manual override"}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  <DropdownMenuContent align="end" className="w-44">
-                    {(["Met", "Not met", "Not set"] as EvaluationStatus[]).map((status) => (
-                      <DropdownMenuItem
-                        key={status}
-                        className="text-xs"
-                        onSelect={() => setOverrides((prev) => ({ ...prev, [row.label]: status }))}
-                      >
-                        {status}
-                        {overrides[row.label] === status && <Check className="ml-auto h-3 w-3" />}
-                      </DropdownMenuItem>
-                    ))}
-                    {overridden && (
-                      <DropdownMenuItem
-                        className="text-xs text-muted-foreground"
-                        onSelect={() =>
-                          setOverrides((prev) => {
-                            const next = { ...prev };
-                            delete next[row.label];
-                            return next;
-                          })
-                        }
-                      >
-                        Clear override
-                      </DropdownMenuItem>
+                <div className="flex h-11 items-center border-l border-border px-4 overflow-hidden">
+                  <span className="block w-full truncate text-xs text-muted-foreground" title={displayText}>
+                    {displayNode}
+                  </span>
+                </div>
+                <div className="flex h-11 items-center justify-end gap-2 border-l border-border px-4">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "shrink-0 text-[10px]",
+                      overridden
+                        ? cn(statusClasses[shown], "border-dashed")
+                        : row.hasData
+                          ? statusClasses[row.status]
+                          : "border-border bg-muted text-muted-foreground",
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  >
+                    {overridden || row.hasData ? shown : "No data"}
+                  </Badge>
+                  <DropdownMenu>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0"
+                              aria-label={`Manual override for ${row.label}`}
+                            >
+                              <PenLine className={cn("h-3.5 w-3.5", overridden ? "text-primary" : "text-muted-foreground")} />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>{overridden ? "Manually overridden — click to change" : "Manual override"}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <DropdownMenuContent align="end" className="w-44">
+                      {(["Met", "Not met", "Not set"] as EvaluationStatus[]).map((status) => (
+                        <DropdownMenuItem
+                          key={status}
+                          className="text-xs"
+                          onSelect={() => setOverrides((prev) => ({ ...prev, [row.label]: status }))}
+                        >
+                          {status}
+                          {overrides[row.label] === status && <Check className="ml-auto h-3 w-3" />}
+                        </DropdownMenuItem>
+                      ))}
+                      {overridden && (
+                        <DropdownMenuItem
+                          className="text-xs text-muted-foreground"
+                          onSelect={() =>
+                            setOverrides((prev) => {
+                              const next = { ...prev };
+                              delete next[row.label];
+                              return next;
+                            })
+                          }
+                        >
+                          Clear override
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            </div>
             );
           })}
 
-          <div className="flex h-11 items-center justify-end px-4">
+          <div className="col-span-3 flex h-11 items-center justify-end px-4">
             {showSaved ? (
               <span className="text-xs text-muted-foreground">Thresholds saved.</span>
             ) : (
@@ -844,7 +864,7 @@ const ResearchSpace: React.FC = () => {
                 Save thresholds
               </Button>
             )}
-        </div>
+          </div>
       </div>
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
