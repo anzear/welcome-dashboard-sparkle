@@ -46,10 +46,12 @@ interface Props {
 }
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
-  const statusKey = `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
-
   const [comments, setComments] = useState<Comment[]>([]);
-  const [overallStatus, setOverallStatus] = useState<Status>('Not evaluated');
+  // Lazy initial read so a stored (or legacy-migrated) value wins; writes
+  // happen only on an explicit chip click, never on mount.
+  const [overallStatus, setOverallStatus] = useState<Status>(() =>
+    readPathwayValidationStatus(topic, pathwayId)
+  );
   const [filter, setFilter] = useState<string>('all');
   const [draftCategory, setDraftCategory] = useState<string>(CATEGORIES[0].id);
   const [draftText, setDraftText] = useState('');
@@ -57,18 +59,19 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   useEffect(() => {
     setComments(readValidationComments(topic, pathwayId));
     setOverallStatus(readPathwayValidationStatus(topic, pathwayId));
-  }, [topic, pathwayId, statusKey]);
+  }, [topic, pathwayId]);
+
+  /** Status changes are free jumps — any value to any value, no fixed order. */
+  const pickStatus = (s: Status) => {
+    setOverallStatus(s);
+    writePathwayValidationStatus(topic, pathwayId, s);
+  };
 
   /** Single writer: persist and notify other views (Workspace) of the change. */
   const persist = (next: Comment[]) => {
     setComments(next);
     writeValidationComments(topic, pathwayId, next);
   };
-
-
-  useEffect(() => {
-    writePathwayValidationStatus(topic, pathwayId, overallStatus);
-  }, [overallStatus, statusKey]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
