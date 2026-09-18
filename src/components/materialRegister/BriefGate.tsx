@@ -4,7 +4,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DEMO_USER_NAMES } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import {
@@ -18,8 +17,6 @@ import {
   overdueConditions,
 } from "@/components/materialRegister/gate";
 import {
-  GATE_OUTCOME_LABEL,
-  GATE_OUTCOMES,
   JOURNEY_STATUS_LABEL,
   type GateCondition,
   type GateOutcome,
