@@ -105,6 +105,7 @@ export function removeFunctionDocument(
   documentId: string,
 ): ValidationExtras {
   const current = extrasFor(extras, fn);
+  unregisterDocument(documentId);
   return {
     ...extras,
     [fn]: { ...current, documents: current.documents.filter((doc) => doc.id !== documentId) },
