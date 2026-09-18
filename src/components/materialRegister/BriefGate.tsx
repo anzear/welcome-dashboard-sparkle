@@ -23,7 +23,6 @@ import {
   JOURNEY_STATUS_LABEL,
   JOURNEY_STATUSES,
   type GateOutcome,
-  type GoalStage,
   type JourneyStatus,
   type Material,
 } from "@/types/materialPrioritisation";
