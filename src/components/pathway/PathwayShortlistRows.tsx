@@ -23,7 +23,6 @@ import {
   NOT_FIT_STATUS,
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
-  countConfirmedFunctions,
   functionStatus,
   finalStatus,
   isNotStartedStatus,
