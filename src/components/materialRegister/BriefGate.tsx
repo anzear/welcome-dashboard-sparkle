@@ -69,8 +69,26 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
+/** Read-only summary of one pathway's validation checkboxes. */
+export interface GateValidationProgress {
+  pathwayLabel: string;
+  confirmed: number;
+  total: number;
+}
+
+const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
+  material: m,
+  validation,
+}) => {
   const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
+
+  /** "Material integrated" is a manual override: the bar reads 100%, the checkboxes do not change. */
+  const integrated = m.journey_status === "adopted";
+  const progressPercent = integrated
+    ? 100
+    : validation && validation.total > 0
+      ? Math.round((validation.confirmed / validation.total) * 100)
+      : 0;
 
   const writable = canSetGate(m, currentUser.name);
 
