@@ -306,13 +306,13 @@ export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material 
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       <FiguresStrip m={material} />
 
-      <div className="space-y-4">
-        <div className="space-y-2">
+      <div className="space-y-3">
+        <div className="space-y-1.5">
           <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Technical fit</h3>
-          <div className="rounded-md border border-border/70 bg-background p-3">
+          <div className="rounded-md border border-border/70 bg-background p-2.5">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Performance targets</span>
               <input
