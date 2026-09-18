@@ -43,6 +43,41 @@ const Inner: React.FC = () => {
     });
   };
 
+  // Prototype: seed candidate ("new") materials and link them so the Potential
+  // replacements card reads as in use. Skipped once any link exists.
+  const seedLinks = (materialId: string) => {
+    const current = data.find((m) => m.material_id === materialId);
+    if (!current || (current.linked_material_ids ?? []).length > 0) return;
+    const candidates: [string, string, JourneyStatus][] = [
+      ["Bio-based lactic acid (fermentation)", "Organic acid", "in_testing"],
+      ["Bio-succinic acid", "Organic acid", "in_development"],
+      ["Polyhydroxyalkanoate (PHA)", "Biopolymer", "in_evaluation"],
+    ];
+    candidates.forEach(([candidateName, materialClass, status]) => {
+      const existing = data.find(
+        (m) => m.role === "new" && m.name.trim().toLowerCase() === candidateName.toLowerCase(),
+      );
+      let candidateId = existing?.material_id;
+      if (!candidateId) {
+        const [id] = addMaterials(
+          [
+            {
+              ...blankMaterial(null, "new"),
+              name: candidateName,
+              material_class: materialClass,
+              journey_status: status,
+              last_status_change_date: "2026-09-05",
+              last_status_user: "S. Rautio",
+            },
+          ],
+          { batchOrigin: "real_transition", source: CURRENT_USER },
+        );
+        candidateId = id;
+      }
+      if (candidateId) toggleLink(materialId, candidateId, true);
+    });
+  };
+
   useEffect(() => {
     if (bootstrapped.current || !name) return;
     const hit = data.find((m) => m.name.trim().toLowerCase() === name.toLowerCase());
