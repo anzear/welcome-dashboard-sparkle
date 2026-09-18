@@ -62,7 +62,9 @@ export function PatentShortlistTable({
         ],
       },
     ),
+    (itemId) => `Patent · ${patents.find((patent) => patent.id === itemId)?.title ?? itemId}`,
   );
+
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
 
