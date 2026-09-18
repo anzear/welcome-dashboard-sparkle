@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
+  DocumentAttachControl,
+  mockSeedByIndex,
+  useItemDocuments,
+} from "@/components/materialRegister/itemDocuments";
+import {
   BAND_LABEL,
   PATHWAY_CHIP_ANCHOR,
   PATHWAY_CHIP_NEUTRAL,
