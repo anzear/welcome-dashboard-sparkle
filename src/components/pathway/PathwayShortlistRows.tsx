@@ -259,15 +259,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
               onClick={() => setExpandedGroups((prev) => new Set(prev).add(key))}
             >
               <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-                <div className="flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
-                  <Checkbox
-                    className="h-3 w-3"
-                    aria-label="Select all pathways in this group"
-                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                    onCheckedChange={(v) => toggle(ids, v === true)}
-                  />
-                </div>
-                <span />
                 {chip(head.feedstock, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.process, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.product, PATHWAY_CHIP_ANCHOR)}
