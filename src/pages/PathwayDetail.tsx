@@ -11,6 +11,7 @@ import PathwayOpinionsTab from "@/components/PathwayOpinionsTab";
 import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
+import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { NODE_LABELS } from '@/lib/hitlStore';
 
@@ -871,10 +872,16 @@ const PathwayDetail = () => {
                 </div>
                   </>
                 ) : evaluationTab === 'company' ? (
+                  <>
+                  <PathwayValidationCard
+                    pathwayId={pathwayId || '0'}
+                    topic={topic ? decodeURIComponent(topic) : undefined}
+                  />
                   <PathwayValidationSpace
                     pathwayId={pathwayId || '0'}
                     topic={topic ? decodeURIComponent(topic) : undefined}
                   />
+                  </>
                 ) : null}
                 </div>
 
