@@ -57,6 +57,7 @@ export const FIELD_LABELS: Record<string, string> = {
   product: "Product",
   application_market: "Application",
   group_id: "Group",
+  group_ids: "Groups",
   "nodes.feedstock": "Feedstock",
   "nodes.process": "Process",
   "nodes.product": "Product",
