@@ -33,7 +33,6 @@ interface Props {
 }
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
-  const storageKey = `pathway-validation-comments:${topic || 'default'}:${pathwayId}`;
   const statusKey = `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
 
   const [comments, setComments] = useState<Comment[]>([]);
