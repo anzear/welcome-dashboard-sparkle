@@ -33,7 +33,6 @@ import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialR
 import BriefGate from "@/components/materialRegister/BriefGate";
 import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { JOURNEY_STATUS_LABEL } from "@/types/materialPrioritisation";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import {
   categoryLabel,
