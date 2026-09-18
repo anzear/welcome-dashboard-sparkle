@@ -10,11 +10,9 @@ import {
 import {
   CURRENT_USER,
   RegisterProvider,
-  UNASSIGNED_OWNER,
   useRegister,
 } from "@/components/materialRegister/registerStore";
 import { JOURNEY_STATUS_LABEL, type JourneyStatus } from "@/types/materialPrioritisation";
-import PositionBlock from "@/components/materialRegister/PositionBlock";
 import { blankMaterial } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 
