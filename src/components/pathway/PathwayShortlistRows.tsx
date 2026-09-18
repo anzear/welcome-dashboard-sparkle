@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronDown, MessageSquare, MessageSquarePlus } from "lucide-react";
+import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
