@@ -914,34 +914,6 @@ const PathwayDetail = () => {
             </div>
           </div>
 
-          {/* Shortlisted items linked to this pathway — same lists as the Workspace */}
-          <section className="mt-4 space-y-3">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
-
-            <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
-              <CompanyShortlistTables
-                companies={shortlistCompanies}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
-              />
-            </PathwayShortlistCard>
-
-            <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
-              <PatentShortlistTable
-                patents={shortlistPatents}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
-              />
-            </PathwayShortlistCard>
-
-            <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
-              <PaperShortlistTable
-                papers={shortlistPapers}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
-              />
-            </PathwayShortlistCard>
-          </section>
         </div>
       </div>
   );
