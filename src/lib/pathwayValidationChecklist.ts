@@ -208,10 +208,11 @@ export function functionConfirmation(
 export const countConfirmedFunctions = (checklist: ValidationChecklist) =>
   VALIDATION_FUNCTIONS.filter((fn) => isFunctionConfirmed(checklist, fn)).length;
 
-/** Grey at position 1, amber mid-progress, green at position 4, red for "Not fit". */
+/** Grey while not started, amber mid-progress, green at the final state, red for "Not fit". */
 export function validationStatusClass(fn: ValidationFunction, status: ValidationStatus): string {
   if (status === NOT_FIT_STATUS) return "bg-red-500/10 text-red-600 border-red-500/30";
   if (status === finalStatus(fn)) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/30";
-  if (status === initialStatus(fn)) return "bg-muted text-muted-foreground border-border";
+  if (isNotStartedStatus(fn, status)) return "bg-muted text-muted-foreground border-border";
+
   return "bg-amber-500/10 text-amber-600 border-amber-500/30";
 }
