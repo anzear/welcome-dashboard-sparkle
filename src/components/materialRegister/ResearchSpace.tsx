@@ -31,6 +31,7 @@ import { CompanyShortlistTables, type ShortlistCompany } from "@/components/mate
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
 
 
@@ -630,6 +631,16 @@ const ResearchSpace: React.FC = () => {
             <p className="pt-1 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
           </div>
           <BriefGate material={material} />
+        </section>
+      )}
+
+      {material && (
+        <section className="space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+          <div className="border-b border-border/70 pb-1.5">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
+            <p className="pt-1 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
+          </div>
+          <CompanyDataDetails material={material} />
         </section>
       )}
 
