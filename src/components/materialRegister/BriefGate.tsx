@@ -28,7 +28,11 @@ import {
  * not suggested. The current stage carries one editable goal.
  */
 
-/** The seven stages, in workflow order. */
+/**
+ * The seven stages. NOT a sequence — functions confirm in any order depending
+ * on the material, so the owner may set any stage at any time. There is no
+ * ordering, locking, or left-to-right progression logic anywhere below.
+ */
 const STATUSES: JourneyStatus[] = [
   "not_started",
   "in_evaluation",
@@ -82,12 +86,19 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
 }) => {
   const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
 
-  /** "Material integrated" is a manual override: the bar reads 100%, the checkboxes do not change. */
+  /**
+   * Function progression. Each confirmed function is worth an equal share
+   * (100 / total) — with 4 functions that is exactly 25% each. The bar reads
+   * ONLY the Validation card checkboxes; the status stage above never moves
+   * it. Exception: "Material integrated" is a manual display override — the
+   * bar reads 100% while the underlying checkboxes stay untouched.
+   */
   const integrated = m.journey_status === "adopted";
+  const perFunction = validation && validation.total > 0 ? 100 / validation.total : 0;
   const progressPercent = integrated
     ? 100
-    : validation && validation.total > 0
-      ? Math.round((validation.confirmed / validation.total) * 100)
+    : validation
+      ? Math.round(validation.confirmed * perFunction)
       : 0;
 
   const writable = canSetGate(m, currentUser.name);
@@ -298,7 +309,7 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       )}
 
-      {/* The status is the headline. Seven stages, one row, in workflow order. */}
+      {/* The status is the headline. Seven stages, one row, no fixed order — any stage can be set at any time. */}
       <div className="space-y-1">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
