@@ -154,6 +154,12 @@ export function PathwayShortlistRows({
   topic,
 }: Props) {
 
+  const navigate = useNavigate();
+  const pathwayHref = (id: string) =>
+    category && topic
+      ? `/landscape/${encodeURIComponent(category)}/${encodeURIComponent(topic)}/value-chain/pathways/${id}`
+      : null;
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
