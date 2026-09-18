@@ -246,17 +246,19 @@ const MaterialBriefHero: React.FC<{
       </div>
 
       {/* ── Band 2 — Material Brief entry tile ───────────────────────────── */}
-      <div>
+      <div className="px-5 py-2">
         <button
           type="button"
           onClick={() => navHero(`/landscape/${category}/${topic}/material-brief-simple`)}
-          className="flex items-center justify-between w-full px-5 py-3 hover:bg-muted/40 transition-colors text-left group"
+          className="flex w-full items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/60 group"
         >
-            <span className="flex items-center gap-2">
-            <Target className="w-3.5 h-3.5 text-foreground" />
-            <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">Workspace</span>
+          <span className="flex items-center gap-2.5">
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-foreground text-background">
+              <Target className="h-3.5 w-3.5" />
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-widest">Workspace</span>
           </span>
-          <span className="text-[10px] text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
+          <span className="text-[10px] font-medium text-muted-foreground group-hover:text-foreground transition-colors" aria-hidden>→</span>
         </button>
       </div>
 
