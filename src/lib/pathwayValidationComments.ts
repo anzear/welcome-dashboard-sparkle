@@ -95,3 +95,20 @@ export function shortlistIdToPathwayIndex(shortlistId: string): string | null {
   if (!match) return null;
   return String(Number(match[1]) - 1);
 }
+
+export type PathwayValidationStatus = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
+
+export const validationStatusKey = (topic: string | undefined, pathwayId: string) =>
+  `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
+
+/** 4-level pathway status set in the Validation Space on the pathway profile. */
+export function readPathwayValidationStatus(
+  topic: string | undefined,
+  pathwayId: string,
+): PathwayValidationStatus {
+  try {
+    const s = localStorage.getItem(validationStatusKey(topic, pathwayId));
+    if (s === 'TBD' || s === 'Go' || s === 'Uncertain' || s === 'No-Go') return s;
+  } catch {}
+  return 'TBD';
+}
