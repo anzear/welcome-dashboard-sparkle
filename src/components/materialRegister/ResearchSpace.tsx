@@ -520,6 +520,25 @@ const ResearchSpace: React.FC = () => {
     return map;
   }, [shortlistPathways, material?.name, commentTick]);
 
+  /**
+   * Function progression for the Status card. Read from the primary (top
+   * priority) shortlisted pathway's Validation card checkboxes — read-only.
+   */
+  const validationProgress = useMemo(() => {
+    void commentTick;
+    const primary = shortlistPathways[0];
+    if (!primary) return undefined;
+    const confirmations = readPathwayConfirmations(
+      material?.name,
+      shortlistIdToPathwayIndex(primary.id) ?? primary.id,
+    );
+    return {
+      pathwayLabel: `${primary.feedstock} → ${primary.product}`,
+      confirmed: VALIDATION_FUNCTIONS.filter((fn) => !!confirmations[fn]).length,
+      total: VALIDATION_FUNCTIONS.length,
+    };
+  }, [shortlistPathways, material?.name, commentTick]);
+
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
     setShowSaved(false);
