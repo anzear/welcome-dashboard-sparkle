@@ -14,7 +14,6 @@ import {
 } from "@/components/materialRegister/gate";
 import {
   JOURNEY_STATUS_LABEL,
-  migrateGateOutcome,
   type GateOutcome,
   type GoalStage,
   type JourneyStatus,
@@ -24,11 +23,9 @@ import {
 /**
  * THE GATE.
  *
- * The status is the headline: a segmented control of five categories. They are
- * categories, not a scale — a material can go straight from Under evaluation to
- * Go, and No-go is not the far end of anything. Nothing here is derived from the
- * assessment: every status is set by the owner, and detail is typed, not
- * suggested. The recommendation sits at the foot, read after the call.
+ * The status is the headline: seven workflow stages. Nothing here is derived
+ * from the assessment: every status is set by the owner, and detail is typed,
+ * not suggested. The current stage carries one editable goal.
  */
 
 /** The seven stages, in workflow order. */
@@ -73,11 +70,9 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
-  const { currentUser, saveRecommendation, saveStageGoal, setGateOutcome, reopenGate } =
-    useRegister();
+  const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
 
   const writable = canSetGate(m, currentUser.name);
-  const rec = m.recommendation;
 
   /** The status being drafted. Never seeded from a score or a recommendation. */
   const [pending, setPending] = useState<GateOutcome | null>(null);
@@ -85,8 +80,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
 
-  const [recOpen, setRecOpen] = useState(false);
-  const [recText, setRecText] = useState("");
   const [goalOpen, setGoalOpen] = useState(false);
   const [goalText, setGoalText] = useState("");
 
@@ -338,75 +331,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
         </p>
       )}
 
-      {/* ------------------------------------------------ the reasoning, last */}
-      {recOpen ? (
-        <div className="space-y-2">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Recommendation</span>
-          <Textarea
-            value={recText}
-            onChange={(e) => setRecText(e.target.value)}
-            rows={3}
-            placeholder="Why this call — or what you'd recommend instead."
-            className="text-[11px]"
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              className="h-7 text-[11px]"
-              disabled={recText.trim() === ""}
-              onClick={() => {
-                if (recText.trim() === "") return;
-                saveRecommendation(m.material_id, migrateGateOutcome(m.journey_status), recText.trim());
-                setRecOpen(false);
-              }}
-            >
-              Save recommendation
-            </Button>
-            <button type="button" onClick={() => setRecOpen(false)} className={LINK}>
-              Cancel
-            </button>
-            {recText.trim() === "" && (
-              <span className="text-[10px] text-muted-foreground">Reasoning is required.</span>
-            )}
-          </div>
-        </div>
-      ) : rec ? (
-        <div className="space-y-1">
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Recommendation</span>
-          <p
-            role={writable ? "button" : undefined}
-            tabIndex={writable ? 0 : undefined}
-            onClick={() => {
-              if (!writable) return;
-              setRecText(rec.text);
-              setRecOpen(true);
-            }}
-            className={cn(
-              "text-[11px] leading-relaxed text-foreground",
-              writable && "cursor-text hover:text-foreground/80",
-            )}
-          >
-            {rec.text}
-          </p>
-          <Stamp by={rec.author} date={rec.date} />
-        </div>
-      ) : (
-        <div className="flex flex-wrap items-baseline gap-2">
-          <span className="text-[11px] text-muted-foreground">No recommendation written.</span>
-          {writable && (
-            <button
-              type="button"
-              onClick={() => {
-                setRecText("");
-                setRecOpen(true);
-              }}
-              className={LINK}
-            >
-              Add
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 };
