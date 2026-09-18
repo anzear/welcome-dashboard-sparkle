@@ -974,7 +974,7 @@ export const MaterialBrief: React.FC<{
 
         <div className="flex flex-wrap items-start gap-y-4 px-4 py-3">
           {/* Read-only here. The gate is set in the Gate card, by the owner only. */}
-          <BarField label="Status" className="w-[190px] pr-5" hint="Set in the Gate card">
+          <BarField label="Status" className="w-[190px] pr-5">
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusPill status={m.journey_status} entered={m.provenance.journey_status?.origin === "entered"} />
               {(hasOverdueCondition(m) || holdReviewOverdue(m)) && (
