@@ -21,7 +21,7 @@ const Inner: React.FC = () => {
   const navigate = useNavigate();
   const { topic } = useParams();
   const name = topic ? decodeURIComponent(topic).trim() : "";
-  const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment, toggleLink } = useRegister();
+  const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment } = useRegister();
   const bootstrapped = useRef(false);
 
   // Prototype: seed one set of driver judgements so the Drivers card reads as
