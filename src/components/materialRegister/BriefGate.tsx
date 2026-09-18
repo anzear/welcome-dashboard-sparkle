@@ -118,8 +118,6 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
 
-  const [goalOpen, setGoalOpen] = useState(false);
-  const [goalText, setGoalText] = useState("");
 
   const reviewLate = holdReviewOverdue(m);
   const decided = m.gate_decided_date !== null;
