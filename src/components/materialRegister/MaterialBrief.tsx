@@ -1131,7 +1131,7 @@ export const MaterialBrief: React.FC<{
             <BriefLinks material={m} />
           </Section>
 
-          <Section title="Documents" note="General files for this material.">
+          <Section title="Documents" note="Every file uploaded for this material. Files uploaded here are general; anything uploaded elsewhere carries a tag showing where.">
             <WorkSpaceDocumentsCard
               currentUser={CURRENT_REVIEWER}
               seed={[
