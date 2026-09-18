@@ -29,7 +29,7 @@ import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDial
 import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
-import BriefAssessment, { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
+import BriefAssessment from "@/components/materialRegister/BriefAssessment";
 import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";

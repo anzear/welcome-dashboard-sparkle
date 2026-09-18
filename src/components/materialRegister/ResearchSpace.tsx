@@ -31,6 +31,7 @@ import { CompanyShortlistTables, type ShortlistCompany } from "@/components/mate
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
 
 
