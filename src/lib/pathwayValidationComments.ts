@@ -32,13 +32,50 @@ export const categoryLabel = (id: string) =>
 export const validationCommentsKey = (topic: string | undefined, pathwayId: string) =>
   `pathway-validation-comments:${topic || 'default'}:${pathwayId}`;
 
+/** Mock comments used to showcase the space until the team writes real ones. */
+const MOCK_COMMENTS: Omit<ValidationComment, 'id' | 'createdAt'>[] = [
+  {
+    categoryId: 'feedstock',
+    author: 'K. Brandt',
+    text: 'Spoke with two EU sugar-beet suppliers — contract volumes look secure through 2028, but pricing is indexed to energy. Worth a hedging clause.',
+  },
+  {
+    categoryId: 'technology',
+    author: 'S. Rautio',
+    text: 'Fermentation step is proven at pilot scale (TRL 6) with our shortlisted licensor. Main open question is downstream purification yield above 500 t/a.',
+  },
+  {
+    categoryId: 'economics',
+    author: 'M. Kovac',
+    text: 'At €1.68/kg the pathway beats our €2,200/t ceiling with ~18% margin. Sensitivity to feedstock price is the main risk to watch.',
+  },
+  {
+    categoryId: 'sustainability',
+    author: 'K. Brandt',
+    text: 'Preliminary LCA shows ~55% lower GHG vs fossil incumbent. Needs third-party verification before we claim it externally.',
+  },
+  {
+    categoryId: 'ip',
+    author: 'Legal',
+    text: 'FTO search returned two blocking patents in the US from a competitor. EU looks clear; flag for counsel before any US commitments.',
+  },
+];
+
 export function readValidationComments(topic: string | undefined, pathwayId: string): ValidationComment[] {
   try {
     const raw = localStorage.getItem(validationCommentsKey(topic, pathwayId));
-    return raw ? (JSON.parse(raw) as ValidationComment[]) : [];
+    if (raw !== null) return JSON.parse(raw) as ValidationComment[];
   } catch {
     return [];
   }
+  // Never written before: seed mock comments so the space showcases populated.
+  const seeded: ValidationComment[] = MOCK_COMMENTS.map((c, i) => ({
+    ...c,
+    id: `mock-${i + 1}`,
+    createdAt: new Date(Date.UTC(2026, 8, 10 + i, 9, 15)).toISOString(),
+  }));
+  writeValidationComments(topic, pathwayId, seeded);
+  return seeded;
 }
 
 export function writeValidationComments(
