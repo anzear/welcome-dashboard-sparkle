@@ -1,77 +1,34 @@
 import { useEffect, useRef, useState } from "react";
 import { FileText, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { makeDocument, type ItemDocument } from "@/components/materialRegister/itemDocuments";
-
-const FUNCTIONS = ["R&D", "Procurement", "Sustainability", "Regulatory"] as const;
-type FunctionName = (typeof FUNCTIONS)[number];
-
-/** Who confirmed a function, and when. Absent means not confirmed. */
-type Confirmation = { by: string; date: string };
-type Confirmations = Partial<Record<FunctionName, Confirmation>>;
-
-const CURRENT_USER = "A. Novak";
-
-/** Mock starting point: two functions confirmed, two still open. */
-const MOCK_CONFIRMATIONS: Confirmations = {
-  "R&D": { by: "K. Brandt", date: "4 Sept 2026" },
-  Sustainability: { by: "M. Feld", date: "11 Sept 2026" },
-};
+import ValidationChecklist from "@/components/pathway/ValidationChecklist";
+import {
+  VALIDATION_CHANGED_EVENT,
+  VALIDATION_CURRENT_USER as CURRENT_USER,
+  VALIDATION_FUNCTIONS,
+  countConfirmedFunctions,
+  readValidationChecklist,
+} from "@/lib/pathwayValidationChecklist";
 
 const MOCK_DOCUMENTS: ItemDocument[] = [
   { id: "pv-doc-1", name: "Pathway-validation-checklist.pdf", uploader: "K. Brandt", date: "4 Sept 2026" },
   { id: "pv-doc-2", name: "Lab-conformance-results.xlsx", uploader: "M. Feld", date: "11 Sept 2026" },
 ];
 
-/** Shared so other views (Workspace status card) can read the same source. */
-export const VALIDATION_FUNCTIONS = FUNCTIONS;
-
-export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId: string) =>
-  `pathway-validation-confirmations:${topic || "default"}:${pathwayId}`;
-
-/** Read-only mirror of the checkboxes; never writes, never alters them. */
-export const readPathwayConfirmations = (
-  topic: string | undefined,
-  pathwayId: string,
-): Confirmations => {
-  try {
-    const stored = localStorage.getItem(pathwayValidationStorageKey(topic, pathwayId));
-    return stored ? (JSON.parse(stored) as Confirmations) : MOCK_CONFIRMATIONS;
-  } catch {
-    return MOCK_CONFIRMATIONS;
-  }
-};
-
-const todayLabel = () =>
-  new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-
 export function PathwayValidationCard({ pathwayId, topic }: { pathwayId: string; topic?: string }) {
-  const storageKey = `pathway-validation-confirmations:${topic || "default"}:${pathwayId}`;
-  const [confirmations, setConfirmations] = useState<Confirmations>(MOCK_CONFIRMATIONS);
+  const [confirmedCount, setConfirmedCount] = useState(() =>
+    countConfirmedFunctions(readValidationChecklist(topic, pathwayId)),
+  );
   const [documents, setDocuments] = useState<ItemDocument[]>(MOCK_DOCUMENTS);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(storageKey);
-      setConfirmations(stored ? (JSON.parse(stored) as Confirmations) : MOCK_CONFIRMATIONS);
-    } catch {
-      setConfirmations(MOCK_CONFIRMATIONS);
-    }
-  }, [storageKey]);
-
-  const toggle = (name: FunctionName, checked: boolean) => {
-    setConfirmations((current) => {
-      const next: Confirmations = { ...current };
-      if (checked) next[name] = { by: CURRENT_USER, date: todayLabel() };
-      else delete next[name];
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-  };
+    const refresh = () => setConfirmedCount(countConfirmedFunctions(readValidationChecklist(topic, pathwayId)));
+    refresh();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
+  }, [topic, pathwayId]);
 
   return (
     <div className="mb-3 overflow-hidden rounded-md border border-border bg-card">
