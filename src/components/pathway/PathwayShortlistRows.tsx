@@ -130,7 +130,6 @@ type Props = {
 };
 
 export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
@@ -156,13 +155,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
    * order; clusters never span non-matching rows.
    */
   const runs = useMemo(() => clusterRuns(pathways), [pathways]);
-
-  const toggle = (ids: string[], on: boolean) =>
-    setSelected((prev) => {
-      const next = new Set(prev);
-      ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
-      return next;
-    });
 
   /** Moves the dragged pathway to the drop target's position and reports the new order. */
   const commitDrop = (targetId: string) => {
