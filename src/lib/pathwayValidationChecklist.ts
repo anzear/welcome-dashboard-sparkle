@@ -1,48 +1,35 @@
 /**
  * PATHWAY VALIDATION CHECKLIST — single source of truth.
  *
+ * Jira-style: each of the four functions carries ONE status
+ * (To do · In progress · Tested · Approved), selected from a dropdown.
  * The same data backs the "Validation" card on the Pathway Profile and the
- * function checklist inside the Workspace Status card. Both read and write this
- * module; there is no second copy. Prototype persistence is localStorage.
+ * evaluation checklist inside the Workspace Status card.
  *
- * A function counts as CONFIRMED only when both of its sub-items are ticked.
- * Partial is never partial credit.
+ * A function counts as CONFIRMED only when its status is "Approved".
+ * Prototype persistence is localStorage.
  */
 
 export const VALIDATION_FUNCTIONS = ["R&D", "Procurement", "Sustainability", "Regulatory"] as const;
 export type ValidationFunction = (typeof VALIDATION_FUNCTIONS)[number];
 
-/** The two sub-items each function carries, in display order. */
-export const FUNCTION_SUBITEMS: Record<ValidationFunction, readonly [string, string]> = {
-  "R&D": ["Tested", "Approved"],
-  Procurement: ["Suppliers engaged", "Suppliers confirmed"],
-  Sustainability: ["Data reviewed", "Approved"],
-  Regulatory: ["Compliance reviewed", "Cleared"],
-};
+export const VALIDATION_STATUSES = ["To do", "In progress", "Tested", "Approved"] as const;
+export type ValidationStatus = (typeof VALIDATION_STATUSES)[number];
 
-/** Who ticked a sub-item, and when. Absent means not confirmed. */
-export type SubItemConfirmation = { by: string; date: string };
-export type FunctionState = Record<string, SubItemConfirmation>;
+export const DEFAULT_VALIDATION_STATUS: ValidationStatus = "To do";
+
+/** Who set the status, and when. */
+export type FunctionState = { status: ValidationStatus; by: string; date: string };
 export type ValidationChecklist = Partial<Record<ValidationFunction, FunctionState>>;
 
 export const VALIDATION_CURRENT_USER = "A. Novak";
 
-/**
- * Mock starting point, shared by both surfaces: R&D and Sustainability fully
- * confirmed (2 of 4 → 50%), Procurement half done, Regulatory untouched.
- */
+/** Mock starting point: R&D and Sustainability approved (2 of 4 → 50%). */
 export const MOCK_CHECKLIST: ValidationChecklist = {
-  "R&D": {
-    Tested: { by: "K. Brandt", date: "28 Aug 2026" },
-    Approved: { by: "K. Brandt", date: "4 Sept 2026" },
-  },
-  Procurement: {
-    "Suppliers engaged": { by: "A. Vermeer", date: "9 Sept 2026" },
-  },
-  Sustainability: {
-    "Data reviewed": { by: "M. Feld", date: "7 Sept 2026" },
-    Approved: { by: "M. Feld", date: "11 Sept 2026" },
-  },
+  "R&D": { status: "Approved", by: "K. Brandt", date: "4 Sept 2026" },
+  Procurement: { status: "In progress", by: "A. Vermeer", date: "9 Sept 2026" },
+  Sustainability: { status: "Approved", by: "M. Feld", date: "11 Sept 2026" },
+  Regulatory: { status: "To do", by: "A. Novak", date: "1 Sept 2026" },
 };
 
 export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId: string | number) =>
@@ -50,7 +37,14 @@ export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId
 
 export const VALIDATION_CHANGED_EVENT = "pathway-validation-checklist-changed";
 
-/** Legacy shape: one confirmation per function. Fold onto both sub-items. */
+const isStatus = (value: unknown): value is ValidationStatus =>
+  typeof value === "string" && (VALIDATION_STATUSES as readonly string[]).includes(value);
+
+/**
+ * Migrate older shapes:
+ *  - { by, date } per function (single confirmation) → Approved
+ *  - { "Sub item": { by, date }, ... } → Approved when both ticked, In progress when one
+ */
 const migrate = (raw: unknown): ValidationChecklist => {
   if (!raw || typeof raw !== "object") return {};
   const out: ValidationChecklist = {};
@@ -58,20 +52,32 @@ const migrate = (raw: unknown): ValidationChecklist => {
     const value = (raw as Record<string, unknown>)[fn];
     if (!value || typeof value !== "object") continue;
     const record = value as Record<string, unknown>;
-    if (typeof record.by === "string" && typeof record.date === "string") {
-      const stamp = { by: record.by, date: record.date };
-      const [a, b] = FUNCTION_SUBITEMS[fn];
-      out[fn] = { [a]: stamp, [b]: stamp };
+
+    if (isStatus(record.status)) {
+      out[fn] = {
+        status: record.status,
+        by: typeof record.by === "string" ? record.by : VALIDATION_CURRENT_USER,
+        date: typeof record.date === "string" ? record.date : todayLabel(),
+      };
       continue;
     }
-    const state: FunctionState = {};
-    for (const key of FUNCTION_SUBITEMS[fn]) {
-      const sub = record[key] as { by?: unknown; date?: unknown } | undefined;
-      if (sub && typeof sub.by === "string" && typeof sub.date === "string") {
-        state[key] = { by: sub.by, date: sub.date };
-      }
+
+    if (typeof record.by === "string" && typeof record.date === "string") {
+      out[fn] = { status: "Approved", by: record.by, date: record.date };
+      continue;
     }
-    if (Object.keys(state).length > 0) out[fn] = state;
+
+    const stamps = Object.values(record).filter(
+      (sub): sub is { by: string; date: string } =>
+        !!sub && typeof sub === "object" && typeof (sub as { by?: unknown }).by === "string",
+    );
+    if (stamps.length === 0) continue;
+    const latest = stamps[stamps.length - 1];
+    out[fn] = {
+      status: stamps.length >= 2 ? "Approved" : "In progress",
+      by: latest.by,
+      date: latest.date,
+    };
   }
   return out;
 };
@@ -100,45 +106,44 @@ export function writeValidationChecklist(
   } catch {}
 }
 
-/** Tick or untick one sub-item and persist. Returns the new checklist. */
-export function toggleSubItem(
+/** Set one function's status and persist-ready checklist. Free jumps allowed. */
+export function setFunctionStatus(
   checklist: ValidationChecklist,
   fn: ValidationFunction,
-  subItem: string,
-  checked: boolean,
+  status: ValidationStatus,
   by: string,
 ): ValidationChecklist {
-  const state: FunctionState = { ...(checklist[fn] ?? {}) };
-  if (checked) state[subItem] = { by, date: todayLabel() };
-  else delete state[subItem];
-  const next: ValidationChecklist = { ...checklist };
-  if (Object.keys(state).length === 0) delete next[fn];
-  else next[fn] = state;
-  return next;
+  return { ...checklist, [fn]: { status, by, date: todayLabel() } };
 }
 
 export const todayLabel = () =>
   new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 
-export const subItemsDone = (checklist: ValidationChecklist, fn: ValidationFunction) =>
-  FUNCTION_SUBITEMS[fn].filter((sub) => !!checklist[fn]?.[sub]).length;
+export const functionStatus = (
+  checklist: ValidationChecklist,
+  fn: ValidationFunction,
+): ValidationStatus => checklist[fn]?.status ?? DEFAULT_VALIDATION_STATUS;
 
-/** Confirmed only when BOTH sub-items are ticked. No partial credit. */
+/** Confirmed only when Approved. */
 export const isFunctionConfirmed = (checklist: ValidationChecklist, fn: ValidationFunction) =>
-  subItemsDone(checklist, fn) === FUNCTION_SUBITEMS[fn].length;
+  functionStatus(checklist, fn) === "Approved";
 
-/** The confirmer and the most recent of the two sub-item dates. */
 export function functionConfirmation(
   checklist: ValidationChecklist,
   fn: ValidationFunction,
-): SubItemConfirmation | null {
-  if (!isFunctionConfirmed(checklist, fn)) return null;
-  const stamps = FUNCTION_SUBITEMS[fn].map((sub) => checklist[fn]![sub]);
-  const latest = stamps.reduce((best, stamp) =>
-    new Date(stamp.date).getTime() >= new Date(best.date).getTime() ? stamp : best,
-  );
-  return latest;
+): { by: string; date: string } | null {
+  const state = checklist[fn];
+  if (!state || state.status !== "Approved") return null;
+  return { by: state.by, date: state.date };
 }
 
 export const countConfirmedFunctions = (checklist: ValidationChecklist) =>
   VALIDATION_FUNCTIONS.filter((fn) => isFunctionConfirmed(checklist, fn)).length;
+
+/** Chip styling per status, Jira-like. */
+export const VALIDATION_STATUS_CLASS: Record<ValidationStatus, string> = {
+  "To do": "bg-muted text-muted-foreground border-border",
+  "In progress": "bg-blue-500/10 text-blue-600 border-blue-500/30",
+  Tested: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+  Approved: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
+};
