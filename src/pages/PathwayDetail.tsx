@@ -14,6 +14,25 @@ import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { NODE_LABELS } from '@/lib/hitlStore';
+import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
+import { PatentShortlistTable, type ShortlistPatent } from '@/components/materialRegister/PatentShortlistTable';
+import { PaperShortlistTable, type ShortlistPaper } from '@/components/materialRegister/PaperShortlistTable';
+import { SHORTLIST_COMPANIES, SHORTLIST_PATENTS, SHORTLIST_PAPERS } from '@/components/materialRegister/shortlistMockData';
+
+const CURRENT_REVIEWER = "A. Weber";
+
+/** Compact shortlist card matching the Workspace "Shortlisted items" pattern. */
+const PathwayShortlistCard = ({ label, count, children }: { label: string; count: number; children: React.ReactNode }) => (
+  <div className="rounded-lg border border-border bg-card shadow-sm">
+    <div className="flex items-center justify-between border-b border-border px-4 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">{label}</span>
+        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-muted-foreground">{count}</span>
+      </div>
+    </div>
+    <div className="p-2">{children}</div>
+  </div>
+);
 
 
 const PathwayDetail = () => {
