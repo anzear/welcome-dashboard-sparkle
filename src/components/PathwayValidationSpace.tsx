@@ -7,10 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   readValidationComments,
   writeValidationComments,
+  readPathwayValidationStatus,
+  writePathwayValidationStatus,
+  PATHWAY_VALIDATION_STATUSES,
+  type PathwayValidationStatus,
   type ValidationComment,
 } from '@/lib/pathwayValidationComments';
 
-type Status = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
+type Status = PathwayValidationStatus;
 
 type Comment = ValidationComment;
 
