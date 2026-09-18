@@ -185,8 +185,6 @@ type Props = {
   currentUser: string;
   /** Grouped is a secondary view the user opts into from the card header. Flat is the default. */
   grouped: boolean;
-  /** Validation Space status per pathway id; absent id renders as Not evaluated. */
-  statuses?: Record<string, ValidationStatus>;
   /** Drag-to-reorder: row order is the priority order, top row highest. */
   onReorder?: (orderedIds: string[]) => void;
   /** Landscape context used to link each row to its pathway profile. */
