@@ -30,6 +30,8 @@ import { PathwayShortlistRows, hasGroupableClusters, type PathwayNote, type Shor
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
+import BriefGate from "@/components/materialRegister/BriefGate";
+import { useRegister } from "@/components/materialRegister/registerStore";
 
 
 
@@ -359,6 +361,8 @@ const ShortlistCard = ({ label, count, children, headerAction }: { label: string
 
 
 const ResearchSpace: React.FC = () => {
+  const { allMaterials, openId } = useRegister();
+  const material = allMaterials.find((item) => item.material_id === openId) ?? null;
   const applications = useMemo(
     () => Array.from(new Set(PREDEFINED_PATHWAYS.map((pathway) => pathway.application))).sort(),
     [],
@@ -619,6 +623,16 @@ const ResearchSpace: React.FC = () => {
 
   return (
     <div className="mt-5 space-y-6">
+      {material && (
+        <section className="space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+          <div className="border-b border-border/70 pb-1.5">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Status</h2>
+            <p className="pt-1 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
+          </div>
+          <BriefGate material={material} />
+        </section>
+      )}
+
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">

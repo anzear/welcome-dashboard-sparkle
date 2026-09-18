@@ -30,7 +30,6 @@ import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment, { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
-import BriefGate from "@/components/materialRegister/BriefGate";
 import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
@@ -1100,14 +1099,6 @@ export const MaterialBrief: React.FC<{
       {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments, matched heights. */}
       <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          {/* The gate sits above the assessment: a decision, not a measurement. */}
-          <Section
-            title="Status"
-            note="Set by the owner."
-          >
-            <BriefGate material={m} />
-          </Section>
-
           <Section
             title="Company data"
             note="Spend, technical fit, and regulatory requirements."
