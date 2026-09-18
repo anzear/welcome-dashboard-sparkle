@@ -91,19 +91,18 @@ export type JourneyStatus =
  */
 export const migrateJourneyStatus = (v: unknown): JourneyStatus => {
   switch (v) {
+    // The four per-function stages collapsed into one evaluation stage; the
+    // functions themselves are now a checklist inside "In evaluation".
     case "in_evaluation":
     case "under_evaluation":
-      return "in_evaluation";
     case "in_testing":
     case "go_with_conditions":
-      return "in_testing";
     case "in_development":
     case "go":
     case "qualified":
-      return "in_development";
     case "in_deployment":
     case "sourcing":
-      return "in_deployment";
+      return "in_evaluation";
     case "adopted":
     case "in_use":
       return "adopted";
