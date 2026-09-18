@@ -311,6 +311,7 @@ export function PathwayShortlistRows({
           <div className="flex items-center justify-center">
             <StatusBadge trl={p.trl} />
           </div>
+          <ValidationProgress topic={topic} pathwayId={p.id} />
           <div className="flex items-center justify-between gap-2">
             <ValidationStatusBadge status={statuses?.[p.id] ?? "Not evaluated"} />
             <div className="flex items-center gap-2" data-row-control>
@@ -354,6 +355,7 @@ export function PathwayShortlistRows({
                 <div className="text-[10px] font-medium text-muted-foreground truncate border border-dashed border-border rounded-md px-2 py-2 text-center">
                   {members.length} applications
                 </div>
+                <span />
                 <span />
                 <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
                   {aggregateNotes > 0 && (
