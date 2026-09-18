@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
 
@@ -19,6 +19,12 @@ import {
   hasTRL,
   pathwayChipCls,
 } from "./pathwayRowStyles";
+import {
+  VALIDATION_CHANGED_EVENT,
+  VALIDATION_FUNCTIONS,
+  countConfirmedFunctions,
+  readValidationChecklist,
+} from "@/lib/pathwayValidationChecklist";
 
 export type ShortlistPathway = {
   id: string;
@@ -65,7 +71,44 @@ function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
 }
 
 const COLS =
-  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_76px_150px]";
+
+/**
+ * Same source of truth as the pathway Validation card: a function counts only
+ * when both of its sub-items are ticked. Display matches the Workspace bar.
+ */
+function ValidationProgress({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
+  const total = VALIDATION_FUNCTIONS.length;
+  const [confirmed, setConfirmed] = useState(() =>
+    countConfirmedFunctions(readValidationChecklist(topic, pathwayId)),
+  );
+
+  useEffect(() => {
+    const sync = () => setConfirmed(countConfirmedFunctions(readValidationChecklist(topic, pathwayId)));
+    sync();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [topic, pathwayId]);
+
+  const percent = Math.round((confirmed / total) * 100);
+  return (
+    <div
+      className="space-y-1"
+      title={`${confirmed} of ${total} functions confirmed in the pathway Validation card`}
+    >
+      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+      </div>
+      <div className="text-[9px] tabular-nums text-muted-foreground text-center">
+        {confirmed}/{total} · {percent}%
+      </div>
+    </div>
+  );
+}
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
