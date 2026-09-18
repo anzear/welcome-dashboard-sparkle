@@ -81,7 +81,7 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   material: m,
   validation,
 }) => {
-  const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
+  const { currentUser, setGateOutcome, reopenGate } = useRegister();
 
   /**
    * Function progression. Each of the four functions is worth exactly
