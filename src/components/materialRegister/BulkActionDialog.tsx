@@ -21,6 +21,7 @@ import {
 import { X } from "lucide-react";
 import {
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   MATERIAL_ROLE_LABEL,
   MATERIAL_ROLES,
   type JourneyStatus,
@@ -59,7 +60,7 @@ export const BLOCKER_CATEGORIES = [
   "Internal capacity",
 ];
 
-const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
+const STATUS_ORDER = JOURNEY_STATUSES;
 
 export interface BulkPayload {
   kind: BulkKind;

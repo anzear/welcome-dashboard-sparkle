@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type JourneyStatus,
   type Material,
 } from "@/types/materialPrioritisation";
@@ -256,7 +257,7 @@ export const MaterialRegisterTable: React.FC = () => {
       [...new Set(vals.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b));
     return {
       classes: uniq(data.map((m) => m.material_class)).map((v) => ({ value: v, label: v })),
-      statuses: (Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((s) => ({
+      statuses: JOURNEY_STATUSES.map((s) => ({
         value: s,
         label: JOURNEY_STATUS_LABEL[s],
       })),

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,8 +12,16 @@ import {
   holdReviewOverdue,
   outcomeBlockers,
 } from "@/components/materialRegister/gate";
+import ValidationChecklist from "@/components/pathway/ValidationChecklist";
+import {
+  VALIDATION_CHANGED_EVENT,
+  VALIDATION_FUNCTIONS,
+  countConfirmedFunctions,
+  readValidationChecklist,
+} from "@/lib/pathwayValidationChecklist";
 import {
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type GateOutcome,
   type GoalStage,
   type JourneyStatus,
@@ -29,30 +37,19 @@ import {
  */
 
 /**
- * The seven stages. NOT a sequence — functions confirm in any order depending
- * on the material, so the owner may set any stage at any time. There is no
- * ordering, locking, or left-to-right progression logic anywhere below.
+ * Four stages. NOT a sequence — the owner may set any stage at any time. There
+ * is no ordering, locking, or left-to-right progression logic anywhere below.
+ * The functions live as a checklist inside "In evaluation", not as stages.
  */
-const STATUSES: JourneyStatus[] = [
-  "not_started",
-  "in_evaluation",
-  "in_testing",
-  "in_development",
-  "in_deployment",
-  "adopted",
-  "parked",
-];
+const STATUSES: JourneyStatus[] = JOURNEY_STATUSES;
 
 /** Parked alone carries structured detail before the status is committed. */
 const DETAIL_STAGES: JourneyStatus[] = ["parked"];
 
 /** Categorical colour. Solid when set, quiet when not — never a gradient. */
-const STATUS_FILL: Record<JourneyStatus, string> = {
+const STATUS_FILL: Partial<Record<JourneyStatus, string>> = {
   not_started: "bg-muted-foreground text-background border-muted-foreground",
   in_evaluation: "bg-provenance-judgement text-white border-provenance-judgement",
-  in_testing: "bg-violet-600 text-white border-violet-600",
-  in_development: "bg-emerald-600 text-white border-emerald-600",
-  in_deployment: "bg-sky-600 text-white border-sky-600",
   adopted: "bg-foreground text-background border-foreground",
   parked: "bg-amber-500 text-white border-amber-500",
 };
@@ -73,11 +70,11 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-/** Read-only summary of one pathway's validation checkboxes. */
+/** Which pathway's Validation card this status card reads and writes. */
 export interface GateValidationProgress {
   pathwayLabel: string;
-  confirmed: number;
-  total: number;
+  topic?: string;
+  pathwayId: string | number;
 }
 
 const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
@@ -87,19 +84,31 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
 
   /**
-   * Function progression. Each confirmed function is worth an equal share
-   * (100 / total) — with 4 functions that is exactly 25% each. The bar reads
-   * ONLY the Validation card checkboxes; the status stage above never moves
-   * it. Exception: "Material integrated" is a manual display override — the
-   * bar reads 100% while the underlying checkboxes stay untouched.
+   * Function progression. Each of the four functions is worth exactly
+   * 100 / 4 = 25%, and counts only when BOTH its sub-items are ticked — no
+   * partial credit. The bar reads ONLY the shared validation checklist; the
+   * status stage never moves it. Exception: "Material integrated" is a manual
+   * display override at 100%, leaving the checkboxes untouched.
    */
   const integrated = m.journey_status === "adopted";
-  const perFunction = validation && validation.total > 0 ? 100 / validation.total : 0;
-  const progressPercent = integrated
-    ? 100
-    : validation
-      ? Math.round(validation.confirmed * perFunction)
-      : 0;
+  const evaluating = m.journey_status === "in_evaluation";
+
+  const [confirmed, setConfirmed] = useState(() =>
+    validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
+  );
+
+  useEffect(() => {
+    if (!validation) return;
+    const refresh = () =>
+      setConfirmed(countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)));
+    refresh();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
+  }, [validation?.topic, validation?.pathwayId]);
+
+  const total = VALIDATION_FUNCTIONS.length;
+  const progressPercent = integrated ? 100 : Math.round((confirmed * 100) / total);
+
 
   const writable = canSetGate(m, currentUser.name);
 
@@ -349,34 +358,56 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       </div>
 
-      {/* Function progression, read from the pathway validation checkboxes. */}
-      {validation && (
+      {/*
+        Function progression and checklist. Visible only under "In evaluation";
+        hidden entirely for Not started, Material integrated and Parked. Both
+        read and write the same store as the pathway Validation card.
+      */}
+      {validation && evaluating && (
+        <div className="space-y-2 rounded-md border border-border">
+          <div className="space-y-1 px-3 pt-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Function progression
+              </span>
+              <span className="tabular-nums text-[11px] font-semibold text-foreground">{progressPercent}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-foreground/70 transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-[10px] leading-snug text-muted-foreground">
+              {confirmed} of {total} functions confirmed on {validation.pathwayLabel}. A function counts only when
+              both of its sub-items are ticked.
+            </p>
+          </div>
+          <div className="border-t border-border">
+            <ValidationChecklist
+              pathwayId={validation.pathwayId}
+              topic={validation.topic}
+              idPrefix="gate-validation"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Material integrated is a manual display override: bar only, at 100%. */}
+      {validation && integrated && (
         <div className="space-y-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Function progression
             </span>
-            <span className="tabular-nums text-[11px] font-semibold text-foreground">
-              {progressPercent}%
-            </span>
+            <span className="tabular-nums text-[11px] font-semibold text-foreground">100%</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn("h-full rounded-full transition-all", integrated ? "bg-emerald-600" : "bg-foreground/70")}
-              style={{ width: `${progressPercent}%` }}
-            />
+            <div className="h-full w-full rounded-full bg-emerald-600" />
           </div>
           <p className="text-[10px] leading-snug text-muted-foreground">
-            {integrated ? (
-              <>
-                Forced to 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. Checkboxes unchanged:{" "}
-                {validation.confirmed} of {validation.total} confirmed on {validation.pathwayLabel}.
-              </>
-            ) : (
-              <>
-                {validation.confirmed} of {validation.total} functions confirmed on {validation.pathwayLabel}.
-              </>
-            )}
+            Shown at 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. The checklist is untouched underneath:{" "}
+            {confirmed} of {total} functions confirmed on {validation.pathwayLabel}.
           </p>
         </div>
       )}

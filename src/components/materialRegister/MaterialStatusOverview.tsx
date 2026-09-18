@@ -12,7 +12,7 @@ import {
   RegisterProvider,
   useRegister,
 } from "@/components/materialRegister/registerStore";
-import { JOURNEY_STATUS_LABEL, type JourneyStatus } from "@/types/materialPrioritisation";
+import { JOURNEY_STATUS_LABEL, JOURNEY_STATUSES, type JourneyStatus } from "@/types/materialPrioritisation";
 import { prototypeBriefSeed } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 
@@ -110,7 +110,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="z-50 bg-popover">
-            {(Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((status) => (
+            {JOURNEY_STATUSES.map((status) => (
               <SelectItem key={status} value={status} className="text-xs">
                 {JOURNEY_STATUS_LABEL[status]}
               </SelectItem>
