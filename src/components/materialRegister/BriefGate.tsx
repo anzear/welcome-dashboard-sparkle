@@ -91,8 +91,8 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
    */
   const evaluating = m.journey_status === "in_evaluation";
 
-
   const [confirmed, setConfirmed] = useState(() =>
+
     validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
   );
 
@@ -108,9 +108,8 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   const total = VALIDATION_FUNCTIONS.length;
   const progressPercent = Math.round((confirmed * 100) / total);
 
-
-
   const writable = canSetGate(m, currentUser.name);
+
 
   /** The status being drafted. Never seeded from a score or a recommendation. */
   const [pending, setPending] = useState<GateOutcome | null>(null);
