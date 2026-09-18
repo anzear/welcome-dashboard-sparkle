@@ -45,37 +45,43 @@ const Inner: React.FC = () => {
 
   // Prototype: seed candidate ("new") materials and link them so the Potential
   // replacements card reads as in use. Skipped once any link exists.
-  const seedLinks = (materialId: string) => {
-    const current = data.find((m) => m.material_id === materialId);
-    if (!current || (current.linked_material_ids ?? []).length > 0) return;
+  const seedLinks = (materialId: string, alreadyLinked: boolean) => {
+    if (alreadyLinked) return;
     const candidates: [string, string, JourneyStatus][] = [
       ["Bio-based lactic acid (fermentation)", "Organic acid", "in_testing"],
       ["Bio-succinic acid", "Organic acid", "in_development"],
       ["Polyhydroxyalkanoate (PHA)", "Biopolymer", "in_evaluation"],
     ];
+    const ids: string[] = [];
     candidates.forEach(([candidateName, materialClass, status]) => {
       const existing = data.find(
         (m) => m.role === "new" && m.name.trim().toLowerCase() === candidateName.toLowerCase(),
       );
-      let candidateId = existing?.material_id;
-      if (!candidateId) {
-        const [id] = addMaterials(
-          [
-            {
-              ...blankMaterial(null, "new"),
-              name: candidateName,
-              material_class: materialClass,
-              journey_status: status,
-              last_status_change_date: "2026-09-05",
-              last_status_user: "S. Rautio",
-            },
-          ],
-          { batchOrigin: "real_transition", source: CURRENT_USER },
-        );
-        candidateId = id;
+      if (existing) {
+        ids.push(existing.material_id);
+        // Mirror the link onto the candidate's own record.
+        updateMaterial(existing.material_id, {
+          linked_material_ids: [...new Set([...(existing.linked_material_ids ?? []), materialId])],
+        });
+        return;
       }
-      if (candidateId) toggleLink(materialId, candidateId, true);
+      const [id] = addMaterials(
+        [
+          {
+            ...blankMaterial(null, "new"),
+            name: candidateName,
+            material_class: materialClass,
+            journey_status: status,
+            linked_material_ids: [materialId],
+            last_status_change_date: "2026-09-05",
+            last_status_user: "S. Rautio",
+          },
+        ],
+        { batchOrigin: "real_transition", source: CURRENT_USER },
+      );
+      if (id) ids.push(id);
     });
+    if (ids.length) updateMaterial(materialId, { linked_material_ids: ids });
   };
 
   useEffect(() => {
@@ -99,7 +105,7 @@ const Inner: React.FC = () => {
         }
       }
       seedDrivers(hit.material_id);
-      seedLinks(hit.material_id);
+      seedLinks(hit.material_id, (hit.linked_material_ids ?? []).length > 0);
       openBrief(hit.material_id);
       return;
     }
@@ -110,7 +116,7 @@ const Inner: React.FC = () => {
     });
     if (id) {
       seedDrivers(id);
-      seedLinks(id);
+      seedLinks(id, false);
       openBrief(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
