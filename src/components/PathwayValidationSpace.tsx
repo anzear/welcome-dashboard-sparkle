@@ -4,15 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import {
+  readValidationComments,
+  writeValidationComments,
+  type ValidationComment,
+} from '@/lib/pathwayValidationComments';
+
 type Status = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
 
-interface Comment {
-  id: string;
-  categoryId: string;
-  author: string;
-  text: string;
-  createdAt: string;
-}
+type Comment = ValidationComment;
+
 
 const CATEGORIES = [
   { id: 'feedstock', label: 'Feedstock Availability & Security', Icon: Sprout },
