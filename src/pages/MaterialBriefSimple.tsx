@@ -53,6 +53,7 @@ const Inner: React.FC = () => {
         const { name: _n, ...seedPatch } = prototypeBriefSeed(hit.name);
         updateMaterial(hit.material_id, seedPatch);
       }
+      seedDrivers(hit.material_id);
       openBrief(hit.material_id);
       return;
     }
@@ -61,7 +62,11 @@ const Inner: React.FC = () => {
       batchOrigin: "real_transition",
       source: CURRENT_USER,
     });
-    if (id) openBrief(id);
+    if (id) {
+      seedDrivers(id);
+      openBrief(id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name, data, openBrief, addMaterials, updateMaterial]);
 
   const [view, setView] = React.useState<"brief" | "research">("research");
