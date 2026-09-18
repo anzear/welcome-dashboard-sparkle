@@ -13,10 +13,31 @@
 export const VALIDATION_FUNCTIONS = ["R&D", "Procurement", "Sustainability", "Regulatory"] as const;
 export type ValidationFunction = (typeof VALIDATION_FUNCTIONS)[number];
 
-export const VALIDATION_STATUSES = ["To do", "In progress", "Tested", "Approved"] as const;
-export type ValidationStatus = (typeof VALIDATION_STATUSES)[number];
+/**
+ * Department-specific stages. Every function starts at "To do" / "In progress";
+ * the last two stages are specific to that function, and the FINAL stage is the
+ * one that counts as confirmed.
+ */
+export const FUNCTION_STATUSES = {
+  "R&D": ["To do", "In progress", "Tested", "Approved"],
+  Procurement: ["To do", "In progress", "Suppliers engaged", "Suppliers confirmed"],
+  Sustainability: ["To do", "In progress", "Data reviewed", "Approved"],
+  Regulatory: ["To do", "In progress", "Compliance reviewed", "Cleared"],
+} as const satisfies Record<ValidationFunction, readonly string[]>;
 
-export const DEFAULT_VALIDATION_STATUS: ValidationStatus = "To do";
+export type ValidationStatus =
+  (typeof FUNCTION_STATUSES)[ValidationFunction][number];
+
+export const DEFAULT_VALIDATION_STATUS = "To do" as const;
+
+/** The stage that counts as confirmed for a given function. */
+export const finalStatus = (fn: ValidationFunction): ValidationStatus => {
+  const stages = FUNCTION_STATUSES[fn];
+  return stages[stages.length - 1];
+};
+
+export const statusesFor = (fn: ValidationFunction): readonly ValidationStatus[] =>
+  FUNCTION_STATUSES[fn];
 
 /** Who set the status, and when. */
 export type FunctionState = { status: ValidationStatus; by: string; date: string };
@@ -27,8 +48,8 @@ export const VALIDATION_CURRENT_USER = "A. Novak";
 /** Mock starting point: R&D and Sustainability approved (2 of 4 → 50%). */
 export const MOCK_CHECKLIST: ValidationChecklist = {
   "R&D": { status: "Approved", by: "K. Brandt", date: "4 Sept 2026" },
-  Procurement: { status: "In progress", by: "A. Vermeer", date: "9 Sept 2026" },
-  Sustainability: { status: "Approved", by: "M. Feld", date: "11 Sept 2026" },
+  Procurement: { status: "Suppliers engaged", by: "A. Vermeer", date: "9 Sept 2026" },
+  Sustainability: { status: "Data reviewed", by: "M. Feld", date: "11 Sept 2026" },
   Regulatory: { status: "To do", by: "A. Novak", date: "1 Sept 2026" },
 };
 
@@ -37,8 +58,8 @@ export const pathwayValidationStorageKey = (topic: string | undefined, pathwayId
 
 export const VALIDATION_CHANGED_EVENT = "pathway-validation-checklist-changed";
 
-const isStatus = (value: unknown): value is ValidationStatus =>
-  typeof value === "string" && (VALIDATION_STATUSES as readonly string[]).includes(value);
+const isStatus = (value: unknown, fn: ValidationFunction): value is ValidationStatus =>
+  typeof value === "string" && (FUNCTION_STATUSES[fn] as readonly string[]).includes(value);
 
 /**
  * Migrate older shapes:
@@ -53,7 +74,7 @@ const migrate = (raw: unknown): ValidationChecklist => {
     if (!value || typeof value !== "object") continue;
     const record = value as Record<string, unknown>;
 
-    if (isStatus(record.status)) {
+    if (isStatus(record.status, fn)) {
       out[fn] = {
         status: record.status,
         by: typeof record.by === "string" ? record.by : VALIDATION_CURRENT_USER,
@@ -63,7 +84,7 @@ const migrate = (raw: unknown): ValidationChecklist => {
     }
 
     if (typeof record.by === "string" && typeof record.date === "string") {
-      out[fn] = { status: "Approved", by: record.by, date: record.date };
+      out[fn] = { status: finalStatus(fn), by: record.by, date: record.date };
       continue;
     }
 
@@ -74,7 +95,7 @@ const migrate = (raw: unknown): ValidationChecklist => {
     if (stamps.length === 0) continue;
     const latest = stamps[stamps.length - 1];
     out[fn] = {
-      status: stamps.length >= 2 ? "Approved" : "In progress",
+      status: stamps.length >= 2 ? finalStatus(fn) : "In progress",
       by: latest.by,
       date: latest.date,
     };
@@ -124,26 +145,26 @@ export const functionStatus = (
   fn: ValidationFunction,
 ): ValidationStatus => checklist[fn]?.status ?? DEFAULT_VALIDATION_STATUS;
 
-/** Confirmed only when Approved. */
+/** Confirmed only at the function's final stage. */
 export const isFunctionConfirmed = (checklist: ValidationChecklist, fn: ValidationFunction) =>
-  functionStatus(checklist, fn) === "Approved";
+  functionStatus(checklist, fn) === finalStatus(fn);
 
 export function functionConfirmation(
   checklist: ValidationChecklist,
   fn: ValidationFunction,
 ): { by: string; date: string } | null {
   const state = checklist[fn];
-  if (!state || state.status !== "Approved") return null;
+  if (!state || state.status !== finalStatus(fn)) return null;
   return { by: state.by, date: state.date };
 }
 
 export const countConfirmedFunctions = (checklist: ValidationChecklist) =>
   VALIDATION_FUNCTIONS.filter((fn) => isFunctionConfirmed(checklist, fn)).length;
 
-/** Chip styling per status, Jira-like. */
-export const VALIDATION_STATUS_CLASS: Record<ValidationStatus, string> = {
-  "To do": "bg-muted text-muted-foreground border-border",
-  "In progress": "bg-blue-500/10 text-blue-600 border-blue-500/30",
-  Tested: "bg-amber-500/10 text-amber-600 border-amber-500/30",
-  Approved: "bg-emerald-500/10 text-emerald-600 border-emerald-500/30",
-};
+/** Chip styling, Jira-like: To do grey, In progress blue, mid stage amber, final green. */
+export function validationStatusClass(fn: ValidationFunction, status: ValidationStatus): string {
+  if (status === "To do") return "bg-muted text-muted-foreground border-border";
+  if (status === "In progress") return "bg-blue-500/10 text-blue-600 border-blue-500/30";
+  if (status === finalStatus(fn)) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/30";
+  return "bg-amber-500/10 text-amber-600 border-amber-500/30";
+}
