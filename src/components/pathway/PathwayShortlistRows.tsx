@@ -238,8 +238,19 @@ export function PathwayShortlistRows({
           </div>
           {chip(p.feedstock, PATHWAY_CHIP_NEUTRAL)}
           {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
-          {chip(p.product, PATHWAY_CHIP_ANCHOR)}
+          {category && topic ? (
+            <Link
+              to={`/landscape/${encodeURIComponent(category)}/${encodeURIComponent(topic)}/value-chain/pathways/${p.id}`}
+              className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} hover:ring-1 hover:ring-emerald-300`}
+              title="Open pathway profile"
+            >
+              {p.product}
+            </Link>
+          ) : (
+            chip(p.product, PATHWAY_CHIP_ANCHOR)
+          )}
           {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
+
           <div className="flex items-center justify-center">
             <StatusBadge trl={p.trl} />
           </div>
