@@ -99,6 +99,7 @@ const Inner: React.FC = () => {
         }
       }
       seedDrivers(hit.material_id);
+      seedLinks(hit.material_id);
       openBrief(hit.material_id);
       return;
     }
@@ -109,6 +110,7 @@ const Inner: React.FC = () => {
     });
     if (id) {
       seedDrivers(id);
+      seedLinks(id);
       openBrief(id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
