@@ -994,7 +994,10 @@ type Row = {
             onRemove={removePathway}
             onReorder={reorderPathways}
             grouped={pathwaysGrouped}
+            category={category}
+            topic={topic}
           />
+
         </ShortlistCard>
 
 
