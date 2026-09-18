@@ -103,20 +103,7 @@ const COLS =
  */
 function ValidationProgress({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
   const total = VALIDATION_FUNCTIONS.length;
-  const [confirmed, setConfirmed] = useState(() =>
-    countConfirmedFunctions(readValidationChecklist(topic, pathwayId)),
-  );
-
-  useEffect(() => {
-    const sync = () => setConfirmed(countConfirmedFunctions(readValidationChecklist(topic, pathwayId)));
-    sync();
-    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, [topic, pathwayId]);
+  const confirmed = countConfirmedFunctions(useValidationChecklist(topic, pathwayId));
 
   const percent = Math.round((confirmed / total) * 100);
   return (
