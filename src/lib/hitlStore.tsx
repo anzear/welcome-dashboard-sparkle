@@ -151,7 +151,7 @@ export interface Pathway extends CommonRecord {
   product: string;
   application_market: string;
   status: ReviewStatus;
-  group_id: string | null;
+  group_ids: string[];
   visibility: PathwayVisibility;
 }
 export interface Group extends CommonRecord {
