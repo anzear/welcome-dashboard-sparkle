@@ -294,53 +294,61 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         read and write the same store as the pathway Validation card.
       */}
       {validation && evaluating && (
-        <div className="space-y-2 rounded-md border border-border">
-          <div className="space-y-1 px-3 pt-2">
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                Function progression
-              </span>
-              <span className="tabular-nums text-[11px] font-semibold text-foreground">{progressPercent}%</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="rounded-md border border-border">
+          <button
+            type="button"
+            aria-expanded={checklistOpen}
+            onClick={() => setChecklistOpen((v) => !v)}
+            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left"
+          >
+            <ChevronDown
+              className={cn(
+                "h-3 w-3 shrink-0 text-muted-foreground transition-transform",
+                !checklistOpen && "-rotate-90",
+              )}
+            />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              Evaluation checklist
+            </span>
+            <div className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-muted">
               <div
                 className="h-full rounded-full bg-foreground/70 transition-all"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <p className="text-[10px] leading-snug text-muted-foreground">
-              {confirmed} of {total} functions confirmed on {validation.pathwayLabel}. A function counts only when
-              both of its sub-items are ticked.
-            </p>
-          </div>
-          <div className="border-t border-border">
-            <ValidationChecklist
-              pathwayId={validation.pathwayId}
-              topic={validation.topic}
-              idPrefix="gate-validation"
-            />
-          </div>
+            <span className="shrink-0 tabular-nums text-[10px] font-semibold text-foreground">
+              {confirmed}/{total} · {progressPercent}%
+            </span>
+          </button>
+          {checklistOpen && (
+            <div className="border-t border-border">
+              <ValidationChecklist
+                pathwayId={validation.pathwayId}
+                topic={validation.topic}
+                idPrefix="gate-validation"
+              />
+              <p className="px-2.5 pb-2 text-[10px] leading-snug text-muted-foreground">
+                {confirmed} of {total} functions confirmed on {validation.pathwayLabel}. A function counts only when
+                both of its sub-items are ticked.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
       {/* Material integrated is a manual display override: bar only, at 100%. */}
       {validation && integrated && (
-        <div className="space-y-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Function progression
-            </span>
-            <span className="tabular-nums text-[11px] font-semibold text-foreground">100%</span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="flex items-center gap-2 rounded-md border border-border px-2.5 py-1.5">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            Evaluation checklist
+          </span>
+          <div className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-muted">
             <div className="h-full w-full rounded-full bg-emerald-600" />
           </div>
-          <p className="text-[10px] leading-snug text-muted-foreground">
-            Shown at 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. The checklist is untouched underneath:{" "}
-            {confirmed} of {total} functions confirmed on {validation.pathwayLabel}.
-          </p>
+          <span className="shrink-0 tabular-nums text-[10px] font-semibold text-foreground">100%</span>
         </div>
       )}
+
 
       {/* Detail belongs to a status, not to a section of its own. */}
       {pending !== null ? pendingDetail : activeDetail}
