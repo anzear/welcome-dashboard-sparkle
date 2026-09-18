@@ -142,7 +142,6 @@ const INITIAL_PATHWAY_NOTES: Record<string, PathwayNote[]> = {
 };
 
 
-import { SHORTLIST_COMPANIES, SHORTLIST_PAPERS, SHORTLIST_PATENTS } from "@/components/materialRegister/shortlistMockData";
 
 
 const statusClasses: Record<EvaluationStatus, string> = {
