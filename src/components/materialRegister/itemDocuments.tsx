@@ -139,7 +139,7 @@ export function DocumentAttachControl({
 }
 
 /**
- * Work Space level documents — general research files for the whole material,
+ * Workspace level documents — general research files for the whole material,
  * not scoped to any shortlisted item.
  */
 export function WorkSpaceDocumentsCard({

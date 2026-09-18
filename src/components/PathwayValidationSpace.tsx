@@ -49,7 +49,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
     } catch {}
   }, [topic, pathwayId, statusKey]);
 
-  /** Single writer: persist and notify other views (Work Space) of the change. */
+  /** Single writer: persist and notify other views (Workspace) of the change. */
   const persist = (next: Comment[]) => {
     setComments(next);
     writeValidationComments(topic, pathwayId, next);

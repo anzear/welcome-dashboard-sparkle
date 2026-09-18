@@ -2,7 +2,7 @@
  * Shared store for Validation Space comments on a pathway.
  *
  * Comments are written on the pathway detail page (Validation Space) and read
- * back in the material Work Space for pathways that are shortlisted there.
+ * back in the material Workspace for pathways that are shortlisted there.
  * Prototype persistence is localStorage only.
  */
 
