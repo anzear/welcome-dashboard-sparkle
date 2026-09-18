@@ -524,19 +524,14 @@ const ResearchSpace: React.FC = () => {
    * priority) shortlisted pathway's Validation card checkboxes — read-only.
    */
   const validationProgress = useMemo(() => {
-    void commentTick;
     const primary = shortlistPathways[0];
     if (!primary) return undefined;
-    const confirmations = readPathwayConfirmations(
-      material?.name,
-      shortlistIdToPathwayIndex(primary.id) ?? primary.id,
-    );
     return {
       pathwayLabel: `${primary.feedstock} → ${primary.product}`,
-      confirmed: VALIDATION_FUNCTIONS.filter((fn) => !!confirmations[fn]).length,
-      total: VALIDATION_FUNCTIONS.length,
+      topic: material?.name,
+      pathwayId: shortlistIdToPathwayIndex(primary.id) ?? primary.id,
     };
-  }, [shortlistPathways, material?.name, commentTick]);
+  }, [shortlistPathways, material?.name]);
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
