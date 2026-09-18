@@ -33,6 +33,7 @@ import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialR
 import BriefGate from "@/components/materialRegister/BriefGate";
 import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import { JOURNEY_STATUS_LABEL } from "@/types/materialPrioritisation";
 import {
   categoryLabel,
   readValidationComments,
@@ -663,8 +664,47 @@ const ResearchSpace: React.FC = () => {
 
   const anyThresholdSet = rows.some((row) => row.status !== "Not set");
 
+  const companyDataFilled = material
+    ? [material.annual_spend, material.annual_volume, material.ghg_contribution].filter(
+        (value) => value !== null && value !== undefined,
+      ).length
+    : 0;
+  const techFitUploaded = Boolean(material?.performance_targets_document);
+  const registrationCount = material?.regulatory_registrations?.length ?? 0;
+  const requirementsSet = rows.filter((row) => row.status !== "Not set").length;
+
   return (
     <div className="mt-5 space-y-6">
+      <div className="flex items-stretch divide-x divide-border rounded-lg border border-border/70 bg-card px-4 py-2 shadow-sm">
+        <div className="flex-1 pr-4">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Gate status</div>
+          <div className={cn("mt-0.5 text-sm font-semibold", material && material.journey_status !== "not_started" ? "text-foreground" : "text-muted-foreground")}>
+            {material ? JOURNEY_STATUS_LABEL[material.journey_status] : "Not started"}
+          </div>
+        </div>
+        <div className="flex-1 px-4">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Company data</div>
+          <div className="mt-0.5 text-sm font-semibold text-foreground">{companyDataFilled} of 3 filled</div>
+          <div className="text-[11px] text-muted-foreground">
+            {techFitUploaded ? "Tech fit ✓" : "Tech fit –"} · {registrationCount} registration{registrationCount === 1 ? "" : "s"}
+          </div>
+        </div>
+        <div className="flex-1 px-4">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Requirements</div>
+          <div className="mt-0.5 text-sm font-semibold text-foreground">{requirementsSet} of 6 set</div>
+          <div className="text-[11px] text-muted-foreground">{metCount} met · {notMetCount} not met</div>
+        </div>
+        <div className="flex-1 pl-4">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Shortlisted</div>
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-foreground">
+            <span>Pathways <span className="font-semibold">{shortlistPathways.length}</span></span>
+            <span>Companies <span className="font-semibold">{shortlistCompanies.length}</span></span>
+            <span>Patents <span className="font-semibold">{shortlistPatents.length}</span></span>
+            <span>Papers <span className="font-semibold">{shortlistPapers.length}</span></span>
+          </div>
+        </div>
+      </div>
+
       {material && (
         <section className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
           <div className="border-b border-border/70 pb-1">
