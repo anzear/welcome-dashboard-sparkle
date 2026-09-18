@@ -109,7 +109,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
       {/* Header row: guidance + pathway status (5 values, no fixed order) */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <p className="text-xs text-muted-foreground leading-relaxed max-w-[560px]">
-          Leave comments on this pathway. Tag each comment with one of the seven evaluation categories and filter the
+          Leave notes on this pathway. Tag each note with one of the seven evaluation categories and filter the
           discussion by category.
         </p>
         <div className="flex items-center gap-2 shrink-0">
@@ -153,13 +153,13 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
         ))}
       </div>
 
-      {/* Comment list */}
+      {/* Note list */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {visible.length === 0 ? (
           <div className="rounded-md border border-dashed border-border py-8 flex flex-col items-center justify-center text-center">
             <MessageSquare className="w-4 h-4 text-muted-foreground" />
-            <div className="text-xs font-semibold mt-1.5">No comments yet</div>
-            <div className="text-[10px] text-muted-foreground mt-1">Post the first comment for this pathway.</div>
+            <div className="text-xs font-semibold mt-1.5">No notes yet</div>
+            <div className="text-[10px] text-muted-foreground mt-1">Post the first note for this pathway.</div>
           </div>
         ) : (
           <div className="divide-y divide-border rounded-md border border-border">
@@ -183,7 +183,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
                   <button
                     onClick={() => persist(comments.filter(x => x.id !== c.id))}
                     className="text-muted-foreground hover:text-foreground"
-                    title="Remove comment"
+                    title="Remove note"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -194,15 +194,15 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
         )}
       </div>
 
-      {/* New comment */}
+      {/* New note */}
       <div className="rounded-md border border-border bg-card p-3">
         <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">New comment</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">New note</span>
         </div>
         <Textarea
           value={draftText}
           onChange={e => setDraftText(e.target.value)}
-          placeholder="Add your comment…"
+          placeholder="Add your note…"
           className="text-xs min-h-[64px]"
         />
         <div className="mt-2 flex items-center justify-between gap-2">
@@ -216,7 +216,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
             </Select>
           </div>
           <Button size="sm" onClick={addComment} disabled={!draftText.trim()} className="h-7 gap-1 text-xs">
-            <Send className="w-3 h-3" /> Post comment
+            <Send className="w-3 h-3" /> Post note
           </Button>
         </div>
       </div>
