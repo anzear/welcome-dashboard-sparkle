@@ -82,21 +82,6 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
 
   if (!material) return null;
 
-  const commitOwner = (value: string) => {
-    const next = value === UNASSIGNED_OWNER ? null : value;
-    if (next === material.owner) return;
-    updateMaterial(material.material_id, { owner: next }, ["owner"], [
-      {
-        material_id: material.material_id,
-        event_type: "owner_change",
-        field: "owner",
-        from_value: material.owner,
-        to_value: next,
-        changed_by: CURRENT_USER,
-      },
-    ]);
-  };
-
   const commitStatus = (value: string) => {
     const next = value as JourneyStatus;
     if (next === material.journey_status) return;
