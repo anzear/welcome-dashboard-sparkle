@@ -5,7 +5,7 @@ export type VisibilityState = "visible" | "locked" | "hidden";
 export const VISIBILITY_STATES: VisibilityState[] = ["visible", "locked", "hidden"];
 export const VISIBILITY_MEANINGS: Record<VisibilityState, string> = {
   visible: "Usable in Pathway Explorer.",
-  locked: "Shown but not usable, for sales and marketing.",
+  locked: "Shown but not usable.",
   hidden: "Not shown in Pathway Explorer, counts or benchmarks.",
 };
 export const VISIBILITY_LABELS: Record<VisibilityState, string> = { visible: "Visible", locked: "Locked", hidden: "Hidden" };
