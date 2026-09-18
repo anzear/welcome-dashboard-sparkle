@@ -35,37 +35,12 @@ export function PathwayValidationCard({ pathwayId, topic }: { pathwayId: string;
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Validation</span>
         <span className="text-[10px] text-muted-foreground">
-          {Object.keys(confirmations).length} of {FUNCTIONS.length} functions confirmed
+          {confirmedCount} of {VALIDATION_FUNCTIONS.length} functions confirmed
         </span>
       </div>
 
-      <div className="divide-y divide-border/40 border-t border-border">
-        {FUNCTIONS.map((name) => {
-          const confirmation = confirmations[name];
-          return (
-            <div key={name} className="flex h-10 items-center gap-2.5 px-3">
-              <Checkbox
-                className="h-3.5 w-3.5"
-                id={`validation-${pathwayId}-${name}`}
-                checked={!!confirmation}
-                onCheckedChange={(value) => toggle(name, value === true)}
-              />
-              <label
-                htmlFor={`validation-${pathwayId}-${name}`}
-                className="cursor-pointer text-[11px] font-medium text-foreground"
-              >
-                {name}
-              </label>
-              {confirmation ? (
-                <span className="text-[10px] text-foreground/70">
-                  Confirmed by {confirmation.by} · {confirmation.date}
-                </span>
-              ) : (
-                <span className="text-[10px] text-muted-foreground">Not confirmed</span>
-              )}
-            </div>
-          );
-        })}
+      <div className="border-t border-border">
+        <ValidationChecklist pathwayId={pathwayId} topic={topic} idPrefix="pathway-validation" />
       </div>
 
       <div className="border-t border-border">
