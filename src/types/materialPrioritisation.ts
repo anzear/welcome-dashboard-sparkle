@@ -210,6 +210,14 @@ export interface GateRecommendation {
   date: string;
 }
 
+export type GoalStage = Exclude<JourneyStatus, "parked">;
+
+export interface StageGoal {
+  text: string;
+  author: string;
+  date: string;
+}
+
 /** One condition attached to a go_with_conditions outcome. */
 export interface GateCondition {
   condition_id: string;
@@ -284,6 +292,8 @@ export interface Material {
   /** Step 2: who set the current gate status, and when. */
   gate_decided_by: string | null;
   gate_decided_date: string | null;
+  /** One editable goal per non-Parked stage. Only the current stage is shown. */
+  stage_goals?: Partial<Record<GoalStage, StageGoal>>;
   /** Only meaningful on go_with_conditions, but kept rather than wiped. */
   gate_conditions: GateCondition[];
   /** Both mandatory on a hold. The event is the reason, the date stops drift. */
@@ -388,6 +398,7 @@ export type MaterialEventType =
   | "tags_change"
   | "recommendation"
   | "gate_outcome"
+  | "stage_goal"
   | "condition_change"
   | "condition_met"
   | "hold_change"
@@ -435,6 +446,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   customer_material_ids: "Customer material IDs",
   material_added: "Material added",
   recommendation: "Recommendation",
+  stage_goal: "Stage goal",
   gate_condition: "Condition",
   hold_trigger_event: "Trigger event",
   hold_review_date: "Review date",
@@ -448,6 +460,7 @@ export const EMPTY_GATE = {
   recommendation: null,
   gate_decided_by: null,
   gate_decided_date: null,
+  stage_goals: {},
   gate_conditions: [],
   hold_trigger_event: null,
   hold_review_date: null,
@@ -459,6 +472,7 @@ export const EMPTY_GATE = {
   | "recommendation"
   | "gate_decided_by"
   | "gate_decided_date"
+  | "stage_goals"
   | "gate_conditions"
   | "hold_trigger_event"
   | "hold_review_date"
