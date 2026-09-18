@@ -4,10 +4,11 @@ export type ReviewStatus = "review_pending" | "approved" | "rejected";
 export type VisibilityState = "visible" | "locked" | "hidden";
 export const VISIBILITY_STATES: VisibilityState[] = ["visible", "locked", "hidden"];
 export const VISIBILITY_MEANINGS: Record<VisibilityState, string> = {
-  visible: "Usable in Pathway Explorer.",
-  locked: "Shown but not usable.",
+  visible: "Default. Usable in Pathway Explorer, included in counts and benchmarks.",
+  locked: "Shown but not usable. Not included in counts or benchmarks.",
   hidden: "Not shown in Pathway Explorer, counts or benchmarks.",
 };
+
 export const VISIBILITY_LABELS: Record<VisibilityState, string> = { visible: "Visible", locked: "Locked", hidden: "Hidden" };
 export interface PathwayVisibility { default: VisibilityState; overrides: Record<string, VisibilityState>; }
 // Legacy pathway lifecycle values migrated onto the unified review status plus visibility state.
