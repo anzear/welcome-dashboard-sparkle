@@ -521,6 +521,7 @@ type Row = {
         status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
         helperText: "Set a TRL range to evaluate.",
         finding: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : null,
+        findingText: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : "Awaiting threshold",
         hasData: true,
       },
       {
