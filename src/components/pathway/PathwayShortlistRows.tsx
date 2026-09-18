@@ -233,7 +233,12 @@ export function PathwayShortlistRows({
         2: [{ name: "Pilot-trial-summary-Q3.docx", uploader: "M. Feld", date: "2 Sept 2026" }],
       },
     ),
+    (itemId) => {
+      const p = pathways.find((item) => item.id === itemId);
+      return `Pathway · ${p ? `${p.feedstock} → ${p.product}` : itemId}`;
+    },
   );
+
 
   /**
    * Consecutive clusters by node identity. Every pathway appears exactly once, in
