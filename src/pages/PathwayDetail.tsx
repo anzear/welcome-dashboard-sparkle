@@ -39,7 +39,7 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'company'>('evaluation');
+  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'company' | 'shortlist'>('evaluation');
 
   // State for favorites and saves
   const pathwayIndex = parseInt(pathwayId || "0");
@@ -651,6 +651,12 @@ const PathwayDetail = () => {
                     >
                       Validation Space
                     </button>
+                    <button
+                      onClick={() => setEvaluationTab('shortlist')}
+                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'shortlist' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      Shortlisted Items
+                    </button>
                   </div>
                 </div>
 
@@ -871,6 +877,32 @@ const PathwayDetail = () => {
                     topic={topic ? decodeURIComponent(topic) : undefined}
                   />
                   </>
+                ) : evaluationTab === 'shortlist' ? (
+                  <div className="space-y-3">
+                    <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
+                      <CompanyShortlistTables
+                        companies={shortlistCompanies}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+
+                    <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
+                      <PatentShortlistTable
+                        patents={shortlistPatents}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+
+                    <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
+                      <PaperShortlistTable
+                        papers={shortlistPapers}
+                        currentUser={CURRENT_REVIEWER}
+                        onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
+                      />
+                    </PathwayShortlistCard>
+                  </div>
                 ) : null}
                 </div>
 
@@ -882,34 +914,6 @@ const PathwayDetail = () => {
             </div>
           </div>
 
-          {/* Shortlisted items linked to this pathway — same lists as the Workspace */}
-          <section className="mt-4 space-y-3">
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
-
-            <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
-              <CompanyShortlistTables
-                companies={shortlistCompanies}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
-              />
-            </PathwayShortlistCard>
-
-            <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
-              <PatentShortlistTable
-                patents={shortlistPatents}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
-              />
-            </PathwayShortlistCard>
-
-            <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
-              <PaperShortlistTable
-                papers={shortlistPapers}
-                currentUser={CURRENT_REVIEWER}
-                onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
-              />
-            </PathwayShortlistCard>
-          </section>
         </div>
       </div>
   );
