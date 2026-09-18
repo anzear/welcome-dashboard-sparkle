@@ -1,7 +1,14 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DOCUMENT_REGISTRY_CHANGED_EVENT,
+  GENERAL_SOURCE,
+  readDocumentRegistry,
+  registerDocuments,
+  unregisterDocument,
+} from "@/lib/documentRegistry";
 
 /** One attached file. Prototype only — nothing is stored server-side. */
 export type ItemDocument = {
@@ -23,25 +30,37 @@ export function makeDocument(name: string, uploader: string): ItemDocument {
 
 /**
  * Per-item document state for one shortlist table. Keyed by item id; documents
- * live alongside notes and never replace them.
+ * live alongside notes and never replace them. When `sourceLabel` is given,
+ * uploads are also registered in the material-wide document registry with that
+ * source tag, so they show up in the general Documents card.
  */
-export function useItemDocuments(seed: DocumentMap = {}) {
+export function useItemDocuments(
+  seed: DocumentMap = {},
+  sourceLabel?: (itemId: string) => string,
+) {
   const [documents, setDocuments] = useState<DocumentMap>(seed);
 
-  const addDocuments = (itemId: string, names: string[], uploader: string) =>
+  const addDocuments = (itemId: string, names: string[], uploader: string) => {
+    const created = sourceLabel
+      ? registerDocuments(names, uploader, sourceLabel(itemId))
+      : names.map((name) => makeDocument(name, uploader));
     setDocuments((current) => ({
       ...current,
-      [itemId]: [...(current[itemId] ?? []), ...names.map((name) => makeDocument(name, uploader))],
+      [itemId]: [...(current[itemId] ?? []), ...created],
     }));
+  };
 
-  const removeDocument = (itemId: string, documentId: string) =>
+  const removeDocument = (itemId: string, documentId: string) => {
+    unregisterDocument(documentId);
     setDocuments((current) => ({
       ...current,
       [itemId]: (current[itemId] ?? []).filter((document) => document.id !== documentId),
     }));
+  };
 
   return { documents, addDocuments, removeDocument };
 }
+
 
 /**
  * Compact attach control: paperclip with a count, opening the attached file list
