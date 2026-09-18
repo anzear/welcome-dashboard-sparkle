@@ -100,7 +100,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   const [noGoReason, setNoGoReason] = useState("");
 
   const [recOpen, setRecOpen] = useState(false);
-  const [recOutcome, setRecOutcome] = useState<GateOutcome | "">("");
   const [recText, setRecText] = useState("");
 
   const [condOpen, setCondOpen] = useState(false);
@@ -110,7 +109,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   const reviewLate = holdReviewOverdue(m);
   const complete = allConditionsMet(m);
   const decided = m.gate_decided_date !== null;
-  const differs = rec !== null && decided && (rec.outcome as string) !== m.journey_status;
 
   const blockers = useMemo(
     () =>
