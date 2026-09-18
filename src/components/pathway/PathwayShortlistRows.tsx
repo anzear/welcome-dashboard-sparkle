@@ -121,10 +121,14 @@ type Props = {
   grouped: boolean;
   /** Validation Space status per pathway id; absent id renders as TBD. */
   statuses?: Record<string, ValidationStatus>;
+  /** Drag-to-reorder: row order is the priority order, top row highest. */
+  onReorder?: (orderedIds: string[]) => void;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses }: Props) {
+export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notesFor, setNotesFor] = useState<string | null>(null);
