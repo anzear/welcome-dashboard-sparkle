@@ -49,17 +49,14 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   const statusKey = `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
 
   const [comments, setComments] = useState<Comment[]>([]);
-  const [overallStatus, setOverallStatus] = useState<Status>('TBD');
+  const [overallStatus, setOverallStatus] = useState<Status>('Not evaluated');
   const [filter, setFilter] = useState<string>('all');
   const [draftCategory, setDraftCategory] = useState<string>(CATEGORIES[0].id);
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
     setComments(readValidationComments(topic, pathwayId));
-    try {
-      const s = localStorage.getItem(statusKey) as Status | null;
-      if (s) setOverallStatus(s);
-    } catch {}
+    setOverallStatus(readPathwayValidationStatus(topic, pathwayId));
   }, [topic, pathwayId, statusKey]);
 
   /** Single writer: persist and notify other views (Workspace) of the change. */
@@ -70,7 +67,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
 
   useEffect(() => {
-    try { localStorage.setItem(statusKey, overallStatus); } catch {}
+    writePathwayValidationStatus(topic, pathwayId, overallStatus);
   }, [overallStatus, statusKey]);
 
   const counts = useMemo(() => {
