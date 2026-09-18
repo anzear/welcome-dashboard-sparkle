@@ -31,7 +31,6 @@ import { CompanyShortlistTables, type ShortlistCompany } from "@/components/mate
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
-import { CompanyDataDetails } from "@/components/materialRegister/BriefAssessment";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import {
@@ -882,16 +881,6 @@ type Row = {
             )}
           </div>
       </div>
-
-      {material && (
-        <section className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
-          <div className="border-b border-border/70 pb-1">
-            <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
-            <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
-          </div>
-          <CompanyDataDetails material={material} />
-        </section>
-      )}
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
