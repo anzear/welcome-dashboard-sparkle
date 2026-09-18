@@ -42,17 +42,19 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
+    setComments(readValidationComments(topic, pathwayId));
     try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) setComments(JSON.parse(raw));
       const s = localStorage.getItem(statusKey) as Status | null;
       if (s) setOverallStatus(s);
     } catch {}
-  }, [storageKey, statusKey]);
+  }, [topic, pathwayId, statusKey]);
 
-  useEffect(() => {
-    try { localStorage.setItem(storageKey, JSON.stringify(comments)); } catch {}
-  }, [comments, storageKey]);
+  /** Single writer: persist and notify other views (Research Space) of the change. */
+  const persist = (next: Comment[]) => {
+    setComments(next);
+    writeValidationComments(topic, pathwayId, next);
+  };
+
 
   useEffect(() => {
     try { localStorage.setItem(statusKey, overallStatus); } catch {}
