@@ -85,15 +85,18 @@ function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFuncti
 function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
   const checklist = useValidationChecklist(topic, pathwayId);
   const active = inEvaluationFunctions(checklist);
-  if (active.length === 0) return null;
+  if (active.length === 0) {
+    return <span className="text-[9px] text-muted-foreground">—</span>;
+  }
   return (
     <span className="flex flex-wrap items-center gap-1">
       {active.map((fn) => (
         <span
           key={fn}
           title={`${fn} is mid-review in the pathway Validation card (${functionStatus(checklist, fn)})`}
-          className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600"
+          className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600"
         >
+          <span className="h-1 w-1 rounded-full bg-amber-500" />
           {fn} evaluation
         </span>
       ))}
@@ -102,7 +105,7 @@ function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayI
 }
 
 const COLS =
-  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_76px_150px]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,1fr)_minmax(0,180px)]";
 
 /**
  * Same source of truth as the pathway Validation card: a function counts only
