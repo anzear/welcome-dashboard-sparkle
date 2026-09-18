@@ -351,11 +351,11 @@ export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material 
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h3 className="text-[10px] font-semibold uppercase tracking-widest text-foreground">Regulatory</h3>
-          <div className="rounded-md border border-border/70 bg-background p-3">
+          <div className="rounded-md border border-border/70 bg-background p-2.5">
             <div className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Registration needed</div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
               {REGISTRATION_OPTIONS.map((option) => {
                 const selected = registrations.includes(option);
                 return (
@@ -373,7 +373,7 @@ export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material 
                 );
               })}
             </div>
-            <p className="mt-2 text-[11px] text-muted-foreground">
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
               {registrations.length > 0 ? `${registrations.length} selected.` : "No registration selected."}
             </p>
           </div>
