@@ -31,6 +31,27 @@ export type ShortlistPathway = {
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
+export type ValidationStatus = "TBD" | "Go" | "Uncertain" | "No-Go";
+
+const VALIDATION_STATUS_CLS: Record<ValidationStatus, string> = {
+  Go: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  Uncertain: "bg-amber-100 text-amber-700 border-amber-300",
+  "No-Go": "bg-red-100 text-red-700 border-red-300",
+  TBD: "bg-muted/60 text-muted-foreground border-border",
+};
+
+/** Mirrors the 4-level status set in the pathway's Validation Space. */
+function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
+  return (
+    <span
+      title="Pathway status set in the Validation Space"
+      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${VALIDATION_STATUS_CLS[status]}`}
+    >
+      {status}
+    </span>
+  );
+}
+
 const COLS =
   "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_120px]";
 
@@ -98,9 +119,11 @@ type Props = {
   currentUser: string;
   /** Grouped is a secondary view the user opts into from the card header. Flat is the default. */
   grouped: boolean;
+  /** Validation Space status per pathway id; absent id renders as TBD. */
+  statuses?: Record<string, ValidationStatus>;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped }: Props) {
+export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
@@ -150,8 +173,9 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
           {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
           {chip(p.product, PATHWAY_CHIP_ANCHOR)}
           {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center justify-center gap-1">
             <StatusBadge trl={p.trl} />
+            <ValidationStatusBadge status={statuses?.[p.id] ?? "TBD"} />
           </div>
           <div className="flex items-center justify-end gap-2">
             <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
