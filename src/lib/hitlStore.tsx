@@ -57,6 +57,7 @@ export const FIELD_LABELS: Record<string, string> = {
   product: "Product",
   application_market: "Application",
   group_id: "Group",
+  group_ids: "Groups",
   "nodes.feedstock": "Feedstock",
   "nodes.process": "Process",
   "nodes.product": "Product",
@@ -150,7 +151,7 @@ export interface Pathway extends CommonRecord {
   product: string;
   application_market: string;
   status: ReviewStatus;
-  group_id: string | null;
+  group_ids: string[];
   visibility: PathwayVisibility;
 }
 export interface Group extends CommonRecord {
@@ -297,19 +298,19 @@ const seedGroups: Group[] = [
   { ...common("grp-005", 10), name: "Annex IX Part A", color_token: "group-bronze", visibility_scope: "all", description: "RED II Annex IX Part A feedstock eligibility, rule-derived", is_system: true, is_archived: false },
 ];
 export const groupById = (groups: Group[], groupId: string | null) => groupId ? groups.find(group => group.id === groupId) ?? null : null;
-export const pathwaysInGroup = (pathways: Pathway[], groupId: string) => pathways.filter(pathway => pathway.group_id === groupId);
+export const pathwaysInGroup = (pathways: Pathway[], groupId: string) => pathways.filter(pathway => pathway.group_ids.includes(groupId));
 
 const seedPathways: Pathway[] = [
-  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", ...migratePathwayStatus("needs_approval", "all"), group_id: "grp-005" },
-  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", ...migratePathwayStatus("approved", "all"), group_id: "grp-002" },
-  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_id: null },
-  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", ...migratePathwayStatus("locked", "all"), group_id: "grp-003" },
-  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", ...migratePathwayStatus("approved", "all"), group_id: "grp-002" },
-  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", ...migratePathwayStatus("hidden", ["VCG.AI", "BioCampus Straubing GmbH"]), group_id: "grp-005" },
-  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", ...migratePathwayStatus("needs_approval", "all"), group_id: "grp-001" },
-  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", ...migratePathwayStatus("deleted", "all"), group_id: null },
-  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", ...migratePathwayStatus("approved", "all"), group_id: "grp-004" },
-  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_id: null },
+  { ...common("pw-001", 14), feedstock: "Wheat straw", process_technology: "Steam explosion and enzymatic hydrolysis", product: "Cellulosic ethanol", application_market: "Road transport fuel", ...migratePathwayStatus("needs_approval", "all"), group_ids: ["grp-005", "grp-002"] },
+  { ...common("pw-002", 13), feedstock: "Kraft lignin", process_technology: "Catalytic depolymerisation", product: "Bio-phenols", application_market: "Phenolic resins", ...migratePathwayStatus("approved", "all"), group_ids: ["grp-002"] },
+  { ...common("pw-003", 12), feedstock: "Whey permeate", process_technology: "Fermentation", product: "Lactic acid", application_market: "Biodegradable packaging", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_ids: [] },
+  { ...common("pw-004", 11, "Jon Goriup", null), feedstock: "Forestry residues", process_technology: "Fast pyrolysis", product: "Bio-oil", application_market: "Industrial heat", ...migratePathwayStatus("locked", "all"), group_ids: ["grp-003", "grp-005"] },
+  { ...common("pw-005", 10), feedstock: "Sugar beet pulp", process_technology: "Enzymatic hydrolysis and fermentation", product: "Succinic acid", application_market: "Bio-based polymers", ...migratePathwayStatus("approved", "all"), group_ids: ["grp-002", "grp-001"] },
+  { ...common("pw-006", 9), feedstock: "Used cooking oil", process_technology: "Hydroprocessing", product: "Renewable diesel", application_market: "Heavy-duty road transport", ...migratePathwayStatus("hidden", ["VCG.AI", "BioCampus Straubing GmbH"]), group_ids: ["grp-005"] },
+  { ...common("pw-007", 8, "Jon Goriup", null), feedstock: "Corn stover", process_technology: "Dilute acid pretreatment and fermentation", product: "Cellulosic ethanol", application_market: "Sustainable aviation fuel blending", ...migratePathwayStatus("needs_approval", "all"), group_ids: ["grp-001"] },
+  { ...common("pw-008", 7), feedstock: "Crude glycerol", process_technology: "Microbial fermentation", product: "1,3-propanediol", application_market: "Polytrimethylene terephthalate", ...migratePathwayStatus("deleted", "all"), group_ids: [] },
+  { ...common("pw-009", 6), feedstock: "Miscanthus", process_technology: "Organosolv fractionation", product: "Cellulose pulp", application_market: "Moulded fibre packaging", ...migratePathwayStatus("approved", "all"), group_ids: ["grp-004"] },
+  { ...common("pw-010", 5), feedstock: "Algal biomass", process_technology: "Lipid extraction and transesterification", product: "Fatty acid methyl esters", application_market: "Marine fuel", ...migratePathwayStatus("needs_approval", ["VCG.AI"]), group_ids: [] },
 ];
 
 const companyRows = [
@@ -631,8 +632,8 @@ const auditSeed = (id: string, timestamp: string, actor: string, entity_type: Au
 // Every latest seed value mirrors its record. audit-002 is superseded by audit-003.
 const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-001", iso(4, 9), "Anže", "pathway", "pw-001", "status", "approved", "review_pending", "update", { note: "Flagged for a final definition check" }),
-  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_id", null, "grp-001", "update"),
-  auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_id", "grp-001", "grp-002", "update"),
+  auditSeed("audit-002", iso(5, 10), "Anže", "pathway", "pw-002", "group_ids", [], ["grp-001"], "update"),
+  auditSeed("audit-003", iso(6, 10), "Jon Goriup", "pathway", "pw-002", "group_ids", ["grp-001"], ["grp-001", "grp-002"], "update"),
   auditSeed("audit-006", iso(8, 9), "Jon Goriup", "company", "co-001", "status", "review_pending", "rejected", "reject", { note: "Evidence requires verification" }),
   auditSeed("audit-007", iso(8, 13), "Anže", "patent_match", "pp-002", "status", "review_pending", "approved", "approve"),
   auditSeed("audit-008", iso(9, 10), "Jon Goriup", "company", "co-003", "registry_id", "AT-OLD-110", null, "update"),
