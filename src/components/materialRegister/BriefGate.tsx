@@ -70,11 +70,11 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-/** Read-only summary of one pathway's validation checkboxes. */
+/** Which pathway's Validation card this status card reads and writes. */
 export interface GateValidationProgress {
   pathwayLabel: string;
-  confirmed: number;
-  total: number;
+  topic?: string;
+  pathwayId: string | number;
 }
 
 const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
@@ -84,19 +84,31 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   const { currentUser, saveStageGoal, setGateOutcome, reopenGate } = useRegister();
 
   /**
-   * Function progression. Each confirmed function is worth an equal share
-   * (100 / total) — with 4 functions that is exactly 25% each. The bar reads
-   * ONLY the Validation card checkboxes; the status stage above never moves
-   * it. Exception: "Material integrated" is a manual display override — the
-   * bar reads 100% while the underlying checkboxes stay untouched.
+   * Function progression. Each of the four functions is worth exactly
+   * 100 / 4 = 25%, and counts only when BOTH its sub-items are ticked — no
+   * partial credit. The bar reads ONLY the shared validation checklist; the
+   * status stage never moves it. Exception: "Material integrated" is a manual
+   * display override at 100%, leaving the checkboxes untouched.
    */
   const integrated = m.journey_status === "adopted";
-  const perFunction = validation && validation.total > 0 ? 100 / validation.total : 0;
-  const progressPercent = integrated
-    ? 100
-    : validation
-      ? Math.round(validation.confirmed * perFunction)
-      : 0;
+  const evaluating = m.journey_status === "in_evaluation";
+
+  const [confirmed, setConfirmed] = useState(() =>
+    validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
+  );
+
+  useEffect(() => {
+    if (!validation) return;
+    const refresh = () =>
+      setConfirmed(countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)));
+    refresh();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
+  }, [validation?.topic, validation?.pathwayId]);
+
+  const total = VALIDATION_FUNCTIONS.length;
+  const progressPercent = integrated ? 100 : Math.round((confirmed * 100) / total);
+
 
   const writable = canSetGate(m, currentUser.name);
 
