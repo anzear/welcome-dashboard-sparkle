@@ -19,7 +19,7 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'updates' | 'company'>('evaluation');
+  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'company'>('evaluation');
 
   // State for favorites and saves
   const pathwayIndex = parseInt(pathwayId || "0");
@@ -654,15 +654,6 @@ const PathwayDetail = () => {
                       className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'evaluation' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                       Pathway Evaluation
-                    </button>
-                    <button
-                      onClick={() => setEvaluationTab('updates')}
-                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all inline-flex items-center justify-center gap-1.5 ${evaluationTab === 'updates' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                      Latest Updates
-                      {unreadUpdatesCount > 0 && (
-                        <Bell className={`w-3 h-3 ${evaluationTab === 'updates' ? 'text-background' : 'text-foreground'}`} strokeWidth={2.5} />
-                      )}
                     </button>
                     <button
                       onClick={() => setEvaluationTab('company')}
