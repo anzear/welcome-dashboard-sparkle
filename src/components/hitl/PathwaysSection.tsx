@@ -144,18 +144,16 @@ function VisibilityCell({ pathway, onClick }: { pathway: Pathway; onClick: () =>
 function SetVisibilityDialog({ ids, pathways, onClose, afterSave }: { ids: string[] | null; pathways: Pathway[]; onClose: () => void; afterSave?: () => void }) {
   const store = useHitlStore();
   const [organisationStates, setOrganisationStates] = useState<Record<string, VisibilityState>>({});
-  const [note, setNote] = useState("");
   useEffect(() => {
     if (!ids) return;
     const first = pathways.find(item => item.id === ids[0]);
     setOrganisationStates(Object.fromEntries(organisations().map(org => [org, first ? effectiveVisibility(first, org) : "visible"])));
-    setNote("");
   }, [ids, pathways]);
   const items = pathways.filter(item => ids?.includes(item.id));
   const nextVisibility = visibilityFromOrganisationStates(organisationStates);
   const changes = items.map(item => ({ item, next: nextVisibility })).filter(row => !sameVisibilityState(row.item.visibility, row.next));
   const save = () => {
-    changes.forEach(({ item, next }) => store.recordChange({ entity_type: "pathway", entity_id: item.id, field: "visibility", prior_value: item.visibility, new_value: next, operation: "update", note: note.trim() || null }));
+    changes.forEach(({ item, next }) => store.recordChange({ entity_type: "pathway", entity_id: item.id, field: "visibility", prior_value: item.visibility, new_value: next, operation: "update" }));
     toast.success(`${changes.length} pathway${changes.length === 1 ? "" : "s"} updated`);
     onClose(); afterSave?.();
   };
