@@ -247,9 +247,6 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
 
           // Collapsed cluster: shared three chips, summary chip in the fourth position.
           const head = members[0];
-          const ids = members.map((m) => m.id);
-          const allSelected = ids.every((id) => selected.has(id));
-          const someSelected = !allSelected && ids.some((id) => selected.has(id));
           const aggregateNotes = members.reduce((sum, m) => sum + (notes[m.id] ?? []).length, 0);
 
           return (
