@@ -17,9 +17,9 @@ import { blankMaterial } from "@/components/materialRegister/materialEntry";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 
 /**
- * Status strip shown on the value-chain hero: the material's register status,
- * owner, priority period and position. Owner and priority period are editable
- * inline, and the status can be set straight from the dropdown.
+ * Status strip shown on the value-chain hero: the material's register status
+ * and priority period. Priority period is editable inline, and the status can
+ * be set straight from the dropdown.
  */
 const SummaryField: React.FC<{ label: string; children: React.ReactNode; hint?: React.ReactNode }> = ({
   label,
