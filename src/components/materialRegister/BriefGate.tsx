@@ -459,33 +459,21 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
       {recOpen ? (
         <div className="space-y-2">
           <span className="text-[10px] uppercase tracking-widest text-muted-foreground">Recommendation</span>
-          <Select value={recOutcome} onValueChange={(v) => setRecOutcome(v as GateOutcome)}>
-            <SelectTrigger className="h-7 text-[11px]">
-              <SelectValue placeholder="What should happen?" />
-            </SelectTrigger>
-            <SelectContent className="portfolio-type">
-              {GATE_OUTCOMES.map((o) => (
-                <SelectItem key={o} value={o} className="text-xs">
-                  {GATE_OUTCOME_LABEL[o]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
           <Textarea
             value={recText}
             onChange={(e) => setRecText(e.target.value)}
             rows={3}
-            placeholder="Why. Say what matters most and what you are discounting."
+            placeholder="Why this call — or what you'd recommend instead."
             className="text-[11px]"
           />
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
               className="h-7 text-[11px]"
-              disabled={recOutcome === "" || recText.trim() === ""}
+              disabled={recText.trim() === ""}
               onClick={() => {
-                if (recOutcome === "") return;
-                saveRecommendation(m.material_id, recOutcome, recText);
+                if (recText.trim() === "") return;
+                saveRecommendation(m.material_id, migrateGateOutcome(m.journey_status), recText.trim());
                 setRecOpen(false);
               }}
             >
@@ -507,7 +495,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             tabIndex={writable ? 0 : undefined}
             onClick={() => {
               if (!writable) return;
-              setRecOutcome(rec.outcome);
               setRecText(rec.text);
               setRecOpen(true);
             }}
@@ -519,11 +506,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             {rec.text}
           </p>
           <Stamp by={rec.author} date={rec.date} />
-          {differs && (
-            <p className="text-[10px] text-muted-foreground">
-              Recommended {GATE_OUTCOME_LABEL[rec.outcome]}.
-            </p>
-          )}
         </div>
       ) : (
         <div className="flex flex-wrap items-baseline gap-2">
@@ -532,7 +514,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
             <button
               type="button"
               onClick={() => {
-                setRecOutcome("");
                 setRecText("");
                 setRecOpen(true);
               }}
