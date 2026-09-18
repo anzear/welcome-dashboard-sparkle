@@ -220,3 +220,20 @@ export function WorkSpaceDocumentsCard({
     </div>
   );
 }
+
+/**
+ * Prototype helper: attaches mock example files to rows by position so the
+ * layout can be reviewed with real-looking file names.
+ */
+export function mockSeedByIndex(
+  ids: string[],
+  entries: Record<number, { name: string; uploader: string; date: string }[]>,
+): DocumentMap {
+  const seed: DocumentMap = {};
+  Object.entries(entries).forEach(([index, files]) => {
+    const id = ids[Number(index)];
+    if (!id) return;
+    seed[id] = files.map((file, position) => ({ id: `${id}-doc-${position}`, ...file }));
+  });
+  return seed;
+}
