@@ -633,6 +633,16 @@ const ResearchSpace: React.FC = () => {
         </section>
       )}
 
+      {material && (
+        <section className="space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
+          <div className="border-b border-border/70 pb-1.5">
+            <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
+            <p className="pt-1 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
+          </div>
+          <CompanyDataDetails material={material} />
+        </section>
+      )}
+
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">

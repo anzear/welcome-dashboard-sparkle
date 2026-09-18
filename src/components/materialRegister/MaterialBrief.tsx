@@ -1100,13 +1100,6 @@ export const MaterialBrief: React.FC<{
       <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Section
-            title="Company data"
-            note="Spend, technical fit, and regulatory requirements."
-          >
-            <CompanyDataDetails material={m} />
-          </Section>
-
-          <Section
             title="Drivers"
             note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
           >
