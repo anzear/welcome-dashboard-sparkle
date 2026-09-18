@@ -391,7 +391,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Active flags first. Visual only — nothing here sends a notification. */}
       {(overdue.length > 0 || reviewLate || m.reopened) && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -410,7 +410,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
       )}
 
       {/* The status is the headline. Seven stages, one row, in workflow order. */}
-      <div className="space-y-1.5">
+      <div className="space-y-1">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
             const active = s === m.journey_status;
@@ -423,7 +423,7 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
                 disabled={!writable}
                 onClick={() => pickStatus(s)}
                 className={cn(
-                  "flex-1 whitespace-nowrap rounded-md border px-2.5 py-1.5 text-[11px] font-medium transition-colors",
+                  "flex-1 whitespace-nowrap rounded-md border px-2 py-1 text-[11px] font-medium transition-colors",
                   active
                     ? STATUS_FILL[s]
                     : drafting
