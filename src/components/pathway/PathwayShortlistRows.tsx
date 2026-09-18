@@ -26,7 +26,7 @@ import {
   countConfirmedFunctions,
   functionStatus,
   finalStatus,
-  initialStatus,
+  isNotStartedStatus,
   readValidationChecklist,
   type ValidationChecklist,
   type ValidationFunction,
