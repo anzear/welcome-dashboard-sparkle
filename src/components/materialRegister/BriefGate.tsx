@@ -1,33 +1,22 @@
 import React, { useMemo, useState } from "react";
-import { AlertTriangle, Check, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DEMO_USER_NAMES } from "@/config/assessmentCriteria";
 import { useRegister } from "@/components/materialRegister/registerStore";
 import {
-  allConditionsMet,
   canSetGate,
-  datePassed,
   formatDate,
   gateLockNote,
   holdReviewOverdue,
   outcomeBlockers,
-  overdueConditions,
 } from "@/components/materialRegister/gate";
 import {
   JOURNEY_STATUS_LABEL,
   migrateGateOutcome,
-  type GateCondition,
   type GateOutcome,
+  type GoalStage,
   type JourneyStatus,
   type Material,
 } from "@/types/materialPrioritisation";
@@ -53,8 +42,8 @@ const STATUSES: JourneyStatus[] = [
   "parked",
 ];
 
-/** Stages that carry detail and draft first: conditions, or a parking note. */
-const DETAIL_STAGES: JourneyStatus[] = ["in_testing", "parked"];
+/** Parked alone carries structured detail before the status is committed. */
+const DETAIL_STAGES: JourneyStatus[] = ["parked"];
 
 /** Categorical colour. Solid when set, quiet when not — never a gradient. */
 const STATUS_FILL: Record<JourneyStatus, string> = {
@@ -83,18 +72,8 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-const emptyCondition = (n: number): GateCondition => ({
-  condition_id: `new-${n}-${Math.random().toString(36).slice(2, 7)}`,
-  text: "",
-  owner: DEMO_USER_NAMES[0],
-  due_date: "",
-  met: false,
-  met_date: null,
-  met_by: null,
-});
-
 const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
-  const { currentUser, saveRecommendation, setGateOutcome, toggleCondition, saveConditions, reopenGate } =
+  const { currentUser, saveRecommendation, saveStageGoal, setGateOutcome, reopenGate } =
     useRegister();
 
   const writable = canSetGate(m, currentUser.name);
@@ -102,33 +81,28 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
 
   /** The status being drafted. Never seeded from a score or a recommendation. */
   const [pending, setPending] = useState<GateOutcome | null>(null);
-  const [conditions, setConditions] = useState<GateCondition[]>([]);
   const [holdTrigger, setHoldTrigger] = useState("");
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
 
   const [recOpen, setRecOpen] = useState(false);
   const [recText, setRecText] = useState("");
+  const [goalOpen, setGoalOpen] = useState(false);
+  const [goalText, setGoalText] = useState("");
 
-  const [condOpen, setCondOpen] = useState(false);
-  const [condDraft, setCondDraft] = useState<GateCondition[]>([]);
-
-  const overdue = overdueConditions(m);
   const reviewLate = holdReviewOverdue(m);
-  const complete = allConditionsMet(m);
   const decided = m.gate_decided_date !== null;
 
   const blockers = useMemo(
     () =>
       pending === null
         ? []
-        : outcomeBlockers(pending, { conditions, holdTrigger, holdReview, noGoReason }),
-    [pending, conditions, holdTrigger, holdReview, noGoReason],
+        : outcomeBlockers(pending, { conditions: [], holdTrigger, holdReview, noGoReason }),
+    [pending, holdTrigger, holdReview, noGoReason],
   );
 
   const startPending = (o: GateOutcome) => {
     setPending(o);
-    setConditions(o === "in_testing" ? (m.gate_conditions.length > 0 ? m.gate_conditions : [emptyCondition(0)]) : []);
     setHoldTrigger(o === "parked" ? (m.hold_trigger_event ?? "") : "");
     setHoldReview(o === "parked" ? (m.hold_review_date ?? "") : "");
     setNoGoReason(o === "parked" ? (m.no_go_reason ?? "") : "");
@@ -137,6 +111,8 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   /** A click on a segment. Detail-carrying stages draft first, then commit. */
   const pickStatus = (s: JourneyStatus) => {
     if (!writable || s === m.journey_status) return;
+    setGoalOpen(false);
+    setGoalText("");
     setPending(null);
     if (DETAIL_STAGES.includes(s)) {
       startPending(s as GateOutcome);
@@ -148,7 +124,6 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   const commitPending = () => {
     if (pending === null || blockers.length > 0) return;
     setGateOutcome(m.material_id, pending, {
-      conditions: conditions.map((c) => ({ ...c, text: c.text.trim() })),
       holdTrigger: holdTrigger.trim() || null,
       holdReview: holdReview || null,
       noGoReason: noGoReason.trim() || null,
@@ -156,71 +131,9 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
     setPending(null);
   };
 
-  const ConditionEditor: React.FC<{
-    rows: GateCondition[];
-    setRows: (r: GateCondition[]) => void;
-  }> = ({ rows, setRows }) => (
-    <div className="space-y-2">
-      {rows.map((c, i) => (
-        <div key={c.condition_id} className="space-y-1.5 rounded-md border border-border/70 bg-background p-2">
-          <div className="flex items-start gap-1.5">
-            <Input
-              value={c.text}
-              onChange={(e) => setRows(rows.map((x, k) => (k === i ? { ...x, text: e.target.value } : x)))}
-              placeholder="e.g. Second supplier qualified outside SE Asia"
-              className="h-7 text-[11px]"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 shrink-0 text-muted-foreground"
-              onClick={() => setRows(rows.filter((_, k) => k !== i))}
-              aria-label="Remove condition"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <div className="grid grid-cols-2 gap-1.5">
-            <Select
-              value={c.owner}
-              onValueChange={(v) => setRows(rows.map((x, k) => (k === i ? { ...x, owner: v } : x)))}
-            >
-              <SelectTrigger className="h-7 text-[11px]">
-                <SelectValue placeholder="Owner" />
-              </SelectTrigger>
-              <SelectContent className="portfolio-type">
-                {DEMO_USER_NAMES.map((n) => (
-                  <SelectItem key={n} value={n} className="text-xs">
-                    {n}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="date"
-              value={c.due_date}
-              onChange={(e) => setRows(rows.map((x, k) => (k === i ? { ...x, due_date: e.target.value } : x)))}
-              className="h-7 tabular-nums text-[11px]"
-            />
-          </div>
-        </div>
-      ))}
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-7 gap-1 text-[11px]"
-        onClick={() => setRows([...rows, emptyCondition(rows.length)])}
-      >
-        <Plus className="h-3 w-3" /> Add condition
-      </Button>
-    </div>
-  );
-
   /** What the drafted status must carry, inline under the control. */
   const pendingDetail = pending && (
     <div className="space-y-2">
-      {pending === "in_testing" && <ConditionEditor rows={conditions} setRows={setConditions} />}
-
       {pending === "parked" && (
         <div className="space-y-1.5">
           <Textarea
@@ -260,106 +173,73 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   );
 
   /** What the status that is actually set carries. Only ever the active one. */
+  const currentGoal = m.journey_status === "parked" ? undefined : m.stage_goals?.[m.journey_status];
+
   const activeDetail = (
     <>
-      {m.journey_status === "in_testing" && (
-        <div className="space-y-2">
-          {condOpen ? (
-            <div className="space-y-2">
-              <ConditionEditor rows={condDraft} setRows={setCondDraft} />
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  className="h-7 text-[11px]"
-                  disabled={
-                    outcomeBlockers("in_testing", {
-                      conditions: condDraft,
-                      holdTrigger: "",
-                      holdReview: "",
-                      noGoReason: "",
-                    }).length > 0
-                  }
-                  onClick={() => {
-                    saveConditions(m.material_id, condDraft);
-                    setCondOpen(false);
-                  }}
-                >
-                  Save conditions
-                </Button>
-                <button type="button" onClick={() => setCondOpen(false)} className={LINK}>
-                  Cancel
-                </button>
-              </div>
+      {m.journey_status !== "parked" &&
+        (goalOpen ? (
+          <div className="space-y-2">
+            <Textarea
+              value={goalText}
+              onChange={(e) => setGoalText(e.target.value)}
+              rows={3}
+              placeholder="What's the goal for this stage."
+              className="text-[11px]"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                size="sm"
+                className="h-7 text-[11px]"
+                disabled={goalText.trim() === ""}
+                onClick={() => {
+                  saveStageGoal(m.material_id, m.journey_status as GoalStage, goalText.trim());
+                  setGoalOpen(false);
+                }}
+              >
+                Save goal
+              </Button>
+              <button type="button" onClick={() => setGoalOpen(false)} className={LINK}>
+                Cancel
+              </button>
             </div>
-          ) : (
-            <>
-              <ul className="space-y-1.5">
-                {m.gate_conditions.map((c) => {
-                  const late = !c.met && datePassed(c.due_date);
-                  return (
-                    <li key={c.condition_id} className="flex items-start gap-2">
-                      {/* Anyone can report a condition met — the ticker is stamped. */}
-                      <button
-                        type="button"
-                        onClick={() => toggleCondition(m.material_id, c.condition_id, !c.met)}
-                        aria-label={c.met ? "Mark not met" : "Mark met"}
-                        className={cn(
-                          "mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-sm border",
-                          c.met
-                            ? "border-emerald-600/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400"
-                            : "border-border bg-background text-transparent hover:border-foreground/40",
-                        )}
-                      >
-                        {c.met ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                      </button>
-                      <div className="min-w-0 flex-1 space-y-0.5">
-                        <p className={cn("text-[11px] text-foreground", c.met && "line-through opacity-70")}>
-                          {c.text}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-x-2 tabular-nums text-[10px] text-muted-foreground">
-                          <span>{c.owner}</span>
-                          <span>due {formatDate(c.due_date)}</span>
-                          {late && <span className="text-amber-700 dark:text-amber-400">overdue</span>}
-                          {c.met && (
-                            <span>
-                              met {formatDate(c.met_date)} · {c.met_by}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-
-              <div className="flex flex-wrap items-center gap-3">
-                {writable && m.gate_conditions.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCondDraft(m.gate_conditions);
-                      setCondOpen(true);
-                    }}
-                    className={LINK}
-                  >
-                    Edit conditions
-                  </button>
-                )}
-                {/* Every condition met earns a prompt, never an automatic flip. */}
-                {complete && writable && (
-                  <button
-                    type="button"
-                    onClick={() => setGateOutcome(m.material_id, "in_development", {})}
-                    className={LINK}
-                  >
-                    All {m.gate_conditions.length} met — move to In development
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
+          </div>
+        ) : currentGoal ? (
+          <div className="space-y-1">
+            <p
+              role={writable ? "button" : undefined}
+              tabIndex={writable ? 0 : undefined}
+              onClick={() => {
+                if (!writable) return;
+                setGoalText(currentGoal.text);
+                setGoalOpen(true);
+              }}
+              className={cn(
+                "text-[11px] leading-relaxed text-foreground",
+                writable && "cursor-text hover:text-foreground/80",
+              )}
+            >
+              {currentGoal.text}
+            </p>
+            <Stamp by={currentGoal.author} date={currentGoal.date} />
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-baseline gap-2">
+            <span className="text-[11px] text-muted-foreground">No goal set for this stage.</span>
+            {writable && (
+              <button
+                type="button"
+                onClick={() => {
+                  setGoalText("");
+                  setGoalOpen(true);
+                }}
+                className={LINK}
+              >
+                Add
+              </button>
+            )}
+          </div>
+        ))}
 
       {m.journey_status === "parked" && (
         <div className="space-y-1">
@@ -396,13 +276,8 @@ const BriefGate: React.FC<{ material: Material }> = ({ material: m }) => {
   return (
     <div className="space-y-3">
       {/* Active flags first. Visual only — nothing here sends a notification. */}
-      {(overdue.length > 0 || reviewLate || m.reopened) && (
+      {(reviewLate || m.reopened) && (
         <div className="flex flex-wrap items-center gap-1.5">
-          {overdue.length > 0 && (
-            <Flag>
-              {overdue.length} condition{overdue.length === 1 ? "" : "s"} overdue
-            </Flag>
-          )}
           {reviewLate && <Flag>Park review overdue</Flag>}
           {m.reopened && (
             <span className="rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">

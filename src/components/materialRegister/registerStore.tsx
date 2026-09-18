@@ -33,6 +33,7 @@ import {
   type GateOutcome,
   type JourneyStatus,
   type Material,
+  type GoalStage,
   type BatchOrigin,
   type MaterialEvent,
   type MaterialEventType,
@@ -461,6 +462,8 @@ interface Store {
   canSetGate: (m: Material) => boolean;
   /** Writes or rewrites the recommendation. Blocked when the text is empty. */
   saveRecommendation: (materialId: string, outcome: GateOutcome, text: string) => void;
+  /** Writes the current non-Parked stage's goal. */
+  saveStageGoal: (materialId: string, stage: GoalStage, text: string) => void;
   /** Records the decision and whatever that stage has to carry with it. */
   setGateOutcome: (
     materialId: string,
@@ -1615,6 +1618,18 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     ]);
   };
 
+  const saveStageGoal = (materialId: string, stage: GoalStage, text: string) => {
+    const m = data.find((x) => x.material_id === materialId);
+    if (!m || !gateWritable(m) || m.journey_status !== stage || text.trim() === "") return;
+    patchMaterial(materialId, (prev) => ({
+      ...prev,
+      stage_goals: {
+        ...(prev.stage_goals ?? {}),
+        [stage]: { text: text.trim(), author: currentUser.name, date: todayIso() },
+      },
+    }));
+  };
+
   const setGateOutcome: Store["setGateOutcome"] = (materialId, outcome, payload) => {
     const m = data.find((x) => x.material_id === materialId);
     if (!m || !gateWritable(m)) return;
@@ -1641,6 +1656,17 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
         changed_by: currentUser.name,
       },
     ];
+    const outgoingGoal = m.journey_status === "parked" ? undefined : m.stage_goals?.[m.journey_status];
+    if (m.journey_status !== outcome && outgoingGoal) {
+      written.unshift({
+        material_id: materialId,
+        event_type: "stage_goal",
+        field: "stage_goal",
+        from_value: m.journey_status,
+        to_value: outgoingGoal.text,
+        changed_by: outgoingGoal.author,
+      });
+    }
     if (outcome === "in_testing") {
       (payload.conditions ?? []).forEach((c) => {
         const existing = m.gate_conditions.find((x) => x.condition_id === c.condition_id);
@@ -1903,6 +1929,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
     restoreAssessments,
     canSetGate: gateWritable,
     saveRecommendation,
+    saveStageGoal,
     setGateOutcome,
     toggleCondition,
     saveConditions,

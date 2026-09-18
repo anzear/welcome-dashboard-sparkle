@@ -47,6 +47,8 @@ export function eventSentence(e: MaterialEvent): string {
       return e.from_value === null
         ? `Gate set to ${statusLabel(e.to_value)}`
         : `Gate changed from ${statusLabel(e.from_value)} to ${statusLabel(e.to_value)}`;
+    case "stage_goal":
+      return `${statusLabel(e.from_value)} goal: “${e.to_value ?? "—"}”`;
     case "condition_change":
       return e.to_value === null
         ? `Condition removed: ${e.from_value ?? "—"}`
