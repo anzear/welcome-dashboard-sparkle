@@ -29,7 +29,16 @@ const CATEGORIES = [
   { id: 'regulations', label: 'Regulations', Icon: Scale },
 ] as const;
 
-const STATUSES: Status[] = ['TBD', 'Go', 'Uncertain', 'No-Go'];
+const STATUSES: Status[] = PATHWAY_VALIDATION_STATUSES;
+
+/** Selected-chip styling per status; unselected chips stay muted. */
+const STATUS_ACTIVE_CLS: Record<Status, string> = {
+  'Not evaluated': 'bg-foreground text-background border-foreground',
+  'Lab testing': 'bg-amber-100 text-amber-700 border-amber-300',
+  Piloting: 'bg-sky-100 text-sky-700 border-sky-300',
+  Integrated: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  Parked: 'bg-red-100 text-red-700 border-red-300',
+};
 
 interface Props {
   pathwayId: string;
