@@ -7,10 +7,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   readValidationComments,
   writeValidationComments,
+  readPathwayValidationStatus,
+  writePathwayValidationStatus,
+  PATHWAY_VALIDATION_STATUSES,
+  type PathwayValidationStatus,
   type ValidationComment,
 } from '@/lib/pathwayValidationComments';
 
-type Status = 'TBD' | 'Go' | 'Uncertain' | 'No-Go';
+type Status = PathwayValidationStatus;
 
 type Comment = ValidationComment;
 
@@ -25,7 +29,16 @@ const CATEGORIES = [
   { id: 'regulations', label: 'Regulations', Icon: Scale },
 ] as const;
 
-const STATUSES: Status[] = ['TBD', 'Go', 'Uncertain', 'No-Go'];
+const STATUSES: Status[] = PATHWAY_VALIDATION_STATUSES;
+
+/** Selected-chip styling per status; unselected chips stay muted. */
+const STATUS_ACTIVE_CLS: Record<Status, string> = {
+  'Not evaluated': 'bg-foreground text-background border-foreground',
+  'Lab testing': 'bg-amber-100 text-amber-700 border-amber-300',
+  Piloting: 'bg-sky-100 text-sky-700 border-sky-300',
+  Integrated: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  Parked: 'bg-red-100 text-red-700 border-red-300',
+};
 
 interface Props {
   pathwayId: string;
@@ -33,32 +46,32 @@ interface Props {
 }
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
-  const statusKey = `pathway-validation-status:${topic || 'default'}:${pathwayId}`;
-
   const [comments, setComments] = useState<Comment[]>([]);
-  const [overallStatus, setOverallStatus] = useState<Status>('TBD');
+  // Lazy initial read so a stored (or legacy-migrated) value wins; writes
+  // happen only on an explicit chip click, never on mount.
+  const [overallStatus, setOverallStatus] = useState<Status>(() =>
+    readPathwayValidationStatus(topic, pathwayId)
+  );
   const [filter, setFilter] = useState<string>('all');
   const [draftCategory, setDraftCategory] = useState<string>(CATEGORIES[0].id);
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
     setComments(readValidationComments(topic, pathwayId));
-    try {
-      const s = localStorage.getItem(statusKey) as Status | null;
-      if (s) setOverallStatus(s);
-    } catch {}
-  }, [topic, pathwayId, statusKey]);
+    setOverallStatus(readPathwayValidationStatus(topic, pathwayId));
+  }, [topic, pathwayId]);
+
+  /** Status changes are free jumps — any value to any value, no fixed order. */
+  const pickStatus = (s: Status) => {
+    setOverallStatus(s);
+    writePathwayValidationStatus(topic, pathwayId, s);
+  };
 
   /** Single writer: persist and notify other views (Workspace) of the change. */
   const persist = (next: Comment[]) => {
     setComments(next);
     writeValidationComments(topic, pathwayId, next);
   };
-
-
-  useEffect(() => {
-    try { localStorage.setItem(statusKey, overallStatus); } catch {}
-  }, [overallStatus, statusKey]);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
@@ -93,7 +106,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   return (
     <div className="mt-1 flex-1 min-h-0 flex flex-col">
-      {/* Header row: guidance + 4-level pathway status */}
+      {/* Header row: guidance + pathway status (5 values, no fixed order) */}
       <div className="flex items-start justify-between gap-4 mb-3">
         <p className="text-xs text-muted-foreground leading-relaxed max-w-[560px]">
           Leave comments on this pathway. Tag each comment with one of the seven evaluation categories and filter the
@@ -104,15 +117,11 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
           <div className="flex items-center gap-1">
             {STATUSES.map(s => {
               const selected = overallStatus === s;
-              const activeCls =
-                s === 'Go' ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                : s === 'Uncertain' ? 'bg-amber-100 text-amber-700 border-amber-300'
-                : s === 'No-Go' ? 'bg-red-100 text-red-700 border-red-300'
-                : 'bg-foreground text-background border-foreground';
+              const activeCls = STATUS_ACTIVE_CLS[s];
               return (
                 <button
                   key={s}
-                  onClick={() => setOverallStatus(s)}
+                  onClick={() => pickStatus(s)}
                   className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold border transition-colors ${selected ? activeCls : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
                 >
                   {s}

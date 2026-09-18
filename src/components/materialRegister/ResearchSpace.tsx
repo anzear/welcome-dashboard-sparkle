@@ -485,7 +485,7 @@ const ResearchSpace: React.FC = () => {
     const indices = shortlistPathways
       .map((p) => shortlistIdToPathwayIndex(p.id))
       .filter((i): i is string => i !== null);
-    seedPathwayValidationStatuses(material.name, indices, ['Go', 'Uncertain', 'No-Go', 'TBD']);
+    seedPathwayValidationStatuses(material.name, indices, ['Piloting', 'Lab testing', 'Parked', 'Integrated']);
     setCommentTick((n) => n + 1);
   }, [material?.name]);
 
@@ -507,7 +507,7 @@ const ResearchSpace: React.FC = () => {
     return merged;
   }, [pathwayNotes, shortlistPathways, material?.name, commentTick]);
 
-  /** 4-level status each shortlisted pathway got in its Validation Space. */
+  /** Status each shortlisted pathway got in its Validation Space. */
   const pathwayStatuses = useMemo(() => {
     void commentTick;
     const map: Record<string, PathwayValidationStatus> = {};
