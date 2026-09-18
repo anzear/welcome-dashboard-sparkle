@@ -2,10 +2,10 @@
  * PATHWAY VALIDATION CHECKLIST — single source of truth.
  *
  * Each of the four functions carries ONE status, picked from its own ladder:
- *   positions 1-2 — not started ("To do" and the department's unassessed state, grey)
- *   positions 3-4 — in progress (amber)
- *   position 5    — positive final state (green, counts toward the bar)
- *   position 6    — "Not fit for function" (red, counts as 0%)
+ *   position 1    — not started ("To do", grey)
+ *   positions 2-3 — in progress (amber)
+ *   position 4    — positive final state (green, counts toward the bar)
+ *   position 5    — "Not fit for function" (red, counts as 0%)
  *
  * The same data backs the "Validation" card on the Pathway Profile and the
  * evaluation checklist inside the Workspace Status card.
@@ -93,16 +93,16 @@ const isStatus = (value: unknown, fn: ValidationFunction): value is ValidationSt
  * the new ladder by position where possible.
  */
 const LEGACY_POSITIONS: Record<string, number> = {
-  "In progress": 2,
-  Tested: 3,
-  "Suppliers engaged": 3,
-  "Data reviewed": 3,
-  "Compliance reviewed": 3,
-  Approved: 4,
-  "Suppliers confirmed": 4,
-  Cleared: 4,
-  "Not assessed": 1,
-  "No supplier identified": 1,
+  "In progress": 1,
+  Tested: 2,
+  "Suppliers engaged": 2,
+  "Data reviewed": 2,
+  "Compliance reviewed": 2,
+  Approved: 3,
+  "Suppliers confirmed": 3,
+  Cleared: 3,
+  "Not assessed": 0,
+  "No supplier identified": 0,
 };
 
 
