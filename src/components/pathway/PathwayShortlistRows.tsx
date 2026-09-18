@@ -58,7 +58,7 @@ function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
 }
 
 const COLS =
-  "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_120px]";
+  "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
@@ -138,6 +138,19 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [notesFor, setNotesFor] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  /** Mock example attachments so the layout can be reviewed. */
+  const { documents, addDocuments, removeDocument } = useItemDocuments(
+    mockSeedByIndex(
+      pathways.map((p) => p.id),
+      {
+        0: [
+          { name: "Fermentation-route-techno-economics.pdf", uploader: "K. Brandt", date: "4 Sept 2026" },
+          { name: "Supplier-capacity-matrix.xlsx", uploader: "A. Novak", date: "11 Sept 2026" },
+        ],
+        2: [{ name: "Pilot-trial-summary-Q3.docx", uploader: "M. Feld", date: "2 Sept 2026" }],
+      },
+    ),
+  );
 
   /**
    * Consecutive clusters by node identity. Every pathway appears exactly once, in
@@ -225,7 +238,15 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
           </div>
           <div className="flex items-center justify-between gap-2">
             <ValidationStatusBadge status={statuses?.[p.id] ?? "TBD"} />
-            <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
+            <div className="flex items-center gap-2">
+              <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
+              <DocumentAttachControl
+                itemLabel={`${p.feedstock} → ${p.product}`}
+                documents={documents[p.id] ?? []}
+                onUpload={(names) => addDocuments(p.id, names, currentUser)}
+                onRemove={(documentId) => removeDocument(p.id, documentId)}
+              />
+            </div>
           </div>
         </div>
       </div>
