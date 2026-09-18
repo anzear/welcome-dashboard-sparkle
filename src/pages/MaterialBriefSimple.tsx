@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import MaterialBrief from "@/components/materialRegister/MaterialBrief";
 import ResearchSpace from "@/components/materialRegister/ResearchSpace";
 import ViewingAsSwitcher from "@/components/materialRegister/ViewingAsSwitcher";
-import { prototypeBriefSeed } from "@/components/materialRegister/materialEntry";
+import { blankMaterial, prototypeBriefSeed } from "@/components/materialRegister/materialEntry";
+import type { JourneyStatus } from "@/types/materialPrioritisation";
 import {
   CURRENT_USER,
   RegisterProvider,
@@ -20,7 +21,7 @@ const Inner: React.FC = () => {
   const navigate = useNavigate();
   const { topic } = useParams();
   const name = topic ? decodeURIComponent(topic).trim() : "";
-  const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment } = useRegister();
+  const { data, openId, openBrief, addMaterials, updateMaterial, assessmentState, saveAssessment, toggleLink } = useRegister();
   const bootstrapped = useRef(false);
 
   // Prototype: seed one set of driver judgements so the Drivers card reads as
