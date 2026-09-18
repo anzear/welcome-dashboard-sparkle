@@ -34,7 +34,6 @@ import { SHORTLIST_COMPANIES, SHORTLIST_PAPERS, SHORTLIST_PATENTS } from "@/comp
 import BriefGate from "@/components/materialRegister/BriefGate";
 // Shared validation checklist store lives in @/lib/pathwayValidationChecklist.
 import { useRegister } from "@/components/materialRegister/registerStore";
-import { StatusPill } from "@/components/materialRegister/primitives";
 import {
   categoryLabel,
   readValidationComments,
