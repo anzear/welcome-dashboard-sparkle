@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export type PaperNote = { id: string; author: string; timestamp: string; text: string };
@@ -27,6 +28,7 @@ const Columns = () => (
     <col style={{ width: "100px" }} />
     <col style={{ width: "200px" }} />
     <col style={{ width: "220px" }} />
+    <col style={{ width: "44px" }} />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />
   </colgroup>
@@ -43,6 +45,18 @@ export function PaperShortlistTable({
 }) {
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistPaper | null>(null);
+  /** Mock example attachments so the layout can be reviewed. */
+  const { documents, addDocuments, removeDocument } = useItemDocuments(
+    mockSeedByIndex(
+      papers.map((paper) => paper.id),
+      {
+        0: [
+          { name: "Yield-data-annotated.pdf", uploader: "M. Feld", date: "3 Sept 2026" },
+          { name: "Internal-review-notes.docx", uploader: "K. Brandt", date: "10 Sept 2026" },
+        ],
+      },
+    ),
+  );
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
 
@@ -57,6 +71,7 @@ export function PaperShortlistTable({
             <TableHead className={HEAD_CLS}>Date</TableHead>
             <TableHead className={HEAD_CLS}>Authors</TableHead>
             <TableHead className={HEAD_CLS}>Comments</TableHead>
+            <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
           </TableRow>
@@ -91,6 +106,14 @@ export function PaperShortlistTable({
                       </button>
                     )}
                   </div>
+                </TableCell>
+                <TableCell className="py-2">
+                  <DocumentAttachControl
+                    itemLabel={paper.title}
+                    documents={documents[paper.id] ?? []}
+                    onUpload={(names) => addDocuments(paper.id, names, currentUser)}
+                    onRemove={(documentId) => removeDocument(paper.id, documentId)}
+                  />
                 </TableCell>
                 <TableCell className="py-2 text-[10px] text-muted-foreground">{paper.savedBy}</TableCell>
                 <TableCell className="py-2 text-right">
