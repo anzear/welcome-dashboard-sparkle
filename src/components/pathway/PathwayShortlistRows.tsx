@@ -147,8 +147,19 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
       return next;
     });
 
-  const rowIndex = new Map<string, number>();
-  pathways.forEach((p, i) => rowIndex.set(p.id, i + 1));
+  /** Moves the dragged pathway to the drop target's position and reports the new order. */
+  const commitDrop = (targetId: string) => {
+    const sourceId = dragId;
+    setDragId(null);
+    setOverId(null);
+    if (!sourceId || !onReorder || sourceId === targetId) return;
+    const ids = pathways.map((p) => p.id);
+    const from = ids.indexOf(sourceId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    onReorder(ids);
+  };
 
   const sheetPathway = pathways.find((p) => p.id === notesFor) ?? null;
   const sheetNotes = notesFor ? [...(notes[notesFor] ?? [])].reverse() : [];
