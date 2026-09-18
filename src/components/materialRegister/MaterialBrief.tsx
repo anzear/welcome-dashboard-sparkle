@@ -1,6 +1,5 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { seedComments } from "@/components/materialRegister/briefComments";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,16 +20,10 @@ import {
   type JourneyStatus,
   type Material,
   type MaterialRole,
-  LINK_SECTION_LABEL,
   MATERIAL_ROLES,
   MATERIAL_ROLE_LABEL,
 } from "@/types/materialPrioritisation";
-import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, StatusPill } from "@/components/materialRegister/primitives";
-import PositionBlock from "@/components/materialRegister/PositionBlock";
-import MaterialHistory from "@/components/materialRegister/MaterialHistory";
-import BriefAssessment from "@/components/materialRegister/BriefAssessment";
-import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
