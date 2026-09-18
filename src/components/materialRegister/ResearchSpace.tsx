@@ -399,7 +399,8 @@ function savePathwayOrder(orderedIds: string[]) {
   }
 }
 
-const ResearchSpace: React.FC = () => {
+const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ category, topic }) => {
+
   const { allMaterials, openId } = useRegister();
   const material = allMaterials.find((item) => item.material_id === openId) ?? null;
   const applications = useMemo(
@@ -993,7 +994,10 @@ type Row = {
             onRemove={removePathway}
             onReorder={reorderPathways}
             grouped={pathwaysGrouped}
+            category={category}
+            topic={topic}
           />
+
         </ShortlistCard>
 
 

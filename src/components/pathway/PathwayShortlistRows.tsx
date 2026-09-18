@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -133,9 +135,25 @@ type Props = {
   statuses?: Record<string, ValidationStatus>;
   /** Drag-to-reorder: row order is the priority order, top row highest. */
   onReorder?: (orderedIds: string[]) => void;
+  /** Landscape context used to link each row to its pathway profile. */
+  category?: string;
+  topic?: string;
 };
 
-export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, currentUser, grouped, statuses, onReorder }: Props) {
+
+export function PathwayShortlistRows({
+  pathways,
+  notes,
+  onAddNote,
+  onRemove,
+  currentUser,
+  grouped,
+  statuses,
+  onReorder,
+  category,
+  topic,
+}: Props) {
+
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
@@ -220,8 +238,19 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
           </div>
           {chip(p.feedstock, PATHWAY_CHIP_NEUTRAL)}
           {chip(p.process, PATHWAY_CHIP_NEUTRAL)}
-          {chip(p.product, PATHWAY_CHIP_ANCHOR)}
+          {category && topic ? (
+            <Link
+              to={`/landscape/${encodeURIComponent(category)}/${encodeURIComponent(topic)}/value-chain/pathways/${p.id}`}
+              className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} hover:ring-1 hover:ring-emerald-300`}
+              title="Open pathway profile"
+            >
+              {p.product}
+            </Link>
+          ) : (
+            chip(p.product, PATHWAY_CHIP_ANCHOR)
+          )}
           {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
+
           <div className="flex items-center justify-center">
             <StatusBadge trl={p.trl} />
           </div>
