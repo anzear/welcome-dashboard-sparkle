@@ -20,15 +20,18 @@ import {
   pathwayChipCls,
 } from "./pathwayRowStyles";
 import {
+  NOT_FIT_STATUS,
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
   countConfirmedFunctions,
   functionStatus,
   finalStatus,
+  initialStatus,
   readValidationChecklist,
   type ValidationChecklist,
   type ValidationFunction,
 } from "@/lib/pathwayValidationChecklist";
+
 
 export type ShortlistPathway = {
   id: string;
@@ -64,16 +67,17 @@ function useValidationChecklist(topic: string | undefined, pathwayId: string): V
 }
 
 /**
- * Pathway status derived from the Validation checklist: each function that is
- * past "To do" but not yet at its final stage renders an "<fn> evaluation"
- * pill. When no function is in progress, no status is shown.
+ * Pathway status derived from the Validation checklist: each function sitting at
+ * a mid-progress stage (past the first option, not yet the positive final state
+ * and not "Not fit for function") renders an "<fn> evaluation" pill.
  */
 function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFunction[] {
   return VALIDATION_FUNCTIONS.filter((fn) => {
     const status = functionStatus(checklist, fn);
-    return status !== "To do" && status !== finalStatus(fn);
+    return status !== initialStatus(fn) && status !== finalStatus(fn) && status !== NOT_FIT_STATUS;
   });
 }
+
 
 function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
   const checklist = useValidationChecklist(topic, pathwayId);

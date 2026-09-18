@@ -64,7 +64,7 @@ export function ValidationChecklist({
               <SelectTrigger
                 id={id}
                 aria-label={`${fn} status`}
-                className={`h-6 w-[160px] shrink-0 rounded-full border px-2.5 text-[10px] font-medium ${validationStatusClass(fn, status)}`}
+                className={`h-6 w-[230px] shrink-0 rounded-full border px-2.5 text-[10px] font-medium ${validationStatusClass(fn, status)}`}
               >
                 <SelectValue />
               </SelectTrigger>
@@ -78,13 +78,14 @@ export function ValidationChecklist({
             </Select>
 
             {state ? (
-              <span className="truncate text-[10px] text-muted-foreground">
+              <span className="ml-auto truncate text-right text-[10px] text-muted-foreground">
                 {state.by} · {state.date}
               </span>
             ) : (
-              <span className="text-[10px] text-muted-foreground">Not set</span>
+              <span className="ml-auto text-[10px] text-muted-foreground">Not set</span>
             )}
           </div>
+
         );
       })}
     </div>
