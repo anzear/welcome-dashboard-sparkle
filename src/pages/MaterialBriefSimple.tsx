@@ -125,7 +125,7 @@ const Inner: React.FC = () => {
   const [view, setView] = React.useState<"brief" | "research">("research");
 
   const tabs: { id: "brief" | "research"; label: string }[] = [
-    { id: "research", label: "Research Space" },
+    { id: "research", label: "Work Space" },
     { id: "brief", label: "Material Profile" },
   ];
 
