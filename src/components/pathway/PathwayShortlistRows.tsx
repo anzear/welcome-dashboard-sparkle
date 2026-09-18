@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
