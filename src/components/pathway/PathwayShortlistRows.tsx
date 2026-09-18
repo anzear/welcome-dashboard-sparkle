@@ -74,7 +74,10 @@ function useValidationChecklist(topic: string | undefined, pathwayId: string): V
 function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFunction[] {
   return VALIDATION_FUNCTIONS.filter((fn) => {
     const status = functionStatus(checklist, fn);
-    return status !== initialStatus(fn) && status !== finalStatus(fn) && status !== NOT_FIT_STATUS;
+    return (
+      !isNotStartedStatus(fn, status) && status !== finalStatus(fn) && status !== NOT_FIT_STATUS
+    );
+
   });
 }
 
