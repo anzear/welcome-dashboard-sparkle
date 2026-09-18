@@ -37,7 +37,9 @@ import { JOURNEY_STATUS_LABEL } from "@/types/materialPrioritisation";
 import {
   categoryLabel,
   readValidationComments,
+  readPathwayValidationStatus,
   shortlistIdToPathwayIndex,
+  type PathwayValidationStatus,
 } from "@/lib/pathwayValidationComments";
 
 
@@ -444,6 +446,18 @@ const ResearchSpace: React.FC = () => {
     });
     return merged;
   }, [pathwayNotes, shortlistPathways, material?.name, commentTick]);
+
+  /** 4-level status each shortlisted pathway got in its Validation Space. */
+  const pathwayStatuses = useMemo(() => {
+    void commentTick;
+    const map: Record<string, PathwayValidationStatus> = {};
+    shortlistPathways.forEach((pathway) => {
+      const index = shortlistIdToPathwayIndex(pathway.id);
+      if (index === null) return;
+      map[pathway.id] = readPathwayValidationStatus(material?.name, index);
+    });
+    return map;
+  }, [shortlistPathways, material?.name, commentTick]);
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
@@ -908,6 +922,7 @@ type Row = {
           <PathwayShortlistRows
             pathways={shortlistPathways}
             notes={mergedPathwayNotes}
+            statuses={pathwayStatuses}
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
