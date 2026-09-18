@@ -226,7 +226,7 @@ export function PathwayShortlistRows({ pathways, notes, onAddNote, onRemove, cur
             <StatusBadge trl={p.trl} />
           </div>
           <div className="flex items-center justify-between gap-2">
-            <ValidationStatusBadge status={statuses?.[p.id] ?? "TBD"} />
+            <ValidationStatusBadge status={statuses?.[p.id] ?? "Not evaluated"} />
             <div className="flex items-center gap-2">
               <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
               <DocumentAttachControl
