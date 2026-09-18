@@ -31,7 +31,7 @@ import { CompanyShortlistTables, type ShortlistCompany } from "@/components/mate
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import BriefGate from "@/components/materialRegister/BriefGate";
-import { VALIDATION_FUNCTIONS, readPathwayConfirmations } from "@/components/pathway/PathwayValidationCard";
+// Shared validation checklist store lives in @/lib/pathwayValidationChecklist.
 import { useRegister } from "@/components/materialRegister/registerStore";
 import { StatusPill } from "@/components/materialRegister/primitives";
 import {
