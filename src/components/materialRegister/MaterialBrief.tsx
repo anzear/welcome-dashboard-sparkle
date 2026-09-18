@@ -380,11 +380,6 @@ export const MaterialBrief: React.FC<{
   // Scope narrows the list, never the material: the brief reads the whole register.
   const material = allMaterials.find((m) => m.material_id === openId) ?? row?.m ?? null;
 
-  const [draftStatus, setDraftStatus] = useState<JourneyStatus | null>(null);
-  const [statusReason, setStatusReason] = useState("");
-  const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
-  const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
-  const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
   const [coverageOpen, setCoverageOpen] = useState(false);
