@@ -10,11 +10,11 @@ import {
   VALIDATION_CHANGED_EVENT,
   VALIDATION_CURRENT_USER,
   VALIDATION_FUNCTIONS,
-  VALIDATION_STATUSES,
-  VALIDATION_STATUS_CLASS,
   functionStatus,
   readValidationChecklist,
   setFunctionStatus,
+  statusesFor,
+  validationStatusClass,
   writeValidationChecklist,
   type ValidationChecklist as Checklist,
   type ValidationFunction,
@@ -64,12 +64,12 @@ export function ValidationChecklist({
               <SelectTrigger
                 id={id}
                 aria-label={`${fn} status`}
-                className={`h-6 w-[130px] shrink-0 rounded-full border px-2.5 text-[10px] font-medium ${VALIDATION_STATUS_CLASS[status]}`}
+                className={`h-6 w-[160px] shrink-0 rounded-full border px-2.5 text-[10px] font-medium ${validationStatusClass(fn, status)}`}
               >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {VALIDATION_STATUSES.map((option) => (
+                {statusesFor(fn).map((option) => (
                   <SelectItem key={option} value={option} className="text-[11px]">
                     {option}
                   </SelectItem>
