@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { seedComments } from "@/components/materialRegister/briefComments";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,10 +21,16 @@ import {
   type JourneyStatus,
   type Material,
   type MaterialRole,
+  LINK_SECTION_LABEL,
   MATERIAL_ROLES,
   MATERIAL_ROLE_LABEL,
 } from "@/types/materialPrioritisation";
+import { BLOCKER_CATEGORIES } from "@/components/materialRegister/BulkActionDialog";
 import { nf, StatusPill } from "@/components/materialRegister/primitives";
+import PositionBlock from "@/components/materialRegister/PositionBlock";
+import MaterialHistory from "@/components/materialRegister/MaterialHistory";
+import BriefAssessment from "@/components/materialRegister/BriefAssessment";
+import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
 import { cleanTags, formatTags, hasTag, normalizeTag, tagVocabulary, TAG_MAX_LENGTH } from "@/components/materialRegister/tags";
@@ -45,12 +52,28 @@ import {
   useRegister,
 } from "@/components/materialRegister/registerStore";
 
+const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 const UNASSIGNED = "__unassigned__";
 
 /* ------------------------------------------------------------------ type scale
  * Three data tiers only: value (text-sm mono tabular), label (text-[11px] muted),
  * provenance (text-[10px] faint). Section headers sit above all three.
  * ---------------------------------------------------------------------------- */
+
+const Section: React.FC<{
+  title: string;
+  note?: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ title, note, children, className }) => (
+  <section className={cn("space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm", className)}>
+    <div className="border-b border-border/70 pb-1.5">
+      <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">{title}</h2>
+      {note && <p className="pt-1 text-xs leading-snug text-muted-foreground">{note}</p>}
+    </div>
+    {children}
+  </section>
+);
 
 const Chip: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 
@@ -380,6 +403,18 @@ export const MaterialBrief: React.FC<{
   // Scope narrows the list, never the material: the brief reads the whole register.
   const material = allMaterials.find((m) => m.material_id === openId) ?? row?.m ?? null;
 
+  const [draftStatus, setDraftStatus] = useState<JourneyStatus | null>(null);
+  const [statusReason, setStatusReason] = useState("");
+  const [draftBlockerCategory, setDraftBlockerCategory] = useState("");
+  const [draftBlockerDetail, setDraftBlockerDetail] = useState("");
+  const [draftBlockerCondition, setDraftBlockerCondition] = useState("");
+  const [comments, setComments] = useState<
+    Record<string, { id: string; author: string; at: string; body: string }[]>
+  >({});
+  /** Mock thread: three seeded comments per material, so the card reads as used. */
+  const seeded = comments[material?.material_id ?? ""] ?? (material ? seedComments(material.material_id) : []);
+
+  const [draft, setDraft] = useState<Record<string, string>>({});
   /** Export is a confirm-and-complete act: a dialog, then a one-line receipt. */
   const [exportOpen, setExportOpen] = useState(false);
   const [coverageOpen, setCoverageOpen] = useState(false);
@@ -951,6 +986,39 @@ export const MaterialBrief: React.FC<{
           </BarField>
 
 
+          <BarField label="Owner" className="w-[190px] border-l border-border/60 px-5">
+            <Select
+              value={m.owner ?? UNASSIGNED}
+              onValueChange={(v) => {
+                const next = v === UNASSIGNED ? null : v;
+                if (next === m.owner) return;
+                updateMaterial(m.material_id, { owner: next }, ["owner"], [
+                  {
+                    material_id: m.material_id,
+                    event_type: "owner_change",
+                    field: "owner",
+                    from_value: m.owner,
+                    to_value: next,
+                  },
+                ]);
+              }}
+            >
+              <SelectTrigger className="h-8 w-full bg-background text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="portfolio-type">
+                {ownerNames.map((o) => (
+                  <SelectItem key={o} value={o} className="text-xs">
+                    {o}
+                  </SelectItem>
+                ))}
+                <SelectItem value={UNASSIGNED} className="text-xs">
+                  Unassigned
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </BarField>
+
           <BarField
             label="Priority period"
             className="w-[210px] border-l border-border/60 px-5"
@@ -989,10 +1057,134 @@ export const MaterialBrief: React.FC<{
             </div>
           </BarField>
 
+          {draftStatus === null && (
+            <div
+              className="ml-auto border-border/60 pl-5 sm:border-l"
+              title="Calculated by the platform from the figures. Four separate positions, never combined into one score."
+            >
+              <div className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Position
+              </div>
+              <div className="flex h-8 items-center">
+                <PositionBlock
+                  materialId={m.material_id}
+                  gapMeasure={row?.gapMeasure ?? null}
+                  gapSize={row?.gapSize ?? 0}
+                  variant="inline"
+                />
+              </div>
+            </div>
+          )}
+
+          {draftStatus !== null && (
+            <div className="ml-auto self-center border-border/60 pl-5 sm:border-l">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">
+                  {JOURNEY_STATUS_LABEL[m.journey_status]} → {JOURNEY_STATUS_LABEL[draftStatus]}
+                </span>
+                <Button size="sm" className="h-7 text-[11px]" disabled={!canSaveStatus} onClick={saveStatusChange}>
+                  Save changes
+                </Button>
+                <Button variant="ghost" size="sm" className="h-7 text-[11px]" onClick={cancelStatusChange}>
+                  Discard
+                </Button>
+              </div>
+            </div>
+          )}
+
         </div>
 
       </div>
 
+      {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments, matched heights. */}
+      <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
+          <Section
+            title="Drivers"
+            note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
+          >
+            <BriefAssessment material={m} />
+          </Section>
+
+          <Section
+            title={LINK_SECTION_LABEL[m.role]}
+            note="A link records candidacy only. Scores and decisions on each side stay independent."
+          >
+            <BriefLinks material={m} />
+          </Section>
+
+        </div>
+
+        <div className="flex min-h-0 flex-col">
+          <Section
+            title="Comments"
+            note="Published to the team. Everyone with access to this material can see them."
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="flex min-h-0 flex-1 flex-col gap-3">
+
+              {seeded.length === 0 ? (
+                <p className="flex-1 text-[11px] text-muted-foreground">No comments yet.</p>
+              ) : (
+                <ul className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+                  {seeded.map((c) => (
+
+                    <li key={c.id} className="border-l-2 border-border/70 pl-3">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[11px] font-medium text-foreground">{c.author}</span>
+                        <span className="tabular-nums text-[10px] text-muted-foreground">
+                          {new Date(c.at).toLocaleString()}
+                        </span>
+                      </div>
+                      <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-foreground">{c.body}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+
+              <textarea
+                value={draft[m.material_id] ?? ""}
+                onChange={(e) => setDraft((d) => ({ ...d, [m.material_id]: e.target.value }))}
+                rows={3}
+                placeholder="Write a comment for the team…"
+                className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-[12px] leading-relaxed text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-ring"
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-muted-foreground">Visible to all team members.</span>
+                <button
+                  type="button"
+                  disabled={!(draft[m.material_id] ?? "").trim()}
+                  onClick={() => {
+                    const body = (draft[m.material_id] ?? "").trim();
+                    if (!body) return;
+                    setComments((prev) => ({
+                      ...prev,
+                      [m.material_id]: [
+                        ...(prev[m.material_id] ?? seedComments(m.material_id)),
+
+                        { id: `${Date.now()}`, author: "You", at: new Date().toISOString(), body },
+                      ],
+                    }));
+                    setDraft((d) => ({ ...d, [m.material_id]: "" }));
+                  }}
+                  className="rounded-md bg-foreground px-3 py-1.5 text-[11px] font-medium text-background disabled:opacity-40"
+                >
+                  Publish
+                </button>
+              </div>
+            </div>
+          </Section>
+
+        </div>
+      </div>
+
+      {/* History — one full-width row beneath both columns */}
+      <div className="mt-10 border-t border-border/60 pt-3">
+        <Section title="History" note="The record of decisions. Newest first.">
+          <MaterialHistory materialId={m.material_id} />
+        </Section>
+      </div>
       </>)}
 
     </div>
