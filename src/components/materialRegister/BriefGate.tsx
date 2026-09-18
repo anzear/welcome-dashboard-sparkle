@@ -29,30 +29,19 @@ import {
  */
 
 /**
- * The seven stages. NOT a sequence — functions confirm in any order depending
- * on the material, so the owner may set any stage at any time. There is no
- * ordering, locking, or left-to-right progression logic anywhere below.
+ * Four stages. NOT a sequence — the owner may set any stage at any time. There
+ * is no ordering, locking, or left-to-right progression logic anywhere below.
+ * The functions live as a checklist inside "In evaluation", not as stages.
  */
-const STATUSES: JourneyStatus[] = [
-  "not_started",
-  "in_evaluation",
-  "in_testing",
-  "in_development",
-  "in_deployment",
-  "adopted",
-  "parked",
-];
+const STATUSES: JourneyStatus[] = JOURNEY_STATUSES;
 
 /** Parked alone carries structured detail before the status is committed. */
 const DETAIL_STAGES: JourneyStatus[] = ["parked"];
 
 /** Categorical colour. Solid when set, quiet when not — never a gradient. */
-const STATUS_FILL: Record<JourneyStatus, string> = {
+const STATUS_FILL: Partial<Record<JourneyStatus, string>> = {
   not_started: "bg-muted-foreground text-background border-muted-foreground",
   in_evaluation: "bg-provenance-judgement text-white border-provenance-judgement",
-  in_testing: "bg-violet-600 text-white border-violet-600",
-  in_development: "bg-emerald-600 text-white border-emerald-600",
-  in_deployment: "bg-sky-600 text-white border-sky-600",
   adopted: "bg-foreground text-background border-foreground",
   parked: "bg-amber-500 text-white border-amber-500",
 };
