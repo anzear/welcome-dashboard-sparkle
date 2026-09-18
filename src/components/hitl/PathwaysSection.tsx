@@ -26,7 +26,6 @@ import { cn } from "@/lib/utils";
 type NodeKey = "feedstock" | "process_technology" | "product" | "application_market";
 type Draft = Pick<Pathway, NodeKey | "group_id">;
 type DecidedStatus = Exclude<ReviewStatus, "review_pending">;
-type VisibilityMerge = "replace" | "add" | "remove";
 type ImportRow = { feedstock: string; process_technology: string; product: string; application_market: string; group_id: string | null; result: string; newNodes: NodeKey[] };
 const nodeLabels = NODE_LABELS;
 const reviewStatuses: ReviewStatus[] = ["review_pending", "approved", "rejected"];
@@ -39,16 +38,10 @@ const visibilityFilterMatches = (pathway: Pathway, filter: string) => {
   if (filter === "overrides") return overrides.length > 0;
   return effectiveVisibility(pathway, filter) !== "visible";
 };
-const nextVisibility = (pathway: Pathway, scope: "all" | "selected", state: VisibilityState, orgs: string[], mode: VisibilityMerge, clearOverrides: boolean): PathwayVisibility => {
-  if (scope === "all") {
-    const kept = clearOverrides ? {} : Object.fromEntries(Object.entries(pathway.visibility.overrides).filter(([, value]) => value !== state));
-    return { default: state, overrides: kept };
-  }
-  const overrides: Record<string, VisibilityState> = { ...pathway.visibility.overrides };
-  orgs.forEach(org => { if (mode === "remove") delete overrides[org]; else overrides[org] = state; });
-  Object.entries(overrides).forEach(([org, value]) => { if (value === pathway.visibility.default) delete overrides[org]; });
-  return { default: pathway.visibility.default, overrides };
-};
+const visibilityFromOrganisationStates = (states: Record<string, VisibilityState>): PathwayVisibility => ({
+  default: "visible",
+  overrides: Object.fromEntries(Object.entries(states).filter(([, state]) => state !== "visible")),
+});
 const sameVisibilityState = (left: PathwayVisibility, right: PathwayVisibility) => left.default === right.default && JSON.stringify(Object.entries(left.overrides).sort()) === JSON.stringify(Object.entries(right.overrides).sort());
 const blankDraft: Draft = { feedstock: "", process_technology: "", product: "", application_market: "", group_id: null };
 const clean = (value: string) => value.trim().toLocaleLowerCase();
@@ -150,32 +143,30 @@ function VisibilityCell({ pathway, onClick }: { pathway: Pathway; onClick: () =>
 
 function SetVisibilityDialog({ ids, pathways, onClose, afterSave }: { ids: string[] | null; pathways: Pathway[]; onClose: () => void; afterSave?: () => void }) {
   const store = useHitlStore();
-  const [scope, setScope] = useState<"all" | "selected">("all");
-  const [orgs, setOrgs] = useState<string[]>([]);
-  const [state, setState] = useState<VisibilityState>("visible");
-  const [clearOverrides, setClearOverrides] = useState(true);
-  const [mode, setMode] = useState<VisibilityMerge>("replace");
+  const [organisationStates, setOrganisationStates] = useState<Record<string, VisibilityState>>({});
   const [note, setNote] = useState("");
-  useEffect(() => { if (!ids) return; const first = pathways.find(item => item.id === ids[0]); setScope("all"); setOrgs([]); setState(ids.length === 1 ? first?.visibility.default ?? "visible" : "visible"); setClearOverrides(true); setMode("replace"); setNote(""); }, [ids, pathways]);
+  useEffect(() => {
+    if (!ids) return;
+    const first = pathways.find(item => item.id === ids[0]);
+    setOrganisationStates(Object.fromEntries(organisations().map(org => [org, first ? effectiveVisibility(first, org) : "visible"])));
+    setNote("");
+  }, [ids, pathways]);
   const items = pathways.filter(item => ids?.includes(item.id));
-  const invalid = scope === "selected" && orgs.length === 0;
-  const changes = items.map(item => ({ item, next: nextVisibility(item, scope, state, orgs, mode, clearOverrides) })).filter(row => !sameVisibilityState(row.item.visibility, row.next));
+  const nextVisibility = visibilityFromOrganisationStates(organisationStates);
+  const changes = items.map(item => ({ item, next: nextVisibility })).filter(row => !sameVisibilityState(row.item.visibility, row.next));
   const save = () => {
-    if (invalid) return;
     changes.forEach(({ item, next }) => store.recordChange({ entity_type: "pathway", entity_id: item.id, field: "visibility", prior_value: item.visibility, new_value: next, operation: "update", note: note.trim() || null }));
     toast.success(`${changes.length} pathway${changes.length === 1 ? "" : "s"} updated`);
     onClose(); afterSave?.();
   };
   const single = items.length === 1 ? items[0] : null;
-  return <Dialog open={ids !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="max-h-[90vh] overflow-y-auto"><DialogHeader><DialogTitle>Set visibility{ids ? ` · ${ids.length === 1 ? ids[0] : `${ids.length} pathways`}` : ""}</DialogTitle><DialogDescription>Pathways are Visible by default to every organisation that purchased the topic. Change that default, or set Visible, Locked or Hidden per organisation.</DialogDescription></DialogHeader><div className="space-y-4">
-    {single && <div className="space-y-2 rounded-md border p-3"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Current state</Label><div className="flex items-center gap-2 text-xs"><VisibilityChip state={single.visibility.default} /><span className="text-muted-foreground">{visibilitySummary(single)}</span></div>{Object.entries(single.visibility.overrides).map(([org, value]) => <div key={org} className="flex items-center gap-2 text-[10px]">{org}<VisibilityChip state={value} /></div>)}</div>}
-    <div className="space-y-2"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Scope</Label><RadioGroup value={scope} onValueChange={next => setScope(next as "all" | "selected")}><label className="flex items-center gap-2 text-xs"><RadioGroupItem value="all" />All organisations with this topic</label><label className="flex items-center gap-2 text-xs"><RadioGroupItem value="selected" />Selected organisations</label></RadioGroup>{scope === "selected" && <div className="grid grid-cols-1 gap-1 rounded-md border p-2 sm:grid-cols-2">{organisations().map(org => <label key={org} className="flex items-center gap-2 text-[10px]"><Checkbox checked={orgs.includes(org)} onCheckedChange={checked => setOrgs(list => checked ? [...list, org] : list.filter(item => item !== org))} />{org} ({organisationCounts[org] ?? 0} users)</label>)}</div>}{invalid && <p className="text-xs text-destructive">Select at least one organisation</p>}</div>
-    <div className="space-y-2"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">State</Label><RadioGroup value={state} onValueChange={next => setState(next as VisibilityState)} className="space-y-2">{VISIBILITY_STATES.map(item => <label key={item} className="flex items-start gap-2 rounded-md border p-2 text-xs"><RadioGroupItem value={item} className="mt-0.5" /><span><b>{VISIBILITY_LABELS[item]}</b>: <span className="text-muted-foreground">{VISIBILITY_MEANINGS[item]}</span></span></label>)}</RadioGroup></div>
-    {scope === "all" && <label className="flex items-center gap-2 text-xs"><Checkbox checked={clearOverrides} onCheckedChange={checked => setClearOverrides(checked === true)} />Also clear organisation overrides</label>}
-    {items.length > 1 && scope === "selected" && <div><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Organisation list mode</Label><RadioGroup value={mode} onValueChange={next => setMode(next as VisibilityMerge)} className="mt-2 grid gap-2 sm:grid-cols-3">{[["replace", "Replace"], ["add", "Add organisations"], ["remove", "Remove organisations"]].map(([key, label]) => <label key={key} className="flex items-center gap-2 rounded-md border p-2 text-xs"><RadioGroupItem value={key} />{label}</label>)}</RadioGroup></div>}
+  return <Dialog open={ids !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"><DialogHeader><DialogTitle>Set visibility{ids ? ` · ${ids.length === 1 ? ids[0] : `${ids.length} pathways`}` : ""}</DialogTitle><DialogDescription>Choose a separate state for every organisation that purchased this topic.</DialogDescription></DialogHeader><div className="space-y-4">
+    {single && <div className="flex items-center gap-2 rounded-md border p-3 text-xs"><span className="text-muted-foreground">Current:</span><span>{visibilitySummary(single)}</span></div>}
+    <div className="overflow-hidden rounded-md border"><div className="grid grid-cols-[minmax(0,1fr)_11rem] gap-3 border-b bg-muted/40 px-3 py-2"><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Organisation</Label><Label className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Visibility</Label></div>{organisations().map(org => <div key={org} className="grid grid-cols-[minmax(0,1fr)_11rem] items-center gap-3 border-b px-3 py-2.5 last:border-b-0"><div className="min-w-0"><p className="truncate text-xs font-medium" title={org}>{org}</p><p className="text-[10px] text-muted-foreground">{organisationCounts[org] ?? 0} users</p></div><Select value={organisationStates[org] ?? "visible"} onValueChange={value => setOrganisationStates(current => ({ ...current, [org]: value as VisibilityState }))}><SelectTrigger aria-label={`Visibility for ${org}`} className="h-8 w-full text-xs"><SelectValue /></SelectTrigger><SelectContent>{VISIBILITY_STATES.map(value => <SelectItem key={value} value={value}>{VISIBILITY_LABELS[value]}</SelectItem>)}</SelectContent></Select></div>)}</div>
+    <div className="grid gap-1 text-[10px] text-muted-foreground sm:grid-cols-3">{VISIBILITY_STATES.map(value => <p key={value}><strong className="text-foreground">{VISIBILITY_LABELS[value]}:</strong> {VISIBILITY_MEANINGS[value]}</p>)}</div>
     <Textarea value={note} onChange={event => setNote(event.target.value)} placeholder="Optional note" className="text-xs" />
     <p className="text-xs text-muted-foreground">{items.length} selected · {changes.length} will change</p>
-  </div><DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={invalid || changes.length === 0} onClick={save}>Set visibility</Button></DialogFooter></DialogContent></Dialog>;
+  </div><DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={changes.length === 0} onClick={save}>Set visibility</Button></DialogFooter></DialogContent></Dialog>;
 }
 
 function BulkSetVisibilityDialog({ open, pathways, onClose }: { open: boolean; pathways: Pathway[]; onClose: () => void }) { const [dimension, setDimension] = useState<NodeKey>("feedstock"); const values = [...new Set(pathways.map(item => item[dimension]))].sort(); const [value, setValue] = useState(""); const [ids, setIds] = useState<string[] | null>(null); const [expanded, setExpanded] = useState(false); useEffect(() => { setValue(values[0] ?? ""); }, [dimension]); useEffect(() => { if (!open) setIds(null); }, [open]); const matches = pathways.filter(item => item[dimension] === value); if (ids) return <SetVisibilityDialog ids={ids} pathways={pathways} onClose={() => { setIds(null); onClose(); }} />; return <Dialog open={open} onOpenChange={next => { if (!next) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Bulk set visibility</DialogTitle><DialogDescription>Set visibility for pathways matching one node value.</DialogDescription></DialogHeader><div className="grid grid-cols-2 gap-3"><SimpleSelect value={dimension} onChange={next => setDimension(next as NodeKey)} label="Dimension" className="w-full">{(Object.keys(NODE_LABELS) as NodeKey[]).map(key => <SelectItem key={key} value={key}>{NODE_LABELS[key]}</SelectItem>)}</SimpleSelect><SimpleSelect value={value} onChange={setValue} label="Value" className="w-full">{values.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SimpleSelect></div><p className="text-xs text-muted-foreground">{matches.length} pathways match · visibility changes preview after selection</p><Collapsible open={expanded} onOpenChange={setExpanded}><CollapsibleTrigger asChild><Button variant="ghost" size="sm" className="px-0 text-xs"><ChevronRight className={cn("mr-1 h-3.5 w-3.5 transition-transform", expanded && "rotate-90")} />Matching pathways</Button></CollapsibleTrigger><CollapsibleContent className="max-h-48 space-y-1 overflow-y-auto rounded-md border p-2">{matches.map(item => <div key={item.id} className="flex justify-between gap-3 text-xs"><code>{item.id}</code><span>{visibilitySummary(item)}</span></div>)}</CollapsibleContent></Collapsible><DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button disabled={!matches.length} onClick={() => setIds(matches.map(item => item.id))}>Continue</Button></DialogFooter></DialogContent></Dialog>; }
