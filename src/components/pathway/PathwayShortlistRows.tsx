@@ -57,7 +57,7 @@ function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
 }
 
 const COLS =
-  "grid-cols-[24px_32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_150px]";
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
