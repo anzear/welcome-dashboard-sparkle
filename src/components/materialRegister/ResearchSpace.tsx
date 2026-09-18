@@ -38,6 +38,7 @@ import {
   categoryLabel,
   readValidationComments,
   readPathwayValidationStatus,
+  seedPathwayValidationStatuses,
   shortlistIdToPathwayIndex,
   type PathwayValidationStatus,
 } from "@/lib/pathwayValidationComments";
