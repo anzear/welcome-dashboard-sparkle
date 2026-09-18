@@ -23,7 +23,6 @@ import {
   NOT_FIT_STATUS,
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
-  countConfirmedFunctions,
   functionStatus,
   finalStatus,
   isNotStartedStatus,
@@ -85,15 +84,18 @@ function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFuncti
 function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
   const checklist = useValidationChecklist(topic, pathwayId);
   const active = inEvaluationFunctions(checklist);
-  if (active.length === 0) return null;
+  if (active.length === 0) {
+    return <span className="text-[9px] text-muted-foreground">—</span>;
+  }
   return (
     <span className="flex flex-wrap items-center gap-1">
       {active.map((fn) => (
         <span
           key={fn}
           title={`${fn} is mid-review in the pathway Validation card (${functionStatus(checklist, fn)})`}
-          className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600"
+          className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600"
         >
+          <span className="h-1 w-1 rounded-full bg-amber-500" />
           {fn} evaluation
         </span>
       ))}
@@ -102,30 +104,9 @@ function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayI
 }
 
 const COLS =
-  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_76px_150px]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,200px)]";
 
 /**
- * Same source of truth as the pathway Validation card: a function counts only
- * when both of its sub-items are ticked. Display matches the Workspace bar.
- */
-function ValidationProgress({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
-  const total = VALIDATION_FUNCTIONS.length;
-  const confirmed = countConfirmedFunctions(useValidationChecklist(topic, pathwayId));
-
-  const percent = Math.round((confirmed / total) * 100);
-  return (
-    <div
-      className="space-y-1"
-      title={`${confirmed} of ${total} functions confirmed in the pathway Validation card`}
-    >
-      <div className="h-1 w-full overflow-hidden rounded-full bg-muted">
-        <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
-      </div>
-      <div className="text-[9px] tabular-nums text-muted-foreground text-center">
-        {confirmed}/{total} · {percent}%
-      </div>
-    </div>
-  );
 }
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
@@ -331,7 +312,6 @@ export function PathwayShortlistRows({
           <div className="flex items-center justify-center">
             <StatusBadge trl={p.trl} />
           </div>
-          <ValidationProgress topic={topic} pathwayId={p.id} />
           <div className="flex items-center justify-between gap-2">
             <EvaluationStatusBadges topic={topic} pathwayId={p.id} />
             <div className="flex items-center gap-2" data-row-control>
