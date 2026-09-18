@@ -371,6 +371,33 @@ const ShortlistCard = ({ label, count, total, children, headerAction }: { label:
 
 
 
+const PATHWAY_ORDER_KEY = "vcg.workspace.pathwayPriorityOrder";
+
+/** Reorders the shortlist to the stored priority order; unknown/new ids keep their place at the end. */
+function applyStoredPathwayOrder(pathways: ShortlistPathway[]): ShortlistPathway[] {
+  try {
+    const raw = localStorage.getItem(PATHWAY_ORDER_KEY);
+    if (!raw) return pathways;
+    const order: string[] = JSON.parse(raw);
+    if (!Array.isArray(order)) return pathways;
+    const ranked = order.filter((id) => pathways.some((pathway) => pathway.id === id));
+    return [
+      ...ranked.map((id) => pathways.find((pathway) => pathway.id === id)!),
+      ...pathways.filter((pathway) => !ranked.includes(pathway.id)),
+    ];
+  } catch {
+    return pathways;
+  }
+}
+
+function savePathwayOrder(orderedIds: string[]) {
+  try {
+    localStorage.setItem(PATHWAY_ORDER_KEY, JSON.stringify(orderedIds));
+  } catch {
+    /* storage unavailable — order stays session-only */
+  }
+}
+
 const ResearchSpace: React.FC = () => {
   const { allMaterials, openId } = useRegister();
   const material = allMaterials.find((item) => item.material_id === openId) ?? null;
