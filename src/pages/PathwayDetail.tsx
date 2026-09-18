@@ -651,6 +651,12 @@ const PathwayDetail = () => {
                     >
                       Validation Space
                     </button>
+                    <button
+                      onClick={() => setEvaluationTab('shortlist')}
+                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'shortlist' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                    >
+                      Shortlisted Items
+                    </button>
                   </div>
                 </div>
 
