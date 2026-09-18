@@ -969,6 +969,14 @@ export const MaterialBrief: React.FC<{
       />
 
       {bodyReplacement ?? (<>
+      <section className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+        <div className="border-b border-border/70 pb-1">
+          <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
+          <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
+        </div>
+        <CompanyDataDetails material={m} />
+      </section>
+
       {/* Decision bar — the interactive layer above the reference material */}
       <div className="mt-4 overflow-hidden rounded-xl border border-border/70 bg-card shadow-sm">
 
