@@ -353,7 +353,7 @@ const MultiSelectChips = ({
 
 
 /** Always expanded — shortlist sections never collapse. */
-const ShortlistCard = ({ label, count, children, headerAction }: { label: string; count: number; children: React.ReactNode; headerAction?: React.ReactNode }) => (
+const ShortlistCard = ({ label, count, total, children, headerAction }: { label: string; count: number; /** When given, the badge reads "count of total". */ total?: number; children: React.ReactNode; headerAction?: React.ReactNode }) => (
   <div className="overflow-hidden rounded-lg border border-border bg-card">
     <div className="flex items-center justify-between px-4 py-3 pr-4">
       <span className="flex items-center gap-2 text-xs">
