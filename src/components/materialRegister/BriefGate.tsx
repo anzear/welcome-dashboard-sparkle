@@ -358,34 +358,56 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       </div>
 
-      {/* Function progression, read from the pathway validation checkboxes. */}
-      {validation && (
+      {/*
+        Function progression and checklist. Visible only under "In evaluation";
+        hidden entirely for Not started, Material integrated and Parked. Both
+        read and write the same store as the pathway Validation card.
+      */}
+      {validation && evaluating && (
+        <div className="space-y-2 rounded-md border border-border">
+          <div className="space-y-1 px-3 pt-2">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Function progression
+              </span>
+              <span className="tabular-nums text-[11px] font-semibold text-foreground">{progressPercent}%</span>
+            </div>
+            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-foreground/70 transition-all"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <p className="text-[10px] leading-snug text-muted-foreground">
+              {confirmed} of {total} functions confirmed on {validation.pathwayLabel}. A function counts only when
+              both of its sub-items are ticked.
+            </p>
+          </div>
+          <div className="border-t border-border">
+            <ValidationChecklist
+              pathwayId={validation.pathwayId}
+              topic={validation.topic}
+              idPrefix="gate-validation"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Material integrated is a manual display override: bar only, at 100%. */}
+      {validation && integrated && (
         <div className="space-y-1">
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
               Function progression
             </span>
-            <span className="tabular-nums text-[11px] font-semibold text-foreground">
-              {progressPercent}%
-            </span>
+            <span className="tabular-nums text-[11px] font-semibold text-foreground">100%</span>
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className={cn("h-full rounded-full transition-all", integrated ? "bg-emerald-600" : "bg-foreground/70")}
-              style={{ width: `${progressPercent}%` }}
-            />
+            <div className="h-full w-full rounded-full bg-emerald-600" />
           </div>
           <p className="text-[10px] leading-snug text-muted-foreground">
-            {integrated ? (
-              <>
-                Forced to 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. Checkboxes unchanged:{" "}
-                {validation.confirmed} of {validation.total} confirmed on {validation.pathwayLabel}.
-              </>
-            ) : (
-              <>
-                {validation.confirmed} of {validation.total} functions confirmed on {validation.pathwayLabel}.
-              </>
-            )}
+            Shown at 100% — status set to {JOURNEY_STATUS_LABEL.adopted}. The checklist is untouched underneath:{" "}
+            {confirmed} of {total} functions confirmed on {validation.pathwayLabel}.
           </p>
         </div>
       )}
