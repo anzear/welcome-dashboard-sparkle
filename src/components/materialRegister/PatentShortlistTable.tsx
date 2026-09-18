@@ -72,7 +72,7 @@ export function PatentShortlistTable({
         <Columns />
         <TableHeader className="bg-muted/20">
           <TableRow className="border-b border-border">
-            <TableHead className={HEAD_CLS}>Patents and applications</TableHead>
+            <TableHead className={HEAD_CLS}>Patents</TableHead>
             <TableHead className={HEAD_CLS}>Filed date</TableHead>
             <TableHead className={HEAD_CLS}>Granted date</TableHead>
             <TableHead className={HEAD_CLS}>Status</TableHead>
