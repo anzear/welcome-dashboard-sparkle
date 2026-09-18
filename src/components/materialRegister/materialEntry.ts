@@ -191,6 +191,69 @@ export function blankMaterial(
   };
 }
 
+/**
+ * Prototype seed: a fully worked example profile so a material auto-created
+ * from the value chain (e.g. Lactic Acid) reads as in use rather than blank.
+ */
+export function prototypeBriefSeed(name: string): Omit<Material, "material_id"> {
+  const entered = provenanceOf("entered", "S. Rautio", "2026-09-08");
+  const computed = provenanceOf("computed", "VCG", "2026-09-08");
+  const annual_volume = 1850;
+  const unit_price = 1.68;
+  const ghg_emission_factor = 2.2;
+  return {
+    ...blankMaterial(null, "existing"),
+    name,
+    cas_number: "79-33-4",
+    material_class: "Organic acid",
+    customer_material_ids: ["MAT-0142", "SKU-11840"],
+    tags: ["Bio-based", "Fermentation-derived"],
+    product_lines: ["Persil", "Somat"],
+    application_categories: ["Bakery preservative", "Beverages", "Personal care"],
+    application_areas: ["Food preservation", "pH regulation", "PLA bioplastics"],
+    annual_volume,
+    unit_price,
+    annual_spend: computeSpend(annual_volume, unit_price),
+    ghg_emission_factor,
+    ghg_contribution: computeGhg(annual_volume, ghg_emission_factor),
+    ghg_boundary: "Cradle-to-gate (A1-A3)",
+    ghg_data_basis: "Supplier-specific",
+    performance_targets_document: { filename: "LacticAcid_TechFit_Targets_2026.pdf", size: "1.2 MB" },
+    regulatory_registrations: ["EU REACH", "US TSCA inventory listing"],
+    requirements: {
+      target_volume: 2200,
+      price_ceiling: 1.85,
+      ghg_reduction_target: 35,
+      required_certifications: ["ISCC PLUS"],
+      earliest_need_date: "2026-10-01",
+      notes: "Move the EU beverage line to a bio-based source before Q4.",
+    },
+    journey_status: "in_evaluation",
+    owner: "S. Rautio",
+    priority_period: "H2 2026",
+    last_status_change_date: "2026-09-08",
+    last_status_user: "S. Rautio",
+    provenance: {
+      name: entered,
+      cas_number: entered,
+      material_class: computed,
+      customer_material_ids: entered,
+      product_lines: entered,
+      tags: entered,
+      application_categories: entered,
+      application_areas: entered,
+      annual_volume: entered,
+      unit_price: entered,
+      annual_spend: computed,
+      ghg_emission_factor: entered,
+      ghg_contribution: computed,
+      ghg_boundary: entered,
+      ghg_data_basis: entered,
+      owner: entered,
+    },
+  };
+}
+
 /* ---------------------------------------------------------------- CSV support */
 
 export interface CsvColumn {
