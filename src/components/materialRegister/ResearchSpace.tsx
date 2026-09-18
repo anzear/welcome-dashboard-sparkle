@@ -359,7 +359,9 @@ const ShortlistCard = ({ label, count, total, children, headerAction }: { label:
       <span className="flex items-center gap-2 text-xs">
         <Bookmark className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
         <span className="font-semibold text-foreground">{label}</span>
-        <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px]">{count}</Badge>
+        <Badge variant="secondary" className="h-5 min-w-5 justify-center px-1.5 text-[10px] tabular-nums">
+          {total === undefined ? count : `${count} of ${total}`}
+        </Badge>
       </span>
       {headerAction}
     </div>
