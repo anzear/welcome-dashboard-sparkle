@@ -708,13 +708,15 @@ export const MaterialBrief: React.FC<{
             >
               Export
             </Button>
-            <Button
-              size="sm"
-              className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
-              onClick={() => setCoverageOpen(true)}
-            >
-              Request analysis
-            </Button>
+            {m.journey_status === "not_started" && (
+              <Button
+                size="sm"
+                className="h-7 bg-foreground text-xs text-background hover:bg-foreground/90"
+                onClick={() => setCoverageOpen(true)}
+              >
+                Request analysis
+              </Button>
+            )}
           </div>
         </div>
 
