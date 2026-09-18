@@ -71,10 +71,6 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
   }, [material, materialName, addMaterials]);
 
 
-  const owners = useMemo(
-    () => Array.from(new Set(allMaterials.map((m) => m.owner).filter(Boolean) as string[])).sort(),
-    [allMaterials],
-  );
   const periods = useMemo(
     () =>
       Array.from(new Set(allMaterials.map((m) => m.priority_period).filter(Boolean) as string[])).sort(),
