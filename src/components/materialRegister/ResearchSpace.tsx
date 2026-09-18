@@ -976,6 +976,7 @@ type Row = {
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
+            onReorder={reorderPathways}
             grouped={pathwaysGrouped}
           />
         </ShortlistCard>
