@@ -714,7 +714,12 @@ type Row = {
       <div className="flex items-stretch divide-x divide-border rounded-lg border border-border/70 bg-card px-4 py-2 shadow-sm">
         <div className="flex-1 pr-4">
           <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Gate status</div>
-          <div className={cn("mt-0.5 text-sm font-semibold", material && material.journey_status !== "not_started" ? "text-foreground" : "text-muted-foreground")}>
+          <div
+            className={cn(
+              "mt-0.5 inline-flex h-8 items-center rounded-md border border-input bg-background px-3 text-xs font-medium",
+              material && material.journey_status !== "not_started" ? "text-foreground" : "text-muted-foreground",
+            )}
+          >
             {material ? JOURNEY_STATUS_LABEL[material.journey_status] : "Not started"}
           </div>
         </div>
