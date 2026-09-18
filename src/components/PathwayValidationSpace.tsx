@@ -132,35 +132,8 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
         </div>
       </div>
 
-      {/* New comment */}
-      <div className="rounded-md border border-border bg-card p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">New comment</span>
-        </div>
-        <Textarea
-          value={draftText}
-          onChange={e => setDraftText(e.target.value)}
-          placeholder="Add your comment…"
-          className="text-xs min-h-[64px]"
-        />
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">Tag</span>
-            <Select value={draftCategory} onValueChange={setDraftCategory}>
-              <SelectTrigger className="h-7 text-xs w-[250px]"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button size="sm" onClick={addComment} disabled={!draftText.trim()} className="h-7 gap-1 text-xs">
-            <Send className="w-3 h-3" /> Post comment
-          </Button>
-        </div>
-      </div>
-
       {/* Filters */}
-      <div className="mt-3 flex flex-wrap items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           onClick={() => setFilter('all')}
           className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors ${filter === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
@@ -181,7 +154,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
       </div>
 
       {/* Comment list */}
-      <div className="mt-2 flex-1 min-h-0 overflow-y-auto pr-1">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {visible.length === 0 ? (
           <div className="rounded-md border border-dashed border-border py-8 flex flex-col items-center justify-center text-center">
             <MessageSquare className="w-4 h-4 text-muted-foreground" />
@@ -219,6 +192,33 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
             })}
           </div>
         )}
+      </div>
+
+      {/* New comment */}
+      <div className="rounded-md border border-border bg-card p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">New comment</span>
+        </div>
+        <Textarea
+          value={draftText}
+          onChange={e => setDraftText(e.target.value)}
+          placeholder="Add your comment…"
+          className="text-xs min-h-[64px]"
+        />
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">Tag</span>
+            <Select value={draftCategory} onValueChange={setDraftCategory}>
+              <SelectTrigger className="h-7 text-xs w-[250px]"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button size="sm" onClick={addComment} disabled={!draftText.trim()} className="h-7 gap-1 text-xs">
+            <Send className="w-3 h-3" /> Post comment
+          </Button>
+        </div>
       </div>
     </div>
   );
