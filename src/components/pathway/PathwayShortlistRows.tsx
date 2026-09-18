@@ -23,7 +23,11 @@ import {
   VALIDATION_CHANGED_EVENT,
   VALIDATION_FUNCTIONS,
   countConfirmedFunctions,
+  functionStatus,
+  finalStatus,
   readValidationChecklist,
+  type ValidationChecklist,
+  type ValidationFunction,
 } from "@/lib/pathwayValidationChecklist";
 
 export type ShortlistPathway = {
@@ -43,29 +47,49 @@ export type ShortlistPathway = {
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
-export type ValidationStatus =
-  | "Not evaluated"
-  | "Lab testing"
-  | "Piloting"
-  | "Integrated"
-  | "Parked";
+/** Live-reads the pathway's validation checklist, re-rendering on every change. */
+function useValidationChecklist(topic: string | undefined, pathwayId: string): ValidationChecklist {
+  const [checklist, setChecklist] = useState(() => readValidationChecklist(topic, pathwayId));
+  useEffect(() => {
+    const sync = () => setChecklist(readValidationChecklist(topic, pathwayId));
+    sync();
+    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [topic, pathwayId]);
+  return checklist;
+}
 
-const VALIDATION_STATUS_CLS: Record<ValidationStatus, string> = {
-  Integrated: "bg-emerald-100 text-emerald-700 border-emerald-300",
-  Piloting: "bg-sky-100 text-sky-700 border-sky-300",
-  "Lab testing": "bg-amber-100 text-amber-700 border-amber-300",
-  Parked: "bg-red-100 text-red-700 border-red-300",
-  "Not evaluated": "bg-muted/60 text-muted-foreground border-border",
-};
+/**
+ * Pathway status derived from the Validation checklist: each function that is
+ * past "To do" but not yet at its final stage renders an "<fn> evaluation"
+ * pill. When no function is in progress, no status is shown.
+ */
+function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFunction[] {
+  return VALIDATION_FUNCTIONS.filter((fn) => {
+    const status = functionStatus(checklist, fn);
+    return status !== "To do" && status !== finalStatus(fn);
+  });
+}
 
-/** Mirrors the pathway status set in the pathway's Validation Space. */
-function ValidationStatusBadge({ status }: { status: ValidationStatus }) {
+function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
+  const checklist = useValidationChecklist(topic, pathwayId);
+  const active = inEvaluationFunctions(checklist);
+  if (active.length === 0) return null;
   return (
-    <span
-      title="Pathway status set in the Validation Space"
-      className={`inline-flex items-center rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${VALIDATION_STATUS_CLS[status]}`}
-    >
-      {status}
+    <span className="flex flex-wrap items-center gap-1">
+      {active.map((fn) => (
+        <span
+          key={fn}
+          title={`${fn} is mid-review in the pathway Validation card (${functionStatus(checklist, fn)})`}
+          className="inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-blue-600"
+        >
+          {fn} evaluation
+        </span>
+      ))}
     </span>
   );
 }
@@ -79,20 +103,7 @@ const COLS =
  */
 function ValidationProgress({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
   const total = VALIDATION_FUNCTIONS.length;
-  const [confirmed, setConfirmed] = useState(() =>
-    countConfirmedFunctions(readValidationChecklist(topic, pathwayId)),
-  );
-
-  useEffect(() => {
-    const sync = () => setConfirmed(countConfirmedFunctions(readValidationChecklist(topic, pathwayId)));
-    sync();
-    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, [topic, pathwayId]);
+  const confirmed = countConfirmedFunctions(useValidationChecklist(topic, pathwayId));
 
   const percent = Math.round((confirmed / total) * 100);
   return (
@@ -174,8 +185,6 @@ type Props = {
   currentUser: string;
   /** Grouped is a secondary view the user opts into from the card header. Flat is the default. */
   grouped: boolean;
-  /** Validation Space status per pathway id; absent id renders as Not evaluated. */
-  statuses?: Record<string, ValidationStatus>;
   /** Drag-to-reorder: row order is the priority order, top row highest. */
   onReorder?: (orderedIds: string[]) => void;
   /** Landscape context used to link each row to its pathway profile. */
@@ -191,7 +200,6 @@ export function PathwayShortlistRows({
   onRemove,
   currentUser,
   grouped,
-  statuses,
   onReorder,
   category,
   topic,
@@ -313,7 +321,7 @@ export function PathwayShortlistRows({
           </div>
           <ValidationProgress topic={topic} pathwayId={p.id} />
           <div className="flex items-center justify-between gap-2">
-            <ValidationStatusBadge status={statuses?.[p.id] ?? "Not evaluated"} />
+            <EvaluationStatusBadges topic={topic} pathwayId={p.id} />
             <div className="flex items-center gap-2" data-row-control>
               <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
               <DocumentAttachControl

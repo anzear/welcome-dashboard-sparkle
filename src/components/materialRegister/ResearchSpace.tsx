@@ -37,10 +37,8 @@ import { useRegister } from "@/components/materialRegister/registerStore";
 import {
   categoryLabel,
   readValidationComments,
-  readPathwayValidationStatus,
   seedPathwayValidationStatuses,
   shortlistIdToPathwayIndex,
-  type PathwayValidationStatus,
 } from "@/lib/pathwayValidationComments";
 
 
@@ -397,17 +395,6 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
     return merged;
   }, [pathwayNotes, shortlistPathways, material?.name, commentTick]);
 
-  /** Status each shortlisted pathway got in its Validation Space. */
-  const pathwayStatuses = useMemo(() => {
-    void commentTick;
-    const map: Record<string, PathwayValidationStatus> = {};
-    shortlistPathways.forEach((pathway) => {
-      const index = shortlistIdToPathwayIndex(pathway.id);
-      if (index === null) return;
-      map[pathway.id] = readPathwayValidationStatus(material?.name, index);
-    });
-    return map;
-  }, [shortlistPathways, material?.name, commentTick]);
 
   /**
    * Function progression for the Status card. Read from the primary (top
@@ -840,7 +827,6 @@ type Row = {
           <PathwayShortlistRows
             pathways={shortlistPathways}
             notes={mergedPathwayNotes}
-            statuses={pathwayStatuses}
             currentUser={CURRENT_REVIEWER}
             onAddNote={addPathwayNote}
             onRemove={removePathway}
