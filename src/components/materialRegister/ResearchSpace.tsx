@@ -947,6 +947,15 @@ type Row = {
         </SheetContent>
       </Sheet>
 
+      <WorkSpaceDocumentsCard
+        currentUser={CURRENT_REVIEWER}
+        seed={[
+          { id: "ws-doc-1", name: "Lactic-acid-market-scan-2026.pdf", uploader: "K. Brandt", date: "2 Sept 2026" },
+          { id: "ws-doc-2", name: "Internal-substitution-brief.docx", uploader: "A. Novak", date: "8 Sept 2026" },
+          { id: "ws-doc-3", name: "Supplier-longlist.xlsx", uploader: "M. Feld", date: "14 Sept 2026" },
+        ]}
+      />
+
       <section className="space-y-3">
         <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
 
