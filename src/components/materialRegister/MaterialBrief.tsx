@@ -30,6 +30,7 @@ import { nf, StatusPill } from "@/components/materialRegister/primitives";
 import PositionBlock from "@/components/materialRegister/PositionBlock";
 import MaterialHistory from "@/components/materialRegister/MaterialHistory";
 import BriefAssessment from "@/components/materialRegister/BriefAssessment";
+import BriefGate from "@/components/materialRegister/BriefGate";
 import BriefLinks from "@/components/materialRegister/BriefLinks";
 import ExportDecisionDialog from "@/components/materialRegister/ExportDecisionDialog";
 import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialRegister/gate";
@@ -1101,6 +1102,10 @@ export const MaterialBrief: React.FC<{
       {/* Body — 2/3 main (Gate, Assessment) + 1/3 comments, matched heights. */}
       <div className="mt-4 grid items-stretch gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
+          <Section title="Status" note="Set by the owner.">
+            <BriefGate material={m} />
+          </Section>
+
           <Section
             title="Drivers"
             note="Evaluated together as a team — every judgement stands on its own, never merged into a single score."
