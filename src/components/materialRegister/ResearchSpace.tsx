@@ -625,20 +625,20 @@ const ResearchSpace: React.FC = () => {
   return (
     <div className="mt-5 space-y-6">
       {material && (
-        <section className="space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
-          <div className="border-b border-border/70 pb-1.5">
+        <section className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+          <div className="border-b border-border/70 pb-1">
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Status</h2>
-            <p className="pt-1 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
+            <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
           </div>
           <BriefGate material={material} />
         </section>
       )}
 
       {material && (
-        <section className="space-y-3 rounded-xl border border-border/70 bg-card p-4 shadow-sm">
-          <div className="border-b border-border/70 pb-1.5">
+        <section className="space-y-2 rounded-xl border border-border/70 bg-card p-3 shadow-sm">
+          <div className="border-b border-border/70 pb-1">
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Company data</h2>
-            <p className="pt-1 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
+            <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Spend, technical fit, and regulatory requirements.</p>
           </div>
           <CompanyDataDetails material={material} />
         </section>
