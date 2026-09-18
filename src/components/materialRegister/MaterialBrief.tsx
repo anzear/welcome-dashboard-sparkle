@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   INTELLIGENCE_STATUS_LABEL,
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type FieldProvenance,
   type JourneyStatus,
   type Material,
@@ -54,7 +55,7 @@ import {
   useRegister,
 } from "@/components/materialRegister/registerStore";
 
-const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
+const STATUS_ORDER = JOURNEY_STATUSES;
 const UNASSIGNED = "__unassigned__";
 const CURRENT_REVIEWER = "A. Weber";
 

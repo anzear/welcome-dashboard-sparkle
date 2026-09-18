@@ -110,7 +110,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
             <SelectValue />
           </SelectTrigger>
           <SelectContent className="z-50 bg-popover">
-            {(Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((status) => (
+            {JOURNEY_STATUSES.map((status) => (
               <SelectItem key={status} value={status} className="text-xs">
                 {JOURNEY_STATUS_LABEL[status]}
               </SelectItem>

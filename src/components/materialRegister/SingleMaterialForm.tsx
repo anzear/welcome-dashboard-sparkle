@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import {
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type EntryType,
   type JourneyStatus,
   type MaterialRole,
@@ -44,7 +45,7 @@ import {
 } from "@/components/materialRegister/materialEntry";
 import { X } from "lucide-react";
 
-const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
+const STATUS_ORDER = JOURNEY_STATUSES;
 
 interface Props {
   onDone: (savedName: string, again: boolean) => void;

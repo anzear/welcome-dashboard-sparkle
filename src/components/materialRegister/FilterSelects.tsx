@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 import {
   JOURNEY_STATUS_LABEL,
+  JOURNEY_STATUSES,
   type JourneyStatus,
 } from "@/types/materialPrioritisation";
 import MultiSelectFilter from "@/components/materialRegister/MultiSelectFilter";
@@ -51,7 +52,7 @@ const FilterSelects: React.FC<{
     const uniq = (vals: (string | null)[]) =>
       [...new Set(vals.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b));
     return {
-      statuses: (Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[]).map((s) => ({
+      statuses: JOURNEY_STATUSES.map((s) => ({
         value: s,
         label: JOURNEY_STATUS_LABEL[s],
       })),
