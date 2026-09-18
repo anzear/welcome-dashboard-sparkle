@@ -56,6 +56,7 @@ import {
 
 const STATUS_ORDER = Object.keys(JOURNEY_STATUS_LABEL) as JourneyStatus[];
 const UNASSIGNED = "__unassigned__";
+const CURRENT_REVIEWER = "A. Weber";
 
 /* ------------------------------------------------------------------ type scale
  * Three data tiers only: value (text-sm mono tabular), label (text-[11px] muted),
