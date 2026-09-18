@@ -140,7 +140,7 @@ export function PaperShortlistTable({
             <SheetTitle className="text-sm">{teamPanel?.title}</SheetTitle>
           </SheetHeader>
           <p className="mt-1 text-[10px] text-muted-foreground">{teamPanel?.authors.join(", ")}</p>
-          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team comments · read only</p>
+          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team notes · read only</p>
           <div className="mt-3 space-y-2">
             {panelNotes.map((note) => (
               <div key={note.id} className="rounded-md border border-border/60 bg-muted/40 px-3 py-2">
@@ -153,7 +153,7 @@ export function PaperShortlistTable({
             ))}
           </div>
           <p className="mt-4 text-[10px] text-muted-foreground">
-            Signed in as {currentUser}. Your own comment stays editable in the row.
+            Signed in as {currentUser}. Your own note stays editable in the row.
           </p>
         </SheetContent>
       </Sheet>
