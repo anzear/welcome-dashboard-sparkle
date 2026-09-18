@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 export type PatentNote = { id: string; author: string; timestamp: string; text: string };
@@ -32,6 +33,7 @@ const Columns = () => (
     <col style={{ width: "80px" }} />
     <col style={{ width: "88px" }} />
     <col style={{ width: "220px" }} />
+    <col style={{ width: "44px" }} />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />
   </colgroup>
@@ -48,6 +50,19 @@ export function PatentShortlistTable({
 }) {
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistPatent | null>(null);
+  /** Mock example attachments so the layout can be reviewed. */
+  const { documents, addDocuments, removeDocument } = useItemDocuments(
+    mockSeedByIndex(
+      patents.map((patent) => patent.id),
+      {
+        0: [{ name: "Claim-chart-EP3421.pdf", uploader: "K. Brandt", date: "8 Sept 2026" }],
+        1: [
+          { name: "FTO-opinion-draft.docx", uploader: "L. Weiss", date: "1 Sept 2026" },
+          { name: "Family-members-export.xlsx", uploader: "A. Novak", date: "9 Sept 2026" },
+        ],
+      },
+    ),
+  );
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
 
@@ -63,6 +78,7 @@ export function PatentShortlistTable({
             <TableHead className={HEAD_CLS}>Status</TableHead>
             <TableHead className={HEAD_CLS}>Jurisdiction</TableHead>
             <TableHead className={HEAD_CLS}>Comments</TableHead>
+            <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
           </TableRow>
@@ -99,6 +115,14 @@ export function PatentShortlistTable({
                       </button>
                     )}
                   </div>
+                </TableCell>
+                <TableCell className="py-2">
+                  <DocumentAttachControl
+                    itemLabel={patent.title}
+                    documents={documents[patent.id] ?? []}
+                    onUpload={(names) => addDocuments(patent.id, names, currentUser)}
+                    onRemove={(documentId) => removeDocument(patent.id, documentId)}
+                  />
                 </TableCell>
                 <TableCell className="py-2 text-[10px] text-muted-foreground">{patent.savedBy}</TableCell>
                 <TableCell className="py-2 text-right">

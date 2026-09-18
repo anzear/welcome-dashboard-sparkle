@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,7 @@ const Columns = () => (
     <col style={{ width: "116px" }} />
     <col />
     <col style={{ width: "88px" }} />
+    <col style={{ width: "40px" }} />
     <col style={{ width: "84px" }} />
     <col style={{ width: "40px" }} />
   </colgroup>
@@ -110,6 +112,20 @@ export function CompanyShortlistTables({
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
   const [activeTab, setActiveTab] = useState(ROLE_TABS[0].value);
+  /** Mock example attachments so the layout can be reviewed. */
+  const { documents, addDocuments, removeDocument } = useItemDocuments(
+    mockSeedByIndex(
+      companies.map((company) => company.id),
+      {
+        0: [
+          { name: "NDA-signed-2026.pdf", uploader: "K. Brandt", date: "5 Sept 2026" },
+          { name: "Capacity-and-pricing.xlsx", uploader: "A. Novak", date: "12 Sept 2026" },
+        ],
+        1: [{ name: "Sample-spec-sheet.pdf", uploader: "M. Feld", date: "7 Sept 2026" }],
+        2: [{ name: "Offtake-term-sheet-draft.docx", uploader: "L. Weiss", date: "9 Sept 2026" }],
+      },
+    ),
+  );
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
   const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
@@ -145,6 +161,7 @@ export function CompanyShortlistTables({
             <TableHead className={HEAD_CLS}>Your rating</TableHead>
             <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS} />
+            <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
           </TableRow>
@@ -152,7 +169,7 @@ export function CompanyShortlistTables({
         <TableBody>
           {visibleRows.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={9} className="h-11 py-0 text-[10px] text-muted-foreground">
+              <TableCell colSpan={10} className="h-11 py-0 text-[10px] text-muted-foreground">
                 No companies shortlisted in this group yet.
               </TableCell>
             </TableRow>
@@ -211,6 +228,14 @@ export function CompanyShortlistTables({
                             {teamNoteCount} from team
                           </button>
                         )}
+                      </TableCell>
+                      <TableCell className="h-11 py-0">
+                        <DocumentAttachControl
+                          itemLabel={company.name}
+                          documents={documents[company.id] ?? []}
+                          onUpload={(names) => addDocuments(company.id, names, currentUser)}
+                          onRemove={(documentId) => removeDocument(company.id, documentId)}
+                        />
                       </TableCell>
                       <TableCell className="h-11 py-0 text-[10px] text-muted-foreground">{company.savedBy}</TableCell>
                       <TableCell className="h-11 py-0 text-right">
