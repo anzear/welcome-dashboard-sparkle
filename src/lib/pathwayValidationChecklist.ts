@@ -142,7 +142,7 @@ const migrate = (raw: unknown): ValidationChecklist => {
     if (stamps.length === 0) continue;
     const latest = stamps[stamps.length - 1];
     out[fn] = {
-      status: stamps.length >= 2 ? finalStatus(fn) : FUNCTION_STATUSES[fn][1],
+      status: stamps.length >= 2 ? finalStatus(fn) : FUNCTION_STATUSES[fn][2],
       by: latest.by,
       date: latest.date,
     };
