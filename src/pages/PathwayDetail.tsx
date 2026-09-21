@@ -431,7 +431,7 @@ const PathwayDetail = () => {
       type: 'technology',
       sections: [
         {
-          name: 'Feedstock name (i.e., corn starch)',
+          name: 'Feedstock name',
           type: 'feedstock',
           rows: [
             { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
@@ -439,7 +439,7 @@ const PathwayDetail = () => {
           ],
         },
         {
-          name: 'Product name (i.e., lactic acid)',
+          name: 'Product name',
           type: 'product',
           rows: [
             { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
