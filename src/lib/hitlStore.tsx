@@ -215,8 +215,8 @@ export interface Company extends CommonRecord {
   city: string | null;
   industry_sector: string | null;
   profile_fields: Record<string, string | number | null>;
-  role: CompanyRole;
-  role_nodes: string[];
+  roles: CompanyRole[];
+  role_nodes: CompanyRoleNodes;
   secondary_nodes: EvidenceNodeLists;
 
   status: ReviewStatus;
@@ -478,13 +478,12 @@ const rolePositions = {
   application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
-export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_nodes">, pathways: Pathway[]): string[] {
-  const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => nodeListMatches(company.role_nodes, pathway[position])).map(pathway => pathway.id);
+export function derivedCompanyPathwayIds(company: Pick<Company, "roles" | "role_nodes">, pathways: Pathway[]): string[] {
+  return pathways.filter(pathway => company.roles.some(role => nodeListMatches(cleanNodeList(company.role_nodes[role]), pathway[roleNodePosition(role)]))).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
-export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
-  const positions = allowedSecondaryPositions(company.role);
+export function computeFit(company: Pick<Company, "roles" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
+  const positions = allowedSecondaryPositions(company.roles);
   if (!positions.length) return null;
   const known = positions.filter(key => cleanNodeList(company.secondary_nodes[key]).length > 0);
   const matched = known.filter(key => nodeListMatches(company.secondary_nodes[key], pathway[key]));
