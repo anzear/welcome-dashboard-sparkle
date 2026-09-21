@@ -91,7 +91,7 @@ export function RecordHistorySheet() {
   const record = target ? store.getRecord(target.entity_type, target.entity_id) : null;
   const isEvidence = Boolean(target && (target.entity_type === "paper_match" || target.entity_type === "patent_match") && record && "nodes" in record);
   const evidence = isEvidence ? record as PaperPatentMatch : null;
-  const company = target?.entity_type === "company" && record && "role_node" in record ? record as Company : null;
+  const company = target?.entity_type === "company" && record && "roles" in record ? record as Company : null;
   const indicatorValue = target?.entity_type === "indicator_value" && record && "indicator_key" in record ? record as IndicatorValue : null;
   const relatedPathwayId = target?.entity_type === "pathway" ? target.entity_id : null;
   const group = target?.entity_type === "group" && record && "color_token" in record ? record as Group : null;
