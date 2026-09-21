@@ -36,7 +36,7 @@ export function PathwayValidationCard({ pathwayId, topic }: { pathwayId: string;
   return (
     <div className="mb-3 overflow-hidden rounded-md border border-border bg-card">
       <div className="flex items-center justify-between px-3 py-2">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Validation</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Work Space</span>
         <span className="text-[10px] text-muted-foreground">
           {confirmedCount} of {total} functions confirmed · {percent}%
         </span>
