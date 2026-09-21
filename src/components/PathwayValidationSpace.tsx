@@ -72,6 +72,11 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(c.createdAt).toLocaleDateString()}
                       </span>
+                      {c.metricLabel && (
+                        <span className="rounded-full border border-border bg-muted px-1.5 py-0.5 text-[9px] font-medium text-foreground">
+                          {c.metricLabel}
+                        </span>
+                      )}
                     </div>
                     <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{c.text}</p>
                   </div>

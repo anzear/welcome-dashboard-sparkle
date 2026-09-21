@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Check, Pencil, RotateCcw, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Check, MessageSquare, MessageSquarePlus, Pencil, RotateCcw, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  readValidationComments,
+  writeValidationComments,
+  VALIDATION_COMMENTS_CHANGED_EVENT,
+  type ValidationComment,
+} from "@/lib/pathwayValidationComments";
 
 /**
  * VALIDATION CHECKLIST — the relevant pathway metrics, one row each.
@@ -57,11 +64,48 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   const [state, setState] = useState<MetricChecklistState>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [comments, setComments] = useState<ValidationComment[]>([]);
+  const [noteOpen, setNoteOpen] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
     setState(read(topic, pathwayId));
     setEditing(null);
   }, [topic, pathwayId]);
+
+  useEffect(() => {
+    const load = () => setComments(readValidationComments(topic, pathwayId));
+    load();
+    window.addEventListener(VALIDATION_COMMENTS_CHANGED_EVENT, load);
+    return () => window.removeEventListener(VALIDATION_COMMENTS_CHANGED_EVENT, load);
+  }, [topic, pathwayId]);
+
+  const commentCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    comments.forEach((c) => {
+      if (c.metricLabel) counts[c.metricLabel] = (counts[c.metricLabel] ?? 0) + 1;
+    });
+    return counts;
+  }, [comments]);
+
+  const addComment = (metric: ChecklistMetric) => {
+    if (!noteDraft.trim()) return;
+    const next: ValidationComment[] = [
+      ...comments,
+      {
+        id: crypto.randomUUID(),
+        categoryId: "",
+        author: currentUser,
+        text: noteDraft.trim(),
+        createdAt: new Date().toISOString(),
+        metricLabel: metric.label,
+      },
+    ];
+    setComments(next);
+    writeValidationComments(topic, pathwayId, next);
+    setNoteDraft("");
+    setNoteOpen(null);
+  };
 
   const persist = (next: MetricChecklistState) => {
     setState(next);
@@ -204,6 +248,62 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Check className="h-3 w-3" /> Confirm
                       </Button>
                     )}
+                    <Popover
+                      open={noteOpen === metric.id}
+                      onOpenChange={(open) => {
+                        setNoteOpen(open ? metric.id : null);
+                        if (open) setNoteDraft("");
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 gap-1 px-1.5 text-[10px]"
+                          title={commentCounts[metric.label] ? "Notes" : "Add note"}
+                        >
+                          {commentCounts[metric.label] ? (
+                            <>
+                              <MessageSquare className="h-3.5 w-3.5 fill-current" />
+                              {commentCounts[metric.label]}
+                            </>
+                          ) : (
+                            <MessageSquarePlus className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-72 p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {metric.label}
+                        </div>
+                        {comments
+                          .filter((c) => c.metricLabel === metric.label)
+                          .map((c) => (
+                            <div key={c.id} className="mt-2 rounded border border-border/60 p-2">
+                              <div className="text-[10px] text-muted-foreground">
+                                {c.author} · {new Date(c.createdAt).toLocaleDateString()}
+                              </div>
+                              <p className="mt-0.5 whitespace-pre-wrap break-words text-[11px]">{c.text}</p>
+                            </div>
+                          ))}
+                        <Textarea
+                          value={noteDraft}
+                          onChange={(event) => setNoteDraft(event.target.value)}
+                          placeholder="Add a note on this metric…"
+                          className="mt-2 min-h-[56px] text-xs"
+                        />
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            className="h-7 gap-1 text-[10px]"
+                            disabled={!noteDraft.trim()}
+                            onClick={() => addComment(metric)}
+                          >
+                            <Send className="h-3 w-3" /> Post note
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <Button
                       size="sm"
                       variant="ghost"

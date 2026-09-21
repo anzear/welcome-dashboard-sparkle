@@ -24,7 +24,11 @@ export interface ValidationComment {
   author: string;
   text: string;
   createdAt: string;
+  /** Set when the note was written on a validation-checklist metric row. */
+  metricLabel?: string;
 }
+
+export const VALIDATION_COMMENTS_CHANGED_EVENT = 'pathway-validation-comments-changed';
 
 export const categoryLabel = (id: string) =>
   VALIDATION_CATEGORIES.find((c) => c.id === id)?.label ?? id;
