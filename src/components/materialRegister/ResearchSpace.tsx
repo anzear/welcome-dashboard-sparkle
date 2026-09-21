@@ -298,6 +298,33 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
+  /** Notes left on individual requirements. Prototype state, seeded with mock entries. */
+  const [requirementNotes, setRequirementNotes] = useState<Record<string, RequirementNote[]>>(
+    INITIAL_REQUIREMENT_NOTES,
+  );
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const addRequirementNote = (label: string) => {
+    const text = (noteDrafts[label] ?? "").trim();
+    if (!text) return;
+    setRequirementNotes((prev) => ({
+      ...prev,
+      [label]: [
+        ...(prev[label] ?? []),
+        {
+          id: `${label}-${Date.now()}`,
+          author: getCurrentUser().name,
+          at: new Date().toISOString(),
+          text,
+        },
+      ],
+    }));
+    setNoteDrafts((prev) => ({ ...prev, [label]: "" }));
+  };
+  const removeRequirementNote = (label: string, id: string) =>
+    setRequirementNotes((prev) => ({
+      ...prev,
+      [label]: (prev[label] ?? []).filter((note) => note.id !== id),
+    }));
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(() =>
     applyStoredPathwayOrder(SHORTLIST_PATHWAYS),
   );
