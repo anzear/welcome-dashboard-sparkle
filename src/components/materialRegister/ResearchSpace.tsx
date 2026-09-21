@@ -862,6 +862,8 @@ type Row = {
             );
           })}
 
+          {material && <FitRequirements material={material} />}
+
           <div className="col-span-3 flex h-11 items-center justify-end px-4">
             {showSaved ? (
               <span className="text-xs text-muted-foreground">Thresholds saved.</span>
@@ -877,7 +879,6 @@ type Row = {
           </div>
       </div>
 
-      {material && <FitRequirements material={material} />}
 
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
