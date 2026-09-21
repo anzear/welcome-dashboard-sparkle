@@ -738,22 +738,16 @@ type Row = {
           </div>
 
           {rows.map((row) => {
-            const overridden = overrides[row.label] !== undefined;
-            const shown = overrides[row.label] ?? row.status;
-            const displayText = overridden
-              ? "Manually overridden"
-              : !row.hasData
-                ? "No data available"
-                : row.status === "Not set"
-                  ? "Awaiting threshold"
-                  : row.findingText;
-            const displayNode = overridden
-              ? "Manually overridden"
-              : !row.hasData
-                ? "No data available"
-                : row.status === "Not set"
-                  ? "Awaiting threshold"
-                  : row.finding;
+            const displayText = !row.hasData
+              ? "No data available"
+              : row.status === "Not set"
+                ? "Awaiting threshold"
+                : row.findingText;
+            const displayNode = !row.hasData
+              ? "No data available"
+              : row.status === "Not set"
+                ? "Awaiting threshold"
+                : row.finding;
             return (
               <div key={row.label} className="grid grid-cols-[55%_1fr_180px] border-b border-border">
                 <div className="flex h-11 items-center gap-3 px-4">
@@ -770,14 +764,10 @@ type Row = {
                     variant="outline"
                     className={cn(
                       "shrink-0 text-[10px]",
-                      overridden
-                        ? cn(statusClasses[shown], "border-dashed")
-                        : row.hasData
-                          ? statusClasses[row.status]
-                          : "border-border bg-muted text-muted-foreground",
+                      row.hasData ? statusClasses[row.status] : "border-border bg-muted text-muted-foreground",
                     )}
                   >
-                    {overridden || row.hasData ? shown : "No data"}
+                    {row.hasData ? row.status : "No data"}
                   </Badge>
                   <Popover>
                     <TooltipProvider delayDuration={100}>
@@ -872,54 +862,6 @@ type Row = {
                       </div>
                     </PopoverContent>
                   </Popover>
-                  <DropdownMenu>
-                    <TooltipProvider delayDuration={100}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 shrink-0"
-                              aria-label={`Manual override for ${row.label}`}
-                            >
-                              <PenLine className={cn("h-3.5 w-3.5", overridden ? "text-primary" : "text-muted-foreground")} />
-                            </Button>
-                          </DropdownMenuTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent side="top">
-                          <p>{overridden ? "Manually overridden — click to change" : "Manual override"}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                    <DropdownMenuContent align="end" className="w-44">
-                      {(["Met", "Not met", "Not set"] as EvaluationStatus[]).map((status) => (
-                        <DropdownMenuItem
-                          key={status}
-                          className="text-xs"
-                          onSelect={() => setOverrides((prev) => ({ ...prev, [row.label]: status }))}
-                        >
-                          {status}
-                          {overrides[row.label] === status && <Check className="ml-auto h-3 w-3" />}
-                        </DropdownMenuItem>
-                      ))}
-                      {overridden && (
-                        <DropdownMenuItem
-                          className="text-xs text-muted-foreground"
-                          onSelect={() =>
-                            setOverrides((prev) => {
-                              const next = { ...prev };
-                              delete next[row.label];
-                              return next;
-                            })
-                          }
-                        >
-                          Clear override
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
               </div>
             );
