@@ -234,8 +234,8 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
         </div>
       </div>
 
-      {/* Technical fit — attachments */}
-      <div className="grid grid-cols-[1fr_180px] border-b border-border">
+      {/* Technical fit — free-text notes + status + attachments */}
+      <div className="grid grid-cols-[1fr_180px_44px] border-b border-border">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Technical fit</span>
           <Input
@@ -244,20 +244,20 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
             placeholder="Add notes on technical fit..."
             className="h-7 flex-1 text-xs"
           />
-          <span className="ml-auto shrink-0">
-            <FitAttachments
-              label="Technical fit"
-              sourceTag="Technical fit"
-              documents={technicalDocs}
-              onChange={setTechnicalDocs}
-            />
-          </span>
         </div>
         <StatusCell label="Technical fit" value={technicalStatus} onChange={setTechnicalStatus} />
+        <div className="flex items-center justify-center border-l border-border">
+          <FitAttachments
+            label="Technical fit"
+            sourceTag="Technical fit"
+            documents={technicalDocs}
+            onChange={setTechnicalDocs}
+          />
+        </div>
       </div>
 
-      {/* Regulatory fit — registrations needed + attachments */}
-      <div className="grid grid-cols-[1fr_180px]">
+      {/* Regulatory fit — registrations needed + status + attachments */}
+      <div className="grid grid-cols-[1fr_180px_44px]">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Regulatory fit</span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
@@ -331,18 +331,17 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
                 </form>
               </PopoverContent>
             </Popover>
-
-            <span className="ml-auto">
-              <FitAttachments
-                label="Regulatory fit"
-                sourceTag="Regulatory fit"
-                documents={regulatoryDocs}
-                onChange={setRegulatoryDocs}
-              />
-            </span>
           </div>
         </div>
         <StatusCell label="Regulatory fit" value={regulatoryStatus} onChange={setRegulatoryStatus} />
+        <div className="flex items-center justify-center border-l border-border">
+          <FitAttachments
+            label="Regulatory fit"
+            sourceTag="Regulatory fit"
+            documents={regulatoryDocs}
+            onChange={setRegulatoryDocs}
+          />
+        </div>
       </div>
     </div>
   );
