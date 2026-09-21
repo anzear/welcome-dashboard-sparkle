@@ -21,7 +21,7 @@ import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionF
 import {
   INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel, unitForStorage,
-  indicatorsForScope, isStale, sameIndicatorTarget, targetLabel, targetToPathwayPosition, useHitlStore,
+  indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
   sameSources, sourceDisplay, type IndicatorDefinition, type IndicatorScope, type IndicatorSource, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
 } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
