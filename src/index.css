@@ -327,3 +327,38 @@ All colors MUST be HSL.
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: "tnum";
 }
+
+/* Pathway workspace status badge palette — semantic HSL tokens only. */
+.pathway-status {
+  @apply inline-flex items-center rounded-full px-2 py-0.5;
+}
+.pathway-status--todo {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+  border-color: hsl(var(--border));
+}
+.pathway-status--in_validation {
+  background-color: hsl(var(--info) / 0.12);
+  color: hsl(var(--info));
+  border-color: hsl(var(--info) / 0.25);
+}
+.pathway-status--validated {
+  background-color: hsl(var(--success) / 0.12);
+  color: hsl(var(--success));
+  border-color: hsl(var(--success) / 0.25);
+}
+.pathway-status--validated_with_conditions {
+  background-color: hsl(var(--warning) / 0.12);
+  color: hsl(var(--warning));
+  border-color: hsl(var(--warning) / 0.25);
+}
+.pathway-status--rejected {
+  background-color: hsl(var(--destructive) / 0.10);
+  color: hsl(var(--destructive));
+  border-color: hsl(var(--destructive) / 0.25);
+}
+.pathway-status--parked {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+  border-color: hsl(var(--border));
+}
