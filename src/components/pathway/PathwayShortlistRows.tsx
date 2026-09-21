@@ -20,16 +20,12 @@ import {
   pathwayChipCls,
 } from "./pathwayRowStyles";
 import {
-  NOT_FIT_STATUS,
-  VALIDATION_CHANGED_EVENT,
-  VALIDATION_FUNCTIONS,
-  functionStatus,
-  finalStatus,
-  isNotStartedStatus,
-  readValidationChecklist,
-  type ValidationChecklist,
-  type ValidationFunction,
-} from "@/lib/pathwayValidationChecklist";
+  PATHWAY_STATUS_CHANGED_EVENT,
+  PATHWAY_STATUS_LABEL,
+  readPathwayStatus,
+  type PathwayStatus,
+} from "./PathwayStatusCard";
+import { cn } from "@/lib/utils";
 
 
 export type ShortlistPathway = {
