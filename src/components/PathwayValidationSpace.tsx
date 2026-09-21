@@ -77,14 +77,6 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
 
   return (
     <div className="mt-1 flex-1 min-h-0 flex flex-col">
-      {/* Header: guidance and pathway status as two cleaner rows */}
-      <div className="mb-3 space-y-2">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Leave notes on this pathway. Tag each note with one of the seven evaluation categories and filter the
-          discussion by category.
-        </p>
-      </div>
-
       {/* Unified notes box: filters, existing notes and composer share one container */}
       <div className="rounded-md border border-border bg-card flex flex-col flex-1 min-h-0">
         {/* Filters */}
