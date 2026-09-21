@@ -126,7 +126,7 @@ const FilterSelects: React.FC<{
     ["applications", "Product category", options.applications, filters.applications],
     ["productLines", "Product line", options.productLines, filters.productLines],
     ["tags", "Tags", options.tags, filters.tags],
-    ["priorityPeriods", "Priority period", options.priorityPeriods, filters.priorityPeriods],
+    ["priorityPeriods", "Internal deadline", options.priorityPeriods, filters.priorityPeriods],
   ];
 
   const active = controls.filter(([k]) => shown(k));

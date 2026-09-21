@@ -208,7 +208,7 @@ export interface Filters {
   products: string[];
   /** Product categories, matched with ANY. */
   applications: string[];
-  /** Priority periods, matched with ANY. May include NO_PRIORITY. */
+  /** Internal deadlines, matched with ANY. May include NO_PRIORITY. */
   priorityPeriods: string[];
   /** Blocker categories, matched with ANY. May include NO_BLOCKER. */
   blockers: string[];
@@ -1273,7 +1273,7 @@ export const RegisterProvider: React.FC<{ rows?: Material[]; children: React.Rea
             : payload.kind === "applications"
               ? "Product categories"
               : payload.kind === "priority_period"
-                ? "Priority period"
+                ? "Internal deadline"
                 : payload.kind === "entry_type"
                   ? "Type"
                   : payload.kind === "product_lines"

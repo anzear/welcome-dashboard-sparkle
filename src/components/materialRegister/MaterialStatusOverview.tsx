@@ -18,7 +18,7 @@ import { hasOverdueCondition, holdReviewOverdue } from "@/components/materialReg
 
 /**
  * Status strip shown on the value-chain hero: the material's register status
- * and priority period. Priority period is editable inline, and the status can
+ * and internal deadline. Internal deadline is editable inline, and the status can
  * be set straight from the dropdown.
  */
 const SummaryField: React.FC<{ label: string; children: React.ReactNode; hint?: React.ReactNode }> = ({
@@ -120,7 +120,7 @@ const StatusOverviewContent: React.FC<{ materialName: string }> = ({ materialNam
       </SummaryField>
 
       <SummaryField
-        label="Priority period"
+        label="Internal deadline"
         hint={material.priority_period ? undefined : "Not prioritised"}
       >
         <Input

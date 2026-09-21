@@ -446,7 +446,7 @@ export const EVENT_FIELD_LABEL: Record<string, string> = {
   linked_material_ids: "Linked materials",
 
   owner: "Owner",
-  priority_period: "Priority period",
+  priority_period: "Internal deadline",
   blocker_category: "Blocker",
   cas_number: "CAS number",
   material_class: "Material class",
