@@ -484,7 +484,11 @@ const PathwayDetail = () => {
   const checklistMetrics = evaluationGroups.flatMap((group) =>
     group.sections.flatMap((section) =>
       section.rows
-        .filter((row) => !row.label.toLowerCase().includes('ip count'))
+        .filter(
+          (row) =>
+            !row.label.toLowerCase().includes('ip count') &&
+            !row.label.toLowerCase().includes('research count'),
+        )
         .map((row) => ({
           id: `${group.category}:${section.name}:${row.label}`,
           label: row.label,
