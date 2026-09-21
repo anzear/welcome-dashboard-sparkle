@@ -116,6 +116,11 @@ function PathwayDialog({ open, pathway, groups, pathways, onClose, onDuplicate }
   const indicatorsAfter = pathway ? store.indicatorValues.filter(item => affectedPathwayIds(item, nextPathways).includes(pathway.id)) : [];
   const applicationScoped = pathway ? store.indicatorValues.filter(item => item.scope === "application" && sameIndicatorTarget(item.target, targetForPathway("application", pathway))) : [];
   const diffText = <T extends { id: string }>(before: T[], after: T[]) => ({ added: after.filter(item => !before.some(previous => previous.id === item.id)), removed: before.filter(item => !after.some(next => next.id === item.id)) });
+  const nextVisibility = visibilityFromOrganisationStates(organisationStates);
+  const visibilityChanged = Boolean(pathway) && !sameVisibilityState(pathway!.visibility, nextVisibility);
+  const nextScope = (groupId: string): VisibilityScope => { const selected = groupScopes[groupId] ?? []; return organisations().every(org => selected.includes(org)) ? "all" : [...selected].sort(); };
+  const groupChanges = pathway ? editableGroups.filter(group => JSON.stringify(group.visibility_scope === "all" ? "all" : [...group.visibility_scope].sort()) !== JSON.stringify(nextScope(group.id))) : [];
+  const toggleGroup = (groupId: string, org: string, on: boolean) => setGroupScopes(current => { const selected = current[groupId] ?? []; return { ...current, [groupId]: on ? [...new Set([...selected, org])] : selected.filter(value => value !== org) }; });
   const validate = () => { const duplicate = pathways.find(item => item.id !== pathway?.id && samePathway(item, draft)); setError(duplicate ?? null); return !duplicate; };
   const save = () => {
     if (!validate()) return; const trimmed = Object.fromEntries((Object.keys(nodeLabels) as NodeKey[]).map(key => [key, draft[key].trim()])) as Record<NodeKey, string>;
@@ -125,6 +130,8 @@ function PathwayDialog({ open, pathway, groups, pathways, onClose, onDuplicate }
     changedNodes.forEach(key => store.recordChange({ entity_type: "pathway", entity_id: pathway.id, field: key, prior_value: pathway[key], new_value: trimmed[key], operation: "update", note }));
     if (JSON.stringify([...draft.group_ids].sort()) !== JSON.stringify([...pathway.group_ids].sort())) store.recordChange({ entity_type: "pathway", entity_id: pathway.id, field: "group_ids", prior_value: pathway.group_ids, new_value: draft.group_ids, operation: "update" });
     if (changedNodes.length) applicationScoped.forEach(item => { if (impact === "keep" && item.status === "approved") return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "status", prior_value: item.status, new_value: "review_pending", operation: "update", note }); });
+    if (visibilityChanged) store.recordChange({ entity_type: "pathway", entity_id: pathway.id, field: "visibility", prior_value: pathway.visibility, new_value: nextVisibility, operation: "update" });
+    groupChanges.forEach(group => store.recordChange({ entity_type: "group", entity_id: group.id, field: "visibility_scope", prior_value: group.visibility_scope, new_value: nextScope(group.id), operation: "update" }));
     toast.success(changedNodes.length ? `Pathway updated; ${applicationScoped.length} Application-scope indicator values processed.` : "Pathway updated."); onClose();
   };
   const ready = (Object.keys(nodeLabels) as NodeKey[]).every(key => draft[key].trim());
