@@ -343,7 +343,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
           />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
