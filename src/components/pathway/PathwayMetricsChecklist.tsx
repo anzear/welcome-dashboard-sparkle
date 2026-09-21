@@ -248,6 +248,62 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Check className="h-3 w-3" /> Confirm
                       </Button>
                     )}
+                    <Popover
+                      open={noteOpen === metric.id}
+                      onOpenChange={(open) => {
+                        setNoteOpen(open ? metric.id : null);
+                        if (open) setNoteDraft("");
+                      }}
+                    >
+                      <PopoverTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 gap-1 px-1.5 text-[10px]"
+                          title={commentCounts[metric.label] ? "Notes" : "Add note"}
+                        >
+                          {commentCounts[metric.label] ? (
+                            <>
+                              <MessageSquare className="h-3.5 w-3.5 fill-current" />
+                              {commentCounts[metric.label]}
+                            </>
+                          ) : (
+                            <MessageSquarePlus className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent align="end" className="w-72 p-2">
+                        <div className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                          {metric.label}
+                        </div>
+                        {comments
+                          .filter((c) => c.metricLabel === metric.label)
+                          .map((c) => (
+                            <div key={c.id} className="mt-2 rounded border border-border/60 p-2">
+                              <div className="text-[10px] text-muted-foreground">
+                                {c.author} · {new Date(c.createdAt).toLocaleDateString()}
+                              </div>
+                              <p className="mt-0.5 whitespace-pre-wrap break-words text-[11px]">{c.text}</p>
+                            </div>
+                          ))}
+                        <Textarea
+                          value={noteDraft}
+                          onChange={(event) => setNoteDraft(event.target.value)}
+                          placeholder="Add a note on this metric…"
+                          className="mt-2 min-h-[56px] text-xs"
+                        />
+                        <div className="mt-2 flex justify-end">
+                          <Button
+                            size="sm"
+                            className="h-7 gap-1 text-[10px]"
+                            disabled={!noteDraft.trim()}
+                            onClick={() => addComment(metric)}
+                          >
+                            <Send className="h-3 w-3" /> Post note
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <Button
                       size="sm"
                       variant="ghost"
