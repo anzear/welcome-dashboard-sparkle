@@ -3,11 +3,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EngagementStageSelect, useEngagementStages } from "@/components/materialRegister/engagementStage";
+import { ItemNotesControl } from "@/components/materialRegister/itemNotes";
 
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
 
@@ -65,8 +64,6 @@ export function CompanyShortlistTables({
   onPostNote?: (itemLabel: string, text: string) => void;
 }) {
   const { stages: engagementStages, setStage: setEngagementStage } = useEngagementStages();
-  const [myNotes, setMyNotes] = useState<Record<string, string>>({});
-  const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
   const [activeTab, setActiveTab] = useState(ROLE_TABS[1].value);
   /** Mock example attachments so the layout can be reviewed. */
   const { documents, addDocuments, removeDocument } = useItemDocuments(
@@ -85,7 +82,6 @@ export function CompanyShortlistTables({
   );
 
 
-  const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
   const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[1]).role;
   const visibleRows = companies.filter((company) => company.role === activeRole);
 
@@ -134,7 +130,6 @@ export function CompanyShortlistTables({
           )}
           {visibleRows.map((company) => {
                   const stage = engagementStages[company.id] ?? "Not engaged";
-                  const teamNoteCount = company.teamNotes.length;
                   return (
                     <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
                       <TableCell className="h-11 py-0">
@@ -166,35 +161,15 @@ export function CompanyShortlistTables({
                         />
                       </TableCell>
                       <TableCell className="h-11 py-0">
-                        <Input
-                          value={myNotes[company.id] ?? ""}
-                          onChange={(event) =>
-                            setMyNotes((current) => ({ ...current, [company.id]: event.target.value }))
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key !== "Enter") return;
-                            const text = (myNotes[company.id] ?? "").trim();
-                            if (!text) return;
-                            onPostNote?.(`Company · ${company.name}`, text);
-                            setMyNotes((current) => ({ ...current, [company.id]: "" }));
-                          }}
-                          placeholder="Add your note…"
-                          title="Press Enter to post — the note appears in the notes section"
-                          aria-label={`Your note on ${company.name}`}
-                          className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
+                        <ItemNotesControl
+                          itemLabel={`Company · ${company.name}`}
+                          title={company.name}
+                          teamNotes={company.teamNotes}
+                          currentUser={currentUser}
+                          onPost={onPostNote}
                         />
                       </TableCell>
-                      <TableCell className="h-11 py-0">
-                        {teamNoteCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setTeamPanel(company)}
-                            className="whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[9px] text-muted-foreground hover:text-foreground"
-                          >
-                            {teamNoteCount} from team
-                          </button>
-                        )}
-                      </TableCell>
+                      <TableCell className="h-11 py-0" />
                       <TableCell className="h-11 py-0">
                         <DocumentAttachControl
                           itemLabel={company.name}
@@ -224,30 +199,6 @@ export function CompanyShortlistTables({
       </Table>
       </div>
 
-      <Sheet open={teamPanel !== null} onOpenChange={(open) => !open && setTeamPanel(null)}>
-        <SheetContent className="w-full sm:max-w-md">
-          <SheetHeader>
-            <SheetTitle className="text-sm">
-              {teamPanel?.name} — {teamPanel?.role}
-            </SheetTitle>
-          </SheetHeader>
-          <p className="mt-2 text-[10px] uppercase tracking-widest text-muted-foreground">Team notes · read only</p>
-          <div className="mt-3 space-y-2">
-            {panelNotes.map((note) => (
-              <div key={note.id} className="rounded-md border border-border/60 bg-muted/40 px-3 py-2">
-                <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground">
-                  <span>{note.author}</span>
-                  <span>{note.timestamp}</span>
-                </div>
-                <p className="mt-1 text-xs text-foreground/85 leading-relaxed">{note.text}</p>
-              </div>
-            ))}
-          </div>
-          <p className="mt-4 text-[10px] text-muted-foreground">
-            Signed in as {currentUser}. Your own note stays editable in the row.
-          </p>
-        </SheetContent>
-      </Sheet>
     </>
   );
 }
