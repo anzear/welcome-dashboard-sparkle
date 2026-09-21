@@ -111,7 +111,7 @@ export function CompanyShortlistTables({
   );
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
-  const [activeTab, setActiveTab] = useState(ROLE_TABS[0].value);
+  const [activeTab, setActiveTab] = useState(ROLE_TABS[1].value);
   /** Mock example attachments so the layout can be reviewed. */
   const { documents, addDocuments, removeDocument } = useItemDocuments(
     mockSeedByIndex(
