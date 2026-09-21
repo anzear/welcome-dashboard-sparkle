@@ -30,25 +30,13 @@ interface Props {
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   const [comments, setComments] = useState<Comment[]>([]);
-  // Lazy initial read so a stored (or legacy-migrated) value wins; writes
-  // happen only on an explicit chip click, never on mount.
-  const [overallStatus, setOverallStatus] = useState<Status>(() =>
-    readPathwayValidationStatus(topic, pathwayId)
-  );
   const [filter, setFilter] = useState<string>('all');
   const [draftCategory, setDraftCategory] = useState<string>(CATEGORIES[0].id);
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
     setComments(readValidationComments(topic, pathwayId));
-    setOverallStatus(readPathwayValidationStatus(topic, pathwayId));
   }, [topic, pathwayId]);
-
-  /** Status changes are free jumps — any value to any value, no fixed order. */
-  const pickStatus = (s: Status) => {
-    setOverallStatus(s);
-    writePathwayValidationStatus(topic, pathwayId, s);
-  };
 
   /** Single writer: persist and notify other views (Workspace) of the change. */
   const persist = (next: Comment[]) => {
