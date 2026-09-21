@@ -345,6 +345,9 @@ export function PathwayShortlistRows({
                   )}
                   <ChevronDown className="w-3.5 h-3.5 -rotate-90" />
                 </div>
+                <span />
+                <span />
+
               </div>
             </div>
           );
