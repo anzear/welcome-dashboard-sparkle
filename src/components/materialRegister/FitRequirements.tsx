@@ -42,7 +42,6 @@ const REGISTRATION_OPTIONS = [
   "UK REACH",
   "US TSCA inventory listing",
   "K-REACH",
-  "No constraint",
 ] as const;
 
 const StatusCell: React.FC<{
