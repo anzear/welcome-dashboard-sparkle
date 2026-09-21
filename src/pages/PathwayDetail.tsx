@@ -431,7 +431,7 @@ const PathwayDetail = () => {
       type: 'technology',
       sections: [
         {
-          name: 'Feedstock',
+          name: 'Feedstock name (i.e., corn starch)',
           type: 'feedstock',
           rows: [
             { label: 'Feedstock price (Europe)', value: displayMetric(activeMetrics.metrics.feedstockPrice), percentile: activeMetrics.radar.feedstockPrice },
