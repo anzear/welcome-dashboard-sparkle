@@ -130,7 +130,7 @@ export function CompanyShortlistTables({
 
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
-  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
+  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[1]).role;
   const visibleRows = companies.filter((company) => company.role === activeRole);
 
   return (
