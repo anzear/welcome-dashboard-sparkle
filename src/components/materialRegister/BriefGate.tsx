@@ -205,7 +205,7 @@ const BriefGate: React.FC<{ material: Material }> = ({
         </div>
       )}
 
-      {/* The status is the headline. Seven stages, one row, no fixed order — any stage can be set at any time. */}
+      {/* The status is the headline. Four stages, one row, no fixed order — any stage can be set at any time. */}
       <div className="space-y-1">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
