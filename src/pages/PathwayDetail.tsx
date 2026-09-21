@@ -23,6 +23,8 @@ import { PatentShortlistTable, type ShortlistPatent } from '@/components/materia
 import { PaperShortlistTable, type ShortlistPaper } from '@/components/materialRegister/PaperShortlistTable';
 import { SHORTLIST_COMPANIES, SHORTLIST_PATENTS, SHORTLIST_PAPERS } from '@/components/materialRegister/shortlistMockData';
 
+import { readValidationComments, writeValidationComments } from '@/lib/pathwayValidationComments';
+
 const CURRENT_REVIEWER = "A. Weber";
 
 /** Compact shortlist card matching the Workspace "Shortlisted items" pattern. */
