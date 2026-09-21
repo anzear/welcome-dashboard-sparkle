@@ -1,8 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { Check, Pencil, RotateCcw, X } from "lucide-react";
+import React, { useEffect, useMemo, useState } from "react";
+import { Check, MessageSquare, MessageSquarePlus, Pencil, RotateCcw, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  readValidationComments,
+  writeValidationComments,
+  VALIDATION_COMMENTS_CHANGED_EVENT,
+  type ValidationComment,
+} from "@/lib/pathwayValidationComments";
 
 /**
  * VALIDATION CHECKLIST — the relevant pathway metrics, one row each.
