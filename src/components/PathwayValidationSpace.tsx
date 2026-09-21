@@ -7,14 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import {
   readValidationComments,
   writeValidationComments,
-  readPathwayValidationStatus,
-  writePathwayValidationStatus,
-  PATHWAY_VALIDATION_STATUSES,
-  type PathwayValidationStatus,
   type ValidationComment,
 } from '@/lib/pathwayValidationComments';
-
-type Status = PathwayValidationStatus;
 
 type Comment = ValidationComment;
 
@@ -28,17 +22,6 @@ const CATEGORIES = [
   { id: 'ip', label: 'IP & FTO', Icon: Shield },
   { id: 'regulations', label: 'Regulations', Icon: Scale },
 ] as const;
-
-const STATUSES: Status[] = PATHWAY_VALIDATION_STATUSES;
-
-/** Selected-chip styling per status; unselected chips stay muted. */
-const STATUS_ACTIVE_CLS: Record<Status, string> = {
-  'Not evaluated': 'bg-foreground text-background border-foreground',
-  'Lab testing': 'bg-amber-100 text-amber-700 border-amber-300',
-  Piloting: 'bg-sky-100 text-sky-700 border-sky-300',
-  Integrated: 'bg-emerald-100 text-emerald-700 border-emerald-300',
-  Parked: 'bg-red-100 text-red-700 border-red-300',
-};
 
 interface Props {
   pathwayId: string;
@@ -112,24 +95,6 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
           Leave notes on this pathway. Tag each note with one of the seven evaluation categories and filter the
           discussion by category.
         </p>
-        <div className="flex items-center justify-end gap-2">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Pathway Status</span>
-          <div className="flex items-center gap-1">
-            {STATUSES.map(s => {
-              const selected = overallStatus === s;
-              const activeCls = STATUS_ACTIVE_CLS[s];
-              return (
-                <button
-                  key={s}
-                  onClick={() => pickStatus(s)}
-                  className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold border transition-colors ${selected ? activeCls : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
-                >
-                  {s}
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
       {/* Unified notes box: filters, existing notes and composer share one container */}
