@@ -16,7 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/components/materialRegister/registerStore";
-import type { Material } from "@/components/materialRegister/materialEntry";
+import type { Material } from "@/types/materialPrioritisation";
 
 type FitStatus = "Met" | "Not met" | "Not set";
 
