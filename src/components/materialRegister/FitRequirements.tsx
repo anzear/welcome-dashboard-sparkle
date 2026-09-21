@@ -197,15 +197,9 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
   );
   const [regulatoryDocs, setRegulatoryDocs] = useState<RegisteredDocument[]>([]);
 
-  const toggleRegistration = (option: string) => {
-    const next =
-      option === "No constraint"
-        ? registrations.includes(option)
-          ? []
-          : [option]
-        : registrations.includes(option)
-          ? registrations.filter((item) => item !== option)
-          : [...registrations.filter((item) => item !== "No constraint"), option];
+  const [customDraft, setCustomDraft] = useState("");
+
+  const setRegistrations = (next: string[]) => {
     updateMaterial(
       material.material_id,
       { regulatory_registrations: next },
