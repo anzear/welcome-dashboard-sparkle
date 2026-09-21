@@ -57,6 +57,14 @@ const PathwayDetail = () => {
   const subscriptionKey = `${topic || ''}_${pathwayId || ''}`;
   const readUpdatesKey = `pathwayReadUpdates_${subscriptionKey}`;
 
+  // Documents uploaded anywhere on this pathway also collect in a pathway-scoped list.
+  const documentRegistryKey = `pathway:${topic || 'default'}:${pathwayId || '0'}`;
+  useEffect(() => {
+    setActiveSubRegistry(documentRegistryKey);
+    return () => setActiveSubRegistry(null);
+  }, [documentRegistryKey]);
+
+
   // Mock updates (stable list with ids so read-state can be tracked)
   const pathwayUpdates = React.useMemo(() => ([
     { id: 'u1', cat: 'Research', title: 'New catalytic process improves yield by 18%', source: 'Nature Catalysis', date: '2d ago', tone: 'blue' },
