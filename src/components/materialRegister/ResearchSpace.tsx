@@ -343,7 +343,6 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
   const [thresholds, setThresholds] = useState<Thresholds>(INITIAL_THRESHOLDS);
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
-  const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
   /** Notes left on individual requirements. Prototype state, seeded with mock entries. */
   const [requirementNotes, setRequirementNotes] = useState<Record<string, RequirementNote[]>>(
     INITIAL_REQUIREMENT_NOTES,
