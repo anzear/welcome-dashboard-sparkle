@@ -245,49 +245,6 @@ const BriefGate: React.FC<{ material: Material }> = ({
         </div>
       </div>
 
-      {/*
-        Function progression and checklist. Visible only under "In evaluation";
-        hidden entirely for Not started, Material integrated and Parked. Both
-        read and write the same store as the pathway Validation card.
-      */}
-      {validation && evaluating && (
-        <div className="rounded-md border border-border">
-          <button
-            type="button"
-            aria-expanded={checklistOpen}
-            onClick={() => setChecklistOpen((v) => !v)}
-            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left"
-          >
-            <ChevronDown
-              className={cn(
-                "h-3 w-3 shrink-0 text-muted-foreground transition-transform",
-                !checklistOpen && "-rotate-90",
-              )}
-            />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Evaluation checklist
-            </span>
-            <div className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-foreground/70 transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <span className="shrink-0 tabular-nums text-[10px] font-semibold text-foreground">
-              {confirmed}/{total} · {progressPercent}%
-            </span>
-          </button>
-          {checklistOpen && (
-            <div className="border-t border-border">
-              <ValidationChecklist
-                pathwayId={validation.pathwayId}
-                topic={validation.topic}
-                idPrefix="gate-validation"
-              />
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Detail belongs to a status, not to a section of its own. */}
 
