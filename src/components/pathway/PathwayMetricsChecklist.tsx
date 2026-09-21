@@ -207,13 +207,14 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     <Button
                       size="sm"
                       variant="ghost"
-                      className="h-7 gap-1 px-2 text-[10px]"
+                      className="h-7 w-7 p-0"
+                      title={entry?.state === "own" ? "Edit own value" : "Own value"}
                       onClick={() => {
                         setEditing(metric.id);
                         setDraft(entry?.ownValue ?? "");
                       }}
                     >
-                      <Pencil className="h-3 w-3" /> {entry?.state === "own" ? "Edit" : "Own value"}
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
                     {entry && (
                       <Button
