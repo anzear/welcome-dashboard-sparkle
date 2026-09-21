@@ -483,12 +483,14 @@ const PathwayDetail = () => {
   /** Flat metric list backing the Workspace validation checklist. */
   const checklistMetrics = evaluationGroups.flatMap((group) =>
     group.sections.flatMap((section) =>
-      section.rows.map((row) => ({
-        id: `${group.category}:${section.name}:${row.label}`,
-        label: row.label,
-        value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
-        group: `${group.category} · ${section.name}`,
-      })),
+      section.rows
+        .filter((row) => !row.label.toLowerCase().includes('ip count'))
+        .map((row) => ({
+          id: `${group.category}:${section.name}:${row.label}`,
+          label: row.label,
+          value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
+          group: `${group.category} · ${section.name}`,
+        })),
     ),
   );
 
