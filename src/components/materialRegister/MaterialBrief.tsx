@@ -580,7 +580,9 @@ export const MaterialBrief: React.FC<{
 
           {/* Top-right: pagination sits above the action buttons */}
           <div className="flex shrink-0 items-center justify-end gap-3 whitespace-nowrap">
-            {index >= 0 && (
+            {/* Stepping through materials only makes sense from the Material Portfolio,
+                not when the profile is opened from an analysis page. */}
+            {index >= 0 && !location.pathname.startsWith("/landscape") && (
               <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                 <button
                   type="button"
