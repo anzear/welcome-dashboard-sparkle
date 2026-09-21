@@ -943,6 +943,7 @@ const PathwayDetail = () => {
                           patents={shortlistPatents}
                           currentUser={CURRENT_REVIEWER}
                           onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
+                          onPostNote={postShortlistNote}
                         />
                       </PathwayShortlistCard>
 
