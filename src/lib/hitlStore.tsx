@@ -71,8 +71,11 @@ export const FIELD_LABELS: Record<string, string> = {
   country: "Country",
   city: "City",
   industry_sector: "Industry sector",
-  role: "Role",
-  role_nodes: "Role nodes",
+  roles: "Roles",
+  "role_nodes.feedstock_supplier": "Supplied feedstock nodes",
+  "role_nodes.product_manufacturer": "Produced product nodes",
+  "role_nodes.application_offtaker": "Offtaken application nodes",
+
   evidence: "Relevance",
   "secondary_nodes.feedstock": "Secondary feedstock",
   "secondary_nodes.process_technology": "Secondary process",
@@ -138,11 +141,26 @@ export const sameNodeList = (a: string[], b: string[]): boolean => sortedKeys(a)
 export const nodeListMatches = (values: string[], pathwayValue: string | null): boolean => values.some(value => normalizedNode(value) === normalizedNode(pathwayValue));
 export const matchedNodeValue = (values: string[], pathwayValue: string | null): string | null => values.find(value => normalizedNode(value) === normalizedNode(pathwayValue)) ?? null;
 export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
-export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
-  if (role === "feedstock_supplier") return [];
-  if (role === "product_manufacturer") return ["feedstock", "process_technology"];
-  return ["feedstock", "process_technology", "product"];
+// A company can hold several roles at once; each role owns its own list of node values.
+export type CompanyRoleNodes = Record<CompanyRole, string[]>;
+export const companyRoleOrder: CompanyRole[] = ["feedstock_supplier", "product_manufacturer", "application_offtaker"];
+export const emptyRoleNodes = (): CompanyRoleNodes => ({ feedstock_supplier: [], product_manufacturer: [], application_offtaker: [] });
+const roleNodePositions: Record<CompanyRole, keyof EvidenceNodes> = { feedstock_supplier: "feedstock", product_manufacturer: "product", application_offtaker: "application_market" };
+export const roleNodePosition = (role: CompanyRole): keyof EvidenceNodes => roleNodePositions[role];
+export const sortedRoles = (roles: CompanyRole[]): CompanyRole[] => companyRoleOrder.filter(role => roles.includes(role));
+export const roleNodesFor = (company: { roles: CompanyRole[]; role_nodes: CompanyRoleNodes }, role: CompanyRole): string[] => cleanNodeList(company.role_nodes[role]);
+export const allRoleNodeValues = (company: { roles: CompanyRole[]; role_nodes: CompanyRoleNodes }): string[] => cleanNodeList(company.roles.flatMap(role => company.role_nodes[role] ?? []));
+export const hasRoleNodes = (roles: CompanyRole[], nodes: CompanyRoleNodes): boolean => roles.length > 0 && roles.every(role => cleanNodeList(nodes[role]).length > 0);
+export function allowedSecondaryPositions(roles: CompanyRole[]): (keyof EvidenceNodes)[] {
+  const used = new Set<keyof EvidenceNodes>(roles.map(role => roleNodePositions[role]));
+  const allowed = new Set<keyof EvidenceNodes>();
+  roles.forEach(role => {
+    if (role === "product_manufacturer") { allowed.add("feedstock"); allowed.add("process_technology"); }
+    if (role === "application_offtaker") { allowed.add("feedstock"); allowed.add("process_technology"); allowed.add("product"); }
+  });
+  return (["feedstock", "process_technology", "product", "application_market"] as (keyof EvidenceNodes)[]).filter(key => allowed.has(key) && !used.has(key));
 }
+
 
 
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
@@ -197,8 +215,8 @@ export interface Company extends CommonRecord {
   city: string | null;
   industry_sector: string | null;
   profile_fields: Record<string, string | number | null>;
-  role: CompanyRole;
-  role_nodes: string[];
+  roles: CompanyRole[];
+  role_nodes: CompanyRoleNodes;
   secondary_nodes: EvidenceNodeLists;
 
   status: ReviewStatus;
@@ -361,16 +379,24 @@ const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewSt
 const seedCompanies: Company[] = companyRows.map((row, index) => {
   const assignment = companyAssignments[index];
   const pathway = seedPathways[assignment.pathway];
-  const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
-  const allowed = new Set(allowedSecondaryPositions(assignment.role));
+  // A couple of seeded companies hold more than one role at the same time.
+  const extraRole: CompanyRole | null = index === 0 ? "product_manufacturer" : index === 4 ? "application_offtaker" : null;
+  const roles = sortedRoles([assignment.role, ...(extraRole ? [extraRole] : [])]);
+  const allowed = new Set(allowedSecondaryPositions(roles));
   const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => {
     const extra = allowed.has(key) && index === 1 && key === "feedstock" ? seedPathways[3].feedstock : null;
     return [key, allowed.has(key) ? cleanNodeList([assignment.secondary_nodes[key], extra]) : []];
   })) as unknown as EvidenceNodeLists;
-  // A couple of seeded companies cover several nodes in the same position.
-  const extraRoleNode = index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_nodes: cleanNodeList([pathway[position], extraRoleNode]), secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  const role_nodes = emptyRoleNodes();
+  roles.forEach(role => {
+    const position = roleNodePosition(role);
+    // A couple of seeded companies cover several nodes in the same position.
+    const extraNode = role === assignment.role ? (index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null) : null;
+    role_nodes[role] = cleanNodeList([pathway[position], extraNode]);
+  });
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, roles, role_nodes, secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
+
 
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
@@ -460,13 +486,12 @@ const rolePositions = {
   application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
-export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_nodes">, pathways: Pathway[]): string[] {
-  const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => nodeListMatches(company.role_nodes, pathway[position])).map(pathway => pathway.id);
+export function derivedCompanyPathwayIds(company: Pick<Company, "roles" | "role_nodes">, pathways: Pathway[]): string[] {
+  return pathways.filter(pathway => company.roles.some(role => nodeListMatches(cleanNodeList(company.role_nodes[role]), pathway[roleNodePosition(role)]))).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
-export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
-  const positions = allowedSecondaryPositions(company.role);
+export function computeFit(company: Pick<Company, "roles" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
+  const positions = allowedSecondaryPositions(company.roles);
   if (!positions.length) return null;
   const known = positions.filter(key => cleanNodeList(company.secondary_nodes[key]).length > 0);
   const matched = known.filter(key => nodeListMatches(company.secondary_nodes[key], pathway[key]));
