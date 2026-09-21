@@ -61,8 +61,6 @@ const GEOGRAPHY_OPTIONS = [
 
 type Thresholds = {
   applications: string[];
-  trlFrom: string;
-  trlTo: string;
   materialGeographies: string[];
   feedstockGeographies: string[];
   priceCeiling: string;
@@ -73,9 +71,7 @@ type Thresholds = {
 };
 
 const INITIAL_THRESHOLDS: Thresholds = {
-  applications: [],
-  trlFrom: "4",
-  trlTo: "7",
+  applications: ["PLA packaging", "Food preservation"],
   materialGeographies: ["Europe", "North America"],
   feedstockGeographies: ["Europe"],
   priceCeiling: "2200",
@@ -171,7 +167,6 @@ const statusClasses: Record<EvaluationStatus, string> = {
 };
 
 // ---- Mock evidence held by the platform ----
-const PATHWAY_TRL = 6;
 
 const PRODUCER_RECORDS: (EvidenceRecord & { country: string; regions: string[]; capacity: number })[] = [
   { name: "Corbion", country: "Netherlands", regions: ["Europe", "European Union"], capacity: 4500, source: "corbion.com" },
@@ -213,17 +208,26 @@ const MultiSelectChips = ({
   options,
   values,
   onChange,
+  allowCustom = false,
 }: {
   label: string;
   options: string[];
   values: string[];
   onChange: (next: string[]) => void;
+  /** Lets the user add an entry that is not on our list, straight from the search box. */
+  allowCustom?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const toggle = (option: string) => {
     onChange(values.includes(option) ? values.filter((value) => value !== option) : [...values, option]);
   };
+
+  const all = Array.from(new Set([...options, ...values]));
+  const trimmed = query.trim();
+  const canAdd =
+    allowCustom && trimmed.length > 0 && !all.some((option) => option.toLowerCase() === trimmed.toLowerCase());
 
   return (
     <div>
@@ -237,11 +241,29 @@ const MultiSelectChips = ({
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
-            <CommandInput placeholder={`Search ${label.toLowerCase()}…`} />
+            <CommandInput
+              placeholder={`Search ${label.toLowerCase()}…`}
+              value={query}
+              onValueChange={setQuery}
+            />
             <CommandList>
-              <CommandEmpty>No options found.</CommandEmpty>
+              {!canAdd && <CommandEmpty>No options found.</CommandEmpty>}
+              {canAdd && (
+                <CommandGroup>
+                  <CommandItem
+                    value={`__add__${trimmed}`}
+                    onSelect={() => {
+                      onChange([...values, trimmed]);
+                      setQuery("");
+                    }}
+                  >
+                    <Plus className="mr-2 h-3.5 w-3.5" />
+                    Add “{trimmed}”
+                  </CommandItem>
+                </CommandGroup>
+              )}
               <CommandGroup>
-                {options.map((option) => (
+                {all.map((option) => (
                   <CommandItem key={option} value={option} onSelect={() => toggle(option)}>
                     <Check className={cn("mr-2 h-3.5 w-3.5", values.includes(option) ? "opacity-100" : "opacity-0")} />
                     {option}
@@ -492,16 +514,10 @@ type Row = {
   const rows: Row[] = (() => {
 
 
-    const trlFrom = Number(thresholds.trlFrom);
-    const trlTo = Number(thresholds.trlTo);
-    // A range covering the whole 1–9 span excludes nothing, so it is not a threshold.
-    const trlSet =
-      thresholds.trlFrom !== "" &&
-      thresholds.trlTo !== "" &&
-      !Number.isNaN(trlFrom) &&
-      !Number.isNaN(trlTo) &&
-      !(trlFrom <= 1 && trlTo >= 9);
-    const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
+    const applicationsSet = thresholds.applications.length > 0;
+    const applicationMatches = shortlistPathways.filter((pathway) =>
+      thresholds.applications.includes(pathway.application),
+    );
 
     const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
       selected.some((geography) => regions.includes(geography) || country === geography);
@@ -532,11 +548,19 @@ type Row = {
     return [
       {
 
-        label: "TRL range",
-        status: trlSet ? (trlInRange ? "Met" : "Not met") : "Not set",
-        helperText: "Set a TRL range to evaluate.",
-        finding: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : null,
-        findingText: trlSet ? `Pathway at TRL ${PATHWAY_TRL} — ${trlInRange ? "within" : "outside"} your range of ${trlFrom}–${trlTo}.` : "Awaiting threshold",
+        label: "Applications",
+        status: applicationsSet ? (applicationMatches.length > 0 ? "Met" : "Not met") : "Not set",
+        helperText: "Select one or more applications to evaluate.",
+        finding: applicationsSet
+          ? applicationMatches.length > 0
+            ? `${applicationMatches.length} analysed pathway${applicationMatches.length === 1 ? "" : "s"} covering ${listGeographies(thresholds.applications)}.`
+            : `No analysed pathway covers ${listGeographies(thresholds.applications)}.`
+          : null,
+        findingText: applicationsSet
+          ? applicationMatches.length > 0
+            ? `${applicationMatches.length} analysed pathway${applicationMatches.length === 1 ? "" : "s"} covering ${listGeographies(thresholds.applications)}.`
+            : `No analysed pathway covers ${listGeographies(thresholds.applications)}.`
+          : "Awaiting threshold",
         hasData: true,
       },
       {
@@ -649,12 +673,15 @@ type Row = {
 
   const renderInput = (label: string) => {
     switch (label) {
-      case "TRL range":
+      case "Applications":
         return (
-          <div className="grid grid-cols-2 gap-2">
-            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 bg-background text-xs" />
-            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 bg-background text-xs" />
-          </div>
+          <MultiSelectChips
+            label="applications"
+            options={applications}
+            values={thresholds.applications}
+            onChange={(value) => patch("applications", value)}
+            allowCustom
+          />
         );
       case "Product geography":
         return <MultiSelectChips label="product geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
