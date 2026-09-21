@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Bookmark, Check, ChevronDown, ChevronsUpDown, Info, MessageSquarePlus, Minus, Plus, X } from "lucide-react";
+import { Bookmark, Check, ChevronDown, ChevronsUpDown, Info, MessageSquare, MessageSquarePlus, Minus, Plus, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { PREDEFINED_PATHWAYS } from "@/pages/ValueChainPathways";
 import { Button } from "@/components/ui/button";
