@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, MessageSquare, Paperclip, Trash2, Upload } from "lucide-react";
+import { FileText, MessageSquare, MessageSquarePlus, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
