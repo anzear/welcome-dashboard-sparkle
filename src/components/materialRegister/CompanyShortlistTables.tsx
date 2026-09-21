@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,11 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { EngagementStageSelect, useEngagementStages } from "@/components/materialRegister/engagementStage";
 
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
-
-/** One colleague's rating — never averaged, never totalled. */
-export type CompanyTeamRating = { author: string; value: number };
 
 export type ShortlistCompany = {
   id: string;
@@ -25,10 +23,6 @@ export type ShortlistCompany = {
   linkedNode: string;
   role: "Producer" | "Supplier" | "Offtaker";
   savedBy: string;
-  /** A single 1–5 rating per company — absent means unrated. */
-  rating?: number;
-  /** Colleagues' ratings, one chip each. Empty means nobody else rated. */
-  teamRatings?: CompanyTeamRating[];
   /** Colleagues' notes only — read-only for the current user. */
   teamNotes: CompanyNote[];
 };
