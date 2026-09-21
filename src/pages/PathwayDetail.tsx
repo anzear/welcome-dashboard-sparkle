@@ -934,6 +934,7 @@ const PathwayDetail = () => {
                           companies={shortlistCompanies}
                           currentUser={CURRENT_REVIEWER}
                           onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
+                          onPostNote={postShortlistNote}
                         />
                       </PathwayShortlistCard>
 
