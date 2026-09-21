@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
 import { EngagementStageSelect, useEngagementStages } from "@/components/materialRegister/engagementStage";
 
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
