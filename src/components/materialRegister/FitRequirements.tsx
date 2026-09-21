@@ -183,6 +183,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
   const registrations = material.regulatory_registrations ?? [];
   const [technicalStatus, setTechnicalStatus] = useState<FitStatus>("Met");
   const [regulatoryStatus, setRegulatoryStatus] = useState<FitStatus>("Not set");
+  const [technicalNote, setTechnicalNote] = useState("");
   const [technicalDocs, setTechnicalDocs] = useState<RegisteredDocument[]>(() =>
     material.performance_targets_document
       ? [
@@ -237,19 +238,20 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
       <div className="grid grid-cols-[1fr_180px] border-b border-border">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Technical fit</span>
-          <div className="flex min-w-0 flex-1 items-center gap-2">
-            {technicalDocs.length === 0 && (
-              <span className="text-[11px] text-muted-foreground">No performance targets attached.</span>
-            )}
-            <span className="ml-auto">
-              <FitAttachments
-                label="Technical fit"
-                sourceTag="Technical fit"
-                documents={technicalDocs}
-                onChange={setTechnicalDocs}
-              />
-            </span>
-          </div>
+          <Input
+            value={technicalNote}
+            onChange={(event) => setTechnicalNote(event.target.value)}
+            placeholder="Add notes on technical fit..."
+            className="h-7 flex-1 text-xs"
+          />
+          <span className="ml-auto shrink-0">
+            <FitAttachments
+              label="Technical fit"
+              sourceTag="Technical fit"
+              documents={technicalDocs}
+              onChange={setTechnicalDocs}
+            />
+          </span>
         </div>
         <StatusCell label="Technical fit" value={technicalStatus} onChange={setTechnicalStatus} />
       </div>
