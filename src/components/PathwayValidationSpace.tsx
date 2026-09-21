@@ -1,8 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Sprout, Rocket, FlaskConical, DollarSign, Leaf, Shield, Scale, MessageSquare, Send, X } from 'lucide-react';
+import { MessageSquare, Send, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 import {
   readValidationComments,
@@ -12,17 +11,6 @@ import {
 
 type Comment = ValidationComment;
 
-
-const CATEGORIES = [
-  { id: 'feedstock', label: 'Feedstock Availability & Security', Icon: Sprout },
-  { id: 'technology', label: 'Technology Maturity & Scalability', Icon: Rocket },
-  { id: 'material', label: 'Material Conformance', Icon: FlaskConical },
-  { id: 'economics', label: 'Economics', Icon: DollarSign },
-  { id: 'sustainability', label: 'Sustainability / LCA', Icon: Leaf },
-  { id: 'ip', label: 'IP & FTO', Icon: Shield },
-  { id: 'regulations', label: 'Regulations', Icon: Scale },
-] as const;
-
 interface Props {
   pathwayId: string;
   topic?: string;
@@ -30,8 +18,6 @@ interface Props {
 
 const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [filter, setFilter] = useState<string>('all');
-  const [draftCategory, setDraftCategory] = useState<string>(CATEGORIES[0].id);
   const [draftText, setDraftText] = useState('');
 
   useEffect(() => {
@@ -44,18 +30,9 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
     writeValidationComments(topic, pathwayId, next);
   };
 
-  const counts = useMemo(() => {
-    const map: Record<string, number> = {};
-    for (const c of CATEGORIES) map[c.id] = 0;
-    for (const c of comments) map[c.categoryId] = (map[c.categoryId] || 0) + 1;
-    return map;
-  }, [comments]);
-
   const visible = useMemo(
-    () => (filter === 'all' ? comments : comments.filter(c => c.categoryId === filter))
-      .slice()
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
-    [comments, filter]
+    () => comments.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [comments]
   );
 
   const addComment = () => {
@@ -64,7 +41,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
       ...comments,
       {
         id: crypto.randomUUID(),
-        categoryId: draftCategory,
+        categoryId: '',
         author: 'You',
         text: draftText.trim(),
         createdAt: new Date().toISOString(),
@@ -73,35 +50,10 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
     setDraftText('');
   };
 
-  const categoryOf = (id: string) => CATEGORIES.find(c => c.id === id) || CATEGORIES[0];
-
   return (
     <div className="mt-1 flex-1 min-h-0 flex flex-col">
-      {/* Unified notes box: filters, existing notes and composer share one container */}
+      {/* Unified notes box: existing notes and composer share one container */}
       <div className="rounded-md border border-border bg-card flex flex-col flex-1 min-h-0">
-        {/* Filters */}
-        <div className="px-3 pt-3 pb-2 border-b border-border">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <button
-              onClick={() => setFilter('all')}
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors ${filter === 'all' ? 'bg-foreground text-background border-foreground' : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
-            >
-              All · {comments.length}
-            </button>
-            {CATEGORIES.map(c => (
-              <button
-                key={c.id}
-                onClick={() => setFilter(c.id)}
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-semibold transition-colors ${filter === c.id ? 'bg-foreground text-background border-foreground' : 'bg-muted/60 text-muted-foreground border-border hover:bg-muted'}`}
-              >
-                <c.Icon className="w-3 h-3" />
-                <span className="truncate max-w-[180px]">{c.label}</span>
-                <span>· {counts[c.id] || 0}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-
         {/* Note list */}
         <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3">
           {visible.length === 0 ? (
@@ -112,33 +64,26 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
             </div>
           ) : (
             <div className="space-y-2">
-              {visible.map(c => {
-                const cat = categoryOf(c.categoryId);
-                return (
-                  <div key={c.id} className="rounded-lg border border-border/60 bg-background p-3 flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/60 px-1.5 py-0.5 text-[9px] font-semibold text-muted-foreground">
-                          <cat.Icon className="w-3 h-3" />
-                          {cat.label}
-                        </span>
-                        <span className="text-[10px] font-medium text-foreground/70">{c.author}</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(c.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{c.text}</p>
+              {visible.map(c => (
+                <div key={c.id} className="rounded-lg border border-border/60 bg-background p-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-medium text-foreground/70">{c.author}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                    <button
-                      onClick={() => persist(comments.filter(x => x.id !== c.id))}
-                      className="text-muted-foreground hover:text-foreground"
-                      title="Remove note"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
+                    <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{c.text}</p>
                   </div>
-                );
-              })}
+                  <button
+                    onClick={() => persist(comments.filter(x => x.id !== c.id))}
+                    className="text-muted-foreground hover:text-foreground"
+                    title="Remove note"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -151,16 +96,7 @@ const PathwayValidationSpace: React.FC<Props> = ({ pathwayId, topic }) => {
             placeholder="Add your note…"
             className="text-xs min-h-[56px] bg-background"
           />
-          <div className="mt-2 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground shrink-0">Tag</span>
-              <Select value={draftCategory} onValueChange={setDraftCategory}>
-                <SelectTrigger className="h-7 text-xs w-[250px]"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map(c => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="mt-2 flex items-center justify-end gap-2">
             <Button size="sm" onClick={addComment} disabled={!draftText.trim()} className="h-7 gap-1 text-xs">
               <Send className="w-3 h-3" /> Post note
             </Button>
