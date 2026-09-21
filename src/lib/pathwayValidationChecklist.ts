@@ -43,7 +43,7 @@ export const FUNCTION_STATUSES = {
   ],
   Regulatory: [
     TO_DO_STATUS,
-    "Pathway identified",
+    "No compliance needed",
     "Compliance check in progress",
     "Approved for use",
     NOT_FIT_STATUS,
