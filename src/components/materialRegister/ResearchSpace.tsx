@@ -213,17 +213,26 @@ const MultiSelectChips = ({
   options,
   values,
   onChange,
+  allowCustom = false,
 }: {
   label: string;
   options: string[];
   values: string[];
   onChange: (next: string[]) => void;
+  /** Lets the user add an entry that is not on our list, straight from the search box. */
+  allowCustom?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
 
   const toggle = (option: string) => {
     onChange(values.includes(option) ? values.filter((value) => value !== option) : [...values, option]);
   };
+
+  const all = Array.from(new Set([...options, ...values]));
+  const trimmed = query.trim();
+  const canAdd =
+    allowCustom && trimmed.length > 0 && !all.some((option) => option.toLowerCase() === trimmed.toLowerCase());
 
   return (
     <div>
@@ -237,11 +246,29 @@ const MultiSelectChips = ({
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command>
-            <CommandInput placeholder={`Search ${label.toLowerCase()}…`} />
+            <CommandInput
+              placeholder={`Search ${label.toLowerCase()}…`}
+              value={query}
+              onValueChange={setQuery}
+            />
             <CommandList>
-              <CommandEmpty>No options found.</CommandEmpty>
+              {!canAdd && <CommandEmpty>No options found.</CommandEmpty>}
+              {canAdd && (
+                <CommandGroup>
+                  <CommandItem
+                    value={`__add__${trimmed}`}
+                    onSelect={() => {
+                      onChange([...values, trimmed]);
+                      setQuery("");
+                    }}
+                  >
+                    <Plus className="mr-2 h-3.5 w-3.5" />
+                    Add “{trimmed}”
+                  </CommandItem>
+                </CommandGroup>
+              )}
               <CommandGroup>
-                {options.map((option) => (
+                {all.map((option) => (
                   <CommandItem key={option} value={option} onSelect={() => toggle(option)}>
                     <Check className={cn("mr-2 h-3.5 w-3.5", values.includes(option) ? "opacity-100" : "opacity-0")} />
                     {option}
