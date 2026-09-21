@@ -768,6 +768,99 @@ type Row = {
                   >
                     {overridden || row.hasData ? shown : "No data"}
                   </Badge>
+                  <Popover>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="relative h-6 w-6 shrink-0"
+                              aria-label={`Notes on ${row.label}`}
+                            >
+                              <MessageSquarePlus
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  (requirementNotes[row.label]?.length ?? 0) > 0
+                                    ? "text-primary"
+                                    : "text-muted-foreground",
+                                )}
+                              />
+                              {(requirementNotes[row.label]?.length ?? 0) > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[8px] font-semibold leading-[12px] text-primary-foreground">
+                                  {requirementNotes[row.label]!.length}
+                                </span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>
+                            {(requirementNotes[row.label]?.length ?? 0) > 0
+                              ? `${requirementNotes[row.label]!.length} note(s) — click to read or add`
+                              : "Add a note"}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <PopoverContent align="end" className="w-80 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">
+                        Notes · {row.label}
+                      </p>
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
+                        {(requirementNotes[row.label] ?? []).length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No notes on this requirement yet.</p>
+                        ) : (
+                          (requirementNotes[row.label] ?? []).map((note) => (
+                            <div
+                              key={note.id}
+                              className="flex items-start justify-between gap-2 rounded-md border border-border/60 bg-muted/20 p-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-medium text-foreground/80">{note.author}</span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {new Date(note.at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 whitespace-pre-wrap break-words text-[11px] text-foreground">
+                                  {note.text}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeRequirementNote(row.label, note.id)}
+                                className="text-muted-foreground hover:text-foreground"
+                                aria-label="Remove note"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <Textarea
+                        value={noteDrafts[row.label] ?? ""}
+                        onChange={(event) =>
+                          setNoteDrafts((prev) => ({ ...prev, [row.label]: event.target.value }))
+                        }
+                        placeholder="Add your note…"
+                        className="mt-2 min-h-[56px] text-xs"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs"
+                          disabled={!(noteDrafts[row.label] ?? "").trim()}
+                          onClick={() => addRequirementNote(row.label)}
+                        >
+                          Post note
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <DropdownMenu>
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
