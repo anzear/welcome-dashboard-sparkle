@@ -75,8 +75,6 @@ const BriefGate: React.FC<{ material: Material }> = ({
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
 
-  const [checklistOpen, setChecklistOpen] = useState(false);
-
   const reviewLate = holdReviewOverdue(m);
   const decided = m.gate_decided_date !== null;
 
