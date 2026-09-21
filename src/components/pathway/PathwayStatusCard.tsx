@@ -39,6 +39,16 @@ export const PATHWAY_STATUSES: PathwayStatus[] = [
 const storageKey = (topic: string | undefined, pathwayId: string) =>
   `vcg.pathway.status.${topic ? encodeURIComponent(topic) : "default"}.${pathwayId}`;
 
+/** Fired whenever a pathway status changes, so shortlist rows can re-read it. */
+export const PATHWAY_STATUS_CHANGED_EVENT = "vcg:pathway-status-changed";
+
+export function readPathwayStatus(topic: string | undefined, pathwayId: string): PathwayStatus {
+  const stored = localStorage.getItem(storageKey(topic, pathwayId));
+  return stored && PATHWAY_STATUSES.includes(stored as PathwayStatus)
+    ? (stored as PathwayStatus)
+    : "todo";
+}
+
 interface PathwayStatusCardProps {
   pathwayId: string;
   topic?: string;
