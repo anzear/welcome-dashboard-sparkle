@@ -39,7 +39,7 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'company' | 'shortlist'>('evaluation');
+  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'workspace'>('evaluation');
 
   // State for favorites and saves
   const pathwayIndex = parseInt(pathwayId || "0");
