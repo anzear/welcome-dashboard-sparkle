@@ -1120,7 +1120,7 @@ export const MaterialBrief: React.FC<{
 
           <Section
             title="Company data"
-            note="Spend, technical fit, and regulatory requirements."
+            note="Data on the material — where and how it is currently being used, produced, or procured."
           >
             <CompanyDataDetails material={m} />
           </Section>
