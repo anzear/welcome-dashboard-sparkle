@@ -1,0 +1,249 @@
+import React, { useEffect, useState } from "react";
+import { Check, Pencil, RotateCcw, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+/**
+ * VALIDATION CHECKLIST — the relevant pathway metrics, one row each.
+ * The user either confirms the VCG.AI value or records their own value found
+ * during their evaluation. Prototype persistence is localStorage.
+ */
+
+export interface ChecklistMetric {
+  id: string;
+  label: string;
+  value: string;
+  group?: string;
+}
+
+type MetricEntry = {
+  state: "confirmed" | "own";
+  ownValue?: string;
+  by: string;
+  date: string;
+};
+
+type MetricChecklistState = Record<string, MetricEntry>;
+
+const storageKey = (topic: string | undefined, pathwayId: string) =>
+  `vcg.pathway.metricChecklist.${topic ? encodeURIComponent(topic) : "default"}.${pathwayId}`;
+
+const todayLabel = () =>
+  new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+const read = (topic: string | undefined, pathwayId: string): MetricChecklistState => {
+  try {
+    const raw = localStorage.getItem(storageKey(topic, pathwayId));
+    return raw ? (JSON.parse(raw) as MetricChecklistState) : {};
+  } catch {
+    return {};
+  }
+};
+
+interface Props {
+  pathwayId: string;
+  topic?: string;
+  metrics: ChecklistMetric[];
+  currentUser?: string;
+}
+
+export const PathwayMetricsChecklist: React.FC<Props> = ({
+  pathwayId,
+  topic,
+  metrics,
+  currentUser = "A. Novak",
+}) => {
+  const [state, setState] = useState<MetricChecklistState>({});
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    setState(read(topic, pathwayId));
+    setEditing(null);
+  }, [topic, pathwayId]);
+
+  const persist = (next: MetricChecklistState) => {
+    setState(next);
+    try {
+      localStorage.setItem(storageKey(topic, pathwayId), JSON.stringify(next));
+    } catch {}
+  };
+
+  const confirm = (metric: ChecklistMetric) =>
+    persist({
+      ...state,
+      [metric.id]: { state: "confirmed", by: currentUser, date: todayLabel() },
+    });
+
+  const saveOwn = (metric: ChecklistMetric) => {
+    if (!draft.trim()) return;
+    persist({
+      ...state,
+      [metric.id]: { state: "own", ownValue: draft.trim(), by: currentUser, date: todayLabel() },
+    });
+    setEditing(null);
+    setDraft("");
+  };
+
+  const reset = (metric: ChecklistMetric) => {
+    const next = { ...state };
+    delete next[metric.id];
+    persist(next);
+  };
+
+  const reviewed = metrics.filter((m) => state[m.id]).length;
+  const percent = metrics.length ? Math.round((reviewed / metrics.length) * 100) : 0;
+
+  let lastGroup: string | undefined;
+
+  return (
+    <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
+      <div className="flex items-center justify-between gap-3 px-3 py-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">
+          Validation checklist
+        </span>
+        <span className="text-[10px] text-muted-foreground">
+          {reviewed} of {metrics.length} metrics reviewed · {percent}%
+        </span>
+      </div>
+
+      <div className="border-t border-border/40 px-3 py-2">
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          role="progressbar"
+          aria-valuenow={percent}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-label="Metric review progression"
+        >
+          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+        </div>
+      </div>
+
+      <div className="max-h-[420px] overflow-y-auto border-t border-border">
+        {metrics.map((metric) => {
+          const entry = state[metric.id];
+          const isEditing = editing === metric.id;
+          const showGroup = metric.group && metric.group !== lastGroup;
+          lastGroup = metric.group;
+
+          return (
+            <React.Fragment key={metric.id}>
+              {showGroup && (
+                <div className="border-b border-border/40 bg-muted/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {metric.group}
+                </div>
+              )}
+              <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2 last:border-b-0">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[11px] font-medium text-foreground">{metric.label}</div>
+                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <span className="tabular-nums">VCG.AI: {metric.value}</span>
+                    {entry?.state === "own" && (
+                      <span className="tabular-nums font-medium text-foreground">
+                        · Your value: {entry.ownValue}
+                      </span>
+                    )}
+                    {entry && (
+                      <span>
+                        · {entry.by}, {entry.date}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {isEditing ? (
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Input
+                      autoFocus
+                      value={draft}
+                      onChange={(event) => setDraft(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") saveOwn(metric);
+                        if (event.key === "Escape") setEditing(null);
+                      }}
+                      placeholder="Your value"
+                      className="h-7 w-[150px] text-xs"
+                    />
+                    <Button size="sm" className="h-7 px-2 text-[10px]" onClick={() => saveOwn(metric)}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setEditing(null)}
+                      aria-label="Cancel"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex shrink-0 items-center gap-1">
+                    {entry ? (
+                      <span
+                        className={cn(
+                          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
+                          entry.state === "confirmed"
+                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
+                            : "border-border bg-muted text-foreground",
+                        )}
+                      >
+                        {entry.state === "confirmed" ? (
+                          <>
+                            <Check className="h-3 w-3" /> Confirmed
+                          </>
+                        ) : (
+                          <>
+                            <Pencil className="h-3 w-3" /> Own value
+                          </>
+                        )}
+                      </span>
+                    ) : null}
+
+                    {!entry && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 gap-1 px-2 text-[10px]"
+                        onClick={() => confirm(metric)}
+                      >
+                        <Check className="h-3 w-3" /> Confirm
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 gap-1 px-2 text-[10px]"
+                      onClick={() => {
+                        setEditing(metric.id);
+                        setDraft(entry?.ownValue ?? "");
+                      }}
+                    >
+                      <Pencil className="h-3 w-3" /> {entry?.state === "own" ? "Edit" : "Own value"}
+                    </Button>
+                    {entry && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        onClick={() => reset(metric)}
+                        aria-label="Reset metric"
+                        title="Clear"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </React.Fragment>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+export default PathwayMetricsChecklist;
