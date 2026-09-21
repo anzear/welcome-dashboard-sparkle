@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FileText, MessageSquare, Paperclip, Trash2, Upload } from "lucide-react";
+import { FileText, MessageSquare, MessageSquarePlus, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
@@ -246,7 +246,11 @@ function FunctionNotes({
           title={count > 0 ? `${count} note${count === 1 ? "" : "s"}` : "Add a note"}
           className="flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-          <MessageSquare className={count > 0 ? "h-3.5 w-3.5 text-foreground" : "h-3.5 w-3.5"} />
+          {count > 0 ? (
+            <MessageSquare className="h-3.5 w-3.5 fill-current text-foreground" />
+          ) : (
+            <MessageSquarePlus className="h-3.5 w-3.5" />
+          )}
           {count > 0 && <span className="text-[10px] font-medium tabular-nums">{count}</span>}
         </button>
       </PopoverTrigger>
