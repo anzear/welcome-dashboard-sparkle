@@ -166,35 +166,15 @@ export function CompanyShortlistTables({
                         />
                       </TableCell>
                       <TableCell className="h-11 py-0">
-                        <Input
-                          value={myNotes[company.id] ?? ""}
-                          onChange={(event) =>
-                            setMyNotes((current) => ({ ...current, [company.id]: event.target.value }))
-                          }
-                          onKeyDown={(event) => {
-                            if (event.key !== "Enter") return;
-                            const text = (myNotes[company.id] ?? "").trim();
-                            if (!text) return;
-                            onPostNote?.(`Company · ${company.name}`, text);
-                            setMyNotes((current) => ({ ...current, [company.id]: "" }));
-                          }}
-                          placeholder="Add your note…"
-                          title="Press Enter to post — the note appears in the notes section"
-                          aria-label={`Your note on ${company.name}`}
-                          className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
+                        <ItemNotesControl
+                          itemLabel={`Company · ${company.name}`}
+                          title={company.name}
+                          teamNotes={company.teamNotes}
+                          currentUser={currentUser}
+                          onPost={onPostNote}
                         />
                       </TableCell>
-                      <TableCell className="h-11 py-0">
-                        {teamNoteCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setTeamPanel(company)}
-                            className="whitespace-nowrap rounded-full border border-border px-2 py-0.5 text-[9px] text-muted-foreground hover:text-foreground"
-                          >
-                            {teamNoteCount} from team
-                          </button>
-                        )}
-                      </TableCell>
+                      <TableCell className="h-11 py-0" />
                       <TableCell className="h-11 py-0">
                         <DocumentAttachControl
                           itemLabel={company.name}
