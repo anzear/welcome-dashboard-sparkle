@@ -55,6 +55,23 @@ const PathwayDetail = () => {
   const [shortlistCompanies, setShortlistCompanies] = useState<ShortlistCompany[]>(SHORTLIST_COMPANIES);
   const [shortlistPatents, setShortlistPatents] = useState<ShortlistPatent[]>(SHORTLIST_PATENTS);
   const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
+  /** Notes written on shortlisted rows also land in the notes section, tagged with the item. */
+  const postShortlistNote = (itemLabel: string, text: string) => {
+    const decodedTopic = topic ? decodeURIComponent(topic) : undefined;
+    const id = pathwayId || '0';
+    const next = [
+      ...readValidationComments(decodedTopic, id),
+      {
+        id: crypto.randomUUID(),
+        categoryId: '',
+        author: CURRENT_REVIEWER,
+        text,
+        createdAt: new Date().toISOString(),
+        metricLabel: itemLabel,
+      },
+    ];
+    writeValidationComments(decodedTopic, id, next);
+  };
   const subscriptionKey = `${topic || ''}_${pathwayId || ''}`;
   const readUpdatesKey = `pathwayReadUpdates_${subscriptionKey}`;
 
