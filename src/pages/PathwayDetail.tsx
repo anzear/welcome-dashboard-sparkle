@@ -12,6 +12,9 @@ import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
+import PathwayDocumentsCard from '@/components/pathway/PathwayDocumentsCard';
+import { setActiveSubRegistry } from '@/lib/documentRegistry';
+
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
