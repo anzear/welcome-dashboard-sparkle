@@ -7,7 +7,7 @@
  * "Technical fit" / "Regulatory fit" source tag.
  */
 import React, { useRef, useState } from "react";
-import { Check, FileText, Paperclip, PenLine, Trash2, Upload } from "lucide-react";
+import { Check, FileText, Paperclip, PenLine, Plus, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
