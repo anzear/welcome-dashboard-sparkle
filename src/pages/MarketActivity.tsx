@@ -84,6 +84,10 @@ const MarketActivity = () => {
   const mapHighlightedCompanyId = tableHoveredCompanyId ?? mapHoveredCompanyId;
   // Pagination state per company type, lifted up so the map can show only the current page
   const [tablePages, setTablePages] = useState<Record<string, { page: number; perPage: number }>>({});
+  /** Shortlist row state — same shape as the Workspace shortlisted companies table. */
+  const [shortlistRatings, setShortlistRatings] = useState<Record<string, number>>({});
+  const [shortlistNotes, setShortlistNotes] = useState<Record<string, string>>({});
+  const shortlistDocs = useItemDocuments({}, (itemId) => `Company · ${companies.find(c => c.id === itemId)?.company_name ?? itemId}`);
   const getPagedCompanies = (companyType: string) => {
     const all = filterCompaniesByType(companyType);
     const { page = 1, perPage = 10 } = tablePages[companyType] || {};
