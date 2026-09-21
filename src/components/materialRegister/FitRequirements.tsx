@@ -50,7 +50,7 @@ const StatusCell: React.FC<{
   value: FitStatus;
   onChange: (next: FitStatus) => void;
 }> = ({ label, value, onChange }) => (
-  <div className="flex min-h-11 items-center justify-end gap-2 border-l border-border px-4">
+  <>
     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[value])}>
       {value}
     </Badge>
@@ -84,7 +84,7 @@ const StatusCell: React.FC<{
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  </div>
+  </>
 );
 
 /** Paperclip attachments control — same pattern as the validation checklist rows. */
@@ -224,10 +224,14 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Fit criteria">
-      <div className="grid grid-cols-[1fr_180px] border-b border-border">
+    <>
+      {/* Section divider — technical & regulatory fit is manually assessed, not driven by VCG.AI signal */}
+      <div className="grid grid-cols-[55%_1fr_180px] border-b border-border bg-muted/30">
         <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
-          Technical and regulatory fit
+          Technical & regulatory fit
+        </div>
+        <div className="flex items-center border-l border-border px-4">
+          <span className="text-[10px] font-semibold text-muted-foreground">No VCG.AI signal</span>
         </div>
         <div className="border-l border-border px-4 py-2 text-right text-[10px] font-bold uppercase tracking-widest text-foreground">
           Status
@@ -235,7 +239,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
       </div>
 
       {/* Technical fit — free-text notes + status + attachments */}
-      <div className="grid grid-cols-[1fr_180px_44px] border-b border-border">
+      <div className="grid grid-cols-[55%_1fr_180px] border-b border-border">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Technical fit</span>
           <Input
@@ -245,8 +249,11 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
             className="h-7 flex-1 text-xs"
           />
         </div>
-        <StatusCell label="Technical fit" value={technicalStatus} onChange={setTechnicalStatus} />
-        <div className="flex items-center justify-center border-l border-border">
+        <div className="flex min-h-11 items-center border-l border-border px-4">
+          <span className="text-xs text-muted-foreground">—</span>
+        </div>
+        <div className="flex min-h-11 items-center justify-end gap-2 border-l border-border px-4">
+          <StatusCell label="Technical fit" value={technicalStatus} onChange={setTechnicalStatus} />
           <FitAttachments
             label="Technical fit"
             sourceTag="Technical fit"
@@ -257,7 +264,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
       </div>
 
       {/* Regulatory fit — registrations needed + status + attachments */}
-      <div className="grid grid-cols-[1fr_180px_44px]">
+      <div className="grid grid-cols-[55%_1fr_180px] border-b border-border">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Regulatory fit</span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
@@ -333,8 +340,11 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
             </Popover>
           </div>
         </div>
-        <StatusCell label="Regulatory fit" value={regulatoryStatus} onChange={setRegulatoryStatus} />
-        <div className="flex items-center justify-center border-l border-border">
+        <div className="flex min-h-11 items-center border-l border-border px-4">
+          <span className="text-xs text-muted-foreground">—</span>
+        </div>
+        <div className="flex min-h-11 items-center justify-end gap-2 border-l border-border px-4">
+          <StatusCell label="Regulatory fit" value={regulatoryStatus} onChange={setRegulatoryStatus} />
           <FitAttachments
             label="Regulatory fit"
             sourceTag="Regulatory fit"
@@ -343,7 +353,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
           />
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
