@@ -183,6 +183,7 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
   const registrations = material.regulatory_registrations ?? [];
   const [technicalStatus, setTechnicalStatus] = useState<FitStatus>("Met");
   const [regulatoryStatus, setRegulatoryStatus] = useState<FitStatus>("Not set");
+  const [technicalNote, setTechnicalNote] = useState("");
   const [technicalDocs, setTechnicalDocs] = useState<RegisteredDocument[]>(() =>
     material.performance_targets_document
       ? [
