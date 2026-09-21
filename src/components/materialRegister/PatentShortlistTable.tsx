@@ -43,10 +43,13 @@ export function PatentShortlistTable({
   patents,
   currentUser,
   onRemove,
+  onPostNote,
 }: {
   patents: ShortlistPatent[];
   currentUser: string;
   onRemove: (id: string) => void;
+  /** Publishes the row note to the pathway notes section, tagged with the item. */
+  onPostNote?: (itemLabel: string, text: string) => void;
 }) {
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistPatent | null>(null);
@@ -105,7 +108,15 @@ export function PatentShortlistTable({
                     <Input
                       value={myNotes[patent.id] ?? ""}
                       onChange={(event) => setMyNotes((current) => ({ ...current, [patent.id]: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        const text = (myNotes[patent.id] ?? "").trim();
+                        if (!text) return;
+                        onPostNote?.(`Patent · ${patent.title}`, text);
+                        setMyNotes((current) => ({ ...current, [patent.id]: "" }));
+                      }}
                       placeholder="Add your note…"
+                      title="Press Enter to post — the note appears in the notes section"
                       aria-label={`Your note on ${patent.title}`}
                       className="h-7 bg-background text-[10px]"
                     />

@@ -56,10 +56,13 @@ export function CompanyShortlistTables({
   companies,
   currentUser,
   onRemove,
+  onPostNote,
 }: {
   companies: ShortlistCompany[];
   currentUser: string;
   onRemove: (id: string) => void;
+  /** Publishes the row note to the pathway notes section, tagged with the item. */
+  onPostNote?: (itemLabel: string, text: string) => void;
 }) {
   const { stages: engagementStages, setStage: setEngagementStage } = useEngagementStages();
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
@@ -168,7 +171,15 @@ export function CompanyShortlistTables({
                           onChange={(event) =>
                             setMyNotes((current) => ({ ...current, [company.id]: event.target.value }))
                           }
+                          onKeyDown={(event) => {
+                            if (event.key !== "Enter") return;
+                            const text = (myNotes[company.id] ?? "").trim();
+                            if (!text) return;
+                            onPostNote?.(`Company · ${company.name}`, text);
+                            setMyNotes((current) => ({ ...current, [company.id]: "" }));
+                          }}
                           placeholder="Add your note…"
+                          title="Press Enter to post — the note appears in the notes section"
                           aria-label={`Your note on ${company.name}`}
                           className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
                         />
