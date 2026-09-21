@@ -72,12 +72,13 @@ export const FIELD_LABELS: Record<string, string> = {
   city: "City",
   industry_sector: "Industry sector",
   role: "Role",
-  role_node: "Role node",
+  role_nodes: "Role nodes",
   evidence: "Relevance",
   "secondary_nodes.feedstock": "Secondary feedstock",
   "secondary_nodes.process_technology": "Secondary process",
   "secondary_nodes.product": "Secondary product",
   "secondary_nodes.application_market": "Secondary application",
+
   "profile_fields.revenue": "Revenue",
   color_token: "Colour",
   description: "Description",
@@ -93,11 +94,13 @@ export const FIELD_LABELS: Record<string, string> = {
   method_detail: "Method detail",
   sources: "Sources",
 };
+// Every matched position holds a list of alternative node values: within a position the values
+// are alternatives, across positions all filled positions must match.
 export interface MatchNodes {
-  feedstock: string | null;
-  process: string | null;
-  product: string | null;
-  application: string | null;
+  feedstock: string[];
+  process: string[];
+  product: string[];
+  application: string[];
 }
 export type MatchNodePosition = keyof MatchNodes;
 export const matchNodePositions: MatchNodePosition[] = ["feedstock", "process", "product", "application"];
@@ -110,16 +113,37 @@ export const MATCH_NODE_LABELS: Record<MatchNodePosition, string> = {
 export const matchToPathwayPosition: Record<MatchNodePosition, keyof EvidenceNodes> = {
   feedstock: "feedstock", process: "process_technology", product: "product", application: "application_market",
 };
-export const emptyMatchNodes = (): MatchNodes => ({ feedstock: null, process: null, product: null, application: null });
+export const emptyMatchNodes = (): MatchNodes => ({ feedstock: [], process: [], product: [], application: [] });
+export type EvidenceNodeLists = Record<keyof EvidenceNodes, string[]>;
+export const emptyEvidenceNodeLists = (): EvidenceNodeLists => ({ feedstock: [], process_technology: [], product: [], application_market: [] });
 export type PathwayNodePosition = keyof EvidenceNodes;
 export const pathwayNodePositions: PathwayNodePosition[] = ["feedstock", "process_technology", "product", "application_market"];
 const normalizedNode = (value: string | null) => value?.trim().toLocaleLowerCase() ?? null;
+// Trims, drops empties and removes case-insensitive duplicates while keeping the given order.
+export const cleanNodeList = (values: (string | null | undefined)[] | null | undefined): string[] => {
+  const result: string[] = [];
+  (values ?? []).forEach(raw => {
+    const value = (raw ?? "").trim();
+    if (!value) return;
+    if (!result.some(item => item.toLocaleLowerCase() === value.toLocaleLowerCase())) result.push(value);
+  });
+  return result;
+};
+// Accepts a single value, an array, or a "a | b" string (paste and upload columns).
+export const toNodeList = (value: string | string[] | null | undefined): string[] => cleanNodeList(Array.isArray(value) ? value : typeof value === "string" ? value.split("|") : []);
+export const nodeListText = (values: string[]): string => values.join(", ");
+export const formatNodeList = (values: string[]): string => values.join(" | ");
+const sortedKeys = (values: string[]) => cleanNodeList(values).map(value => value.toLocaleLowerCase()).sort().join("|");
+export const sameNodeList = (a: string[], b: string[]): boolean => sortedKeys(a) === sortedKeys(b);
+export const nodeListMatches = (values: string[], pathwayValue: string | null): boolean => values.some(value => normalizedNode(value) === normalizedNode(pathwayValue));
+export const matchedNodeValue = (values: string[], pathwayValue: string | null): string | null => values.find(value => normalizedNode(value) === normalizedNode(pathwayValue)) ?? null;
 export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
 export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
   if (role === "feedstock_supplier") return [];
   if (role === "product_manufacturer") return ["feedstock", "process_technology"];
   return ["feedstock", "process_technology", "product"];
 }
+
 
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
 export type IndicatorValueType = "trl" | "count" | "decimal";
@@ -174,8 +198,9 @@ export interface Company extends CommonRecord {
   industry_sector: string | null;
   profile_fields: Record<string, string | number | null>;
   role: CompanyRole;
-  role_node: string;
-  secondary_nodes: EvidenceNodes;
+  role_nodes: string[];
+  secondary_nodes: EvidenceNodeLists;
+
   status: ReviewStatus;
   evidence: string | null;
   note: string | null;
@@ -338,9 +363,15 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   const pathway = seedPathways[assignment.pathway];
   const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
   const allowed = new Set(allowedSecondaryPositions(assignment.role));
-  const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => [key, allowed.has(key) ? assignment.secondary_nodes[key] : null])) as unknown as EvidenceNodes;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_node: pathway[position], secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => {
+    const extra = allowed.has(key) && index === 1 && key === "feedstock" ? seedPathways[3].feedstock : null;
+    return [key, allowed.has(key) ? cleanNodeList([assignment.secondary_nodes[key], extra]) : []];
+  })) as unknown as EvidenceNodeLists;
+  // A couple of seeded companies cover several nodes in the same position.
+  const extraRoleNode = index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null;
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_nodes: cleanNodeList([pathway[position], extraRoleNode]), secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
+
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
 const paperTitles = ["Enzymatic fractionation of agricultural residues for advanced biorefineries", "Fermentative conversion of side streams into renewable platform chemicals", "Process intensification routes for circular bio-based production"];
@@ -358,6 +389,10 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
         : { feedstock: null, process_technology: pathway.process_technology, product: pathway.product, application_market: null };
   const legacyValues = [...new Map(Object.values(legacyNodes).filter((value): value is string => Boolean(value?.trim())).map(value => [value.trim().toLocaleLowerCase(), value.trim()])).values()];
   const nodes = migrateLegacyMatchedNodes(legacyValues, seedPathways);
+  // Seed a few records with several alternative values in the same position.
+  if (index === 2) nodes.product = cleanNodeList([...nodes.product, seedPathways[5].product]);
+  if (index === 5) nodes.feedstock = cleanNodeList([...nodes.feedstock, seedPathways[2].feedstock, seedPathways[4].feedstock]);
+
   return {
     ...common(`pp-${String(index + 1).padStart(3, "0")}`, 13 - (index % 7)), kind,
     external_id: kind === "paper" ? `10.1016/j.biortech.202${index}.10${index}42` : `EP${3201400 + index}A1`,
@@ -392,26 +427,28 @@ function migrateLegacyMatchedNodes(values: string[], pathways: Pathway[]): Match
     const meta = metadata.find(item => normalizedNode(item.value) === normalizedNode(value));
     if (!meta) return;
     const candidates = meta.positions.map(item => matchNodePositions[pathwayNodePositions.indexOf(item.position)]).filter((position): position is MatchNodePosition => Boolean(position));
-    const free = candidates.find(position => nodes[position] === null);
-    if (free) nodes[free] = meta.value;
+    const free = candidates.find(position => nodes[position].length === 0);
+    if (free) nodes[free] = [meta.value];
   });
   return nodes;
 }
 export function filledPositions(match: Pick<PaperPatentMatch, "nodes">): MatchNodePosition[] {
-  return matchNodePositions.filter(position => Boolean(match.nodes[position]?.trim()));
+  return matchNodePositions.filter(position => cleanNodeList(match.nodes[position]).length > 0);
 }
 export function hasNoNodes(match: Pick<PaperPatentMatch, "nodes">): boolean { return filledPositions(match).length === 0; }
 export function derivedPathwayIds(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]): string[] {
   const positions = filledPositions(match);
   if (!positions.length) return [];
-  return pathways.filter(pathway => positions.every(position => normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]))).map(pathway => pathway.id);
+  return pathways.filter(pathway => positions.every(position => nodeListMatches(match.nodes[position], pathway[matchToPathwayPosition[position]]))).map(pathway => pathway.id);
 }
-export interface PathwayScope { production: boolean; application: boolean; productionPositions: MatchNodePosition[]; applicationHit: boolean; }
+export interface PathwayScope { production: boolean; application: boolean; productionPositions: MatchNodePosition[]; applicationHit: boolean; matchedValues: Partial<Record<MatchNodePosition, string>>; }
 export function pathwayScope(match: Pick<PaperPatentMatch, "nodes">, pathway: Pathway): PathwayScope {
   const filled = filledPositions(match);
-  const productionPositions = filled.filter(position => position !== "application" && normalizedNode(pathway[matchToPathwayPosition[position]]) === normalizedNode(match.nodes[position]));
-  const applicationHit = filled.includes("application") && normalizedNode(pathway.application_market) === normalizedNode(match.nodes.application);
-  return { production: productionPositions.length > 0, application: applicationHit, productionPositions, applicationHit };
+  const matchedValues: Partial<Record<MatchNodePosition, string>> = {};
+  filled.forEach(position => { const hit = matchedNodeValue(match.nodes[position], pathway[matchToPathwayPosition[position]]); if (hit) matchedValues[position] = hit; });
+  const productionPositions = filled.filter(position => position !== "application" && matchedValues[position]);
+  const applicationHit = Boolean(matchedValues.application);
+  return { production: productionPositions.length > 0, application: applicationHit, productionPositions, applicationHit, matchedValues };
 }
 export function scopeSummary(match: Pick<PaperPatentMatch, "nodes">, pathways: Pathway[]) {
   return derivedPathwayIds(match, pathways).reduce((counts, id) => { const pathway = pathways.find(item => item.id === id); if (!pathway) return counts; const scope = pathwayScope(match, pathway); return { production: counts.production + Number(scope.production), application: counts.application + Number(scope.application) }; }, { production: 0, application: 0 });
@@ -423,19 +460,21 @@ const rolePositions = {
   application_offtaker: { positionKey: "application_market", positionLabel: NODE_LABELS.application_market, verb: "Offtakes" },
 } as const;
 export function rolePosition(role: CompanyRole) { return rolePositions[role]; }
-export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_node">, pathways: Pathway[]): string[] {
+export function derivedCompanyPathwayIds(company: Pick<Company, "role" | "role_nodes">, pathways: Pathway[]): string[] {
   const position = rolePosition(company.role).positionKey;
-  return pathways.filter(pathway => normalizedNode(pathway[position]) === normalizedNode(company.role_node)).map(pathway => pathway.id);
+  return pathways.filter(pathway => nodeListMatches(company.role_nodes, pathway[position])).map(pathway => pathway.id);
 }
 export type CompanyFit = { level: "exact" | "strong" | "broad"; matched: (keyof EvidenceNodes)[]; differing: (keyof EvidenceNodes)[]; unknown: (keyof EvidenceNodes)[] };
 export function computeFit(company: Pick<Company, "role" | "secondary_nodes">, pathway: Pathway): CompanyFit | null {
   const positions = allowedSecondaryPositions(company.role);
   if (!positions.length) return null;
-  const matched = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) === normalizedNode(pathway[key]));
-  const differing = positions.filter(key => normalizedNode(company.secondary_nodes[key]) !== null && normalizedNode(company.secondary_nodes[key]) !== normalizedNode(pathway[key]));
-  const unknown = positions.filter(key => normalizedNode(company.secondary_nodes[key]) === null);
+  const known = positions.filter(key => cleanNodeList(company.secondary_nodes[key]).length > 0);
+  const matched = known.filter(key => nodeListMatches(company.secondary_nodes[key], pathway[key]));
+  const differing = known.filter(key => !nodeListMatches(company.secondary_nodes[key], pathway[key]));
+  const unknown = positions.filter(key => cleanNodeList(company.secondary_nodes[key]).length === 0);
   return { level: matched.length > 0 && differing.length === 0 ? "exact" : matched.length > 0 && differing.length > 0 ? "strong" : "broad", matched, differing, unknown };
 }
+
 
 export interface IndicatorDefinition { key: string; label: string; scope: IndicatorScope; value_type: IndicatorValueType; unit: string; units: string[]; computed: boolean; }
 export const INDICATORS: IndicatorDefinition[] = [

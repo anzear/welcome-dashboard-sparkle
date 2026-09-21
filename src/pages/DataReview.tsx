@@ -10,7 +10,7 @@ import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { MatchReviewSection } from "@/components/hitl/MatchReviewSection";
 import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
-import { affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, rolePosition, useHitlStore, type Company, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
+import { affectedPathwayIds, nodeListMatches, derivedCompanyPathwayIds, derivedPathwayIds, rolePosition, useHitlStore, type Company, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type Section = "pathways" | "companies" | "papers" | "patents" | "indicators" | "audit";
@@ -31,8 +31,8 @@ function DataReviewContent() {
   const requested = rawRequested as Section | null;
   const activeSection: Section = requested && validSections.has(requested) ? requested : "pathways";
   const nodeFilter = useNodeFilter();
-  const evidencePassesFilter = (item: PaperPatentMatch) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || normalized(item.nodes.feedstock) === normalized(nodeFilter.feedstock)) && (!nodeFilter.product || normalized(item.nodes.product) === normalized(nodeFilter.product)); return direct || derivedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
-  const companyPassesFilter = (item: Company) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const position = rolePosition(item.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && normalized(item.role_node) === normalized(nodeFilter.feedstock))) && (!nodeFilter.product || (position === "product" && normalized(item.role_node) === normalized(nodeFilter.product))); return direct || derivedCompanyPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
+  const evidencePassesFilter = (item: PaperPatentMatch) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || nodeListMatches(item.nodes.feedstock, nodeFilter.feedstock)) && (!nodeFilter.product || nodeListMatches(item.nodes.product, nodeFilter.product)); return direct || derivedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
+  const companyPassesFilter = (item: Company) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const position = rolePosition(item.role).positionKey; const direct = (!nodeFilter.feedstock || (position === "feedstock" && nodeListMatches(item.role_nodes, nodeFilter.feedstock))) && (!nodeFilter.product || (position === "product" && nodeListMatches(item.role_nodes, nodeFilter.product))); return direct || derivedCompanyPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
 
   const indicatorPassesFilter = (item: IndicatorValue) => { if (!nodeFilter.isActive) return true; const normalized = (value: string | null) => value?.trim().toLocaleLowerCase() ?? ""; const direct = (!nodeFilter.feedstock || normalized(item.target.feedstock) === normalized(nodeFilter.feedstock)) && (!nodeFilter.product || normalized(item.target.product) === normalized(nodeFilter.product)); return direct || affectedPathwayIds(item, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); };
 
