@@ -199,6 +199,11 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
 
   const [customDraft, setCustomDraft] = useState("");
 
+  const allOptions = [
+    ...REGISTRATION_OPTIONS,
+    ...registrations.filter((item) => !REGISTRATION_OPTIONS.includes(item as never)),
+  ];
+
   const setRegistrations = (next: string[]) => {
     updateMaterial(
       material.material_id,
