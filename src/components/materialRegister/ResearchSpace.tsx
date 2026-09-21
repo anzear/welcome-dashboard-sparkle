@@ -774,27 +774,22 @@ type Row = {
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <PopoverTrigger asChild>
-                            <Button
+                            <button
                               type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="relative h-6 w-6 shrink-0"
                               aria-label={`Notes on ${row.label}`}
+                              className="flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                             >
-                              <MessageSquarePlus
-                                className={cn(
-                                  "h-3.5 w-3.5",
-                                  (requirementNotes[row.label]?.length ?? 0) > 0
-                                    ? "text-primary"
-                                    : "text-muted-foreground",
-                                )}
-                              />
+                              {(requirementNotes[row.label]?.length ?? 0) > 0 ? (
+                                <MessageSquare className="h-3.5 w-3.5 fill-current text-foreground" />
+                              ) : (
+                                <MessageSquarePlus className="h-3.5 w-3.5" />
+                              )}
                               {(requirementNotes[row.label]?.length ?? 0) > 0 && (
-                                <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[8px] font-semibold leading-[12px] text-primary-foreground">
+                                <span className="text-[10px] font-medium tabular-nums text-foreground">
                                   {requirementNotes[row.label]!.length}
                                 </span>
                               )}
-                            </Button>
+                            </button>
                           </PopoverTrigger>
                         </TooltipTrigger>
                         <TooltipContent side="top">
