@@ -224,8 +224,8 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Fit criteria">
-      <div className="grid grid-cols-[1fr_180px] border-b border-border">
+    <>
+      <div className="grid grid-cols-[1fr_180px] border-t border-b border-border">
         <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
           Technical and regulatory fit
         </div>
