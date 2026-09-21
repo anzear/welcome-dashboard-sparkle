@@ -96,7 +96,15 @@ export function PaperShortlistTable({
                     <Input
                       value={myNotes[paper.id] ?? ""}
                       onChange={(event) => setMyNotes((current) => ({ ...current, [paper.id]: event.target.value }))}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        const text = (myNotes[paper.id] ?? "").trim();
+                        if (!text) return;
+                        onPostNote?.(`Paper · ${paper.title}`, text);
+                        setMyNotes((current) => ({ ...current, [paper.id]: "" }));
+                      }}
                       placeholder="Add your note…"
+                      title="Press Enter to post — the note appears in the notes section"
                       aria-label={`Your note on ${paper.title}`}
                       className="h-7 bg-background text-[10px]"
                     />
