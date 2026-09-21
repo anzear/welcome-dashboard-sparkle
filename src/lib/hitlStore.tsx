@@ -71,8 +71,11 @@ export const FIELD_LABELS: Record<string, string> = {
   country: "Country",
   city: "City",
   industry_sector: "Industry sector",
-  role: "Role",
-  role_nodes: "Role nodes",
+  roles: "Roles",
+  "role_nodes.feedstock_supplier": "Supplied feedstock nodes",
+  "role_nodes.product_manufacturer": "Produced product nodes",
+  "role_nodes.application_offtaker": "Offtaken application nodes",
+
   evidence: "Relevance",
   "secondary_nodes.feedstock": "Secondary feedstock",
   "secondary_nodes.process_technology": "Secondary process",
@@ -138,11 +141,26 @@ export const sameNodeList = (a: string[], b: string[]): boolean => sortedKeys(a)
 export const nodeListMatches = (values: string[], pathwayValue: string | null): boolean => values.some(value => normalizedNode(value) === normalizedNode(pathwayValue));
 export const matchedNodeValue = (values: string[], pathwayValue: string | null): string | null => values.find(value => normalizedNode(value) === normalizedNode(pathwayValue)) ?? null;
 export interface NodeValueMetadata { value: string; positions: { position: PathwayNodePosition; pathwayCount: number }[]; pathwayCount: number; mostCommonPosition: PathwayNodePosition; }
-export function allowedSecondaryPositions(role: CompanyRole): (keyof EvidenceNodes)[] {
-  if (role === "feedstock_supplier") return [];
-  if (role === "product_manufacturer") return ["feedstock", "process_technology"];
-  return ["feedstock", "process_technology", "product"];
+// A company can hold several roles at once; each role owns its own list of node values.
+export type CompanyRoleNodes = Record<CompanyRole, string[]>;
+export const companyRoleOrder: CompanyRole[] = ["feedstock_supplier", "product_manufacturer", "application_offtaker"];
+export const emptyRoleNodes = (): CompanyRoleNodes => ({ feedstock_supplier: [], product_manufacturer: [], application_offtaker: [] });
+const roleNodePositions: Record<CompanyRole, keyof EvidenceNodes> = { feedstock_supplier: "feedstock", product_manufacturer: "product", application_offtaker: "application_market" };
+export const roleNodePosition = (role: CompanyRole): keyof EvidenceNodes => roleNodePositions[role];
+export const sortedRoles = (roles: CompanyRole[]): CompanyRole[] => companyRoleOrder.filter(role => roles.includes(role));
+export const roleNodesFor = (company: { roles: CompanyRole[]; role_nodes: CompanyRoleNodes }, role: CompanyRole): string[] => cleanNodeList(company.role_nodes[role]);
+export const allRoleNodeValues = (company: { roles: CompanyRole[]; role_nodes: CompanyRoleNodes }): string[] => cleanNodeList(company.roles.flatMap(role => company.role_nodes[role] ?? []));
+export const hasRoleNodes = (roles: CompanyRole[], nodes: CompanyRoleNodes): boolean => roles.length > 0 && roles.every(role => cleanNodeList(nodes[role]).length > 0);
+export function allowedSecondaryPositions(roles: CompanyRole[]): (keyof EvidenceNodes)[] {
+  const used = new Set<keyof EvidenceNodes>(roles.map(role => roleNodePositions[role]));
+  const allowed = new Set<keyof EvidenceNodes>();
+  roles.forEach(role => {
+    if (role === "product_manufacturer") { allowed.add("feedstock"); allowed.add("process_technology"); }
+    if (role === "application_offtaker") { allowed.add("feedstock"); allowed.add("process_technology"); allowed.add("product"); }
+  });
+  return (["feedstock", "process_technology", "product", "application_market"] as (keyof EvidenceNodes)[]).filter(key => allowed.has(key) && !used.has(key));
 }
+
 
 
 export type IndicatorScope = "feedstock" | "process" | "product" | "production" | "application";
