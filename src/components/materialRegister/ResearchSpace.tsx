@@ -89,6 +89,28 @@ type EvaluationStatus = "Met" | "Not met" | "Not set";
 
 type EvidenceRecord = { name: string; source: string };
 
+/** A note left by a colleague on one requirement row. */
+type RequirementNote = { id: string; author: string; at: string; text: string };
+
+const INITIAL_REQUIREMENT_NOTES: Record<string, RequirementNote[]> = {
+  Volume: [
+    {
+      id: "req-note-1",
+      author: "Sam Patel",
+      at: "2026-09-08T09:20:00.000Z",
+      text: "12,000 t/yr is all we can verify today. A second supplier would close the gap — RFI is out.",
+    },
+  ],
+  "Price ceiling": [
+    {
+      id: "req-note-2",
+      author: "Maya Chen",
+      at: "2026-09-11T14:05:00.000Z",
+      text: "Indicative price excludes logistics. Recheck once we have landed cost from the Rotterdam quote.",
+    },
+  ],
+};
+
 
 
 
