@@ -1,18 +1,15 @@
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Star, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { EngagementStageSelect, useEngagementStages } from "@/components/materialRegister/engagementStage";
 
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
-
-/** One colleague's rating — never averaged, never totalled. */
-export type CompanyTeamRating = { author: string; value: number };
 
 export type ShortlistCompany = {
   id: string;
@@ -25,10 +22,6 @@ export type ShortlistCompany = {
   linkedNode: string;
   role: "Producer" | "Supplier" | "Offtaker";
   savedBy: string;
-  /** A single 1–5 rating per company — absent means unrated. */
-  rating?: number;
-  /** Colleagues' ratings, one chip each. Empty means nobody else rated. */
-  teamRatings?: CompanyTeamRating[];
   /** Colleagues' notes only — read-only for the current user. */
   teamNotes: CompanyNote[];
 };
@@ -50,7 +43,7 @@ const Columns = () => (
     <col style={{ width: "84px" }} />
     <col style={{ width: "112px" }} />
     <col style={{ width: "120px" }} />
-    <col style={{ width: "116px" }} />
+    <col style={{ width: "140px" }} />
     <col />
     <col style={{ width: "88px" }} />
     <col style={{ width: "40px" }} />
@@ -58,44 +51,6 @@ const Columns = () => (
     <col style={{ width: "40px" }} />
   </colgroup>
 );
-
-function StarRating({
-  value,
-  onChange,
-  name,
-}: {
-  value: number;
-  onChange: (next: number) => void;
-  name: string;
-}) {
-  const unrated = value === 0;
-  return (
-    <div
-      className={cn("flex items-center gap-0.5", unrated && "opacity-25")}
-      role="group"
-      aria-label={`Your rating for ${name}`}
-      title={unrated ? "Not rated" : undefined}
-    >
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          // Clicking the current rating clears it back to unrated.
-          onClick={() => onChange(value === star ? 0 : star)}
-          aria-label={`Rate ${name} ${star} of 5`}
-          className="p-0.5"
-        >
-          <Star
-            className={cn(
-              "h-[14px] w-[14px]",
-              star <= value ? "fill-primary text-primary" : "fill-none text-muted-foreground",
-            )}
-          />
-        </button>
-      ))}
-    </div>
-  );
-}
 
 export function CompanyShortlistTables({
   companies,
@@ -106,9 +61,7 @@ export function CompanyShortlistTables({
   currentUser: string;
   onRemove: (id: string) => void;
 }) {
-  const [ratings, setRatings] = useState<Record<string, number>>(() =>
-    Object.fromEntries(companies.filter((company) => company.rating).map((company) => [company.id, company.rating as number])),
-  );
+  const { stages: engagementStages, setStage: setEngagementStage } = useEngagementStages();
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
   const [activeTab, setActiveTab] = useState(ROLE_TABS[1].value);
@@ -160,7 +113,7 @@ export function CompanyShortlistTables({
             <TableHead className={HEAD_CLS}>Country</TableHead>
             <TableHead className={HEAD_CLS}>Sector</TableHead>
             <TableHead className={HEAD_CLS}>Linked node</TableHead>
-            <TableHead className={HEAD_CLS}>Your rating</TableHead>
+            <TableHead className={HEAD_CLS}>Engagement</TableHead>
             <TableHead className={HEAD_CLS}>Notes</TableHead>
             <TableHead className={HEAD_CLS} />
             <TableHead className={HEAD_CLS}>Docs</TableHead>
@@ -177,7 +130,7 @@ export function CompanyShortlistTables({
             </TableRow>
           )}
           {visibleRows.map((company) => {
-                  const rating = ratings[company.id] ?? 0;
+                  const stage = engagementStages[company.id] ?? "Not engaged";
                   const teamNoteCount = company.teamNotes.length;
                   return (
                     <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
@@ -203,10 +156,10 @@ export function CompanyShortlistTables({
                         </Badge>
                       </TableCell>
                       <TableCell className="h-11 py-0">
-                        <StarRating
-                          value={rating}
-                          name={company.name}
-                          onChange={(next) => setRatings((current) => ({ ...current, [company.id]: next }))}
+                        <EngagementStageSelect
+                          value={stage}
+                          companyName={company.name}
+                          onChange={(next) => setEngagementStage(company.id, next)}
                         />
                       </TableCell>
                       <TableCell className="h-11 py-0">
