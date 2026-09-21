@@ -22,15 +22,14 @@ import {
 /**
  * THE GATE.
  *
- * The status is the headline: seven workflow stages. Nothing here is derived
+ * The status is the headline: four workflow stages. Nothing here is derived
  * from the assessment: every status is set by the owner, and detail is typed,
- * not suggested. The current stage carries one editable goal.
+ * not suggested.
  */
 
 /**
  * Four stages. NOT a sequence — the owner may set any stage at any time. There
  * is no ordering, locking, or left-to-right progression logic anywhere below.
- * The functions live as a checklist inside "In evaluation", not as stages.
  */
 const STATUSES: JourneyStatus[] = JOURNEY_STATUSES;
 
