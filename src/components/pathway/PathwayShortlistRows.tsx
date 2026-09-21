@@ -78,8 +78,6 @@ function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayI
 const COLS =
   "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,200px)]";
 
-/**
-}
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
 function StatusBadge({ trl }: { trl?: string }) {
