@@ -65,40 +65,33 @@ function useValidationChecklist(topic: string | undefined, pathwayId: string): V
   return checklist;
 }
 
-/**
- * Pathway status derived from the Validation checklist: each function sitting at
- * a mid-progress stage (past the first option, not yet the positive final state
- * and not "Not fit for function") renders an "<fn> evaluation" pill.
- */
-function inEvaluationFunctions(checklist: ValidationChecklist): ValidationFunction[] {
-  return VALIDATION_FUNCTIONS.filter((fn) => {
-    const status = functionStatus(checklist, fn);
-    return (
-      !isNotStartedStatus(fn, status) && status !== finalStatus(fn) && status !== NOT_FIT_STATUS
-    );
-
-  });
+/** Live-reads the pathway's own status (To do … Parked) set in the Workspace. */
+function usePathwayStatus(topic: string | undefined, pathwayId: string): PathwayStatus {
+  const [status, setStatus] = useState(() => readPathwayStatus(topic, pathwayId));
+  useEffect(() => {
+    const sync = () => setStatus(readPathwayStatus(topic, pathwayId));
+    sync();
+    window.addEventListener(PATHWAY_STATUS_CHANGED_EVENT, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(PATHWAY_STATUS_CHANGED_EVENT, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [topic, pathwayId]);
+  return status;
 }
 
-
 function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayId: string }) {
-  const checklist = useValidationChecklist(topic, pathwayId);
-  const active = inEvaluationFunctions(checklist);
-  if (active.length === 0) {
-    return <span className="text-[9px] text-muted-foreground">—</span>;
-  }
+  const status = usePathwayStatus(topic, pathwayId);
   return (
-    <span className="flex flex-wrap items-center gap-1">
-      {active.map((fn) => (
-        <span
-          key={fn}
-          title={`${fn} is mid-review in the pathway Validation card (${functionStatus(checklist, fn)})`}
-          className="inline-flex items-center gap-1 rounded-md border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600"
-        >
-          <span className="h-1 w-1 rounded-full bg-amber-500" />
-          {fn} evaluation
-        </span>
-      ))}
+    <span
+      title={`Pathway status: ${PATHWAY_STATUS_LABEL[status]}`}
+      className={cn(
+        "inline-flex items-center rounded-md border px-1.5 py-0.5 text-[9px] font-semibold pathway-status",
+        `pathway-status--${status}`,
+      )}
+    >
+      {PATHWAY_STATUS_LABEL[status]}
     </span>
   );
 }
