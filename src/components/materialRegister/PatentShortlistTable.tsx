@@ -27,7 +27,7 @@ const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking
 
 const Columns = () => (
   <colgroup>
-    <col />
+    <col className="min-w-[220px]" />
     <col style={{ width: "100px" }} />
     <col style={{ width: "100px" }} />
     <col style={{ width: "80px" }} />
@@ -91,7 +91,9 @@ export function PatentShortlistTable({
             return (
               <TableRow key={patent.id} className="border-b border-border/30 hover:bg-muted/20">
                 <TableCell className="py-2">
-                  <div className="text-[10px] font-medium leading-snug text-foreground">{patent.title}</div>
+                  <div title={patent.title} className="text-[10px] font-medium leading-snug text-foreground truncate">
+                    {patent.title}
+                  </div>
                   <div className="mt-0.5 text-[9px] text-muted-foreground">Applicant: {patent.applicant}</div>
                 </TableCell>
                 <TableCell className="py-2 text-[10px] text-muted-foreground">{patent.filedDate ?? "—"}</TableCell>
