@@ -469,19 +469,6 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
   }, [pathwayNotes, shortlistPathways, material?.name, commentTick]);
 
 
-  /**
-   * Function progression for the Status card. Read from the primary (top
-   * priority) shortlisted pathway's Validation card checkboxes — read-only.
-   */
-  const validationProgress = useMemo(() => {
-    const primary = shortlistPathways[0];
-    if (!primary) return undefined;
-    return {
-      pathwayLabel: `${primary.feedstock} → ${primary.product}`,
-      topic: material?.name,
-      pathwayId: shortlistIdToPathwayIndex(primary.id) ?? primary.id,
-    };
-  }, [shortlistPathways, material?.name]);
 
 
   const patch = <K extends keyof Thresholds>(key: K, value: Thresholds[K]) => {
