@@ -497,10 +497,14 @@ const PathwayDetail = () => {
           value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
           group:
             group.category === 'Production' && section.name === 'Production'
-              ? 'Feedstock → Product'
+              ? `${currentFeedstock} → ${currentProduct}`
               : group.category === 'Application' && section.name === 'Application'
-                ? 'Product → Application'
-                : section.name,
+                ? `${currentProduct} → ${currentApplication}`
+                : section.name === 'Feedstock name'
+                  ? currentFeedstock
+                  : section.name === 'Product name'
+                    ? currentProduct
+                    : section.name,
         })),
     ),
   );
