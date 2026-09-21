@@ -62,8 +62,16 @@ export const initialStatus = (fn: ValidationFunction): ValidationStatus => FUNCT
 export const isNotStartedStatus = (fn: ValidationFunction, status: ValidationStatus) =>
   status === FUNCTION_STATUSES[fn][0];
 
-/** Position 4 — the positive final state that counts as confirmed. */
+/** Position 4 — the default positive final state for legacy helpers. */
 export const finalStatus = (fn: ValidationFunction): ValidationStatus => FUNCTION_STATUSES[fn][3];
+
+/** All positive final states for a function. Regulatory has two green-light options. */
+export const finalStatuses = (fn: ValidationFunction): readonly ValidationStatus[] => {
+  if (fn === "Regulatory") {
+    return [FUNCTION_STATUSES.Regulatory[1], FUNCTION_STATUSES.Regulatory[3]];
+  }
+  return [FUNCTION_STATUSES[fn][3]];
+};
 
 
 /** Who set the status, and when. */
@@ -188,26 +196,26 @@ export const functionStatus = (
   fn: ValidationFunction,
 ): ValidationStatus => checklist[fn]?.status ?? initialStatus(fn);
 
-/** Confirmed only at position 4. "Not fit for function" is never confirmed. */
+/** Confirmed at any positive final state. "Not fit for function" is never confirmed. */
 export const isFunctionConfirmed = (checklist: ValidationChecklist, fn: ValidationFunction) =>
-  functionStatus(checklist, fn) === finalStatus(fn);
+  finalStatuses(fn).includes(functionStatus(checklist, fn));
 
 export function functionConfirmation(
   checklist: ValidationChecklist,
   fn: ValidationFunction,
 ): { by: string; date: string } | null {
   const state = checklist[fn];
-  if (!state || state.status !== finalStatus(fn)) return null;
+  if (!state || !finalStatuses(fn).includes(state.status)) return null;
   return { by: state.by, date: state.date };
 }
 
 export const countConfirmedFunctions = (checklist: ValidationChecklist) =>
   VALIDATION_FUNCTIONS.filter((fn) => isFunctionConfirmed(checklist, fn)).length;
 
-/** Grey while not started, amber mid-progress, green at the final state, red for "Not fit". */
+/** Grey while not started, amber mid-progress, green at any final state, red for "Not fit". */
 export function validationStatusClass(fn: ValidationFunction, status: ValidationStatus): string {
   if (status === NOT_FIT_STATUS) return "bg-red-500/10 text-red-600 border-red-500/30";
-  if (status === finalStatus(fn)) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/30";
+  if (finalStatuses(fn).includes(status)) return "bg-emerald-500/10 text-emerald-600 border-emerald-500/30";
   if (isNotStartedStatus(fn, status)) return "bg-muted text-muted-foreground border-border";
 
   return "bg-amber-500/10 text-amber-600 border-amber-500/30";
