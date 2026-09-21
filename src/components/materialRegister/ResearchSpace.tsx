@@ -802,67 +802,66 @@ type Row = {
         </SheetContent>
       </Sheet>
 
-      <section className="space-y-3">
-        <h3 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted items</h3>
+      <section>
+        <h3 className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">Shortlisted Items</h3>
+        <div className="mt-2 space-y-2 border-l border-border/50 pl-3">
+          <ShortlistCard
+            label="Pathways"
+            count={shortlistPathways.length}
+            total={analysedPathwayTotal}
+            headerAction={
+              hasGroupableClusters(shortlistPathways) ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1.5 text-[10px] font-normal"
+                  onClick={() => setPathwaysGrouped((current) => !current)}
+                >
+                  <ChevronDown className={pathwaysGrouped ? "h-3 w-3 -rotate-90" : "h-3 w-3"} />
+                  {pathwaysGrouped ? "Expand applications" : "Collapse applications"}
+                </Button>
+              ) : undefined
+            }
+          >
+            <PathwayShortlistRows
+              pathways={shortlistPathways}
+              notes={mergedPathwayNotes}
+              currentUser={CURRENT_REVIEWER}
+              onAddNote={addPathwayNote}
+              onRemove={removePathway}
+              onReorder={reorderPathways}
+              grouped={pathwaysGrouped}
+              category={category}
+              topic={topic}
+            />
 
-        <ShortlistCard
-          label="Pathways"
-          count={shortlistPathways.length}
-          total={analysedPathwayTotal}
-          headerAction={
-            hasGroupableClusters(shortlistPathways) ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 gap-1.5 text-[10px] font-normal"
-                onClick={() => setPathwaysGrouped((current) => !current)}
-              >
-                <ChevronDown className={pathwaysGrouped ? "h-3 w-3 -rotate-90" : "h-3 w-3"} />
-                {pathwaysGrouped ? "Expand applications" : "Collapse applications"}
-              </Button>
-            ) : undefined
-          }
-        >
-          <PathwayShortlistRows
-            pathways={shortlistPathways}
-            notes={mergedPathwayNotes}
-            currentUser={CURRENT_REVIEWER}
-            onAddNote={addPathwayNote}
-            onRemove={removePathway}
-            onReorder={reorderPathways}
-            grouped={pathwaysGrouped}
-            category={category}
-            topic={topic}
-          />
+          </ShortlistCard>
 
-        </ShortlistCard>
+          <ShortlistCard label="Companies" count={shortlistCompanies.length}>
+            <CompanyShortlistTables
+              companies={shortlistCompanies}
+              currentUser={CURRENT_REVIEWER}
+              onRemove={removeCompany}
+            />
+          </ShortlistCard>
 
+          <ShortlistCard label="Patents" count={shortlistPatents.length}>
+            <PatentShortlistTable
+              patents={shortlistPatents}
+              currentUser={CURRENT_REVIEWER}
+              onRemove={removePatent}
+            />
+          </ShortlistCard>
 
-        <ShortlistCard label="Companies" count={shortlistCompanies.length}>
-          <CompanyShortlistTables
-            companies={shortlistCompanies}
-            currentUser={CURRENT_REVIEWER}
-            onRemove={removeCompany}
-          />
-        </ShortlistCard>
-
-
-        <ShortlistCard label="Patents" count={shortlistPatents.length}>
-          <PatentShortlistTable
-            patents={shortlistPatents}
-            currentUser={CURRENT_REVIEWER}
-            onRemove={removePatent}
-          />
-        </ShortlistCard>
-
-        <ShortlistCard label="Papers" count={shortlistPapers.length}>
-          <PaperShortlistTable
-            papers={shortlistPapers}
-            currentUser={CURRENT_REVIEWER}
-            onRemove={removePaper}
-          />
-        </ShortlistCard>
+          <ShortlistCard label="Papers" count={shortlistPapers.length}>
+            <PaperShortlistTable
+              papers={shortlistPapers}
+              currentUser={CURRENT_REVIEWER}
+              onRemove={removePaper}
+            />
+          </ShortlistCard>
+        </div>
       </section>
 
     </div>
