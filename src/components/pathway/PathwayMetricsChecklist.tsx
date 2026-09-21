@@ -182,24 +182,16 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                 ) : (
                   <div className="flex shrink-0 items-center gap-1">
                     {entry ? (
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium",
-                          entry.state === "confirmed"
-                            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600"
-                            : "border-border bg-muted text-foreground",
-                        )}
-                      >
-                        {entry.state === "confirmed" ? (
-                          <>
-                            <Check className="h-3 w-3" /> Confirmed
-                          </>
-                        ) : (
-                          <>
+                      <>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
+                          <Check className="h-3 w-3" /> Confirmed
+                        </span>
+                        {entry.state === "own" && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground">
                             <Pencil className="h-3 w-3" /> Own value
-                          </>
+                          </span>
                         )}
-                      </span>
+                      </>
                     ) : null}
 
                     {!entry && (
