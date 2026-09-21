@@ -872,10 +872,6 @@ const PathwayDetail = () => {
                   </>
                 ) : (
                   <>
-                    <PathwayValidationCard
-                      pathwayId={pathwayId || '0'}
-                      topic={topic ? decodeURIComponent(topic) : undefined}
-                    />
                     <PathwayValidationSpace
                       pathwayId={pathwayId || '0'}
                       topic={topic ? decodeURIComponent(topic) : undefined}
