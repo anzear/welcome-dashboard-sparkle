@@ -956,6 +956,8 @@ type Row = {
           </div>
       </div>
 
+      {material && <FitRequirements material={material} />}
+
       <Sheet open={evidence !== null} onOpenChange={(open) => !open && setEvidence(null)}>
         <SheetContent className="w-full sm:max-w-md">
           <SheetHeader>
