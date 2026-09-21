@@ -1,27 +1,17 @@
-import { useEffect, useRef, useState } from "react";
-import { FileText, Trash2, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { makeDocument, type ItemDocument } from "@/components/materialRegister/itemDocuments";
+import { useEffect, useState } from "react";
 import ValidationChecklist from "@/components/pathway/ValidationChecklist";
 import {
   VALIDATION_CHANGED_EVENT,
-  VALIDATION_CURRENT_USER as CURRENT_USER,
   VALIDATION_FUNCTIONS,
   countConfirmedFunctions,
   readValidationChecklist,
 } from "@/lib/pathwayValidationChecklist";
 
-const MOCK_DOCUMENTS: ItemDocument[] = [
-  { id: "pv-doc-1", name: "Pathway-validation-checklist.pdf", uploader: "K. Brandt", date: "4 Sept 2026" },
-  { id: "pv-doc-2", name: "Lab-conformance-results.xlsx", uploader: "M. Feld", date: "11 Sept 2026" },
-];
-
 export function PathwayValidationCard({ pathwayId, topic }: { pathwayId: string; topic?: string }) {
   const [confirmedCount, setConfirmedCount] = useState(() =>
     countConfirmedFunctions(readValidationChecklist(topic, pathwayId)),
   );
-  const [documents, setDocuments] = useState<ItemDocument[]>(MOCK_DOCUMENTS);
-  const inputRef = useRef<HTMLInputElement>(null);
+
 
   useEffect(() => {
     const refresh = () => setConfirmedCount(countConfirmedFunctions(readValidationChecklist(topic, pathwayId)));
