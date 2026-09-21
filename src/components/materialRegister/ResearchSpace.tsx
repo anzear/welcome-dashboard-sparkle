@@ -26,6 +26,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/currentUser";
 import { PathwayShortlistRows, hasGroupableClusters, type PathwayNote, type ShortlistPathway } from "@/components/pathway/PathwayShortlistRows";
 import { CompanyShortlistTables, type ShortlistCompany } from "@/components/materialRegister/CompanyShortlistTables";
 import { PatentShortlistTable, type ShortlistPatent } from "@/components/materialRegister/PatentShortlistTable";
@@ -88,6 +89,28 @@ const INITIAL_THRESHOLDS: Thresholds = {
 type EvaluationStatus = "Met" | "Not met" | "Not set";
 
 type EvidenceRecord = { name: string; source: string };
+
+/** A note left by a colleague on one requirement row. */
+type RequirementNote = { id: string; author: string; at: string; text: string };
+
+const INITIAL_REQUIREMENT_NOTES: Record<string, RequirementNote[]> = {
+  Volume: [
+    {
+      id: "req-note-1",
+      author: "Sam Patel",
+      at: "2026-09-08T09:20:00.000Z",
+      text: "12,000 t/yr is all we can verify today. A second supplier would close the gap — RFI is out.",
+    },
+  ],
+  "Price ceiling": [
+    {
+      id: "req-note-2",
+      author: "Maya Chen",
+      at: "2026-09-11T14:05:00.000Z",
+      text: "Indicative price excludes logistics. Recheck once we have landed cost from the Rotterdam quote.",
+    },
+  ],
+};
 
 
 
@@ -298,6 +321,33 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
   const [evidence, setEvidence] = useState<{ title: string; records: EvidenceRecord[] } | null>(null);
   const [showSaved, setShowSaved] = useState(false);
   const [overrides, setOverrides] = useState<Record<string, EvaluationStatus>>({});
+  /** Notes left on individual requirements. Prototype state, seeded with mock entries. */
+  const [requirementNotes, setRequirementNotes] = useState<Record<string, RequirementNote[]>>(
+    INITIAL_REQUIREMENT_NOTES,
+  );
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const addRequirementNote = (label: string) => {
+    const text = (noteDrafts[label] ?? "").trim();
+    if (!text) return;
+    setRequirementNotes((prev) => ({
+      ...prev,
+      [label]: [
+        ...(prev[label] ?? []),
+        {
+          id: `${label}-${Date.now()}`,
+          author: getCurrentUser().name,
+          at: new Date().toISOString(),
+          text,
+        },
+      ],
+    }));
+    setNoteDrafts((prev) => ({ ...prev, [label]: "" }));
+  };
+  const removeRequirementNote = (label: string, id: string) =>
+    setRequirementNotes((prev) => ({
+      ...prev,
+      [label]: (prev[label] ?? []).filter((note) => note.id !== id),
+    }));
   const [shortlistPathways, setShortlistPathways] = useState<ShortlistPathway[]>(() =>
     applyStoredPathwayOrder(SHORTLIST_PATHWAYS),
   );
@@ -657,7 +707,7 @@ type Row = {
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-          <div className="grid grid-cols-[55%_1fr_150px] border-b border-border">
+          <div className="grid grid-cols-[55%_1fr_180px] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
             <div className="col-span-2 border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
               <TooltipProvider delayDuration={100}>
@@ -694,7 +744,7 @@ type Row = {
                   ? "Awaiting threshold"
                   : row.finding;
             return (
-              <div key={row.label} className="grid grid-cols-[55%_1fr_150px] border-b border-border">
+              <div key={row.label} className="grid grid-cols-[55%_1fr_180px] border-b border-border">
                 <div className="flex h-11 items-center gap-3 px-4">
                   <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
                   <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
@@ -718,6 +768,99 @@ type Row = {
                   >
                     {overridden || row.hasData ? shown : "No data"}
                   </Badge>
+                  <Popover>
+                    <TooltipProvider delayDuration={100}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <PopoverTrigger asChild>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="relative h-6 w-6 shrink-0"
+                              aria-label={`Notes on ${row.label}`}
+                            >
+                              <MessageSquarePlus
+                                className={cn(
+                                  "h-3.5 w-3.5",
+                                  (requirementNotes[row.label]?.length ?? 0) > 0
+                                    ? "text-primary"
+                                    : "text-muted-foreground",
+                                )}
+                              />
+                              {(requirementNotes[row.label]?.length ?? 0) > 0 && (
+                                <span className="absolute -right-0.5 -top-0.5 rounded-full bg-primary px-1 text-[8px] font-semibold leading-[12px] text-primary-foreground">
+                                  {requirementNotes[row.label]!.length}
+                                </span>
+                              )}
+                            </Button>
+                          </PopoverTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="top">
+                          <p>
+                            {(requirementNotes[row.label]?.length ?? 0) > 0
+                              ? `${requirementNotes[row.label]!.length} note(s) — click to read or add`
+                              : "Add a note"}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <PopoverContent align="end" className="w-80 p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-foreground">
+                        Notes · {row.label}
+                      </p>
+                      <div className="mt-2 max-h-48 space-y-2 overflow-y-auto">
+                        {(requirementNotes[row.label] ?? []).length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No notes on this requirement yet.</p>
+                        ) : (
+                          (requirementNotes[row.label] ?? []).map((note) => (
+                            <div
+                              key={note.id}
+                              className="flex items-start justify-between gap-2 rounded-md border border-border/60 bg-muted/20 p-2"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-medium text-foreground/80">{note.author}</span>
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {new Date(note.at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="mt-0.5 whitespace-pre-wrap break-words text-[11px] text-foreground">
+                                  {note.text}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeRequirementNote(row.label, note.id)}
+                                className="text-muted-foreground hover:text-foreground"
+                                aria-label="Remove note"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                      <Textarea
+                        value={noteDrafts[row.label] ?? ""}
+                        onChange={(event) =>
+                          setNoteDrafts((prev) => ({ ...prev, [row.label]: event.target.value }))
+                        }
+                        placeholder="Add your note…"
+                        className="mt-2 min-h-[56px] text-xs"
+                      />
+                      <div className="mt-2 flex justify-end">
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs"
+                          disabled={!(noteDrafts[row.label] ?? "").trim()}
+                          onClick={() => addRequirementNote(row.label)}
+                        >
+                          Post note
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                   <DropdownMenu>
                     <TooltipProvider delayDuration={100}>
                       <Tooltip>
