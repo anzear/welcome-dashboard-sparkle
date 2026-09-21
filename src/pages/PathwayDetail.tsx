@@ -498,7 +498,9 @@ const PathwayDetail = () => {
           group:
             group.category === 'Production' && section.name === 'Production'
               ? `Feedstock → Product (i.e., ${currentFeedstock} → ${currentProduct})`
-              : `${group.category} · ${section.name}`,
+              : group.category === 'Application' && section.name === 'Application'
+                ? `Product → Application (i.e., ${currentProduct} → PLA packaging)`
+                : `${group.category} · ${section.name}`,
         })),
     ),
   );
