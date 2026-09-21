@@ -45,21 +45,6 @@ export type ShortlistPathway = {
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
-/** Live-reads the pathway's validation checklist, re-rendering on every change. */
-function useValidationChecklist(topic: string | undefined, pathwayId: string): ValidationChecklist {
-  const [checklist, setChecklist] = useState(() => readValidationChecklist(topic, pathwayId));
-  useEffect(() => {
-    const sync = () => setChecklist(readValidationChecklist(topic, pathwayId));
-    sync();
-    window.addEventListener(VALIDATION_CHANGED_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(VALIDATION_CHANGED_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
-  }, [topic, pathwayId]);
-  return checklist;
-}
 
 /** Live-reads the pathway's own status (To do … Parked) set in the Workspace. */
 function usePathwayStatus(topic: string | undefined, pathwayId: string): PathwayStatus {
