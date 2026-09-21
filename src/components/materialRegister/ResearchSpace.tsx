@@ -678,12 +678,15 @@ type Row = {
 
   const renderInput = (label: string) => {
     switch (label) {
-      case "TRL range":
+      case "Applications":
         return (
-          <div className="grid grid-cols-2 gap-2">
-            <Input aria-label="TRL from" type="number" min={1} max={9} placeholder="From" value={thresholds.trlFrom} onChange={(event) => patch("trlFrom", event.target.value)} className="h-8 bg-background text-xs" />
-            <Input aria-label="TRL to" type="number" min={1} max={9} placeholder="To" value={thresholds.trlTo} onChange={(event) => patch("trlTo", event.target.value)} className="h-8 bg-background text-xs" />
-          </div>
+          <MultiSelectChips
+            label="applications"
+            options={applications}
+            values={thresholds.applications}
+            onChange={(value) => patch("applications", value)}
+            allowCustom
+          />
         );
       case "Product geography":
         return <MultiSelectChips label="product geography" options={GEOGRAPHY_OPTIONS} values={thresholds.materialGeographies} onChange={(value) => patch("materialGeographies", value)} />;
