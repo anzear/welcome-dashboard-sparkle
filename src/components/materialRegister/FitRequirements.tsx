@@ -1,10 +1,13 @@
 /**
  * Technical fit and Regulatory fit, shown in the Workspace directly below the
  * requirements table. Same row styling as requirements, but there is no VCG.AI
- * signal here — the status is set manually by the team.
+ * signal here — the status is set manually by the team. Each row has a paperclip
+ * attachment control, the same as the validation checklist and other boxes;
+ * uploads are registered in the material-wide document registry with a
+ * "Technical fit" / "Regulatory fit" source tag.
  */
 import React, { useRef, useState } from "react";
-import { Check, FileText, PenLine, Upload, X } from "lucide-react";
+import { Check, FileText, Paperclip, PenLine, Trash2, Upload } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,12 +16,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { useRegister } from "@/components/materialRegister/registerStore";
+import {
+  registerDocuments,
+  unregisterDocument,
+  type RegisteredDocument,
+} from "@/lib/documentRegistry";
 import type { Material } from "@/types/materialPrioritisation";
 
 type FitStatus = "Met" | "Not met" | "Not set";
+
+const CURRENT_USER = "You";
 
 const statusClasses: Record<FitStatus, string> = {
   Met: "border-success/30 bg-success/10 text-success",
@@ -76,34 +87,116 @@ const StatusCell: React.FC<{
   </div>
 );
 
+/** Paperclip attachments control — same pattern as the validation checklist rows. */
+const FitAttachments: React.FC<{
+  label: string;
+  sourceTag: string;
+  documents: RegisteredDocument[];
+  onChange: (next: RegisteredDocument[]) => void;
+}> = ({ label, sourceTag, documents, onChange }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const count = documents.length;
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={`Documents for ${label}`}
+          title={count > 0 ? `${count} document${count === 1 ? "" : "s"} attached` : "Attach a document"}
+          className="flex h-6 shrink-0 items-center gap-1 rounded-md px-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+        >
+          <Paperclip className={count > 0 ? "h-3.5 w-3.5 text-foreground" : "h-3.5 w-3.5"} />
+          {count > 0 && <span className="text-[10px] font-medium tabular-nums">{count}</span>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 p-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          {label} documents
+        </p>
+        <div className="mt-2 space-y-1.5">
+          {count === 0 ? (
+            <p className="text-[10px] text-muted-foreground">No documents attached yet.</p>
+          ) : (
+            documents.map((document) => (
+              <div
+                key={document.id}
+                className="flex items-center gap-2 rounded-md border border-border/60 bg-muted/30 px-2 py-1.5"
+              >
+                <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[10px] font-medium text-foreground" title={document.name}>
+                    {document.name}
+                  </div>
+                  <div className="text-[9px] text-muted-foreground">
+                    {document.uploader} · {document.date}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  title="Remove document"
+                  aria-label={`Remove ${document.name}`}
+                  onClick={() => {
+                    unregisterDocument(document.id);
+                    onChange(documents.filter((item) => item.id !== document.id));
+                  }}
+                  className="shrink-0 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg"
+          onChange={(event) => {
+            const names = Array.from(event.target.files ?? []).map((file) => file.name);
+            if (names.length > 0) {
+              onChange([...documents, ...registerDocuments(names, CURRENT_USER, sourceTag)]);
+            }
+            event.target.value = "";
+          }}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2 h-7 w-full gap-1.5 text-[10px] font-normal"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="h-3 w-3" />
+          Upload document
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export const FitRequirements: React.FC<{ material: Material }> = ({ material }) => {
   const { updateMaterial } = useRegister();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const doc = material.performance_targets_document ?? null;
   const registrations = material.regulatory_registrations ?? [];
   const [technicalStatus, setTechnicalStatus] = useState<FitStatus>("Met");
   const [regulatoryStatus, setRegulatoryStatus] = useState<FitStatus>("Not set");
-
-  const record = (
-    field: "performance_targets_document" | "regulatory_registrations",
-    before: string | null,
-    after: string | null,
-  ) => ({
-    material_id: material.material_id,
-    event_type: "field_correction" as const,
-    field,
-    from_value: before,
-    to_value: after,
-  });
-
-  const setDocument = (next: Material["performance_targets_document"]) => {
-    updateMaterial(
-      material.material_id,
-      { performance_targets_document: next },
-      ["performance_targets_document"],
-      [record("performance_targets_document", doc?.filename ?? null, next?.filename ?? null)],
-    );
-  };
+  const [technicalDocs, setTechnicalDocs] = useState<RegisteredDocument[]>(() =>
+    material.performance_targets_document
+      ? [
+          {
+            id: "fit-tech-doc-1",
+            name: material.performance_targets_document.filename,
+            uploader: "K. Brandt",
+            date: "6 Sept 2026",
+            source: "Technical fit",
+          },
+        ]
+      : [],
+  );
+  const [regulatoryDocs, setRegulatoryDocs] = useState<RegisteredDocument[]>([]);
 
   const toggleRegistration = (option: string) => {
     const next =
@@ -118,7 +211,15 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
       material.material_id,
       { regulatory_registrations: next },
       ["regulatory_registrations"],
-      [record("regulatory_registrations", registrations.join(", ") || null, next.join(", ") || null)],
+      [
+        {
+          material_id: material.material_id,
+          event_type: "field_correction" as const,
+          field: "regulatory_registrations",
+          from_value: registrations.join(", ") || null,
+          to_value: next.join(", ") || null,
+        },
+      ],
     );
   };
 
@@ -133,65 +234,28 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
         </div>
       </div>
 
-      {/* Technical fit — performance targets document */}
+      {/* Technical fit — attachments */}
       <div className="grid grid-cols-[1fr_180px] border-b border-border">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Technical fit</span>
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              className="hidden"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx,.png,.jpg,.jpeg"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                const bytes = file.size;
-                const size =
-                  bytes >= 1_000_000
-                    ? `${(bytes / 1_048_576).toFixed(1)} MB`
-                    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-                setDocument({ filename: file.name, size });
-                event.target.value = "";
-              }}
-            />
-            {doc ? (
-              <>
-                <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 truncate text-[11px] text-foreground" title={doc.filename}>
-                  {doc.filename}
-                </span>
-                <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">{doc.size}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 shrink-0"
-                  aria-label="Remove performance targets document"
-                  onClick={() => setDocument(null)}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </>
-            ) : (
+            {technicalDocs.length === 0 && (
               <span className="text-[11px] text-muted-foreground">No performance targets attached.</span>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="ml-auto h-7 shrink-0 gap-1.5 px-2 text-[10px]"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Upload
-            </Button>
+            <span className="ml-auto">
+              <FitAttachments
+                label="Technical fit"
+                sourceTag="Technical fit"
+                documents={technicalDocs}
+                onChange={setTechnicalDocs}
+              />
+            </span>
           </div>
         </div>
         <StatusCell label="Technical fit" value={technicalStatus} onChange={setTechnicalStatus} />
       </div>
 
-      {/* Regulatory fit — registrations needed */}
+      {/* Regulatory fit — registrations needed + attachments */}
       <div className="grid grid-cols-[1fr_180px]">
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Regulatory fit</span>
@@ -215,6 +279,14 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
                 </Button>
               );
             })}
+            <span className="ml-auto">
+              <FitAttachments
+                label="Regulatory fit"
+                sourceTag="Regulatory fit"
+                documents={regulatoryDocs}
+                onChange={setRegulatoryDocs}
+              />
+            </span>
           </div>
         </div>
         <StatusCell label="Regulatory fit" value={regulatoryStatus} onChange={setRegulatoryStatus} />
