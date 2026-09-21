@@ -38,11 +38,14 @@ export function PathwayDocumentsCard({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // Persist the mock starting list once, so later uploads append to it.
+    if (readSubRegistry(registryKey).length === 0) writeSubRegistry(registryKey, seed);
     const refresh = () => setDocuments(readSubRegistry(registryKey, seed));
     refresh();
     window.addEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
     return () => window.removeEventListener(DOCUMENT_REGISTRY_CHANGED_EVENT, refresh);
   }, [registryKey, seed]);
+
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
