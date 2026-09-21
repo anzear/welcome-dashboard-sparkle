@@ -122,24 +122,24 @@ const CURRENT_REVIEWER = "A. Weber";
 /** Shortlisted pathways — node ids drive grouping, labels are display only. */
 const SHORTLIST_PATHWAYS: ShortlistPathway[] = [
   {
-    id: "pathway-1",
+    id: "pathway-1", savedBy: "K. Brandt",
     feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-pla",
     feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "PLA packaging",
     trl: "TRL 9",
   },
   {
-    id: "pathway-2",
+    id: "pathway-2", savedBy: "A. Weber",
     feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-food",
     feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Food preservation",
     trl: "TRL 7",
   },
   {
-    id: "pathway-3",
+    id: "pathway-3", savedBy: "M. Rossi",
     feedstockId: "fs-whey", processId: "pr-ferm", productId: "pd-la", applicationId: "ap-skin",
     feedstock: "Whey permeate", process: "Fermentation", product: "Lactic Acid", application: "Skin care (AHA)",
   },
   {
-    id: "pathway-4",
+    id: "pathway-4", savedBy: "K. Brandt",
     feedstockId: "fs-stover", processId: "pr-hydro-ferm", productId: "pd-la", applicationId: "ap-films",
     feedstock: "Corn stover", process: "Enzymatic hydrolysis + fermentation", product: "Lactic Acid",
     application: "Biodegradable films",
