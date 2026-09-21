@@ -495,7 +495,10 @@ const PathwayDetail = () => {
           id: `${group.category}:${section.name}:${row.label}`,
           label: row.label,
           value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
-          group: `${group.category} · ${section.name}`,
+          group:
+            group.category === 'Production' && section.name === 'Production'
+              ? `Feedstock → Product (i.e., ${currentFeedstock} → ${currentProduct})`
+              : `${group.category} · ${section.name}`,
         })),
     ),
   );
