@@ -88,7 +88,7 @@ const MarketActivity = () => {
   // Pagination state per company type, lifted up so the map can show only the current page
   const [tablePages, setTablePages] = useState<Record<string, { page: number; perPage: number }>>({});
   /** Shortlist row state — same shape as the Workspace shortlisted companies table. */
-  const [shortlistRatings, setShortlistRatings] = useState<Record<string, number>>({});
+  const { stages: shortlistStages, setStage: setShortlistStage } = useEngagementStages();
   const [shortlistNotes, setShortlistNotes] = useState<Record<string, string>>({});
   const shortlistDocs = useItemDocuments({}, (itemId) => `Company · ${companies.find(c => c.id === itemId)?.company_name ?? itemId}`);
   const getPagedCompanies = (companyType: string) => {
@@ -548,7 +548,7 @@ const MarketActivity = () => {
                 <TableHead className={SHORTLIST_HEAD_CLS}>Country</TableHead>
                 <TableHead className={SHORTLIST_HEAD_CLS}>Size</TableHead>
                 <TableHead className={SHORTLIST_HEAD_CLS}>Specialization</TableHead>
-                <TableHead className={SHORTLIST_HEAD_CLS}>Your rating</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Engagement</TableHead>
                 <TableHead className={SHORTLIST_HEAD_CLS}>Notes</TableHead>
                 <TableHead className={SHORTLIST_HEAD_CLS}>Docs</TableHead>
                 <TableHead className={SHORTLIST_HEAD_CLS} />
@@ -561,7 +561,7 @@ const MarketActivity = () => {
                     No companies shortlisted in this group yet.
                   </TableCell>
                 </TableRow> : currentCompanies.map(company => {
-              const rating = shortlistRatings[company.id] ?? 0;
+              const stage = shortlistStages[company.id] ?? "Not engaged";
               return <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
                       <TableCell className="h-11 py-0">
                         <button
@@ -579,24 +579,11 @@ const MarketActivity = () => {
                         {company.application}
                       </TableCell>
                       <TableCell className="h-11 py-0">
-                        <div
-                          className={cn("flex items-center gap-0.5", rating === 0 && "opacity-25")}
-                          role="group"
-                          aria-label={`Your rating for ${company.company_name}`}
-                          title={rating === 0 ? "Not rated" : undefined}
-                        >
-                          {[1, 2, 3, 4, 5].map(star => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setShortlistRatings(current => ({ ...current, [company.id]: rating === star ? 0 : star }))}
-                              aria-label={`Rate ${company.company_name} ${star} of 5`}
-                              className="p-0.5"
-                            >
-                              <Star className={cn("h-[14px] w-[14px]", star <= rating ? "fill-primary text-primary" : "fill-none text-muted-foreground")} />
-                            </button>
-                          ))}
-                        </div>
+                        <EngagementStageSelect
+                          value={stage}
+                          companyName={company.company_name}
+                          onChange={next => setShortlistStage(company.id, next)}
+                        />
                       </TableCell>
                       <TableCell className="h-11 py-0">
                         <Input
