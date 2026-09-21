@@ -260,51 +260,7 @@ const FiguresStrip: React.FC<{ m: Material }> = ({ m }) => {
   );
 };
 
-const REGISTRATION_OPTIONS = [
-  "EU REACH",
-  "UK REACH",
-  "US TSCA inventory listing",
-  "K-REACH",
-  "No constraint",
-] as const;
-
 export const CompanyDataDetails: React.FC<{ material: Material }> = ({ material }) => {
-  const { updateMaterial } = useRegister();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const document = material.performance_targets_document ?? null;
-  const registrations = material.regulatory_registrations ?? [];
-
-  const record = (field: "performance_targets_document" | "regulatory_registrations", before: string | null, after: string | null) => ({
-    material_id: material.material_id,
-    event_type: "field_correction" as const,
-    field,
-    from_value: before,
-    to_value: after,
-  });
-
-  const setDocument = (next: Material["performance_targets_document"]) => {
-    updateMaterial(
-      material.material_id,
-      { performance_targets_document: next },
-      ["performance_targets_document"],
-      [record("performance_targets_document", document?.filename ?? null, next?.filename ?? null)],
-    );
-  };
-
-  const toggleRegistration = (option: string) => {
-    const next = option === "No constraint"
-      ? registrations.includes(option) ? [] : [option]
-      : registrations.includes(option)
-        ? registrations.filter((item) => item !== option)
-        : [...registrations.filter((item) => item !== "No constraint"), option];
-    updateMaterial(
-      material.material_id,
-      { regulatory_registrations: next },
-      ["regulatory_registrations"],
-      [record("regulatory_registrations", registrations.join(", ") || null, next.join(", ") || null)],
-    );
-  };
-
   return (
     <div className="space-y-2">
       <FiguresStrip m={material} />

@@ -33,6 +33,7 @@ import { PatentShortlistTable, type ShortlistPatent } from "@/components/materia
 import { PaperShortlistTable, type ShortlistPaper } from "@/components/materialRegister/PaperShortlistTable";
 import { SHORTLIST_COMPANIES, SHORTLIST_PAPERS, SHORTLIST_PATENTS } from "@/components/materialRegister/shortlistMockData";
 import BriefGate from "@/components/materialRegister/BriefGate";
+import { FitRequirements } from "@/components/materialRegister/FitRequirements";
 // Shared validation checklist store lives in @/lib/pathwayValidationChecklist.
 import { useRegister } from "@/components/materialRegister/registerStore";
 import {
