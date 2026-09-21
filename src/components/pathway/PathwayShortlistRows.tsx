@@ -284,6 +284,23 @@ export function PathwayShortlistRows({
               />
             </div>
           </div>
+          <div className="truncate text-[10px] text-muted-foreground" title={p.savedBy ? `Saved by ${p.savedBy}` : undefined}>
+            {p.savedBy ?? "—"}
+          </div>
+          <div className="flex items-center justify-end" data-row-control>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              title="Remove from shortlist"
+              aria-label={`Remove ${p.feedstock} → ${p.product} from shortlist`}
+              onClick={() => onRemove(p.id)}
+            >
+              <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+            </Button>
+          </div>
+
         </div>
       </div>
     );
