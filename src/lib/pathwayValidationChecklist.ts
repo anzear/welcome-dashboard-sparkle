@@ -62,8 +62,16 @@ export const initialStatus = (fn: ValidationFunction): ValidationStatus => FUNCT
 export const isNotStartedStatus = (fn: ValidationFunction, status: ValidationStatus) =>
   status === FUNCTION_STATUSES[fn][0];
 
-/** Position 4 — the positive final state that counts as confirmed. */
+/** Position 4 — the default positive final state for legacy helpers. */
 export const finalStatus = (fn: ValidationFunction): ValidationStatus => FUNCTION_STATUSES[fn][3];
+
+/** All positive final states for a function. Regulatory has two green-light options. */
+export const finalStatuses = (fn: ValidationFunction): readonly ValidationStatus[] => {
+  if (fn === "Regulatory") {
+    return [FUNCTION_STATUSES.Regulatory[1], FUNCTION_STATUSES.Regulatory[3]];
+  }
+  return [FUNCTION_STATUSES[fn][3]];
+};
 
 
 /** Who set the status, and when. */
