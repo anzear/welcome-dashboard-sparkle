@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DocumentAttachControl, mockSeedByIndex, useItemDocuments } from "@/components/materialRegister/itemDocuments";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { EngagementStageSelect, useEngagementStages } from "@/components/materialRegister/engagementStage";
+import { ItemNotesControl } from "@/components/materialRegister/itemNotes";
 
 export type CompanyNote = { id: string; author: string; timestamp: string; text: string };
 
@@ -65,7 +66,6 @@ export function CompanyShortlistTables({
   onPostNote?: (itemLabel: string, text: string) => void;
 }) {
   const { stages: engagementStages, setStage: setEngagementStage } = useEngagementStages();
-  const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
   const [activeTab, setActiveTab] = useState(ROLE_TABS[1].value);
   /** Mock example attachments so the layout can be reviewed. */
@@ -134,7 +134,6 @@ export function CompanyShortlistTables({
           )}
           {visibleRows.map((company) => {
                   const stage = engagementStages[company.id] ?? "Not engaged";
-                  const teamNoteCount = company.teamNotes.length;
                   return (
                     <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
                       <TableCell className="h-11 py-0">
