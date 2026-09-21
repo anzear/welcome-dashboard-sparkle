@@ -61,8 +61,6 @@ const GEOGRAPHY_OPTIONS = [
 
 type Thresholds = {
   applications: string[];
-  trlFrom: string;
-  trlTo: string;
   materialGeographies: string[];
   feedstockGeographies: string[];
   priceCeiling: string;
@@ -74,8 +72,6 @@ type Thresholds = {
 
 const INITIAL_THRESHOLDS: Thresholds = {
   applications: [],
-  trlFrom: "4",
-  trlTo: "7",
   materialGeographies: ["Europe", "North America"],
   feedstockGeographies: ["Europe"],
   priceCeiling: "2200",
@@ -171,7 +167,6 @@ const statusClasses: Record<EvaluationStatus, string> = {
 };
 
 // ---- Mock evidence held by the platform ----
-const PATHWAY_TRL = 6;
 
 const PRODUCER_RECORDS: (EvidenceRecord & { country: string; regions: string[]; capacity: number })[] = [
   { name: "Corbion", country: "Netherlands", regions: ["Europe", "European Union"], capacity: 4500, source: "corbion.com" },
