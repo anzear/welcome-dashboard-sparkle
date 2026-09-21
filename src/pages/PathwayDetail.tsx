@@ -891,6 +891,13 @@ const PathwayDetail = () => {
                       topic={topic ? decodeURIComponent(topic) : undefined}
                     />
 
+                    <PathwayMetricsChecklist
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                      metrics={checklistMetrics}
+                      currentUser={CURRENT_REVIEWER}
+                    />
+
                     <PathwayValidationSpace
                       pathwayId={pathwayId || '0'}
                       topic={topic ? decodeURIComponent(topic) : undefined}
