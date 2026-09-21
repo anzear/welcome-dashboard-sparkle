@@ -649,7 +649,7 @@ const PathwayDetail = () => {
                       onClick={() => setEvaluationTab('company')}
                       className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'company' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                      Validation Space
+                      Workspace
                     </button>
                     <button
                       onClick={() => setEvaluationTab('shortlist')}
