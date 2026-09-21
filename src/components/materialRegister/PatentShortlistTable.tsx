@@ -43,10 +43,13 @@ export function PatentShortlistTable({
   patents,
   currentUser,
   onRemove,
+  onPostNote,
 }: {
   patents: ShortlistPatent[];
   currentUser: string;
   onRemove: (id: string) => void;
+  /** Publishes the row note to the pathway notes section, tagged with the item. */
+  onPostNote?: (itemLabel: string, text: string) => void;
 }) {
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistPatent | null>(null);
