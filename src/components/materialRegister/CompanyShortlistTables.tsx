@@ -111,7 +111,7 @@ export function CompanyShortlistTables({
   );
   const [myNotes, setMyNotes] = useState<Record<string, string>>({});
   const [teamPanel, setTeamPanel] = useState<ShortlistCompany | null>(null);
-  const [activeTab, setActiveTab] = useState(ROLE_TABS[0].value);
+  const [activeTab, setActiveTab] = useState(ROLE_TABS[1].value);
   /** Mock example attachments so the layout can be reviewed. */
   const { documents, addDocuments, removeDocument } = useItemDocuments(
     mockSeedByIndex(
@@ -130,7 +130,7 @@ export function CompanyShortlistTables({
 
 
   const panelNotes = teamPanel ? [...teamPanel.teamNotes].reverse() : [];
-  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[0]).role;
+  const activeRole = (ROLE_TABS.find((tab) => tab.value === activeTab) ?? ROLE_TABS[1]).role;
   const visibleRows = companies.filter((company) => company.role === activeRole);
 
   return (
