@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React, { useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,13 +11,6 @@ import {
   holdReviewOverdue,
   outcomeBlockers,
 } from "@/components/materialRegister/gate";
-import ValidationChecklist from "@/components/pathway/ValidationChecklist";
-import {
-  VALIDATION_CHANGED_EVENT,
-  VALIDATION_FUNCTIONS,
-  countConfirmedFunctions,
-  readValidationChecklist,
-} from "@/lib/pathwayValidationChecklist";
 import {
   JOURNEY_STATUS_LABEL,
   JOURNEY_STATUSES,
