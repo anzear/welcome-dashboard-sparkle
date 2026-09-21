@@ -14,6 +14,6 @@ const positions = {
 } satisfies Record<CompanyRole, { positionKey: PathwayNodeKey; positionLabel: string; verb: string }>;
 
 export const companyRoleLabels = labels;
-export function roleNode(company: Pick<Company, "role" | "role_node">) {
-  return { ...positions[company.role], roleLabel: labels[company.role], value: company.role_node };
+export function roleNode(company: Pick<Company, "role" | "role_nodes">) {
+  return { ...positions[company.role], roleLabel: labels[company.role], values: company.role_nodes, value: company.role_nodes.join(", ") };
 }
