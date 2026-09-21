@@ -66,32 +66,6 @@ const BriefGate: React.FC<{ material: Material }> = ({
 }) => {
   const { currentUser, setGateOutcome, reopenGate } = useRegister();
 
-  /**
-   * Function progression. Each of the four functions is worth exactly
-   * 100 / 4 = 25%, and counts only when BOTH its sub-items are ticked — no
-   * partial credit. The bar reads ONLY the shared validation checklist; the
-   * status stage never moves it. The checklist is shown only under
-   * "In evaluation".
-   */
-  const evaluating = m.journey_status === "in_evaluation";
-
-  const [confirmed, setConfirmed] = useState(() =>
-
-    validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
-  );
-
-  useEffect(() => {
-    if (!validation) return;
-    const refresh = () =>
-      setConfirmed(countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)));
-    refresh();
-    window.addEventListener(VALIDATION_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
-  }, [validation?.topic, validation?.pathwayId]);
-
-  const total = VALIDATION_FUNCTIONS.length;
-  const progressPercent = Math.round((confirmed * 100) / total);
-
   const writable = canSetGate(m, currentUser.name);
 
 
