@@ -715,7 +715,7 @@ type Row = {
             <h2 className="text-[10px] font-bold uppercase tracking-widest text-foreground">Status</h2>
             <p className="pt-0.5 text-xs leading-snug text-muted-foreground">Set by the owner.</p>
           </div>
-          <BriefGate material={material} validation={validationProgress} />
+          <BriefGate material={material} />
         </section>
       )}
 
