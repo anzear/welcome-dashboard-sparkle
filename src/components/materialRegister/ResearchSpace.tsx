@@ -37,7 +37,6 @@ import { FitRequirements } from "@/components/materialRegister/FitRequirements";
 // Shared validation checklist store lives in @/lib/pathwayValidationChecklist.
 import { useRegister } from "@/components/materialRegister/registerStore";
 import {
-  categoryLabel,
   readValidationComments,
   seedPathwayValidationStatuses,
   shortlistIdToPathwayIndex,
