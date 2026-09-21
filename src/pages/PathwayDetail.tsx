@@ -643,7 +643,7 @@ const PathwayDetail = () => {
                       onClick={() => setEvaluationTab('evaluation')}
                       className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'evaluation' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >
-                      Pathway Evaluation
+                      Metrics
                     </button>
                     <button
                       onClick={() => setEvaluationTab('company')}

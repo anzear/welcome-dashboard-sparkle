@@ -203,7 +203,7 @@ export function exportCompanyPdf({
   // ============ COMPANY EVALUATION ============
   doc.addPage();
   y = margin;
-  h1(`Pathway Evaluation — ${pathwayLabel || "Pathway"}`);
+  h1(`Metrics — ${pathwayLabel || "Pathway"}`);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   doc.setTextColor(100);
