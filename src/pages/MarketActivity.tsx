@@ -537,7 +537,7 @@ const MarketActivity = () => {
               <col style={{ width: "96px" }} />
               <col style={{ width: "96px" }} />
               <col style={{ width: "150px" }} />
-              <col style={{ width: "116px" }} />
+              <col style={{ width: "140px" }} />
               <col />
               <col style={{ width: "44px" }} />
               <col style={{ width: "44px" }} />
