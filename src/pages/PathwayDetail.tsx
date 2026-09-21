@@ -952,6 +952,7 @@ const PathwayDetail = () => {
                           papers={shortlistPapers}
                           currentUser={CURRENT_REVIEWER}
                           onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
+                          onPostNote={postShortlistNote}
                         />
                       </PathwayShortlistCard>
                     </div>
