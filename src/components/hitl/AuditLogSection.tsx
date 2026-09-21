@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DerivedPathwaysForRecord, GroupChip, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TargetRef, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { FIELD_LABELS, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type MethodTag } from "@/lib/hitlStore";
+import { FIELD_LABELS, nodeListMatches, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type MethodTag } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [

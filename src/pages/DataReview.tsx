@@ -10,7 +10,7 @@ import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { MatchReviewSection } from "@/components/hitl/MatchReviewSection";
 import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
-import { affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, rolePosition, useHitlStore, type Company, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
+import { affectedPathwayIds, nodeListMatches, derivedCompanyPathwayIds, derivedPathwayIds, rolePosition, useHitlStore, type Company, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 type Section = "pathways" | "companies" | "papers" | "patents" | "indicators" | "audit";
