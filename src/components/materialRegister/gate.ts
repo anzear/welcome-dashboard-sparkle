@@ -65,8 +65,8 @@ export const canSetGate = (m: Material, userName: string) =>
 
 export const gateLockNote = (m: Material) =>
   m.owner === null
-    ? "Assign an owner to set the gate."
-    : `Only ${m.owner} can set the gate for this material.`;
+    ? "Assign an owner to set the status."
+    : `Only ${m.owner} can set the status for this material.`;
 
 /** What each outcome must carry before it can be saved. */
 export const outcomeBlockers = (
