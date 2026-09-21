@@ -71,7 +71,7 @@ type Thresholds = {
 };
 
 const INITIAL_THRESHOLDS: Thresholds = {
-  applications: [],
+  applications: ["PLA packaging", "Food preservation"],
   materialGeographies: ["Europe", "North America"],
   feedstockGeographies: ["Europe"],
   priceCeiling: "2200",
