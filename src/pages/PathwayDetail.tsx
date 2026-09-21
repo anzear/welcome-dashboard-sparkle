@@ -439,7 +439,7 @@ const PathwayDetail = () => {
           ],
         },
         {
-          name: 'Product',
+          name: 'Product name (i.e., lactic acid)',
           type: 'product',
           rows: [
             { label: 'Product price', value: displayMetric(activeMetrics.metrics.appPrice), percentile: activeMetrics.radar.marketPrice },
