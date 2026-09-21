@@ -74,6 +74,7 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
   const commit = (next: PathwayStatus) => {
     setStatus(next);
     localStorage.setItem(storageKey(topic, pathwayId), next);
+    window.dispatchEvent(new Event(PATHWAY_STATUS_CHANGED_EVENT));
   };
 
   const commitConditions = (next: string) => {
