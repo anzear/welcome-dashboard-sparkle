@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, GripVertical } from "lucide-react";
+import { ChevronDown, GripVertical, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 
 import { ItemNotesControl } from "@/components/materialRegister/itemNotes";
 import {
@@ -39,7 +41,10 @@ export type ShortlistPathway = {
   application: string;
   /** e.g. "TRL 9"; absent means the pathway has no assigned status. */
   trl?: string;
+  /** Colleague who shortlisted this pathway. */
+  savedBy?: string;
 };
+
 
 export type PathwayNote = { id: string; author: string; timestamp: string; text: string };
 
@@ -76,7 +81,8 @@ function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayI
 }
 
 const COLS =
-  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,200px)]";
+  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,200px)_80px_32px]";
+
 
 
 /** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
