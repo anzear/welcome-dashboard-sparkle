@@ -15,6 +15,7 @@ import PathwayDocumentsCard from '@/components/pathway/PathwayDocumentsCard';
 import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
+import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
 import { PatentShortlistTable, type ShortlistPatent } from '@/components/materialRegister/PatentShortlistTable';
