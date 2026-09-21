@@ -561,7 +561,7 @@ const PathwayDetail = () => {
 
         {/* Content grid */}
         <div className={`grid gap-5 items-start min-h-0 pb-2 lg:grid-cols-[minmax(0,1fr)_280px] ${
-          evaluationTab === 'company' ? 'flex-none' : 'flex-1'
+          evaluationTab === 'workspace' ? 'flex-none' : 'flex-1'
         }`}>
               <div className={`border border-border rounded-lg bg-card p-5 shadow-sm flex flex-col gap-3 min-w-0 ${
                 evaluationTab === 'company'
