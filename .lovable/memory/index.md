@@ -1,0 +1,1 @@
+- [Pathway nodes immutable](mem://features/pathway-nodes-immutable) — Existing pathway nodes read-only in Data Review; only groups/status/visibility editable
