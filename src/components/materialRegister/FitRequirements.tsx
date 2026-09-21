@@ -258,25 +258,77 @@ export const FitRequirements: React.FC<{ material: Material }> = ({ material }) 
         <div className="flex min-h-11 items-center gap-3 px-4 py-2">
           <span className="w-[140px] shrink-0 text-xs text-foreground">Regulatory fit</span>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
-            {REGISTRATION_OPTIONS.map((option) => {
+            {allOptions.map((option) => {
               const selected = registrations.includes(option);
               return (
                 <Button
                   key={option}
                   type="button"
-                  variant={selected ? "secondary" : "outline"}
+                  variant="outline"
                   size="sm"
                   aria-pressed={selected}
-                  onClick={() => toggleRegistration(option)}
+                  onClick={() =>
+                    setRegistrations(
+                      selected
+                        ? registrations.filter((item) => item !== option)
+                        : [...registrations, option],
+                    )
+                  }
                   className={cn(
-                    "h-6 rounded-full px-2.5 text-[10px] font-normal",
-                    selected && "border border-foreground/20",
+                    "h-6 gap-1 rounded-full px-2.5 text-[10px] font-normal",
+                    selected
+                      ? "border-transparent bg-foreground font-medium text-background shadow-sm hover:bg-foreground/90 hover:text-background"
+                      : "text-muted-foreground",
                   )}
                 >
+                  {selected && <Check className="h-3 w-3" />}
                   {option}
                 </Button>
               );
             })}
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 gap-1 rounded-full border border-dashed border-border px-2.5 text-[10px] font-normal text-muted-foreground"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add regulation
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-64 p-3">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  Add regulation
+                </p>
+                <form
+                  className="mt-2 flex items-center gap-1.5"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const value = customDraft.trim();
+                    if (!value || registrations.includes(value)) {
+                      setCustomDraft("");
+                      return;
+                    }
+                    setRegistrations([...registrations, value]);
+                    setCustomDraft("");
+                  }}
+                >
+                  <Input
+                    value={customDraft}
+                    onChange={(event) => setCustomDraft(event.target.value)}
+                    placeholder="e.g. China IECSC"
+                    className="h-7 text-[11px]"
+                  />
+                  <Button type="submit" size="sm" className="h-7 px-2 text-[10px]">
+                    Add
+                  </Button>
+                </form>
+              </PopoverContent>
+            </Popover>
+
             <span className="ml-auto">
               <FitAttachments
                 label="Regulatory fit"
