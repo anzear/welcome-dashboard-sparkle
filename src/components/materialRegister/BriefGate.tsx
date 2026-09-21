@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ChevronDown } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,6 @@ import {
   holdReviewOverdue,
   outcomeBlockers,
 } from "@/components/materialRegister/gate";
-import ValidationChecklist from "@/components/pathway/ValidationChecklist";
-import {
-  VALIDATION_CHANGED_EVENT,
-  VALIDATION_FUNCTIONS,
-  countConfirmedFunctions,
-  readValidationChecklist,
-} from "@/lib/pathwayValidationChecklist";
 import {
   JOURNEY_STATUS_LABEL,
   JOURNEY_STATUSES,
@@ -30,15 +23,14 @@ import {
 /**
  * THE GATE.
  *
- * The status is the headline: seven workflow stages. Nothing here is derived
+ * The status is the headline: four workflow stages. Nothing here is derived
  * from the assessment: every status is set by the owner, and detail is typed,
- * not suggested. The current stage carries one editable goal.
+ * not suggested.
  */
 
 /**
  * Four stages. NOT a sequence — the owner may set any stage at any time. There
  * is no ordering, locking, or left-to-right progression logic anywhere below.
- * The functions live as a checklist inside "In evaluation", not as stages.
  */
 const STATUSES: JourneyStatus[] = JOURNEY_STATUSES;
 
@@ -69,44 +61,10 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-/** Which pathway's Validation card this status card reads and writes. */
-export interface GateValidationProgress {
-  pathwayLabel: string;
-  topic?: string;
-  pathwayId: string | number;
-}
-
-const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
+const BriefGate: React.FC<{ material: Material }> = ({
   material: m,
-  validation,
 }) => {
   const { currentUser, setGateOutcome, reopenGate } = useRegister();
-
-  /**
-   * Function progression. Each of the four functions is worth exactly
-   * 100 / 4 = 25%, and counts only when BOTH its sub-items are ticked — no
-   * partial credit. The bar reads ONLY the shared validation checklist; the
-   * status stage never moves it. The checklist is shown only under
-   * "In evaluation".
-   */
-  const evaluating = m.journey_status === "in_evaluation";
-
-  const [confirmed, setConfirmed] = useState(() =>
-
-    validation ? countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)) : 0,
-  );
-
-  useEffect(() => {
-    if (!validation) return;
-    const refresh = () =>
-      setConfirmed(countConfirmedFunctions(readValidationChecklist(validation.topic, validation.pathwayId)));
-    refresh();
-    window.addEventListener(VALIDATION_CHANGED_EVENT, refresh);
-    return () => window.removeEventListener(VALIDATION_CHANGED_EVENT, refresh);
-  }, [validation?.topic, validation?.pathwayId]);
-
-  const total = VALIDATION_FUNCTIONS.length;
-  const progressPercent = Math.round((confirmed * 100) / total);
 
   const writable = canSetGate(m, currentUser.name);
 
@@ -116,8 +74,6 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
   const [holdTrigger, setHoldTrigger] = useState("");
   const [holdReview, setHoldReview] = useState("");
   const [noGoReason, setNoGoReason] = useState("");
-
-  const [checklistOpen, setChecklistOpen] = useState(false);
 
   const reviewLate = holdReviewOverdue(m);
   const decided = m.gate_decided_date !== null;
@@ -249,7 +205,7 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       )}
 
-      {/* The status is the headline. Seven stages, one row, no fixed order — any stage can be set at any time. */}
+      {/* The status is the headline. Four stages, one row, no fixed order — any stage can be set at any time. */}
       <div className="space-y-1">
         <div className="flex flex-wrap gap-1.5">
           {STATUSES.map((s) => {
@@ -289,49 +245,6 @@ const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgr
         </div>
       </div>
 
-      {/*
-        Function progression and checklist. Visible only under "In evaluation";
-        hidden entirely for Not started, Material integrated and Parked. Both
-        read and write the same store as the pathway Validation card.
-      */}
-      {validation && evaluating && (
-        <div className="rounded-md border border-border">
-          <button
-            type="button"
-            aria-expanded={checklistOpen}
-            onClick={() => setChecklistOpen((v) => !v)}
-            className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left"
-          >
-            <ChevronDown
-              className={cn(
-                "h-3 w-3 shrink-0 text-muted-foreground transition-transform",
-                !checklistOpen && "-rotate-90",
-              )}
-            />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              Evaluation checklist
-            </span>
-            <div className="ml-1 h-1 flex-1 overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-foreground/70 transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <span className="shrink-0 tabular-nums text-[10px] font-semibold text-foreground">
-              {confirmed}/{total} · {progressPercent}%
-            </span>
-          </button>
-          {checklistOpen && (
-            <div className="border-t border-border">
-              <ValidationChecklist
-                pathwayId={validation.pathwayId}
-                topic={validation.topic}
-                idPrefix="gate-validation"
-              />
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Detail belongs to a status, not to a section of its own. */}
 
