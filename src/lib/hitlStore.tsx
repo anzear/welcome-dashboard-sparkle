@@ -379,16 +379,24 @@ const companyAssignments: { role: CompanyRole; pathway: number; status: ReviewSt
 const seedCompanies: Company[] = companyRows.map((row, index) => {
   const assignment = companyAssignments[index];
   const pathway = seedPathways[assignment.pathway];
-  const position = assignment.role === "feedstock_supplier" ? "feedstock" : assignment.role === "product_manufacturer" ? "product" : "application_market";
-  const allowed = new Set(allowedSecondaryPositions(assignment.role));
+  // A couple of seeded companies hold more than one role at the same time.
+  const extraRole: CompanyRole | null = index === 0 ? "product_manufacturer" : index === 4 ? "application_offtaker" : null;
+  const roles = sortedRoles([assignment.role, ...(extraRole ? [extraRole] : [])]);
+  const allowed = new Set(allowedSecondaryPositions(roles));
   const secondary_nodes = Object.fromEntries((Object.keys(assignment.secondary_nodes) as (keyof EvidenceNodes)[]).map(key => {
     const extra = allowed.has(key) && index === 1 && key === "feedstock" ? seedPathways[3].feedstock : null;
     return [key, allowed.has(key) ? cleanNodeList([assignment.secondary_nodes[key], extra]) : []];
   })) as unknown as EvidenceNodeLists;
-  // A couple of seeded companies cover several nodes in the same position.
-  const extraRoleNode = index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null;
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, role: assignment.role, role_nodes: cleanNodeList([pathway[position], extraRoleNode]), secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  const role_nodes = emptyRoleNodes();
+  roles.forEach(role => {
+    const position = roleNodePosition(role);
+    // A couple of seeded companies cover several nodes in the same position.
+    const extraNode = role === assignment.role ? (index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null) : null;
+    role_nodes[role] = cleanNodeList([pathway[position], extraNode]);
+  });
+  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, roles, role_nodes, secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
+
 
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
