@@ -19,6 +19,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Star, Trash2 } from "lucide-react";
+import { DocumentAttachControl, useItemDocuments } from "@/components/materialRegister/itemDocuments";
+import { cn } from "@/lib/utils";
 
 const TAG_OPTIONS = [
   { value: 'very_interested', label: 'Very Interested', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
@@ -84,6 +87,10 @@ const MarketActivity = () => {
   const mapHighlightedCompanyId = tableHoveredCompanyId ?? mapHoveredCompanyId;
   // Pagination state per company type, lifted up so the map can show only the current page
   const [tablePages, setTablePages] = useState<Record<string, { page: number; perPage: number }>>({});
+  /** Shortlist row state — same shape as the Workspace shortlisted companies table. */
+  const [shortlistRatings, setShortlistRatings] = useState<Record<string, number>>({});
+  const [shortlistNotes, setShortlistNotes] = useState<Record<string, string>>({});
+  const shortlistDocs = useItemDocuments({}, (itemId) => `Company · ${companies.find(c => c.id === itemId)?.company_name ?? itemId}`);
   const getPagedCompanies = (companyType: string) => {
     const all = filterCompaniesByType(companyType);
     const { page = 1, perPage = 10 } = tablePages[companyType] || {};
@@ -504,120 +511,129 @@ const MarketActivity = () => {
     return Array.from(new Set(companies.map(c => c.country))).sort();
   }, [companies]);
   const uniqueSizes = ['Startups', 'SME', 'Medium', 'Large', 'Enterprise'];
+  const SHORTLIST_HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
   const SavedCompaniesTable = ({ companyType }: { companyType?: string }) => {
-    const [currentPage, setCurrentPage] = useState(1);
+    const pageKey = `saved-${companyType ?? 'all'}`;
+    const currentPage = tablePages[pageKey]?.page ?? 1;
+    const setCurrentPage = (updater: number | ((prev: number) => number)) => {
+      setTablePages(prev => {
+        const cur = prev[pageKey] || { page: 1, perPage: 5 };
+        const next = typeof updater === 'function' ? (updater as (p: number) => number)(cur.page) : updater;
+        return { ...prev, [pageKey]: { ...cur, page: next } };
+      });
+    };
     const itemsPerPage = 5;
     const savedCompaniesList = getAllSavedCompanies(companyType);
-
-    // Calculate pagination
     const totalPages = Math.max(1, Math.ceil(savedCompaniesList.length / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     const currentCompanies = savedCompaniesList.slice(startIndex, endIndex);
     return <div className="flex flex-col border border-border/60 rounded-lg bg-card shadow-sm">
-        <div className="overflow-auto bg-card flex-1">
-          <Table>
-            <TableHeader className="sticky top-0 bg-muted/50 z-10">
+        <div className="overflow-hidden bg-card flex-1">
+          <Table className="table-fixed">
+            <colgroup>
+              <col style={{ width: "190px" }} />
+              <col style={{ width: "96px" }} />
+              <col style={{ width: "96px" }} />
+              <col style={{ width: "150px" }} />
+              <col style={{ width: "116px" }} />
+              <col />
+              <col style={{ width: "44px" }} />
+              <col style={{ width: "44px" }} />
+              <col style={{ width: "40px" }} />
+            </colgroup>
+            <TableHeader className="bg-muted/20">
               <TableRow className="border-b border-border">
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-center w-[60px]">Save</TableHead>
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-left">Company Name</TableHead>
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-left">Country</TableHead>
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-left">Size</TableHead>
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-left">Specialization</TableHead>
-                <TableHead className="font-semibold text-[10px] h-8 py-1.5 text-muted-foreground uppercase tracking-widest text-center"></TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Company</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Country</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Size</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Specialization</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Your rating</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Notes</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS}>Docs</TableHead>
+                <TableHead className={SHORTLIST_HEAD_CLS} />
+                <TableHead className={SHORTLIST_HEAD_CLS} />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {savedCompaniesList.length === 0 ? <TableRow>
-                  <TableCell colSpan={6} className="py-12">
-                    <div className="flex flex-col items-center justify-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-yellow-50 flex items-center justify-center">
-                        <Bookmark className="w-6 h-6 text-yellow-600" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[11px] font-medium text-foreground mb-1">No saved companies yet</p>
-                        <p className="text-[10px] text-muted-foreground">Click the + button next to companies above to save them for later review</p>
-                      </div>
-                    </div>
+              {savedCompaniesList.length === 0 ? <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={9} className="h-11 py-0 text-[10px] text-muted-foreground">
+                    No companies shortlisted in this group yet.
                   </TableCell>
                 </TableRow> : currentCompanies.map(company => {
-              const categoryColor = company.company_type === 'feedstock' ? 'bg-green-100 text-green-700' : company.company_type === 'technology' ? 'bg-blue-100 text-blue-700' : company.company_type === 'product' ? 'bg-purple-100 text-purple-700' : 'bg-orange-100 text-orange-700';
-              return <React.Fragment key={company.id}>
-                      <TableRow className="hover:bg-muted/20 transition-colors duration-200 border-b-0">
-                      <TableCell className="text-center py-3 w-[60px]" rowSpan={2}>
-                        <button onClick={e => handleSaveCompany(company.id, e)} className="p-0 bg-transparent border-none cursor-pointer hover:opacity-80 transition-opacity" title={savedCompanies.has(company.id) ? 'Remove from saved' : 'Save company'}>
-                          <Bookmark className={`w-4 h-4 ${savedCompanies.has(company.id) ? 'fill-green-600 text-green-600' : 'text-muted-foreground'}`} />
+              const rating = shortlistRatings[company.id] ?? 0;
+              return <TableRow key={company.id} className="border-b border-border/30 hover:bg-muted/20">
+                      <TableCell className="h-11 py-0">
+                        <button
+                          type="button"
+                          onClick={() => handleCompanyClick(company)}
+                          title={company.company_name}
+                          className="block max-w-full truncate text-left text-[10px] font-semibold text-foreground underline-offset-2 hover:underline"
+                        >
+                          {company.company_name}
                         </button>
                       </TableCell>
-                      <TableCell className="py-1 pb-0">
-                        <div className="flex flex-col gap-0.5">
-                          <span className={`text-[9px] font-medium ${company.company_type === 'feedstock' ? 'text-green-700' : company.company_type === 'technology' ? 'text-blue-700' : company.company_type === 'product' ? 'text-purple-700' : 'text-orange-700'}`}>
-                            {getCategoryLabel(company.company_type)}
-                          </span>
-                          <span className="text-[11px] font-semibold text-foreground">{company.company_name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-[10px] py-1 pb-0 bg-white text-muted-foreground" rowSpan={2}>{company.country}</TableCell>
-                      <TableCell className="text-[10px] py-1 pb-0 bg-white text-muted-foreground" rowSpan={2}>{getCompanySize(company.annual_revenue)}</TableCell>
-                      <TableCell className="text-[10px] py-1 pb-0 bg-white text-muted-foreground" rowSpan={2}>
+                      <TableCell className="h-11 py-0 text-[10px] text-muted-foreground">{company.country}</TableCell>
+                      <TableCell className="h-11 py-0 text-[10px] text-muted-foreground">{getCompanySize(company.annual_revenue)}</TableCell>
+                      <TableCell className="h-11 truncate py-0 text-[10px] text-muted-foreground" title={company.application}>
                         {company.application}
                       </TableCell>
-                  <TableCell className="text-center py-1 pb-0" rowSpan={2}>
-                        <div className="flex items-center justify-center gap-0.5">
-                          <Popover open={notesPopoverCompanyId === company.id} onOpenChange={(open) => {
-                            if (open) {
-                              setNotesPopoverCompanyId(company.id);
-                              setNoteTag('neutral');
-                              setNoteText('');
-                            } else {
-                              setNotesPopoverCompanyId(null);
-                            }
-                          }}>
-                            <PopoverTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-muted" title="Add notes & tag">
-                                <StickyNote className="h-3.5 w-3.5 text-muted-foreground" />
-                              </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-56 p-2.5" side="left" align="start">
-                              <div className="space-y-2">
-                                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Rating</p>
-                                <Select value={noteTag} onValueChange={setNoteTag}>
-                                  <SelectTrigger className="h-6 text-[10px]"><SelectValue /></SelectTrigger>
-                                  <SelectContent>
-                                    {TAG_OPTIONS.map(t => (
-                                      <SelectItem key={t.value} value={t.value} className="text-[10px]">{t.label}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest">Notes</p>
-                                <Textarea
-                                  placeholder="Add evaluation notes..."
-                                  value={noteText}
-                                  onChange={e => setNoteText(e.target.value)}
-                                  className="text-[10px] min-h-[50px] py-1"
-                                />
-                                <Button size="sm" className="w-full h-6 text-[9px]" onClick={() => handleSaveNotes(company)}>
-                                  Save
-                                </Button>
-                              </div>
-                            </PopoverContent>
-                          </Popover>
-                          <Button variant="ghost" size="sm" onClick={() => handleCompanyClick(company)} className="h-6 w-6 p-0 hover:bg-muted">
-                            <Info className="h-3.5 w-3.5 text-muted-foreground" />
-                          </Button>
+                      <TableCell className="h-11 py-0">
+                        <div
+                          className={cn("flex items-center gap-0.5", rating === 0 && "opacity-25")}
+                          role="group"
+                          aria-label={`Your rating for ${company.company_name}`}
+                          title={rating === 0 ? "Not rated" : undefined}
+                        >
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setShortlistRatings(current => ({ ...current, [company.id]: rating === star ? 0 : star }))}
+                              aria-label={`Rate ${company.company_name} ${star} of 5`}
+                              className="p-0.5"
+                            >
+                              <Star className={cn("h-[14px] w-[14px]", star <= rating ? "fill-primary text-primary" : "fill-none text-muted-foreground")} />
+                            </button>
+                          ))}
                         </div>
                       </TableCell>
-                    </TableRow>
-                    <TableRow className="hover:bg-muted/20 transition-colors duration-200 border-b border-border/30 last:border-0">
-                      <TableCell className="py-1 pt-0">
-                        <div className="flex gap-1 items-center text-[10px]">
-                          <span className="text-muted-foreground font-medium">{company.sector}</span>
-                          <ChevronRightIcon className="h-3 w-3 text-muted-foreground/50" />
-                          <span className="text-muted-foreground/70">{company.application}</span>
-                        </div>
+                      <TableCell className="h-11 py-0">
+                        <Input
+                          value={shortlistNotes[company.id] ?? ""}
+                          onChange={event => setShortlistNotes(current => ({ ...current, [company.id]: event.target.value }))}
+                          placeholder="Add your note…"
+                          aria-label={`Your note on ${company.company_name}`}
+                          className="h-8 min-w-0 border-transparent bg-transparent px-2 text-[10px] shadow-none placeholder:text-muted-foreground hover:border-input hover:bg-background focus:border-input focus:bg-background"
+                        />
                       </TableCell>
-                    </TableRow>
-                    </React.Fragment>;
+                      <TableCell className="h-11 py-0">
+                        <DocumentAttachControl
+                          itemLabel={company.company_name}
+                          documents={shortlistDocs.documents[company.id] ?? []}
+                          onUpload={names => shortlistDocs.addDocuments(company.id, names, 'You')}
+                          onRemove={documentId => shortlistDocs.removeDocument(company.id, documentId)}
+                        />
+                      </TableCell>
+                      <TableCell className="h-11 py-0">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" title="Company details" onClick={() => handleCompanyClick(company)}>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="h-11 py-0 text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          title="Remove from shortlist"
+                          aria-label={`Remove ${company.company_name} from shortlist`}
+                          onClick={e => handleSaveCompany(company.id, e as any)}
+                        >
+                          <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>;
             })}
             </TableBody>
           </Table>
