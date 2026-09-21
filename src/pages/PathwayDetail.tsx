@@ -635,7 +635,7 @@ const PathwayDetail = () => {
 
               {/* Technical Feasibility Evaluation Card */}
               <div className={`border border-border rounded-lg bg-card px-5 py-4 shadow-sm flex flex-col min-w-0 ${
-                evaluationTab === 'company' ? 'flex-none min-h-0' : 'flex-1 min-h-[420px]'
+                evaluationTab === 'workspace' ? 'flex-none min-h-0' : 'flex-1 min-h-[420px]'
               }`}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="inline-flex w-full xl:w-auto items-center gap-2 bg-muted/50 rounded-lg p-0.5">
