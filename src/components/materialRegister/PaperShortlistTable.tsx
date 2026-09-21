@@ -23,7 +23,6 @@ const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking
 
 const Columns = () => (
   <colgroup>
-    <col style={{ width: "32px" }} />
     <col />
     <col style={{ width: "100px" }} />
     <col style={{ width: "200px" }} />
@@ -68,7 +67,6 @@ export function PaperShortlistTable({
         <Columns />
         <TableHeader className="bg-muted/20">
           <TableRow className="border-b border-border">
-            <TableHead className={HEAD_CLS}>#</TableHead>
             <TableHead className={HEAD_CLS}>Publication</TableHead>
             <TableHead className={HEAD_CLS}>Date</TableHead>
             <TableHead className={HEAD_CLS}>Authors</TableHead>
@@ -79,11 +77,10 @@ export function PaperShortlistTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {papers.map((paper, index) => {
+          {papers.map((paper) => {
             const teamNoteCount = paper.teamNotes.length;
             return (
               <TableRow key={paper.id} className="border-b border-border/30 hover:bg-muted/20">
-                <TableCell className="py-2 text-[10px] text-muted-foreground">{index + 1}</TableCell>
                 <TableCell className="py-2">
                   <div className="text-[10px] font-medium leading-snug text-foreground">{paper.title}</div>
                 </TableCell>
