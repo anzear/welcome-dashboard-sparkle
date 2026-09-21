@@ -50,7 +50,7 @@ const StatusCell: React.FC<{
   value: FitStatus;
   onChange: (next: FitStatus) => void;
 }> = ({ label, value, onChange }) => (
-  <div className="flex min-h-11 items-center justify-end gap-2 border-l border-border px-4">
+  <>
     <Badge variant="outline" className={cn("shrink-0 text-[10px]", statusClasses[value])}>
       {value}
     </Badge>
@@ -84,7 +84,7 @@ const StatusCell: React.FC<{
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  </div>
+  </>
 );
 
 /** Paperclip attachments control — same pattern as the validation checklist rows. */
