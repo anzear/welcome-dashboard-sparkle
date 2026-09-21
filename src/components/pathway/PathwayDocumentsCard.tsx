@@ -8,6 +8,7 @@ import {
   registerDocuments,
   type RegisteredDocument,
   unregisterDocument,
+  writeSubRegistry,
 } from "@/lib/documentRegistry";
 
 /** Mock files so the tagged list can be reviewed with real-looking data. */
