@@ -488,7 +488,8 @@ const PathwayDetail = () => {
           (row) =>
             !row.label.toLowerCase().includes('ip count') &&
             !row.label.toLowerCase().includes('research count') &&
-            !row.label.toLowerCase().startsWith('market'),
+            !row.label.toLowerCase().startsWith('market') &&
+            row.label !== 'Demand',
         )
         .map((row) => ({
           id: `${group.category}:${section.name}:${row.label}`,
