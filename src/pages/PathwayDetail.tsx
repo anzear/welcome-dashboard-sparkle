@@ -904,6 +904,9 @@ const PathwayDetail = () => {
                         />
                       </PathwayShortlistCard>
                     </div>
+
+                    <PathwayDocumentsCard registryKey={documentRegistryKey} currentUser={CURRENT_REVIEWER} />
+
                   </>
                 )}
                 </div>
