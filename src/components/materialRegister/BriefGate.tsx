@@ -61,16 +61,8 @@ const Flag: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   </span>
 );
 
-/** Which pathway's Validation card this status card reads and writes. */
-export interface GateValidationProgress {
-  pathwayLabel: string;
-  topic?: string;
-  pathwayId: string | number;
-}
-
-const BriefGate: React.FC<{ material: Material; validation?: GateValidationProgress }> = ({
+const BriefGate: React.FC<{ material: Material }> = ({
   material: m,
-  validation,
 }) => {
   const { currentUser, setGateOutcome, reopenGate } = useRegister();
 
