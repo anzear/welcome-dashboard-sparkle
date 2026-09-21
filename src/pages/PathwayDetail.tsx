@@ -11,7 +11,6 @@ import PathwayOpinionsTab from "@/components/PathwayOpinionsTab";
 import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
-import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
 import PathwayDocumentsCard from '@/components/pathway/PathwayDocumentsCard';
 import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
