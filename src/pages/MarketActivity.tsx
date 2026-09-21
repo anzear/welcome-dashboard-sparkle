@@ -19,6 +19,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { Star, Trash2 } from "lucide-react";
+import { DocumentAttachControl, useItemDocuments } from "@/components/materialRegister/itemDocuments";
+import { cn } from "@/lib/utils";
 
 const TAG_OPTIONS = [
   { value: 'very_interested', label: 'Very Interested', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
