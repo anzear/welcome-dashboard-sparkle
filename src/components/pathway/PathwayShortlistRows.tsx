@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ChevronDown, GripVertical, MessageSquare, MessageSquarePlus } from "lucide-react";
+import { ChevronDown, GripVertical } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { ItemNotesControl } from "@/components/materialRegister/itemNotes";
 import {
   DocumentAttachControl,
   mockSeedByIndex,
@@ -104,23 +103,6 @@ function StatusBadge({ trl }: { trl?: string }) {
   );
 }
 
-function NotesButton({ count, onClick }: { count: number; onClick: () => void }) {
-  const has = count > 0;
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      title={has ? `${count} note${count === 1 ? "" : "s"}` : "Add a note"}
-      className="flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
-    >
-      {has ? <MessageSquare className="w-3.5 h-3.5 fill-current" /> : <MessageSquarePlus className="w-3.5 h-3.5" />}
-      {has && <span className="text-[10px] tabular-nums font-medium">{count}</span>}
-    </button>
-  );
-}
-
 /** Consecutive clusters by node identity — grouping never matches on label text. */
 function clusterRuns(pathways: ShortlistPathway[]): { key: string; members: ShortlistPathway[] }[] {
   const out: { key: string; members: ShortlistPathway[] }[] = [];
@@ -177,8 +159,6 @@ export function PathwayShortlistRows({
   const [overId, setOverId] = useState<string | null>(null);
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [notesFor, setNotesFor] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   /** Mock example attachments so the layout can be reviewed. */
   const { documents, addDocuments, removeDocument } = useItemDocuments(
     mockSeedByIndex(
@@ -218,13 +198,9 @@ export function PathwayShortlistRows({
     onReorder(ids);
   };
 
-  const sheetPathway = pathways.find((p) => p.id === notesFor) ?? null;
-  const sheetNotes = notesFor ? [...(notes[notesFor] ?? [])].reverse() : [];
-
   const chip = (label: string, cls: string) => <div className={pathwayChipCls(cls)}>{label}</div>;
 
   const flatRow = (p: ShortlistPathway) => {
-    const count = (notes[p.id] ?? []).length;
     return (
       <div
         key={p.id}
@@ -289,7 +265,14 @@ export function PathwayShortlistRows({
           <div className="flex items-center justify-between gap-2">
             <EvaluationStatusBadges topic={topic} pathwayId={p.id} />
             <div className="flex items-center gap-2" data-row-control>
-              <NotesButton count={count} onClick={() => setNotesFor(p.id)} />
+              <ItemNotesControl
+                itemLabel={`Pathway · ${p.feedstock} → ${p.product}`}
+                title={`${p.feedstock} → ${p.product}`}
+                teamNotes={(notes[p.id] ?? []).slice().reverse()}
+                currentUser={currentUser}
+                storeLocally={false}
+                onPost={(_label, text) => onAddNote(p.id, text)}
+              />
               <DocumentAttachControl
                 itemLabel={`${p.feedstock} → ${p.product}`}
                 documents={documents[p.id] ?? []}
@@ -348,69 +331,6 @@ export function PathwayShortlistRows({
         })}
       </div>
 
-      <Sheet
-        open={!!notesFor}
-        onOpenChange={(o) => {
-          if (!o) {
-            setNotesFor(null);
-            setDraft("");
-          }
-        }}
-      >
-        <SheetContent className="w-[440px] sm:max-w-[440px]">
-          <SheetHeader>
-            <SheetTitle className="text-[10px] font-bold uppercase tracking-widest">Pathway notes</SheetTitle>
-          </SheetHeader>
-          {sheetPathway && (
-            <div className="mt-4 space-y-4">
-              <div className="grid grid-cols-2 gap-2">
-                {chip(sheetPathway.feedstock, PATHWAY_CHIP_NEUTRAL)}
-                {chip(sheetPathway.process, PATHWAY_CHIP_NEUTRAL)}
-                {chip(sheetPathway.product, PATHWAY_CHIP_ANCHOR)}
-                {chip(sheetPathway.application, PATHWAY_CHIP_NEUTRAL)}
-              </div>
-
-              <div className="space-y-2">
-                <Textarea
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  placeholder="Add a note on this pathway…"
-                  className="text-xs min-h-[72px]"
-                />
-                <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    disabled={!draft.trim()}
-                    onClick={() => {
-                      onAddNote(sheetPathway.id, draft.trim());
-                      setDraft("");
-                    }}
-                  >
-                    Add note
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {sheetNotes.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No notes on this pathway yet.</p>
-                ) : (
-                  sheetNotes.map((n) => (
-                    <div key={n.id} className="rounded-md border border-border/60 bg-muted/40 px-3 py-2">
-                      <div className="flex items-center justify-between text-[9px] uppercase tracking-widest text-muted-foreground">
-                        <span>{n.author}</span>
-                        <span>{n.timestamp}</span>
-                      </div>
-                      <p className="mt-1 text-xs text-foreground/85 leading-relaxed">{n.text}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-              <p className="text-[10px] text-muted-foreground">Signed in as {currentUser}.</p>
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
     </>
   );
 }

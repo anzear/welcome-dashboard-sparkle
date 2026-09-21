@@ -71,6 +71,7 @@ export function ItemNotesControl({
   currentUser,
   onPost,
   align = "end",
+  storeLocally = true,
 }: {
   /** Tag used in the Notes section, e.g. "Company · Corbion". */
   itemLabel: string;
@@ -82,18 +83,20 @@ export function ItemNotesControl({
   /** Publishes the note to the Notes section, tagged with the item. */
   onPost?: (itemLabel: string, text: string) => void;
   align?: "start" | "center" | "end";
+  /** False when the parent already owns and renders the notes list. */
+  storeLocally?: boolean;
 }) {
   const { notes: ownNotes, add } = useOwnNotes(itemLabel);
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
 
-  const all = [...teamNotes, ...ownNotes];
+  const all = storeLocally ? [...teamNotes, ...ownNotes] : teamNotes;
   const count = all.length;
 
   const post = () => {
     const text = draft.trim();
     if (!text) return;
-    add(text, currentUser);
+    if (storeLocally) add(text, currentUser);
     onPost?.(itemLabel, text);
     setDraft("");
     setOpen(false);
