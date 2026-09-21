@@ -27,10 +27,10 @@ export function eventSentence(e: MaterialEvent): string {
       return `Owner changed from ${e.from_value ?? "Unassigned"} to ${e.to_value ?? "Unassigned"}`;
     case "priority_change":
       return e.to_value === null
-        ? "Priority period cleared"
+        ? "Internal deadline cleared"
         : e.from_value === null
-          ? `Priority period set to ${e.to_value}`
-          : `Priority period changed from ${e.from_value} to ${e.to_value}`;
+          ? `Internal deadline set to ${e.to_value}`
+          : `Internal deadline changed from ${e.from_value} to ${e.to_value}`;
     case "blocker_set":
       return `Blocker recorded on ${statusLabel(e.from_value) !== "—" ? "status change" : "this material"}`;
     case "score_change":

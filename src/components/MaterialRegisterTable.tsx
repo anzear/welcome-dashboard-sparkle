@@ -86,7 +86,7 @@ const OPTIONAL_COLUMNS: [OptionalColumn, string, string][] = [
   ["productLine", "Product line", "Product lines the material belongs to"],
   ["applications", "Product categories", "Product categories the material is used in"],
   ["links", "Links", "Number of linked materials of the opposite role"],
-  ["priority", "Priority period", "Period the material is prioritised for"],
+  ["priority", "Internal deadline", "Period the material is prioritised for"],
   ["owner", "Owner", "Person accountable"],
   ["contributors", "Contributors", "People with at least one input on the brief"],
   ["intelligence", "Coverage", "Whether coverage has been requested"],
@@ -397,7 +397,7 @@ export const MaterialRegisterTable: React.FC = () => {
             className={cn(HEAD, "px-3 py-2.5 text-left")}
             title="Period the material is prioritised for"
           >
-            Priority period
+            Internal deadline
           </th>
         );
       case "intelligence":
@@ -980,7 +980,7 @@ export const MaterialRegisterTable: React.FC = () => {
             {(
               [
                 ["owner", "Set owner"],
-                ["priority_period", "Set priority period"],
+                ["priority_period", "Set internal deadline"],
                 ["product_lines", "Product lines"],
                 ["tags", "Tags"],
                 ["role", "Set role"],

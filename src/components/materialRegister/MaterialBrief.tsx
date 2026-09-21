@@ -1026,7 +1026,7 @@ export const MaterialBrief: React.FC<{
           </BarField>
 
           <BarField
-            label="Priority period"
+            label="Internal deadline"
             className="w-[210px] border-l border-border/60 px-5"
             hint={m.priority_period === null ? "Not prioritised" : undefined}
           >

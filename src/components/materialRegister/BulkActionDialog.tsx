@@ -82,7 +82,7 @@ interface Props {
   applicationSuggestions: string[];
   /** General tag vocabulary in use, for autocomplete on the tag action. */
   tagSuggestions: string[];
-  /** Priority periods already in use. */
+  /** Internal deadlines already in use. */
   periodSuggestions: string[];
   onCancel: () => void;
   onApply: (payload: BulkPayload) => void;
@@ -202,7 +202,7 @@ export const BulkActionDialog: React.FC<Props> = ({
     });
   }, [isMulti, kind, values, materials, mode]);
 
-  /** Priority period: state exactly what is replaced and what does not change. */
+  /** Internal deadline: state exactly what is replaced and what does not change. */
   const periodEffect = useMemo(() => {
     if (kind !== "priority_period") return null;
     const target = value.trim() || null;
@@ -249,7 +249,7 @@ export const BulkActionDialog: React.FC<Props> = ({
               : kind === "tags"
               ? `${mode === "add" ? "Add" : "Remove"} tags — ${materials.length} materials`
               : kind === "priority_period"
-              ? `${value.trim() ? "Set" : "Clear"} priority period for ${materials.length} materials`
+              ? `${value.trim() ? "Set" : "Clear"} internal deadline for ${materials.length} materials`
               : kind === "role"
                 ? `Set role for ${materials.length} materials`
               : kind === "entry_type"
@@ -331,7 +331,7 @@ export const BulkActionDialog: React.FC<Props> = ({
                   : kind === "owner"
                     ? "New owner"
                     : kind === "priority_period"
-                      ? "Priority period"
+                      ? "Internal deadline"
                       : kind === "role"
                         ? "New role"
                       : kind === "entry_type"
@@ -554,8 +554,8 @@ export const BulkActionDialog: React.FC<Props> = ({
                     <ul className="space-y-0.5 text-[11px]">
                       <li>
                         {periodEffect.target === null
-                          ? `Clear priority period for ${materials.length} materials?`
-                          : `Set priority period to ${periodEffect.target} for ${materials.length} materials?`}
+                          ? `Clear internal deadline for ${materials.length} materials?`
+                          : `Set internal deadline to ${periodEffect.target} for ${materials.length} materials?`}
                       </li>
                       {periodEffect.none > 0 && (
                         <li className="text-muted-foreground">
