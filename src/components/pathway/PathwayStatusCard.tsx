@@ -70,8 +70,8 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
         <Badge
           variant="outline"
           className={cn(
-            "text-[10px] font-medium border pathway-status pathway-status--",
-            status
+            "text-[10px] font-medium border pathway-status",
+            `pathway-status--${status}`
           )}
         >
           {PATHWAY_STATUS_LABEL[status]}
