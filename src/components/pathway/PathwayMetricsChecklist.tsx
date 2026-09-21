@@ -64,11 +64,48 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   const [state, setState] = useState<MetricChecklistState>({});
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
+  const [comments, setComments] = useState<ValidationComment[]>([]);
+  const [noteOpen, setNoteOpen] = useState<string | null>(null);
+  const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
     setState(read(topic, pathwayId));
     setEditing(null);
   }, [topic, pathwayId]);
+
+  useEffect(() => {
+    const load = () => setComments(readValidationComments(topic, pathwayId));
+    load();
+    window.addEventListener(VALIDATION_COMMENTS_CHANGED_EVENT, load);
+    return () => window.removeEventListener(VALIDATION_COMMENTS_CHANGED_EVENT, load);
+  }, [topic, pathwayId]);
+
+  const commentCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    comments.forEach((c) => {
+      if (c.metricLabel) counts[c.metricLabel] = (counts[c.metricLabel] ?? 0) + 1;
+    });
+    return counts;
+  }, [comments]);
+
+  const addComment = (metric: ChecklistMetric) => {
+    if (!noteDraft.trim()) return;
+    const next: ValidationComment[] = [
+      ...comments,
+      {
+        id: crypto.randomUUID(),
+        categoryId: "",
+        author: currentUser,
+        text: noteDraft.trim(),
+        createdAt: new Date().toISOString(),
+        metricLabel: metric.label,
+      },
+    ];
+    setComments(next);
+    writeValidationComments(topic, pathwayId, next);
+    setNoteDraft("");
+    setNoteOpen(null);
+  };
 
   const persist = (next: MetricChecklistState) => {
     setState(next);
