@@ -519,16 +519,10 @@ type Row = {
   const rows: Row[] = (() => {
 
 
-    const trlFrom = Number(thresholds.trlFrom);
-    const trlTo = Number(thresholds.trlTo);
-    // A range covering the whole 1–9 span excludes nothing, so it is not a threshold.
-    const trlSet =
-      thresholds.trlFrom !== "" &&
-      thresholds.trlTo !== "" &&
-      !Number.isNaN(trlFrom) &&
-      !Number.isNaN(trlTo) &&
-      !(trlFrom <= 1 && trlTo >= 9);
-    const trlInRange = PATHWAY_TRL >= trlFrom && PATHWAY_TRL <= trlTo;
+    const applicationsSet = thresholds.applications.length > 0;
+    const applicationMatches = shortlistPathways.filter((pathway) =>
+      thresholds.applications.includes(pathway.application),
+    );
 
     const matchesGeography = (regions: string[], country: string | undefined, selected: string[]) =>
       selected.some((geography) => regions.includes(geography) || country === geography);
