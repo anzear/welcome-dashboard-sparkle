@@ -39,7 +39,7 @@ const PathwayDetail = () => {
   const { pathwayId, category, topic } = useParams<{pathwayId: string;category: string;topic: string;}>();
   const navigate = useNavigate();
   const [activeOpinionsTab, setActiveOpinionsTab] = useState(false);
-  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'company' | 'shortlist'>('evaluation');
+  const [evaluationTab, setEvaluationTab] = useState<'evaluation' | 'workspace'>('evaluation');
 
   // State for favorites and saves
   const pathwayIndex = parseInt(pathwayId || "0");
@@ -561,10 +561,10 @@ const PathwayDetail = () => {
 
         {/* Content grid */}
         <div className={`grid gap-5 items-start min-h-0 pb-2 lg:grid-cols-[minmax(0,1fr)_280px] ${
-          evaluationTab === 'company' ? 'flex-none' : 'flex-1'
+          evaluationTab === 'workspace' ? 'flex-none' : 'flex-1'
         }`}>
               <div className={`border border-border rounded-lg bg-card p-5 shadow-sm flex flex-col gap-3 min-w-0 ${
-                evaluationTab === 'company'
+                evaluationTab === 'workspace'
                   ? 'min-h-0 overflow-x-hidden'
                   : 'min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-y-contain'
               }`}>
@@ -635,7 +635,7 @@ const PathwayDetail = () => {
 
               {/* Technical Feasibility Evaluation Card */}
               <div className={`border border-border rounded-lg bg-card px-5 py-4 shadow-sm flex flex-col min-w-0 ${
-                evaluationTab === 'company' ? 'flex-none min-h-0' : 'flex-1 min-h-[420px]'
+                evaluationTab === 'workspace' ? 'flex-none min-h-0' : 'flex-1 min-h-[420px]'
               }`}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="inline-flex w-full xl:w-auto items-center gap-2 bg-muted/50 rounded-lg p-0.5">
@@ -646,16 +646,10 @@ const PathwayDetail = () => {
                       Metrics
                     </button>
                     <button
-                      onClick={() => setEvaluationTab('company')}
-                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'company' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                      onClick={() => setEvaluationTab('workspace')}
+                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'workspace' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                       Workspace
-                    </button>
-                    <button
-                      onClick={() => setEvaluationTab('shortlist')}
-                      className={`flex-1 xl:flex-none xl:w-[140px] min-w-0 text-center py-1 rounded-md text-[9px] font-semibold uppercase tracking-widest transition-all ${evaluationTab === 'shortlist' ? 'bg-foreground text-background shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
-                    >
-                      Shortlisted Items
                     </button>
                   </div>
                 </div>
@@ -866,44 +860,52 @@ const PathwayDetail = () => {
                   </details>
                 </div>
                   </>
-                ) : evaluationTab === 'company' ? (
+                ) : (
                   <>
-                  <PathwayValidationCard
-                    pathwayId={pathwayId || '0'}
-                    topic={topic ? decodeURIComponent(topic) : undefined}
-                  />
-                  <PathwayValidationSpace
-                    pathwayId={pathwayId || '0'}
-                    topic={topic ? decodeURIComponent(topic) : undefined}
-                  />
+                    <PathwayValidationCard
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                    />
+                    <PathwayValidationSpace
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                    />
+
+                    {/* Shortlisted items rendered below comments inside the Workspace tab */}
+                    <div className="mt-3 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted Items</span>
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold tabular-nums text-muted-foreground">
+                          {shortlistCompanies.length + shortlistPatents.length + shortlistPapers.length}
+                        </span>
+                      </div>
+
+                      <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
+                        <CompanyShortlistTables
+                          companies={shortlistCompanies}
+                          currentUser={CURRENT_REVIEWER}
+                          onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
+                        />
+                      </PathwayShortlistCard>
+
+                      <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
+                        <PatentShortlistTable
+                          patents={shortlistPatents}
+                          currentUser={CURRENT_REVIEWER}
+                          onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
+                        />
+                      </PathwayShortlistCard>
+
+                      <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
+                        <PaperShortlistTable
+                          papers={shortlistPapers}
+                          currentUser={CURRENT_REVIEWER}
+                          onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
+                        />
+                      </PathwayShortlistCard>
+                    </div>
                   </>
-                ) : evaluationTab === 'shortlist' ? (
-                  <div className="space-y-3">
-                    <PathwayShortlistCard label="Companies" count={shortlistCompanies.length}>
-                      <CompanyShortlistTables
-                        companies={shortlistCompanies}
-                        currentUser={CURRENT_REVIEWER}
-                        onRemove={(id) => setShortlistCompanies((current) => current.filter((company) => company.id !== id))}
-                      />
-                    </PathwayShortlistCard>
-
-                    <PathwayShortlistCard label="Patents" count={shortlistPatents.length}>
-                      <PatentShortlistTable
-                        patents={shortlistPatents}
-                        currentUser={CURRENT_REVIEWER}
-                        onRemove={(id) => setShortlistPatents((current) => current.filter((patent) => patent.id !== id))}
-                      />
-                    </PathwayShortlistCard>
-
-                    <PathwayShortlistCard label="Papers" count={shortlistPapers.length}>
-                      <PaperShortlistTable
-                        papers={shortlistPapers}
-                        currentUser={CURRENT_REVIEWER}
-                        onRemove={(id) => setShortlistPapers((current) => current.filter((paper) => paper.id !== id))}
-                      />
-                    </PathwayShortlistCard>
-                  </div>
-                ) : null}
+                )}
                 </div>
 
             </div>
