@@ -564,7 +564,7 @@ const PathwayDetail = () => {
           evaluationTab === 'workspace' ? 'flex-none' : 'flex-1'
         }`}>
               <div className={`border border-border rounded-lg bg-card p-5 shadow-sm flex flex-col gap-3 min-w-0 ${
-                evaluationTab === 'company'
+                evaluationTab === 'workspace'
                   ? 'min-h-0 overflow-x-hidden'
                   : 'min-h-0 max-h-full overflow-y-auto overflow-x-hidden overscroll-y-contain'
               }`}>
