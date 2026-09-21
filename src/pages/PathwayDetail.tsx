@@ -479,6 +479,18 @@ const PathwayDetail = () => {
     },
   ];
 
+  /** Flat metric list backing the Workspace validation checklist. */
+  const checklistMetrics = evaluationGroups.flatMap((group) =>
+    group.sections.flatMap((section) =>
+      section.rows.map((row) => ({
+        id: `${group.category}:${section.name}:${row.label}`,
+        label: row.label,
+        value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
+        group: `${group.category} · ${section.name}`,
+      })),
+    ),
+  );
+
 
   // Popover data for each flow item
   const flowPopoverData = {
