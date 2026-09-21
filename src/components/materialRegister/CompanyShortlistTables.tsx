@@ -35,17 +35,17 @@ const ROLE_TABS: { value: string; role: ShortlistCompany["role"]; label: string 
 const HEAD_CLS = "h-7 py-1 text-left text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
 
 /** Column widths — one grid for the whole table, group rows included.
- *  Notes is flexible so the table always fits its card without scrolling. */
+ *  Sector flexes so the table always fits its card; Notes and Docs are the
+ *  narrow icon columns on the right, as in every other box. */
 const Columns = () => (
   <colgroup>
     <col style={{ width: "170px" }} />
     <col style={{ width: "84px" }} />
-    <col style={{ width: "112px" }} />
+    <col />
     <col style={{ width: "120px" }} />
     <col style={{ width: "140px" }} />
-    <col />
-    <col style={{ width: "88px" }} />
-    <col style={{ width: "40px" }} />
+    <col style={{ width: "44px" }} />
+    <col style={{ width: "44px" }} />
     <col style={{ width: "84px" }} />
     <col style={{ width: "40px" }} />
   </colgroup>
@@ -114,7 +114,6 @@ export function CompanyShortlistTables({
             <TableHead className={HEAD_CLS}>Linked node</TableHead>
             <TableHead className={HEAD_CLS}>Engagement</TableHead>
             <TableHead className={HEAD_CLS}>Notes</TableHead>
-            <TableHead className={HEAD_CLS} />
             <TableHead className={HEAD_CLS}>Docs</TableHead>
             <TableHead className={HEAD_CLS}>Saved by</TableHead>
             <TableHead className={HEAD_CLS} />
@@ -123,7 +122,7 @@ export function CompanyShortlistTables({
         <TableBody>
           {visibleRows.length === 0 && (
             <TableRow className="hover:bg-transparent">
-              <TableCell colSpan={10} className="h-11 py-0 text-[10px] text-muted-foreground">
+              <TableCell colSpan={9} className="h-11 py-0 text-[10px] text-muted-foreground">
                 No companies shortlisted in this group yet.
               </TableCell>
             </TableRow>
@@ -169,7 +168,6 @@ export function CompanyShortlistTables({
                           onPost={onPostNote}
                         />
                       </TableCell>
-                      <TableCell className="h-11 py-0" />
                       <TableCell className="h-11 py-0">
                         <DocumentAttachControl
                           itemLabel={company.name}

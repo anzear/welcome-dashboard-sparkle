@@ -24,7 +24,7 @@ const Columns = () => (
     <col className="min-w-[260px]" />
     <col style={{ width: "100px" }} />
     <col style={{ width: "200px" }} />
-    <col style={{ width: "220px" }} />
+    <col style={{ width: "44px" }} />
     <col style={{ width: "44px" }} />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />

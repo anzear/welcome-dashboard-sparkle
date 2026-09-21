@@ -30,7 +30,7 @@ const Columns = () => (
     <col style={{ width: "100px" }} />
     <col style={{ width: "80px" }} />
     <col style={{ width: "88px" }} />
-    <col style={{ width: "220px" }} />
+    <col style={{ width: "44px" }} />
     <col style={{ width: "44px" }} />
     <col style={{ width: "100px" }} />
     <col style={{ width: "44px" }} />
