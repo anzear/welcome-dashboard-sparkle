@@ -459,7 +459,7 @@ const ResearchSpace: React.FC<{ category?: string; topic?: string }> = ({ catego
         id: `validation-${comment.id}`,
         author: comment.author,
         timestamp: comment.createdAt.slice(0, 16).replace("T", " "),
-        text: `[${categoryLabel(comment.categoryId)}] ${comment.text}`,
+        text: comment.text,
       }));
       if (validation.length === 0) return;
       merged[pathway.id] = [...(merged[pathway.id] ?? []), ...validation];
