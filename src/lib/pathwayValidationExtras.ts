@@ -92,7 +92,7 @@ export function addFunctionDocuments(
 ): ValidationExtras {
   const current = extrasFor(extras, fn);
   // Uploads here also land in the material-wide registry, tagged with the function.
-  const created = registerDocuments(names, uploader, `Validation · ${fn}`);
+  const created = registerDocuments(names, uploader, `Status · ${fn}`);
   return {
     ...extras,
     [fn]: { ...current, documents: [...current.documents, ...created] },

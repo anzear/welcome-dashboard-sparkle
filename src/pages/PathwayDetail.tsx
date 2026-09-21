@@ -12,6 +12,9 @@ import PathwayUserInputSection from "@/components/PathwayUserInputSection";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import PathwayValidationSpace from '@/components/PathwayValidationSpace';
 import PathwayValidationCard from '@/components/pathway/PathwayValidationCard';
+import PathwayDocumentsCard from '@/components/pathway/PathwayDocumentsCard';
+import { setActiveSubRegistry } from '@/lib/documentRegistry';
+
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
@@ -53,6 +56,14 @@ const PathwayDetail = () => {
   const [shortlistPapers, setShortlistPapers] = useState<ShortlistPaper[]>(SHORTLIST_PAPERS);
   const subscriptionKey = `${topic || ''}_${pathwayId || ''}`;
   const readUpdatesKey = `pathwayReadUpdates_${subscriptionKey}`;
+
+  // Documents uploaded anywhere on this pathway also collect in a pathway-scoped list.
+  const documentRegistryKey = `pathway:${topic || 'default'}:${pathwayId || '0'}`;
+  useEffect(() => {
+    setActiveSubRegistry(documentRegistryKey);
+    return () => setActiveSubRegistry(null);
+  }, [documentRegistryKey]);
+
 
   // Mock updates (stable list with ids so read-state can be tracked)
   const pathwayUpdates = React.useMemo(() => ([
@@ -904,6 +915,9 @@ const PathwayDetail = () => {
                         />
                       </PathwayShortlistCard>
                     </div>
+
+                    <PathwayDocumentsCard registryKey={documentRegistryKey} currentUser={CURRENT_REVIEWER} />
+
                   </>
                 )}
                 </div>

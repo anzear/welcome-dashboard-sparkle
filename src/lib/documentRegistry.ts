@@ -34,9 +34,40 @@ export const MOCK_REGISTRY: RegisteredDocument[] = [
   { id: "reg-co-1", name: "Producer-capacity-overview.xlsx", uploader: "A. Vermeer", date: "9 Sept 2026", source: "Company · Corbion" },
   { id: "reg-pa-1", name: "Patent-family-summary.pdf", uploader: "L. Haas", date: "11 Sept 2026", source: "Patent · EP3456789A1" },
   { id: "reg-pp-1", name: "Fermentation-yield-paper.pdf", uploader: "A. Novak", date: "12 Sept 2026", source: "Paper · Continuous fermentation of lactic acid" },
-  { id: "rd-doc-1", name: "Lab-trial-report-Q3.pdf", uploader: "K. Brandt", date: "4 Sept 2026", source: "Validation · R&D" },
-  { id: "pr-doc-1", name: "Supplier-quotes-comparison.xlsx", uploader: "A. Vermeer", date: "9 Sept 2026", source: "Validation · Procurement" },
+  { id: "rd-doc-1", name: "Lab-trial-report-Q3.pdf", uploader: "K. Brandt", date: "4 Sept 2026", source: "Status · R&D" },
+  { id: "pr-doc-1", name: "Supplier-quotes-comparison.xlsx", uploader: "A. Vermeer", date: "9 Sept 2026", source: "Status · Procurement" },
 ];
+
+/**
+ * Optional second registry (e.g. one pathway) that mirrors uploads made while it
+ * is active, so a pathway can show its own tagged document list without losing
+ * the material-wide list.
+ */
+let activeSubKey: string | null = null;
+
+export function setActiveSubRegistry(key: string | null): void {
+  activeSubKey = key;
+}
+
+const subStorageKey = (key: string) => `${STORAGE_KEY}.sub.${key}`;
+
+export function readSubRegistry(key: string, fallback: RegisteredDocument[] = []): RegisteredDocument[] {
+  try {
+    const stored = localStorage.getItem(subStorageKey(key));
+    if (!stored) return fallback;
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? (parsed as RegisteredDocument[]) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+export function writeSubRegistry(key: string, documents: RegisteredDocument[]): void {
+  try {
+    localStorage.setItem(subStorageKey(key), JSON.stringify(documents));
+    window.dispatchEvent(new Event(DOCUMENT_REGISTRY_CHANGED_EVENT));
+  } catch {}
+}
 
 export function readDocumentRegistry(): RegisteredDocument[] {
   try {
@@ -72,10 +103,18 @@ export function registerDocuments(
   }));
   const next = [...readDocumentRegistry(), ...added];
   write(next);
+  if (activeSubKey) writeSubRegistry(activeSubKey, [...readSubRegistry(activeSubKey), ...added]);
   return added;
 }
 
 /** Removes a registry entry — used when a file is deleted at its source. */
 export function unregisterDocument(documentId: string): void {
   write(readDocumentRegistry().filter((document) => document.id !== documentId));
+  if (activeSubKey) {
+    writeSubRegistry(
+      activeSubKey,
+      readSubRegistry(activeSubKey).filter((document) => document.id !== documentId),
+    );
+  }
 }
+
