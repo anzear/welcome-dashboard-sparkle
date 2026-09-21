@@ -707,7 +707,7 @@ type Row = {
       {countLine && <p className="text-xs text-muted-foreground">{countLine}</p>}
 
       <div className="overflow-hidden rounded-lg border border-border bg-card" aria-label="Threshold criteria">
-          <div className="grid grid-cols-[55%_1fr_150px] border-b border-border">
+          <div className="grid grid-cols-[55%_1fr_180px] border-b border-border">
             <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">Your requirements</div>
             <div className="col-span-2 border-l border-border px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-foreground">
               <TooltipProvider delayDuration={100}>
@@ -744,7 +744,7 @@ type Row = {
                   ? "Awaiting threshold"
                   : row.finding;
             return (
-              <div key={row.label} className="grid grid-cols-[55%_1fr_150px] border-b border-border">
+              <div key={row.label} className="grid grid-cols-[55%_1fr_180px] border-b border-border">
                 <div className="flex h-11 items-center gap-3 px-4">
                   <span className="w-[140px] shrink-0 truncate text-xs text-foreground">{row.label}</span>
                   <div className="min-w-0 flex-1">{renderInput(row.label)}</div>
