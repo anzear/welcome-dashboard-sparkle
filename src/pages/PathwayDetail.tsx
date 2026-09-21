@@ -16,6 +16,7 @@ import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
+import PathwayMetricsChecklist from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
 import { PatentShortlistTable, type ShortlistPatent } from '@/components/materialRegister/PatentShortlistTable';
@@ -479,6 +480,18 @@ const PathwayDetail = () => {
     },
   ];
 
+  /** Flat metric list backing the Workspace validation checklist. */
+  const checklistMetrics = evaluationGroups.flatMap((group) =>
+    group.sections.flatMap((section) =>
+      section.rows.map((row) => ({
+        id: `${group.category}:${section.name}:${row.label}`,
+        label: row.label,
+        value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
+        group: `${group.category} · ${section.name}`,
+      })),
+    ),
+  );
+
 
   // Popover data for each flow item
   const flowPopoverData = {
@@ -876,6 +889,13 @@ const PathwayDetail = () => {
                     <PathwayStatusCard
                       pathwayId={pathwayId || '0'}
                       topic={topic ? decodeURIComponent(topic) : undefined}
+                    />
+
+                    <PathwayMetricsChecklist
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                      metrics={checklistMetrics}
+                      currentUser={CURRENT_REVIEWER}
                     />
 
                     <PathwayValidationSpace
