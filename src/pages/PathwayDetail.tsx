@@ -499,11 +499,13 @@ const PathwayDetail = () => {
     },
   ];
 
-  /** Validation checklist rows: the seven evaluation categories. */
+  /** Validation checklist rows: eight criteria across three review groups. */
   const checklistMetrics = VALIDATION_CATEGORIES.map((c) => ({
     id: c.id,
     label: c.label,
     value: '',
+    group: c.group,
+    evidence: null,
   }));
 
 

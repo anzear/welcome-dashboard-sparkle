@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, MessageSquare, MessageSquarePlus, Pencil, RotateCcw, Send, X } from "lucide-react";
+import { Check, MessageSquare, MessageSquarePlus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -12,9 +11,8 @@ import {
 } from "@/lib/pathwayValidationComments";
 
 /**
- * VALIDATION CHECKLIST — the relevant pathway metrics, one row each.
- * The user either confirms the VCG.AI value or records their own value found
- * during their evaluation. Prototype persistence is localStorage.
+ * VALIDATION CHECKLIST — grouped pathway review criteria.
+ * Confirmations and attributed notes use the existing localStorage stores.
  */
 
 export interface ChecklistMetric {
@@ -22,6 +20,8 @@ export interface ChecklistMetric {
   label: string;
   value: string;
   group?: string;
+  /** Null means evidence has not loaded; an empty list means it loaded with no evidence. */
+  evidence?: string[] | null;
 }
 
 type MetricEntry = {
@@ -62,15 +62,12 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   currentUser = "A. Novak",
 }) => {
   const [state, setState] = useState<MetricChecklistState>({});
-  const [editing, setEditing] = useState<string | null>(null);
-  const [draft, setDraft] = useState("");
   const [comments, setComments] = useState<ValidationComment[]>([]);
   const [noteOpen, setNoteOpen] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
 
   useEffect(() => {
     setState(read(topic, pathwayId));
-    setEditing(null);
   }, [topic, pathwayId]);
 
   useEffect(() => {
@@ -120,16 +117,6 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
       [metric.id]: { state: "confirmed", by: currentUser, date: todayLabel() },
     });
 
-  const saveOwn = (metric: ChecklistMetric) => {
-    if (!draft.trim()) return;
-    persist({
-      ...state,
-      [metric.id]: { state: "own", ownValue: draft.trim(), by: currentUser, date: todayLabel() },
-    });
-    setEditing(null);
-    setDraft("");
-  };
-
   const reset = (metric: ChecklistMetric) => {
     const next = { ...state };
     delete next[metric.id];
@@ -137,9 +124,16 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   };
 
   const reviewed = metrics.filter((m) => state[m.id]).length;
-  const percent = metrics.length ? Math.round((reviewed / metrics.length) * 100) : 0;
-
-  let lastGroup: string | undefined;
+  const groups = useMemo(() => {
+    const ordered: Array<{ label: string; metrics: ChecklistMetric[] }> = [];
+    metrics.forEach((metric) => {
+      const label = metric.group ?? "Criteria";
+      const existing = ordered.find((group) => group.label === label);
+      if (existing) existing.metrics.push(metric);
+      else ordered.push({ label, metrics: [metric] });
+    });
+    return ordered;
+  }, [metrics]);
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
@@ -148,102 +142,72 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
           Validation checklist
         </span>
         <span className="text-[10px] text-muted-foreground">
-          {reviewed} of {metrics.length} confirmed · {percent}%
+          {reviewed > 0 ? `${reviewed} of ${metrics.length} confirmed` : `${metrics.length} criteria`}
         </span>
       </div>
 
       <div className="border-t border-border/40 px-3 py-2">
         <div
-          className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+          className="flex h-0.5 w-full gap-1"
           role="progressbar"
-          aria-valuenow={percent}
+          aria-valuenow={reviewed}
           aria-valuemin={0}
-          aria-valuemax={100}
-          aria-label="Metric review progression"
+          aria-valuemax={metrics.length}
+          aria-label="Criteria confirmed"
         >
-          <div className="h-full rounded-full bg-emerald-500" style={{ width: `${percent}%` }} />
+          {groups.map((group) => {
+            const confirmed = group.metrics.filter((metric) => state[metric.id]).length;
+            const fill = (confirmed / group.metrics.length) * 100;
+            return (
+              <div key={group.label} className="h-full overflow-hidden bg-muted" style={{ flex: group.metrics.length }}>
+                {confirmed > 0 && <div className="h-full bg-primary" style={{ width: `${fill}%` }} />}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="max-h-[420px] overflow-y-auto border-t border-border">
-        {metrics.map((metric) => {
-          const entry = state[metric.id];
-          const isEditing = editing === metric.id;
-          const showGroup = metric.group && metric.group !== lastGroup;
-          lastGroup = metric.group;
+      <div className="max-h-[520px] overflow-y-auto border-t border-border">
+        {groups.map((group, groupIndex) => (
+          <div key={group.label} className={groupIndex > 0 ? "mt-3" : undefined}>
+            <div className="flex h-8 items-center px-3 text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+              {group.label}
+            </div>
+            {group.metrics.map((metric, metricIndex) => {
+              const entry = state[metric.id];
+              const noteCount = commentCounts[metric.label] ?? 0;
+              const evidenceText = metric.evidence === null || metric.evidence === undefined
+                ? "Not available"
+                : metric.evidence.filter(Boolean).join(" · ");
 
-          return (
-            <React.Fragment key={metric.id}>
-              {showGroup && (
-                <div className="border-b border-border/40 bg-muted/30 px-3 py-1 text-[9px] font-semibold uppercase tracking-widest text-muted-foreground">
-                  {metric.group}
-                </div>
-              )}
-              <div className="flex items-center gap-2 border-b border-border/40 px-3 py-2 last:border-b-0">
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[11px] font-medium text-foreground">{metric.label}</div>
-                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-                    {metric.value && <span className="tabular-nums">VCG.AI: {metric.value}</span>}
-                    {metric.value && entry?.state === "own" && (
-                      <span className="tabular-nums font-medium text-foreground">
-                        · Your value: {entry.ownValue}
-                      </span>
-                    )}
-                    {entry && (
-                      <span>
-                        {metric.value ? "· " : ""}
-                        {entry.by}, {entry.date}
-                      </span>
-                    )}
+              return (
+                <div
+                  key={metric.id}
+                  className={`group relative flex h-11 items-center gap-2 px-3 ${metricIndex > 0 ? "border-t border-border/40" : ""} ${entry ? "before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-primary" : ""}`}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className={`truncate text-[11px] font-medium ${entry ? "text-muted-foreground" : "text-foreground"}`}>
+                      {metric.label}
+                    </div>
+                    {evidenceText && <div className="truncate text-[11px] text-muted-foreground">{evidenceText}</div>}
                   </div>
-                </div>
 
-                {isEditing ? (
-                  <div className="flex shrink-0 items-center gap-1">
-                    <Input
-                      autoFocus
-                      value={draft}
-                      onChange={(event) => setDraft(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter") saveOwn(metric);
-                        if (event.key === "Escape") setEditing(null);
-                      }}
-                      placeholder="Your value"
-                      className="h-7 w-[150px] text-xs"
-                    />
-                    <Button size="sm" className="h-7 px-2 text-[10px]" onClick={() => saveOwn(metric)}>
-                      Save
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      onClick={() => setEditing(null)}
-                      aria-label="Cancel"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                ) : (
                   <div className="flex shrink-0 items-center gap-1">
                     {entry ? (
-                      <>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600">
-                          <Check className="h-3 w-3" /> Confirmed
-                        </span>
-                        {entry.state === "own" && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[10px] font-medium text-foreground">
-                            <Pencil className="h-3 w-3" /> Own value
-                          </span>
-                        )}
-                      </>
-                    ) : null}
-
-                    {!entry && (
                       <Button
                         size="sm"
-                        variant="outline"
-                        className="h-7 gap-1 px-2 text-[10px]"
+                        variant="ghost"
+                        className="h-7 gap-1 px-2 text-[10px] text-primary hover:text-primary"
+                        onClick={() => reset(metric)}
+                        title="Revert to pending"
+                      >
+                        <Check className="h-3.5 w-3.5 fill-current" /> Confirmed
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 gap-1 border border-transparent bg-transparent px-2 text-[10px] opacity-0 transition-[opacity,background-color,border-color] hover:border-border hover:bg-muted group-hover:opacity-100 focus-visible:opacity-100"
                         onClick={() => confirm(metric)}
                       >
                         <Check className="h-3 w-3" /> Confirm
@@ -260,13 +224,13 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 gap-1 px-1.5 text-[10px]"
+                          className={`h-7 gap-1 px-1.5 text-[10px] transition-opacity ${noteCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
                           title={commentCounts[metric.label] ? "Notes" : "Add note"}
                         >
-                          {commentCounts[metric.label] ? (
+                          {noteCount > 0 ? (
                             <>
                               <MessageSquare className="h-3.5 w-3.5 fill-current" />
-                              {commentCounts[metric.label]}
+                              {noteCount}
                             </>
                           ) : (
                             <MessageSquarePlus className="h-3.5 w-3.5" />
@@ -305,38 +269,12 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         </div>
                       </PopoverContent>
                     </Popover>
-                    {metric.value && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        title={entry?.state === "own" ? "Edit own value" : "Own value"}
-                        onClick={() => {
-                          setEditing(metric.id);
-                          setDraft(entry?.ownValue ?? "");
-                        }}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    {entry && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 w-7 p-0"
-                        onClick={() => reset(metric)}
-                        aria-label="Reset metric"
-                        title="Clear"
-                      >
-                        <RotateCcw className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
                   </div>
-                )}
-              </div>
-            </React.Fragment>
-          );
-        })}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
     </div>
   );
