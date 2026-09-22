@@ -16,7 +16,7 @@ import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
-import PathwayMetricsChecklist from '@/components/pathway/PathwayMetricsChecklist';
+import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
 import { PatentShortlistTable, type ShortlistPatent } from '@/components/materialRegister/PatentShortlistTable';
@@ -499,6 +499,43 @@ const PathwayDetail = () => {
     },
   ];
 
+  const indicatorUnit: Record<string, string> = {
+    'Feedstock availability (Europe)': 't/yr',
+    'Feedstock price (Europe)': 'EUR/t',
+    'Production TRL': 'TRL',
+    'Production IP count': 'patents',
+    'Production research count': 'papers',
+    'Product availability (Europe)': 'kt/yr',
+    'Market concentration': 'HHI',
+    'Product price': 'EUR/t',
+    'Market size (EU)': 'EUR m',
+    'Market size (Global)': 'EUR m',
+    'Market growth (EU)': '%/yr',
+    'Market growth (Global)': '%/yr',
+    'Application IP count': 'patents',
+  };
+  const indicatorByLabel = new Map<string, ChecklistIndicator>();
+  evaluationGroups.forEach((group) => group.sections.forEach((section) => section.rows.forEach((row) => {
+    const countIndicator = /(?:IP|research) count$/.test(row.label);
+    const numericCount = Number(row.value.replace(/,/g, ''));
+    indicatorByLabel.set(row.label, {
+      id: row.label.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+      label: row.label,
+      vcgValue: countIndicator && numericCount === 0 ? null : row.value === '—' ? null : row.value,
+      unit: indicatorUnit[row.label] ?? '',
+      observedAt: shortDate(observedAt(row.label)),
+      percentile: row.value === '—' ? undefined : row.percentile,
+    });
+  })));
+
+  const checklistIndicatorLabels: Record<string, string[]> = {
+    'feedstock-availability': ['Feedstock availability (Europe)', 'Feedstock price (Europe)'],
+    'process-maturity': ['Production TRL', 'Production IP count', 'Production research count'],
+    'supply-chain': ['Product availability (Europe)', 'Market concentration'],
+    'cost-economics': ['Product price', 'Market size (EU)', 'Market size (Global)', 'Market growth (EU)', 'Market growth (Global)'],
+    'ip-freedom': ['Production IP count', 'Application IP count'],
+  };
+
   /** Validation checklist rows: eight criteria across three review groups. */
   const checklistMetrics = VALIDATION_CATEGORIES.map((c) => ({
     id: c.id,
@@ -506,6 +543,9 @@ const PathwayDetail = () => {
     value: '',
     group: c.group,
     evidence: null,
+    indicators: (checklistIndicatorLabels[c.id] ?? [])
+      .map((label) => indicatorByLabel.get(label))
+      .filter((indicator): indicator is ChecklistIndicator => Boolean(indicator)),
   }));
 
 
