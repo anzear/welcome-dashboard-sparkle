@@ -12,7 +12,7 @@ export const VALIDATION_CATEGORIES = [
   { id: 'material', label: 'Product Specification Fit', group: 'Technical Feasibility' },
   { id: 'supply-chain', label: 'Supply Chain & Sourcing Readiness', group: 'Commercial Viability' },
   { id: 'economics', label: 'Cost & Economics', group: 'Commercial Viability' },
-  { id: 'sustainability', label: 'Sustainablity targets fit', group: 'Risk & Compliance' },
+  { id: 'sustainability', label: 'Sustainability targets', group: 'Risk & Compliance' },
   { id: 'ip', label: 'IP & Freedom to Operate', group: 'Risk & Compliance' },
   { id: 'regulations', label: 'Regulatory Compliance', group: 'Risk & Compliance' },
 ] as const;
