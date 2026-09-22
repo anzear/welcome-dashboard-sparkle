@@ -122,10 +122,10 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
     } catch {}
   };
 
-  const confirm = (metric: ChecklistMetric) =>
+  const setStatus = (metric: ChecklistMetric, status: MetricStatus) =>
     persist({
       ...state,
-      [metric.id]: { state: "confirmed", by: currentUser, date: todayLabel() },
+      [metric.id]: { state: status, by: currentUser, date: todayLabel() },
     });
 
   const reset = (metric: ChecklistMetric) => {
