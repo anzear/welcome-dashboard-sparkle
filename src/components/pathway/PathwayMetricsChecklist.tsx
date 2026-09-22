@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Check, MessageSquare, MessageSquarePlus, Send } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, MessageSquare, MessageSquarePlus, Paperclip, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,10 +9,11 @@ import {
   VALIDATION_COMMENTS_CHANGED_EVENT,
   type ValidationComment,
 } from "@/lib/pathwayValidationComments";
+import { registerDocuments } from "@/lib/documentRegistry";
 
 /**
  * VALIDATION CHECKLIST — grouped pathway review criteria.
- * Confirmations and attributed notes use the existing localStorage stores.
+ * Confirmations, attributed notes, and checklist documents use the existing localStorage stores.
  */
 
 export interface ChecklistMetric {
@@ -70,6 +71,8 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   const [comments, setComments] = useState<ValidationComment[]>([]);
   const [noteOpen, setNoteOpen] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [pendingDocMetric, setPendingDocMetric] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setState(read(topic, pathwayId));
@@ -107,6 +110,25 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
     writeValidationComments(topic, pathwayId, next);
     setNoteDraft("");
     setNoteOpen(null);
+  };
+
+  const handleDocClick = (metric: ChecklistMetric) => {
+    setPendingDocMetric(metric.id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0 || !pendingDocMetric) return;
+    const metric = metrics.find((m) => m.id === pendingDocMetric);
+    if (!metric) return;
+    registerDocuments(
+      files.map((file) => file.name),
+      currentUser,
+      `Checklist · ${metric.label}`,
+    );
+    event.target.value = "";
+    setPendingDocMetric(null);
   };
 
   const persist = (next: MetricChecklistState) => {
@@ -147,6 +169,13 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">
           Validation checklist
@@ -225,7 +254,21 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     ) : null}
                   </div>
 
-                  <div className="ml-2 flex h-5 w-5 shrink-0 items-center justify-end">
+                  <div className="ml-2 flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 w-5 p-0 text-muted-foreground"
+                      title="Attach document"
+                      aria-label="Attach document"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDocClick(metric);
+                      }}
+                    >
+                      <Paperclip className="h-3.5 w-3.5" />
+                    </Button>
                     <Popover
                       open={noteOpen === metric.id}
                       onOpenChange={(open) => {
@@ -237,7 +280,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className={`h-5 min-w-5 gap-0.5 p-0 text-[9px] transition-opacity ${noteCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
+                          className="h-5 min-w-5 gap-0.5 p-0 text-[9px] text-muted-foreground"
                           title={commentCounts[metric.label] ? "Notes" : "Add note"}
                           onClick={(event) => event.stopPropagation()}
                         >
