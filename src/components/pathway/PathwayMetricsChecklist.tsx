@@ -306,13 +306,13 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     {metric.label}
                   </span>
 
-                  <div className="ml-2 flex min-w-[110px] shrink-0 justify-end">
+                  <div className="ml-2 flex w-[110px] shrink-0 justify-start">
                     {indicators.length > 0 && (
                       <Button
                         type="button"
                         size="sm"
                         variant="ghost"
-                        className="h-6 gap-1 px-1.5 text-[10px] font-normal text-muted-foreground"
+                        className="h-6 w-full justify-start gap-1 px-1.5 text-[10px] font-normal text-muted-foreground"
                         title={expanded[metric.id] ? "Hide related indicators" : "Show related indicators"}
                         aria-expanded={Boolean(expanded[metric.id])}
                         onClick={(event) => {
