@@ -195,10 +195,10 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                       entry ? reset(metric) : confirm(metric);
                     }
                   }}
-                  className="group flex h-9 cursor-pointer items-center gap-3 rounded-sm px-2 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
+                  className="group flex h-9 cursor-pointer items-center rounded-sm px-2 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
                 >
                   <span
-                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color] duration-100 ${entry ? "border-primary bg-primary text-primary-foreground" : "border-border bg-transparent"}`}
+                    className={`mr-3 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color] duration-[120ms] ${entry ? "border-primary bg-primary text-primary-foreground" : "border-border bg-transparent"}`}
                     aria-hidden="true"
                   >
                     {entry && <Check className="h-3 w-3" strokeWidth={3} />}
@@ -208,7 +208,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     {metric.label}
                   </span>
 
-                  <div className="flex min-w-[60px] shrink-0 justify-end">
+                  <div className="ml-2 flex min-w-[60px] shrink-0 justify-end">
                     {metric.evidence === null || metric.evidence === undefined ? (
                       <span className="h-2.5 w-[60px] animate-pulse rounded-sm bg-muted" aria-label="Evidence loading" />
                     ) : evidenceText ? (
@@ -218,7 +218,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     ) : null}
                   </div>
 
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-end">
+                  <div className="ml-2 flex h-5 w-5 shrink-0 items-center justify-end">
                     <Popover
                       open={noteOpen === metric.id}
                       onOpenChange={(open) => {
