@@ -143,7 +143,7 @@
 - [x] Remove “IP” from value-chain summary card labels
 
 ## Validation checklist indicator panels
-- [ ] Map only the specified indicators to the five eligible criteria
-- [ ] Add collapsed summaries and expandable profile-style indicator rows
-- [ ] Add attributed per-user overrides with required reasons and append-only revert history
-- [ ] Verify checklist interactions, null/count handling, layout, and build
+- [x] Map only the specified indicators to the five eligible criteria
+- [x] Add collapsed summaries and expandable profile-style indicator rows
+- [x] Add attributed per-user overrides with required reasons and append-only revert history
+- [x] Verify checklist interactions, null/count handling, layout, and build
