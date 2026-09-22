@@ -148,7 +148,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
           Validation checklist
         </span>
         <span className="text-[10px] text-muted-foreground">
-          {reviewed} of {metrics.length} metrics reviewed · {percent}%
+          {reviewed} of {metrics.length} confirmed · {percent}%
         </span>
       </div>
 
@@ -183,15 +183,16 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[11px] font-medium text-foreground">{metric.label}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="tabular-nums">VCG.AI: {metric.value}</span>
-                    {entry?.state === "own" && (
+                    {metric.value && <span className="tabular-nums">VCG.AI: {metric.value}</span>}
+                    {metric.value && entry?.state === "own" && (
                       <span className="tabular-nums font-medium text-foreground">
                         · Your value: {entry.ownValue}
                       </span>
                     )}
                     {entry && (
                       <span>
-                        · {entry.by}, {entry.date}
+                        {metric.value ? "· " : ""}
+                        {entry.by}, {entry.date}
                       </span>
                     )}
                   </div>
@@ -304,18 +305,20 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      title={entry?.state === "own" ? "Edit own value" : "Own value"}
-                      onClick={() => {
-                        setEditing(metric.id);
-                        setDraft(entry?.ownValue ?? "");
-                      }}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {metric.value && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        title={entry?.state === "own" ? "Edit own value" : "Own value"}
+                        onClick={() => {
+                          setEditing(metric.id);
+                          setDraft(entry?.ownValue ?? "");
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     {entry && (
                       <Button
                         size="sm"

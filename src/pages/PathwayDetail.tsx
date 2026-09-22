@@ -23,7 +23,7 @@ import { PatentShortlistTable, type ShortlistPatent } from '@/components/materia
 import { PaperShortlistTable, type ShortlistPaper } from '@/components/materialRegister/PaperShortlistTable';
 import { SHORTLIST_COMPANIES, SHORTLIST_PATENTS, SHORTLIST_PAPERS } from '@/components/materialRegister/shortlistMockData';
 
-import { readValidationComments, writeValidationComments } from '@/lib/pathwayValidationComments';
+import { readValidationComments, writeValidationComments, VALIDATION_CATEGORIES } from '@/lib/pathwayValidationComments';
 
 const CURRENT_REVIEWER = "A. Weber";
 
@@ -499,34 +499,12 @@ const PathwayDetail = () => {
     },
   ];
 
-  /** Flat metric list backing the Workspace validation checklist. */
-  const checklistMetrics = evaluationGroups.flatMap((group) =>
-    group.sections.flatMap((section) =>
-      section.rows
-        .filter(
-          (row) =>
-            !row.label.toLowerCase().includes('ip count') &&
-            !row.label.toLowerCase().includes('research count') &&
-            !row.label.toLowerCase().startsWith('market') &&
-            row.label !== 'Demand',
-        )
-        .map((row) => ({
-          id: `${group.category}:${section.name}:${row.label}`,
-          label: row.label,
-          value: row.mutedDetail ? `${row.value} ${row.mutedDetail}` : row.value,
-          group:
-            group.category === 'Production' && section.name === 'Production'
-              ? `${currentFeedstock} → ${currentProduct}`
-              : group.category === 'Application' && section.name === 'Application'
-                ? `${currentProduct} → ${currentApplication}`
-                : section.name === 'Feedstock name'
-                  ? currentFeedstock
-                  : section.name === 'Product name'
-                    ? currentProduct
-                    : section.name,
-        })),
-    ),
-  );
+  /** Validation checklist rows: the seven evaluation categories. */
+  const checklistMetrics = VALIDATION_CATEGORIES.map((c) => ({
+    id: c.id,
+    label: c.label,
+    value: '',
+  }));
 
 
   // Popover data for each flow item
