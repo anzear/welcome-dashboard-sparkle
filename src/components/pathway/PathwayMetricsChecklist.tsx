@@ -169,6 +169,13 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
 
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileChange}
+      />
       <div className="flex items-center justify-between gap-3 px-3 py-2">
         <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">
           Validation checklist
