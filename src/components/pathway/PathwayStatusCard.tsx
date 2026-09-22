@@ -86,6 +86,11 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
     localStorage.setItem(`${storageKey(topic, pathwayId)}.conditions`, next);
   };
 
+  const commitRejectionReason = (next: string) => {
+    setRejectionReason(next);
+    localStorage.setItem(`${storageKey(topic, pathwayId)}.rejectionReason`, next);
+  };
+
   return (
     <div className="rounded-md border border-border bg-card px-3 py-2.5">
       <div className="flex items-center justify-between gap-3">
