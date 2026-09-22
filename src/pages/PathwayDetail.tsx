@@ -529,11 +529,11 @@ const PathwayDetail = () => {
   })));
 
   const checklistIndicatorLabels: Record<string, string[]> = {
-    'feedstock-availability': ['Feedstock availability (Europe)', 'Feedstock price (Europe)'],
-    'process-maturity': ['Production TRL', 'Production IP count', 'Production research count'],
+    feedstock: ['Feedstock availability (Europe)', 'Feedstock price (Europe)'],
+    technology: ['Production TRL', 'Production IP count', 'Production research count'],
     'supply-chain': ['Product availability (Europe)', 'Market concentration'],
-    'cost-economics': ['Product price', 'Market size (EU)', 'Market size (Global)', 'Market growth (EU)', 'Market growth (Global)'],
-    'ip-freedom': ['Production IP count', 'Application IP count'],
+    economics: ['Product price', 'Market size (EU)', 'Market size (Global)', 'Market growth (EU)', 'Market growth (Global)'],
+    ip: ['Production IP count', 'Application IP count'],
   };
 
   /** Validation checklist rows: eight criteria across three review groups. */

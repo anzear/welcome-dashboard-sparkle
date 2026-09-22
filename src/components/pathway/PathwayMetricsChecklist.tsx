@@ -476,8 +476,8 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                               </Button>
                             </div>
                           </div>
-                          <div className="mt-1 flex items-start justify-between gap-3 pl-[calc(100%-192px)] text-[9px] text-muted-foreground">
-                            <span>VCG: {indicator.vcgValue ?? "—"}</span>
+                          <div className="mt-1 flex items-start justify-end gap-3 text-[9px] text-muted-foreground">
+                            {currentUsersOverride && <span>VCG: {indicator.vcgValue ?? "—"}</span>}
                             {currentUsersOverride && (
                               <Button size="sm" variant="ghost" className="h-4 gap-1 px-1 text-[9px] text-muted-foreground" title="Revert your value" onClick={(event) => { event.stopPropagation(); revertOverride(currentUsersOverride); }}>
                                 <RotateCcw className="h-3 w-3" /> Revert
