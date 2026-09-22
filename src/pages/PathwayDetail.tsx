@@ -912,12 +912,7 @@ const PathwayDetail = () => {
                       currentUser={CURRENT_REVIEWER}
                     />
 
-                    <PathwayValidationSpace
-                      pathwayId={pathwayId || '0'}
-                      topic={topic ? decodeURIComponent(topic) : undefined}
-                    />
-
-                    {/* Shortlisted items rendered below comments inside the Workspace tab */}
+                    {/* Shortlisted items rendered inside the Workspace tab */}
                     <div className="mt-3 space-y-3">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">Shortlisted Items</span>
