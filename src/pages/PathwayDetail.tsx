@@ -530,7 +530,7 @@ const PathwayDetail = () => {
 
   const checklistIndicatorLabels: Record<string, string[]> = {
     feedstock: ['Feedstock availability (Europe)', 'Feedstock price (Europe)'],
-    technology: ['Production TRL', 'Production IP count', 'Production research count'],
+    technology: ['Production TRL', 'Production IP count', 'Application TRL'],
     'supply-chain': ['Product availability (Europe)', 'Market concentration'],
     economics: ['Product price', 'Market size (EU)', 'Market size (Global)', 'Market growth (EU)', 'Market growth (Global)'],
     ip: ['Production IP count', 'Application IP count'],
