@@ -112,6 +112,25 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
     setNoteOpen(null);
   };
 
+  const handleDocClick = (metric: ChecklistMetric) => {
+    setPendingDocMetric(metric.id);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0 || !pendingDocMetric) return;
+    const metric = metrics.find((m) => m.id === pendingDocMetric);
+    if (!metric) return;
+    registerDocuments(
+      files.map((file) => file.name),
+      currentUser,
+      `Checklist · ${metric.label}`,
+    );
+    event.target.value = "";
+    setPendingDocMetric(null);
+  };
+
   const persist = (next: MetricChecklistState) => {
     setState(next);
     try {
