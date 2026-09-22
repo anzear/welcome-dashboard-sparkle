@@ -7,13 +7,14 @@
  */
 
 export const VALIDATION_CATEGORIES = [
-  { id: 'feedstock', label: 'Feedstock Availability & Security' },
-  { id: 'technology', label: 'Technology Maturity & Scalability' },
-  { id: 'material', label: 'Material Conformance' },
-  { id: 'economics', label: 'Economics' },
-  { id: 'sustainability', label: 'Sustainability / LCA' },
-  { id: 'ip', label: 'IP & FTO' },
-  { id: 'regulations', label: 'Regulations' },
+  { id: 'feedstock', label: 'Feedstock Availability & Security', group: 'Technical Feasibility' },
+  { id: 'technology', label: 'Process Maturity & Scalability', group: 'Technical Feasibility' },
+  { id: 'material', label: 'Product Specification Fit', group: 'Technical Feasibility' },
+  { id: 'supply-chain', label: 'Supply Chain & Sourcing Readiness', group: 'Commercial Viability' },
+  { id: 'economics', label: 'Cost & Economics', group: 'Commercial Viability' },
+  { id: 'sustainability', label: 'Sustainability & LCA', group: 'Risk & Compliance' },
+  { id: 'ip', label: 'IP & Freedom to Operate', group: 'Risk & Compliance' },
+  { id: 'regulations', label: 'Regulatory Compliance', group: 'Risk & Compliance' },
 ] as const;
 
 export type ValidationCategoryId = (typeof VALIDATION_CATEGORIES)[number]['id'];
