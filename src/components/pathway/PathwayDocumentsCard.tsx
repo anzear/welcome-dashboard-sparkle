@@ -52,13 +52,22 @@ export function PathwayDocumentsCard({
   return (
     <div className="mt-3 overflow-hidden rounded-md border border-border bg-card">
       <div className="flex items-center justify-between px-3 py-2">
-        <span className="flex items-center gap-2 text-[10px]">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="flex items-center gap-2 text-[10px]"
+        >
+          {expanded ? (
+            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+          )}
           <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
           <span className="font-bold uppercase tracking-widest text-foreground">Documents</span>
           <span className="text-[10px] normal-case tracking-normal text-muted-foreground">
             Every file attached to this pathway, tagged with where it was uploaded
           </span>
-        </span>
+        </button>
         <input
           ref={inputRef}
           type="file"
@@ -82,7 +91,7 @@ export function PathwayDocumentsCard({
         </Button>
       </div>
 
-      <div className="border-t border-border">
+      {expanded && <div className="border-t border-border">
         {documents.length === 0 ? (
           <p className="px-3 py-2 text-[10px] text-muted-foreground">No documents attached to this pathway yet.</p>
         ) : (
