@@ -183,8 +183,8 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-[11px] font-medium text-foreground">{metric.label}</div>
                   <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
-                    <span className="tabular-nums">VCG.AI: {metric.value}</span>
-                    {entry?.state === "own" && (
+                    {metric.value && <span className="tabular-nums">VCG.AI: {metric.value}</span>}
+                    {metric.value && entry?.state === "own" && (
                       <span className="tabular-nums font-medium text-foreground">
                         · Your value: {entry.ownValue}
                       </span>
