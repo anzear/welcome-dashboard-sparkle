@@ -132,7 +132,7 @@ export function PathwayDocumentsCard({
             ))}
           </div>
         )}
-      </div>
+      </div>}
     </div>
   );
 }
