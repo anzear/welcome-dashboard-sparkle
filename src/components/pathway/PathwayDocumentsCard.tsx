@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileText, Paperclip, Trash2, Upload } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Paperclip, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DOCUMENT_REGISTRY_CHANGED_EVENT,
