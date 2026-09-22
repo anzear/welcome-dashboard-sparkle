@@ -306,24 +306,26 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     {metric.label}
                   </span>
 
-                  {indicators.length > 0 && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="ml-1 h-6 gap-1 px-1.5 text-[10px] font-normal text-muted-foreground"
-                      title={expanded[metric.id] ? "Hide related indicators" : "Show related indicators"}
-                      aria-expanded={Boolean(expanded[metric.id])}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setExpanded((current) => ({ ...current, [metric.id]: !current[metric.id] }));
-                      }}
-                    >
-                      <ChevronRight className={`h-3 w-3 transition-transform ${expanded[metric.id] ? "rotate-90" : ""}`} />
-                      {indicators.length} indicators
-                      {metricOverrides.length > 0 && <span>· {metricOverrides.length} overridden</span>}
-                    </Button>
-                  )}
+                  <div className="ml-2 flex min-w-[110px] shrink-0 justify-end">
+                    {indicators.length > 0 && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 gap-1 px-1.5 text-[10px] font-normal text-muted-foreground"
+                        title={expanded[metric.id] ? "Hide related indicators" : "Show related indicators"}
+                        aria-expanded={Boolean(expanded[metric.id])}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setExpanded((current) => ({ ...current, [metric.id]: !current[metric.id] }));
+                        }}
+                      >
+                        <ChevronRight className={`h-3 w-3 transition-transform ${expanded[metric.id] ? "rotate-90" : ""}`} />
+                        {indicators.length} indicators
+                        {metricOverrides.length > 0 && <span>· {metricOverrides.length} overridden</span>}
+                      </Button>
+                    )}
+                  </div>
 
                   <div className="ml-2 flex min-w-[60px] shrink-0 justify-end">
                     {indicators.length > 0 ? null : metric.evidence === null || metric.evidence === undefined ? (
