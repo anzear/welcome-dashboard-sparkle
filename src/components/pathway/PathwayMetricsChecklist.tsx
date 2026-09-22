@@ -1,12 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Check, ChevronDown, MessageSquare, MessageSquarePlus, Send } from "lucide-react";
+import { Check, MessageSquare, MessageSquarePlus, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
