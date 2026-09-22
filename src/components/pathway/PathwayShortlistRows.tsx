@@ -213,6 +213,7 @@ export function PathwayShortlistRows({
   const chip = (label: string, cls: string) => <div className={pathwayChipCls(cls)}>{label}</div>;
 
   const flatRow = (p: ShortlistPathway) => {
+    const noteCount = (notes[p.id] ?? []).length;
     return (
       <div
         key={p.id}
@@ -235,6 +236,11 @@ export function PathwayShortlistRows({
           setDragId(null);
           setOverId(null);
         }}
+        onMouseMove={(e) => {
+          if (!pathwayHref(p.id)) return;
+          setTip({ x: e.clientX - 150, y: e.clientY + 22 });
+        }}
+        onMouseLeave={() => setTip(null)}
         onClick={(e) => {
           // Whole row opens the pathway profile; drag handle and row controls opt out.
           const href = pathwayHref(p.id);
@@ -242,13 +248,12 @@ export function PathwayShortlistRows({
           if ((e.target as HTMLElement).closest("[data-row-control]")) return;
           navigate(href);
         }}
-        title={pathwayHref(p.id) ? "Open pathway profile" : undefined}
         className={`group transition-colors hover:bg-muted/30 ${pathwayHref(p.id) ? "cursor-pointer" : ""} ${
           dragId === p.id ? "opacity-50" : ""
         } ${overId === p.id && dragId && dragId !== p.id ? "bg-muted/50" : ""}`}
       >
-        <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
-          <div className="flex justify-center" data-row-control>
+        <div className={`h-[56px] pr-4 grid ${COLS} items-center gap-2`}>
+          <div className="flex items-center justify-center" data-row-control>
             <span
               title="Drag to change priority — top row is highest"
               className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground cursor-grab active:cursor-grabbing hover:bg-muted hover:text-foreground"
@@ -261,22 +266,23 @@ export function PathwayShortlistRows({
           {pathwayHref(p.id) ? (
             <Link
               to={pathwayHref(p.id)!}
-              className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} hover:ring-1 hover:ring-emerald-300`}
-              title="Open pathway profile"
+              className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} mx-3 hover:ring-1 hover:ring-emerald-300`}
             >
               {p.product}
             </Link>
           ) : (
-            chip(p.product, PATHWAY_CHIP_ANCHOR)
+            <div className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} mx-3`}>{p.product}</div>
           )}
           {chip(p.application, PATHWAY_CHIP_NEUTRAL)}
 
-          <div className="flex items-center justify-center">
+          <div className="flex items-center">
             <StatusBadge trl={p.trl} />
           </div>
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center">
             <EvaluationStatusBadges topic={topic} pathwayId={p.id} />
-            <div className="flex items-center gap-2" data-row-control>
+          </div>
+          <div className="flex items-center gap-2" data-row-control>
+            <div className="flex w-[55px] items-center">
               <ItemNotesControl
                 itemLabel={`Pathway · ${p.feedstock} → ${p.product}`}
                 title={`${p.feedstock} → ${p.product}`}
@@ -285,6 +291,8 @@ export function PathwayShortlistRows({
                 storeLocally={false}
                 onPost={(_label, text) => onAddNote(p.id, text)}
               />
+            </div>
+            <div className="flex w-[55px] items-center">
               <DocumentAttachControl
                 itemLabel={`${p.feedstock} → ${p.product}`}
                 documents={documents[p.id] ?? []}
@@ -293,15 +301,18 @@ export function PathwayShortlistRows({
               />
             </div>
           </div>
-          <div className="truncate text-[10px] text-muted-foreground" title={p.savedBy ? `Saved by ${p.savedBy}` : undefined}>
-            {p.savedBy ?? "—"}
+          <div
+            className="truncate text-right text-[10px] text-muted-foreground"
+            title={p.savedBy ? `Saved by ${p.savedBy}` : undefined}
+          >
+            {p.savedBy ?? ""}
           </div>
           <div className="flex items-center justify-end" data-row-control>
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              className="h-6 w-6"
+              className="h-6 w-6 opacity-0 transition-opacity group-hover:opacity-100"
               title="Remove from shortlist"
               aria-label={`Remove ${p.feedstock} → ${p.product} from shortlist`}
               onClick={() => onRemove(p.id)}
@@ -309,7 +320,7 @@ export function PathwayShortlistRows({
               <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
             </Button>
           </div>
-
+          {noteCount === 0 ? null : null}
         </div>
       </div>
     );
@@ -317,6 +328,18 @@ export function PathwayShortlistRows({
 
   return (
     <>
+      <div className={`h-8 pr-4 grid ${COLS} items-center gap-2 border-b border-border/50`}>
+        <span />
+        <span className={HEAD_CLS}>Feedstock</span>
+        <span className={HEAD_CLS}>Process</span>
+        <span className={`${HEAD_CLS} mx-3`}>Product</span>
+        <span className={HEAD_CLS}>Application</span>
+        <span className={HEAD_CLS}>Maturity</span>
+        <span className={HEAD_CLS}>Status</span>
+        <span className={HEAD_CLS}>Activity</span>
+        <span className={`${HEAD_CLS} text-right`}>Owner</span>
+        <span />
+      </div>
       <div className="divide-y divide-border/50">
         {runs.map(({ key, members }) => {
           if (members.length < 2 || !grouped || expandedGroups.has(key)) {
@@ -334,16 +357,17 @@ export function PathwayShortlistRows({
               className="group cursor-pointer hover:bg-muted/30 transition-colors"
               onClick={() => setExpandedGroups((prev) => new Set(prev).add(key))}
             >
-              <div className={`px-4 py-4 grid ${COLS} items-center gap-2`}>
+              <div className={`h-[56px] pr-4 grid ${COLS} items-center gap-2`}>
+                <span />
                 {chip(head.feedstock, PATHWAY_CHIP_NEUTRAL)}
                 {chip(head.process, PATHWAY_CHIP_NEUTRAL)}
-                {chip(head.product, PATHWAY_CHIP_ANCHOR)}
+                <div className={`${pathwayChipCls(PATHWAY_CHIP_ANCHOR)} mx-3`}>{head.product}</div>
                 <div className="text-[10px] font-medium text-muted-foreground truncate border border-dashed border-border rounded-md px-2 py-2 text-center">
                   {members.length} applications
                 </div>
                 <span />
                 <span />
-                <div className="flex items-center justify-end gap-1.5 text-muted-foreground">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
                   {aggregateNotes > 0 && (
                     <span
                       className="text-[9px] tabular-nums"
@@ -356,13 +380,21 @@ export function PathwayShortlistRows({
                 </div>
                 <span />
                 <span />
-
               </div>
             </div>
           );
         })}
       </div>
 
+      {tip && (
+        <div
+          className="pointer-events-none fixed z-50 rounded-md border border-border bg-popover px-2 py-1 text-[10px] text-muted-foreground shadow-sm"
+          style={{ left: tip.x, top: tip.y }}
+        >
+          Open pathway profile
+        </div>
+      )}
     </>
   );
 }
+
