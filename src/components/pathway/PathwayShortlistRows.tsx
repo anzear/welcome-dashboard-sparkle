@@ -81,15 +81,18 @@ function EvaluationStatusBadges({ topic, pathwayId }: { topic?: string; pathwayI
 }
 
 const COLS =
-  "grid-cols-[32px_minmax(0,1.4fr)_minmax(0,1.5fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_96px_minmax(0,200px)_80px_32px]";
+  "grid-cols-[32px_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_150px_88px_120px_110px_32px]";
+
+/** Existing table-header treatment, reused so the grid header matches the app. */
+const HEAD_CLS = "text-[8px] font-semibold uppercase tracking-widest text-muted-foreground";
 
 
 
-/** Mirrors the Pathway Explorer badge: band colour, bold label, TRL beneath. */
+/** Mirrors the Pathway Explorer badge: band colour and TRL on one line. */
 function StatusBadge({ trl }: { trl?: string }) {
   if (!hasTRL(trl)) {
     return (
-      <span className="inline-flex items-center rounded-md border border-border bg-muted px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="inline-flex items-center whitespace-nowrap rounded-md border border-border bg-muted px-2 py-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
         Not assessed
       </span>
     );
@@ -97,7 +100,9 @@ function StatusBadge({ trl }: { trl?: string }) {
   const viability = getViability(trl);
   const colors = getViabilityColor(viability);
   return (
-    <span className={`inline-flex flex-col items-center leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}>
+    <span
+      className={`inline-flex items-center gap-1 whitespace-nowrap leading-tight rounded-md border px-2 py-1 ${colors.border} ${colors.text}`}
+    >
       <span className="text-[9px] font-bold uppercase tracking-wider">
         {BAND_LABEL[viability as string] ?? viability}
       </span>
@@ -105,6 +110,7 @@ function StatusBadge({ trl }: { trl?: string }) {
     </span>
   );
 }
+
 
 /** Consecutive clusters by node identity — grouping never matches on label text. */
 function clusterRuns(pathways: ShortlistPathway[]): { key: string; members: ShortlistPathway[] }[] {
