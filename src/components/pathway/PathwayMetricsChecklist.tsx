@@ -254,7 +254,21 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     ) : null}
                   </div>
 
-                  <div className="ml-2 flex h-5 w-5 shrink-0 items-center justify-end">
+                  <div className="ml-2 flex items-center gap-1">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-5 w-5 p-0 text-muted-foreground"
+                      title="Attach document"
+                      aria-label="Attach document"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDocClick(metric);
+                      }}
+                    >
+                      <Paperclip className="h-3.5 w-3.5" />
+                    </Button>
                     <Popover
                       open={noteOpen === metric.id}
                       onOpenChange={(open) => {
@@ -266,7 +280,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className={`h-5 min-w-5 gap-0.5 p-0 text-[9px] transition-opacity ${noteCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
+                          className="h-5 min-w-5 gap-0.5 p-0 text-[9px] text-muted-foreground"
                           title={commentCounts[metric.label] ? "Notes" : "Add note"}
                           onClick={(event) => event.stopPropagation()}
                         >
