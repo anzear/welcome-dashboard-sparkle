@@ -36,6 +36,7 @@ export function PathwayDocumentsCard({
 }) {
   const seed = useMemo(() => MOCK_PATHWAY_DOCUMENTS, []);
   const [documents, setDocuments] = useState<RegisteredDocument[]>(() => readSubRegistry(registryKey, seed));
+  const [expanded, setExpanded] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
