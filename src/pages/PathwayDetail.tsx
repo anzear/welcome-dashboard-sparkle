@@ -949,6 +949,11 @@ const PathwayDetail = () => {
                       </PathwayShortlistCard>
                     </div>
 
+                    <PathwayValidationSpace
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                    />
+
                     <PathwayDocumentsCard registryKey={documentRegistryKey} currentUser={CURRENT_REVIEWER} />
 
                   </>
