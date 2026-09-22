@@ -134,7 +134,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
     persist(next);
   };
 
-  const reviewed = metrics.filter((m) => state[m.id]).length;
+  const reviewed = metrics.filter((m) => isMet(state[m.id])).length;
   const groupLabels: Record<string, string> = {
     "Technical Feasibility": "Technical",
     "Commercial Viability": "Commercial",
