@@ -213,7 +213,6 @@ export function PathwayShortlistRows({
   const chip = (label: string, cls: string) => <div className={pathwayChipCls(cls)}>{label}</div>;
 
   const flatRow = (p: ShortlistPathway) => {
-    const noteCount = (notes[p.id] ?? []).length;
     return (
       <div
         key={p.id}
@@ -320,7 +319,6 @@ export function PathwayShortlistRows({
               <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
             </Button>
           </div>
-          {noteCount === 0 ? null : null}
         </div>
       </div>
     );
