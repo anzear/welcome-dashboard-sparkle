@@ -124,6 +124,11 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   };
 
   const reviewed = metrics.filter((m) => state[m.id]).length;
+  const groupLabels: Record<string, string> = {
+    "Technical Feasibility": "Technical",
+    "Commercial Viability": "Commercial",
+    "Risk & Compliance": "Risk & Compliance",
+  };
   const groups = useMemo(() => {
     const ordered: Array<{ label: string; metrics: ChecklistMetric[] }> = [];
     metrics.forEach((metric) => {
@@ -141,78 +146,79 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
         <span className="text-[10px] font-bold uppercase tracking-widest text-foreground">
           Validation checklist
         </span>
-        <span className="text-[10px] text-muted-foreground">
-          {reviewed > 0 ? `${reviewed} of ${metrics.length} confirmed` : `${metrics.length} criteria`}
-        </span>
-      </div>
-
-      <div className="border-t border-border/40 px-3 py-2">
-        <div
-          className="flex h-0.5 w-full gap-1"
-          role="progressbar"
-          aria-valuenow={reviewed}
-          aria-valuemin={0}
-          aria-valuemax={metrics.length}
-          aria-label="Criteria confirmed"
-        >
-          {groups.map((group) => {
-            const confirmed = group.metrics.filter((metric) => state[metric.id]).length;
-            const fill = (confirmed / group.metrics.length) * 100;
-            return (
-              <div key={group.label} className="h-full overflow-hidden bg-muted" style={{ flex: group.metrics.length }}>
-                {confirmed > 0 && <div className="h-full bg-primary" style={{ width: `${fill}%` }} />}
-              </div>
-            );
-          })}
+        <div className="flex shrink-0 items-center gap-2">
+          <div
+            className="h-[3px] w-12 overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuenow={reviewed}
+            aria-valuemin={0}
+            aria-valuemax={metrics.length}
+            aria-label="Criteria confirmed"
+          >
+            {reviewed > 0 && (
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-150"
+                style={{ width: `${(reviewed / metrics.length) * 100}%` }}
+              />
+            )}
+          </div>
+          <span className="text-[10px] tabular-nums text-muted-foreground">
+            {reviewed > 0 ? `${reviewed} of ${metrics.length}` : `${metrics.length} criteria`}
+          </span>
         </div>
       </div>
 
-      <div className="max-h-[520px] overflow-y-auto border-t border-border">
+      <div className="max-h-[520px] overflow-y-auto border-t border-border px-2 pb-2">
         {groups.map((group, groupIndex) => (
-          <div key={group.label} className={groupIndex > 0 ? "mt-3" : undefined}>
-            <div className="flex h-8 items-center px-3 text-[11px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
-              {group.label}
+          <div key={group.label}>
+            <div className={`flex h-6 items-center gap-2 px-1 pb-1 ${groupIndex > 0 ? "mt-2" : ""}`}>
+              <span className="shrink-0 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                {groupLabels[group.label] ?? group.label}
+              </span>
+              <span className="h-px flex-1 bg-border" />
             </div>
-            {group.metrics.map((metric, metricIndex) => {
+            {group.metrics.map((metric) => {
               const entry = state[metric.id];
               const noteCount = commentCounts[metric.label] ?? 0;
-              const evidenceText = metric.evidence === null || metric.evidence === undefined
-                ? "Not available"
-                : metric.evidence.filter(Boolean).join(" · ");
+              const evidenceText = metric.evidence?.filter(Boolean).join(" · ") ?? "";
 
               return (
                 <div
                   key={metric.id}
-                  className={`group relative flex h-11 items-center gap-2 px-3 ${metricIndex > 0 ? "border-t border-border/40" : ""} ${entry ? "before:absolute before:inset-y-0 before:left-0 before:w-0.5 before:bg-primary" : ""}`}
+                  role="checkbox"
+                  aria-checked={Boolean(entry)}
+                  tabIndex={0}
+                  onClick={() => entry ? reset(metric) : confirm(metric)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      entry ? reset(metric) : confirm(metric);
+                    }
+                  }}
+                  className="group flex h-9 cursor-pointer items-center gap-3 rounded-sm px-2 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
                 >
-                  <div className="min-w-0 flex-1">
-                    <div className={`truncate text-[11px] font-medium ${entry ? "text-muted-foreground" : "text-foreground"}`}>
-                      {metric.label}
-                    </div>
-                    {evidenceText && <div className="truncate text-[11px] text-muted-foreground">{evidenceText}</div>}
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color] duration-100 ${entry ? "border-primary bg-primary text-primary-foreground" : "border-border bg-transparent"}`}
+                    aria-hidden="true"
+                  >
+                    {entry && <Check className="h-3 w-3" strokeWidth={3} />}
+                  </span>
+
+                  <span className={`min-w-0 flex-1 truncate text-left text-[13px] font-medium ${entry ? "text-muted-foreground" : "text-foreground"}`}>
+                    {metric.label}
+                  </span>
+
+                  <div className="flex min-w-[60px] shrink-0 justify-end">
+                    {metric.evidence === null || metric.evidence === undefined ? (
+                      <span className="h-2.5 w-[60px] animate-pulse rounded-sm bg-muted" aria-label="Evidence loading" />
+                    ) : evidenceText ? (
+                      <span className="max-w-[180px] truncate text-right text-[11px] text-muted-foreground">
+                        {evidenceText}
+                      </span>
+                    ) : null}
                   </div>
 
-                  <div className="flex shrink-0 items-center gap-1">
-                    {entry ? (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 gap-1 px-2 text-[10px] text-primary hover:text-primary"
-                        onClick={() => reset(metric)}
-                        title="Revert to pending"
-                      >
-                        <Check className="h-3.5 w-3.5 fill-current" /> Confirmed
-                      </Button>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 gap-1 border border-transparent bg-transparent px-2 text-[10px] opacity-0 transition-[opacity,background-color,border-color] hover:border-border hover:bg-muted group-hover:opacity-100 focus-visible:opacity-100"
-                        onClick={() => confirm(metric)}
-                      >
-                        <Check className="h-3 w-3" /> Confirm
-                      </Button>
-                    )}
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-end">
                     <Popover
                       open={noteOpen === metric.id}
                       onOpenChange={(open) => {
@@ -224,12 +230,13 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         <Button
                           size="sm"
                           variant="ghost"
-                          className={`h-7 gap-1 px-1.5 text-[10px] transition-opacity ${noteCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
+                          className={`h-5 min-w-5 gap-0.5 p-0 text-[9px] transition-opacity ${noteCount > 0 ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"}`}
                           title={commentCounts[metric.label] ? "Notes" : "Add note"}
+                          onClick={(event) => event.stopPropagation()}
                         >
                           {noteCount > 0 ? (
                             <>
-                              <MessageSquare className="h-3.5 w-3.5 fill-current" />
+                              <MessageSquare className="h-3 w-3 fill-current" />
                               {noteCount}
                             </>
                           ) : (
