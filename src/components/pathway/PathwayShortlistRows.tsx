@@ -166,6 +166,9 @@ export function PathwayShortlistRows({
 
   const [dragId, setDragId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  /** Cursor-following hint, offset below and to the left so it never covers the node value. */
+  const [tip, setTip] = useState<{ x: number; y: number } | null>(null);
+
   /** Groups the user expanded individually while the grouped view is on. Session-only. */
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   /** Mock example attachments so the layout can be reviewed. */
