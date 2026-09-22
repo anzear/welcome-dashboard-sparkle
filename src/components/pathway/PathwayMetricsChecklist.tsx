@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Check, MessageSquare, MessageSquarePlus, Send } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, MessageSquare, MessageSquarePlus, Paperclip, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,10 +9,11 @@ import {
   VALIDATION_COMMENTS_CHANGED_EVENT,
   type ValidationComment,
 } from "@/lib/pathwayValidationComments";
+import { registerDocuments } from "@/lib/documentRegistry";
 
 /**
  * VALIDATION CHECKLIST — grouped pathway review criteria.
- * Confirmations and attributed notes use the existing localStorage stores.
+ * Confirmations, attributed notes, and checklist documents use the existing localStorage stores.
  */
 
 export interface ChecklistMetric {
