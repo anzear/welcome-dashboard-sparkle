@@ -60,6 +60,7 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
 }) => {
   const [status, setStatus] = useState<PathwayStatus>("todo");
   const [conditions, setConditions] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem(storageKey(topic, pathwayId));
@@ -69,6 +70,9 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
       setStatus("todo");
     }
     setConditions(localStorage.getItem(`${storageKey(topic, pathwayId)}.conditions`) ?? "");
+    setRejectionReason(
+      localStorage.getItem(`${storageKey(topic, pathwayId)}.rejectionReason`) ?? ""
+    );
   }, [topic, pathwayId]);
 
   const commit = (next: PathwayStatus) => {
@@ -80,6 +84,11 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
   const commitConditions = (next: string) => {
     setConditions(next);
     localStorage.setItem(`${storageKey(topic, pathwayId)}.conditions`, next);
+  };
+
+  const commitRejectionReason = (next: string) => {
+    setRejectionReason(next);
+    localStorage.setItem(`${storageKey(topic, pathwayId)}.rejectionReason`, next);
   };
 
   return (
@@ -129,6 +138,27 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
             value={conditions}
             onChange={(event) => commitConditions(event.target.value)}
             placeholder="Describe the conditions that must be met, e.g. supplier audit, regulatory clearance, pilot volumes…"
+            className="mt-1 min-h-[64px] text-xs"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Saved automatically with this pathway.
+          </p>
+        </div>
+      )}
+
+      {status === "rejected" && (
+        <div className="mt-2.5 border-t border-border/60 pt-2.5">
+          <label
+            htmlFor="pathway-rejection-reason"
+            className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            Reason for rejection
+          </label>
+          <Textarea
+            id="pathway-rejection-reason"
+            value={rejectionReason}
+            onChange={(event) => commitRejectionReason(event.target.value)}
+            placeholder="Describe why this pathway was rejected, e.g. feedstock unavailable, cost too high, regulatory blocker…"
             className="mt-1 min-h-[64px] text-xs"
           />
           <p className="mt-1 text-xs text-muted-foreground">
