@@ -196,24 +196,36 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
               return (
                 <div
                   key={metric.id}
-                  role="checkbox"
-                  aria-checked={Boolean(entry)}
-                  tabIndex={0}
-                  onClick={() => entry ? reset(metric) : confirm(metric)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      entry ? reset(metric) : confirm(metric);
-                    }
-                  }}
-                  className="group flex h-9 cursor-pointer items-center rounded-sm px-2 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:ring-1 focus-visible:ring-ring"
+                  className="group flex h-9 items-center rounded-sm px-2 outline-none transition-colors hover:bg-muted/50"
                 >
-                  <span
-                    className={`mr-3 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-[1.5px] transition-[background-color,border-color] duration-[120ms] ${entry ? "border-primary bg-primary text-primary-foreground" : "border-border bg-transparent"}`}
-                    aria-hidden="true"
-                  >
-                    {entry && <Check className="h-3 w-3" strokeWidth={3} />}
-                  </span>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        onClick={(event) => event.stopPropagation()}
+                        className={`mr-3 flex h-5 shrink-0 items-center gap-1 rounded-full border px-2 text-[10px] font-medium transition-colors duration-[120ms] ${
+                          isMet(entry)
+                            ? "border-success/30 bg-success/10 text-success"
+                            : entry?.state === "not_met"
+                              ? "border-destructive/30 bg-destructive/10 text-destructive"
+                              : "border-border bg-transparent text-muted-foreground hover:bg-muted/60"
+                        }`}
+                        title="Set status"
+                      >
+                        {isMet(entry) ? "Met" : entry?.state === "not_met" ? "Not met" : "Not set"}
+                        <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-[110px]">
+                      <DropdownMenuItem onClick={() => setStatus(metric, "met")}>
+                        <Check className="mr-1.5 h-3 w-3 text-success" /> Met
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setStatus(metric, "not_met")}>
+                        Not met
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => reset(metric)}>Not set</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <span className={`min-w-0 flex-1 truncate text-left text-[13px] font-medium ${entry ? "text-muted-foreground" : "text-foreground"}`}>
                     {metric.label}
