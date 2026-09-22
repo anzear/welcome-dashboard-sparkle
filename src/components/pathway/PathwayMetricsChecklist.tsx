@@ -71,6 +71,8 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
   const [comments, setComments] = useState<ValidationComment[]>([]);
   const [noteOpen, setNoteOpen] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [pendingDocMetric, setPendingDocMetric] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setState(read(topic, pathwayId));
