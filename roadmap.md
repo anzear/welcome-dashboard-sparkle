@@ -141,3 +141,9 @@
 - [x] Prompt 33 — Add indicator justification and edit-only method across tables, dialogs, review, and history.
 - [x] Prompt 34 — Bulk add indicator values
 - [x] Remove “IP” from value-chain summary card labels
+
+## Validation checklist indicator panels
+- [ ] Map only the specified indicators to the five eligible criteria
+- [ ] Add collapsed summaries and expandable profile-style indicator rows
+- [ ] Add attributed per-user overrides with required reasons and append-only revert history
+- [ ] Verify checklist interactions, null/count handling, layout, and build
