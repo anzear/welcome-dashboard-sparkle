@@ -70,6 +70,9 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
       setStatus("todo");
     }
     setConditions(localStorage.getItem(`${storageKey(topic, pathwayId)}.conditions`) ?? "");
+    setRejectionReason(
+      localStorage.getItem(`${storageKey(topic, pathwayId)}.rejectionReason`) ?? ""
+    );
   }, [topic, pathwayId]);
 
   const commit = (next: PathwayStatus) => {
