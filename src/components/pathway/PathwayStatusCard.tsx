@@ -145,6 +145,27 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
           </p>
         </div>
       )}
+
+      {status === "rejected" && (
+        <div className="mt-2.5 border-t border-border/60 pt-2.5">
+          <label
+            htmlFor="pathway-rejection-reason"
+            className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground"
+          >
+            Reason for rejection
+          </label>
+          <Textarea
+            id="pathway-rejection-reason"
+            value={rejectionReason}
+            onChange={(event) => commitRejectionReason(event.target.value)}
+            placeholder="Describe why this pathway was rejected, e.g. feedstock unavailable, cost too high, regulatory blocker…"
+            className="mt-1 min-h-[64px] text-xs"
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Saved automatically with this pathway.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
