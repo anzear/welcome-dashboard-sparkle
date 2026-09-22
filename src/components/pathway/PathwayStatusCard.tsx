@@ -21,8 +21,8 @@ export type PathwayStatus =
 export const PATHWAY_STATUS_LABEL: Record<PathwayStatus, string> = {
   todo: "To do",
   in_validation: "In validation",
-  validated: "go",
-  validated_with_conditions: "go with conditions",
+  validated: "Go",
+  validated_with_conditions: "Go with conditions",
   rejected: "Rejected",
   parked: "Parked",
 };
