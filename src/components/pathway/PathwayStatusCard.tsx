@@ -60,6 +60,7 @@ export const PathwayStatusCard: React.FC<PathwayStatusCardProps> = ({
 }) => {
   const [status, setStatus] = useState<PathwayStatus>("todo");
   const [conditions, setConditions] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem(storageKey(topic, pathwayId));
