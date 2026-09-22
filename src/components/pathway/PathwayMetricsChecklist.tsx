@@ -148,7 +148,7 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
           Validation checklist
         </span>
         <span className="text-[10px] text-muted-foreground">
-          {reviewed} of {metrics.length} metrics reviewed · {percent}%
+          {reviewed} of {metrics.length} confirmed · {percent}%
         </span>
       </div>
 
@@ -305,18 +305,20 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                         </div>
                       </PopoverContent>
                     </Popover>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-7 w-7 p-0"
-                      title={entry?.state === "own" ? "Edit own value" : "Own value"}
-                      onClick={() => {
-                        setEditing(metric.id);
-                        setDraft(entry?.ownValue ?? "");
-                      }}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                    </Button>
+                    {metric.value && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 w-7 p-0"
+                        title={entry?.state === "own" ? "Edit own value" : "Own value"}
+                        onClick={() => {
+                          setEditing(metric.id);
+                          setDraft(entry?.ownValue ?? "");
+                        }}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                     {entry && (
                       <Button
                         size="sm"
