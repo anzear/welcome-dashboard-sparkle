@@ -30,12 +30,17 @@ export interface ChecklistMetric {
   evidence?: string[] | null;
 }
 
+type MetricStatus = "met" | "not_met";
+
 type MetricEntry = {
-  state: "confirmed" | "own";
+  state: MetricStatus | "confirmed" | "own";
   ownValue?: string;
   by: string;
   date: string;
 };
+
+const isMet = (entry?: MetricEntry) =>
+  entry?.state === "met" || entry?.state === "confirmed" || entry?.state === "own";
 
 type MetricChecklistState = Record<string, MetricEntry>;
 
