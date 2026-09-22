@@ -191,7 +191,8 @@ export const PathwayMetricsChecklist: React.FC<Props> = ({
                     )}
                     {entry && (
                       <span>
-                        · {entry.by}, {entry.date}
+                        {metric.value ? "· " : ""}
+                        {entry.by}, {entry.date}
                       </span>
                     )}
                   </div>
