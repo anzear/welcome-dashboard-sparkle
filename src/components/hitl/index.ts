@@ -10,4 +10,3 @@ export { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./Indi
 export { GroupChip } from "./GroupChip";
 export { SplitAddButton, type SplitAddButtonItem } from "./SplitAddButton";
 export { BulkActionsButton, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, type BulkActionItem } from "./SectionToolbar";
-export { BulkJobProgressPanel, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, EnrichmentSelectionBar, EnrichmentTypeDialog, useBulkEnrichment, type BulkJob } from "./PathwayEnrichmentBulk";
