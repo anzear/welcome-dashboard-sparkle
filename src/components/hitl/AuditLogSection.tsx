@@ -9,16 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DerivedPathwaysForRecord, GroupChip, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TargetRef, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { FIELD_LABELS, nodeListMatches, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type MethodTag } from "@/lib/hitlStore";
+import { DerivedPathwaysForRecord, GroupChip, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TargetRef, ValueCell, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, FIELD_LABELS, nodeListMatches, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type EnrichmentType, type MethodTag } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "pathway", label: "Pathway" }, { value: "group", label: "Group" }, { value: "company", label: "Company" },
   { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" }, { value: "enrichment_run", label: "Enrichment run" },
+  { value: "bulk_job", label: "Bulk job" },
 ];
-const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail"];
+const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail", "reconfirm", "seen_again"];
+const operationLabel = (operation: string) => operation.replace(/_/g, " ");
 const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function AuditLogSection() {
@@ -29,6 +31,9 @@ export function AuditLogSection() {
   const [entity, setEntity] = useState("all");
   const [operation, setOperation] = useState("all");
   const [actor, setActor] = useState("all");
+  const [enrichmentType, setEnrichmentType] = useState("all");
+  const [bulkJob, setBulkJob] = useState("all");
+  const [expandedJobs, setExpandedJobs] = useState<string[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -53,10 +58,10 @@ export function AuditLogSection() {
   const filtered = useMemo(() => store.auditEntries.filter(item => {
     const haystack = [item.entity_id, item.actor, item.field, item.note].join(" ").toLowerCase();
     const time = new Date(item.timestamp).getTime();
-    return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
-  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companies, store.pathways, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, from, to, nodeFilter.feedstock, nodeFilter.product]);
+    return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (enrichmentType === "all" || item.enrichment_type === enrichmentType) && (bulkJob === "all" || item.bulk_job_id === bulkJob) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companies, store.pathways, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, enrichmentType, bulkJob, from, to, nodeFilter.feedstock, nodeFilter.product]);
   const pages = Math.max(1, Math.ceil(filtered.length / 25));
-  useEffect(() => setPage(1), [search, entity, operation, actor, from, to]);
+  useEffect(() => setPage(1), [search, entity, operation, actor, enrichmentType, bulkJob, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
   const rows = filtered.slice((page - 1) * 25, page * 25);
   const selectedEntries = selected.map(id => store.auditEntries.find(item => item.id === id)).filter((item): item is AuditEntry => Boolean(item));
@@ -70,7 +75,7 @@ export function AuditLogSection() {
     if (item.entity_type === "enrichment_run") return store.enrichmentRuns.find(run => run.run_id === item.entity_id)?.pathway_id ?? null;
     return null;
   };
-  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setFrom(""); setTo(""); };
+  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setEnrichmentType("all"); setBulkJob("all"); setFrom(""); setTo(""); };
   const doRevert = () => {
     if (!confirm) return;
     const entry = store.revertEntry(confirm.id);
@@ -98,7 +103,7 @@ export function AuditLogSection() {
     const entry = store.recordChange({ entity_type: "indicator_value", entity_id: target.id, field: "value", prior_value: target.value, new_value: value, operation: "update", trace_id: `tr_${Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}` });
     toast.success(`Pipeline change written — ${entry.id}`);
   };
-  const filtersActive = Boolean(search || entity !== "all" || operation !== "all" || actor !== "all" || from || to);
+  const filtersActive = Boolean(search || entity !== "all" || operation !== "all" || actor !== "all" || enrichmentType !== "all" || bulkJob !== "all" || from || to);
   const renderEntitySummary = (item: AuditEntry) => {
     const evidence = item.entity_type === "paper_match" || item.entity_type === "patent_match" ? store.paperPatentMatches.find(match => match.id === item.entity_id) : null;
     const company = item.entity_type === "company" ? store.companies.find(row => row.id === item.entity_id) : null;
