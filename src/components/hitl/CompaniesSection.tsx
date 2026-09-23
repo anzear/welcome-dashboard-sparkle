@@ -15,8 +15,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ActorStamp, FirstSeenCell, PreviouslyRejectedPanel, ReconfirmedCell, ReconfirmedMarker, CompanyDerivedPathwayList, CompanyRoleChips, DerivedPathwaysForCompany, FitChip, NodeFilterEmpty, PathwayRef, VisibilityChip, RecordHistoryList, ReviewStatusChip, RoleNodeLine, SecondaryNodes, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { NODE_LABELS, allRoleNodeValues, allowedSecondaryPositions, cleanNodeList, companyRoleOrder, computeFit, derivedCompanyPathwayIds, emptyEvidenceNodeLists, emptyRoleNodes, hasRoleNodes, nodeListMatches, roleNodePosition, sameNodeList, sortedRoles, useHitlStore, type Company, type CompanyRole, type CompanyRoleNodes, type EvidenceNodeLists, type EvidenceNodes, type ReviewStatus } from "@/lib/hitlStore";
+import { ActorStamp, CompanyDerivedPathwayList, CompanyRoleChips, DerivedPathwaysForCompany, FitChip, NodeFilterEmpty, PathwayRef, VisibilityChip, RecordHistoryList, ReviewStatusChip, RoleNodeLine, SecondaryNodes, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, ValueCell, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { NODE_LABELS, allRoleNodeValues, allowedSecondaryPositions, approvedNodeLinks, cleanNodeList, companyFoundAt, companyFoundRunId, companyIdentityKey, companyNodeLinks, companyRoleOrder, computeFit, derivedCompanyPathwayIds, emptyEvidenceNodeLists, emptyRoleNodes, hasRoleNodes, nodeLinkTypeLabel, nodeListMatches, pendingNodeLinks, rejectedNodeLinks, roleNodePosition, sameNodeList, sortedRoles, useHitlStore, type Company, type CompanyNodeLink, type CompanyRole, type CompanyRoleNodes, type EvidenceNodeLists, type EvidenceNodes, type ReviewStatus } from "@/lib/hitlStore";
+
 import { NodeMultiInput } from "@/components/hitl/EvidenceMatchPrimitives";
 import { companyRoleLabels, roleNodePositionKeys, roleNodeRefs, roleNodesSummary } from "@/lib/roleNode";
 import { cn } from "@/lib/utils";
