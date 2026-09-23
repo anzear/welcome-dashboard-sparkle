@@ -342,6 +342,9 @@ export interface RecordChangeInput {
   note?: string | null;
   trace_id?: string | null;
   reverts_entry_id?: string | null;
+  enrichment_type?: EnrichmentType | null;
+  trigger_mode?: EnrichmentTriggerMode | null;
+  bulk_job_id?: string | null;
 }
 
 const readField = (record: HitlRecord, field: string): unknown => {
