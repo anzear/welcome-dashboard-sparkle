@@ -1,5 +1,6 @@
 export { SourcesEditor, SourcesPopover, cleanSources, sourcesValid } from "./IndicatorSources";
 export { ActorStamp, ComputedChip, VisibilityChip, OperationChip, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
+export { FirstSeenCell, PreviouslyRejectedPanel, ReconfirmedCell, ReconfirmedMarker } from "./RerunProvenance";
 export { HistorySheetProvider, RecordHistoryList, RecordHistorySheet, useHistorySheet } from "./RecordHistorySheet";
 export { NodeFilterBar, NodeFilterEmpty, NodeFilterProvider, useNodeFilter } from "./NodeFilterBar";
 

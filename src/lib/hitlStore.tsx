@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { rerunPayloadFor } from "@/lib/mockRerunPayload";
 
 export type ReviewStatus = "review_pending" | "approved" | "rejected";
 export type VisibilityState = "visible" | "locked" | "hidden";
@@ -96,6 +97,9 @@ export const FIELD_LABELS: Record<string, string> = {
   method_tag: "Method",
   method_detail: "Method detail",
   sources: "Sources",
+  first_seen_run_id: "First seen",
+  reconfirmations: "Re-confirmed",
+  seen_again: "Seen again",
 };
 // Every matched position holds a list of alternative node values: within a position the values
 // are alternatives, across positions all filled positions must match.
@@ -176,7 +180,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -222,6 +226,9 @@ export interface Company extends CommonRecord {
   status: ReviewStatus;
   evidence: string | null;
   note: string | null;
+  first_seen_run_id?: string | null;
+  reconfirmations?: Reconfirmation[];
+  seen_again?: SeenAgain;
 }
 export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
@@ -235,7 +242,20 @@ export interface PaperPatentMatch extends CommonRecord {
   authors_or_assignee: string | null;
   abstract: string | null;
   source: "Semantic Scholar" | "USPTO" | null;
+  first_seen_run_id?: string | null;
+  reconfirmations?: Reconfirmation[];
+  seen_again?: SeenAgain;
 }
+// --- Re-run provenance. Append-only: a re-run never edits or removes a record. ---
+export interface Reconfirmation { run_id: string; timestamp: string; }
+export interface SeenAgain { count: number; run_ids: string[]; }
+type ProvenanceRecord = { first_seen_run_id?: string | null; reconfirmations?: Reconfirmation[]; seen_again?: SeenAgain };
+export const reconfirmationsOf = (record: ProvenanceRecord): Reconfirmation[] => record.reconfirmations ?? [];
+export const reconfirmCount = (record: ProvenanceRecord): number => reconfirmationsOf(record).length;
+export const lastReconfirmedAt = (record: ProvenanceRecord): string | null => reconfirmationsOf(record).map(item => item.timestamp).sort().slice(-1)[0] ?? null;
+export const lastReconfirmation = (record: ProvenanceRecord): Reconfirmation | null => [...reconfirmationsOf(record)].sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp)).slice(-1)[0] ?? null;
+export const seenAgainOf = (record: ProvenanceRecord): SeenAgain => record.seen_again ?? { count: 0, run_ids: [] };
+export const seenAgainCount = (record: ProvenanceRecord): number => seenAgainOf(record).count;
 export interface IndicatorSource { url: string; label: string | null; }
 export const sourceDomain = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
 export const sourceDisplay = (source: IndicatorSource): string => source.label?.trim() || sourceDomain(source.url);
@@ -373,6 +393,11 @@ const iso = (day: number, hour = 9) => `2026-09-${String(day).padStart(2, "0")}T
 const common = (id: string, day: number, actor: string | null = "Anže", trace: string | null = `trace-${id}-8f4a91c2`) => ({
   id, created_at: iso(Math.max(1, day - 3)), updated_at: iso(day), status_changed_at: iso(day), last_actor: actor, trace_id: trace,
 });
+// Fresh CommonRecord for records inserted by a re-run.
+const blankCommon = (id: string, timestamp: string, actor: string) => ({ id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: null });
+const nextNumberedId = (prefix: string, ids: string[]) => `${prefix}-${String(Math.max(0, ...ids.map(id => Number(id.match(/\d+/)?.[0] ?? 0))) + 1).padStart(3, "0")}`;
+const nextCompanyId = (ids: string[]) => nextNumberedId("co", ids);
+const nextMatchId = (ids: string[]) => nextNumberedId("pp", ids);
 export const GROUP_COLOR_TOKENS: GroupColorToken[] = ["group-violet", "group-fuchsia", "group-rose", "group-indigo", "group-bronze"];
 export const organisations = () => ["VCG.AI", "BioCampus Straubing GmbH", "Packaging Excellence Stuttgart", "Smart Cities and Communities", "Regio Augsburg Wirtschaft GmbH"];
 const seedGroups: Group[] = [
@@ -439,6 +464,32 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
   return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, roles, role_nodes, secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
 });
 
+// Extra pw-001 companies so a single re-run demonstrates every merge branch:
+// co-009 approved (re-confirmed), co-001 rejected (found again), co-010 absent
+// from the payload (untouched).
+seedCompanies.push(
+  {
+    ...common("co-009", 12), name: "Vistula Straw Collective", website: "https://vistula-straw.example", registry_id: "PL-330192",
+    address: "Ulica Polna 44", postal_code: "02-086", relevance_url: "https://vistula-straw.example/supply", country: "Poland", city: "Warsaw",
+    industry_sector: "Agricultural residues", profile_fields: { revenue: "€12.4M" },
+    roles: ["feedstock_supplier"], role_nodes: { ...emptyRoleNodes(), feedstock_supplier: [seedPathways[0].feedstock] },
+    secondary_nodes: emptyEvidenceNodeLists(), status: "approved", evidence: "Straw collection contracts published by the cooperative", note: null,
+    first_seen_run_id: "run-001", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+  },
+  {
+    ...common("co-010", 11), name: "Wisła Enzyme Works", website: "https://wisla-enzymes.example", registry_id: "PL-887311",
+    address: "Aleja Fabryczna 6", postal_code: "31-231", relevance_url: null, country: "Poland", city: "Kraków",
+    industry_sector: "Industrial biotechnology", profile_fields: { revenue: null },
+    roles: ["product_manufacturer"], role_nodes: { ...emptyRoleNodes(), product_manufacturer: [seedPathways[0].product] },
+    secondary_nodes: emptyEvidenceNodeLists(), status: "review_pending", evidence: null, note: null,
+    first_seen_run_id: "run-001", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+  },
+);
+// co-001 was introduced by the same first run and was rejected afterwards.
+seedCompanies.forEach(company => { if (company.id === "co-001") { company.first_seen_run_id = "run-001"; company.reconfirmations = []; company.seen_again = { count: 0, run_ids: [] }; } });
+
+
+
 
 
 const ppStatuses: ReviewStatus[] = ["review_pending", "approved", "review_pending", "rejected", "review_pending", "approved", "approved", "review_pending", "rejected", "review_pending", "approved", "review_pending"];
@@ -472,6 +523,34 @@ const seedPaperPatentMatches: PaperPatentMatch[] = Array.from({ length: 12 }, (_
     source: index === 11 ? null : kind === "paper" ? "Semantic Scholar" : "USPTO",
   };
 });
+
+// Extra pw-003 paper matches so a single papers re-run demonstrates every merge
+// branch: pp-101 approved (re-confirmed), pp-102 rejected (found again),
+// pp-103 absent from the payload (untouched).
+const pw003 = seedPathways[2];
+const pw003Nodes = (): MatchNodes => ({ ...emptyMatchNodes(), process: [pw003.process_technology], product: [pw003.product] });
+seedPaperPatentMatches.push(
+  {
+    ...common("pp-101", 12), kind: "paper", external_id: "10.1016/j.biortech.2026.44011",
+    title: "Whey-derived lactic acid fermentation at pilot scale", nodes: pw003Nodes(), status: "approved", matched_at: iso(12),
+    note: null, year: 2025, authors_or_assignee: "T. Bauer, M. Kovač", abstract: "Pilot-scale fermentation of dairy side streams into purified lactic acid.",
+    source: "Semantic Scholar", first_seen_run_id: "run-020", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+  },
+  {
+    ...common("pp-102", 12), kind: "paper", external_id: "10.1016/j.biortech.2026.44012",
+    title: "Membrane separation of dairy fermentation broths", nodes: pw003Nodes(), status: "rejected", matched_at: iso(12),
+    note: "Out of scope for this Pathway", year: 2024, authors_or_assignee: "J. Petersen", abstract: "Comparison of membrane configurations for broth clarification.",
+    source: "Semantic Scholar", first_seen_run_id: "run-020", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+  },
+  {
+    ...common("pp-103", 11), kind: "paper", external_id: "10.1016/j.biortech.2026.44014",
+    title: "Nutrient recovery from permeate streams in dairy processing", nodes: pw003Nodes(), status: "review_pending", matched_at: iso(11),
+    note: null, year: 2023, authors_or_assignee: "S. Ahmadi, L. Berg", abstract: "Assessment of nutrient recovery routes for permeate side streams.",
+    source: "Semantic Scholar", first_seen_run_id: "run-020", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+  },
+);
+
+
 
 export function allNodeValues(pathways: Pathway[]): NodeValueMetadata[] {
   const values = new Map<string, { value: string; pathwayIds: Set<string>; positions: Map<PathwayNodePosition, Set<string>> }>();
@@ -797,6 +876,8 @@ const seedEnrichmentRuns: EnrichmentRun[] = [
   // pw-009 / pw-010 — sparse single-type histories.
   runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(11, 13, 2) }),
   runSeed("run-016", "pw-010", "patents", "failed", iso(14, 10), {}, { completedAt: laterIso(14, 10, 1), error: "Patent family lookup rejected the request" }),
+  // The runs that first introduced the re-run demo records.
+  runSeed("run-020", "pw-003", "papers", "completed", iso(12, 10), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(12, 10, 4) }),
   // pw-007 has zero runs of any type.
 ];
 export const sortRunsNewestFirst = (runs: EnrichmentRun[]) => [...runs].sort((a, b) => +new Date(b.triggered_at) - +new Date(a.triggered_at));
@@ -945,31 +1026,107 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       : run)));
   }, []);
 
+  // Re-run merge. Never deletes, never overwrites an approved record and never
+  // changes any existing review status. Returns the counts for the run.
+  const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; reconfirmed: number; seenAgain: number } | null => {
+    const payload = rerunPayloadFor(run.pathway_id, run.enrichment_type);
+    if (!payload.length) return null;
+    const pathway = pathways.find(item => item.id === run.pathway_id);
+    if (!pathway) return null;
+    const timestamp = new Date().toISOString();
+    const isCompanies = run.enrichment_type === "companies";
+    const kind: "paper" | "patent" = run.enrichment_type === "papers" ? "paper" : "patent";
+    const entityType: AuditEntityType = isCompanies ? "company" : kind === "paper" ? "paper_match" : "patent_match";
+    const existingCompanies = [...companies];
+    const existingMatches = paperPatentMatches.filter(item => item.kind === kind);
+    let companyIds = companies.map(item => item.id);
+    let matchIds = paperPatentMatches.map(item => item.id);
+    let added = 0; let reconfirmed = 0; let seenAgain = 0;
+    payload.forEach(item => {
+      const existing: (Company | PaperPatentMatch) | null = isCompanies
+        ? existingCompanies.find(company => (company.registry_id ?? "") === item.identifier) ?? null
+        : existingMatches.find(match => match.external_id === item.identifier) ?? null;
+      if (!existing) {
+        added += 1;
+        if (isCompanies) {
+          const id = nextCompanyId(companyIds); companyIds = [...companyIds, id];
+          const company: Company = {
+            ...blankCommon(id, timestamp, currentUser.name), name: item.label, website: item.website ?? null, registry_id: item.identifier,
+            address: null, postal_code: null, relevance_url: null, country: item.country ?? null, city: item.city ?? null,
+            industry_sector: item.industry_sector ?? null, profile_fields: { revenue: null },
+            roles: ["feedstock_supplier"], role_nodes: { ...emptyRoleNodes(), feedstock_supplier: [pathway.feedstock] },
+            secondary_nodes: emptyEvidenceNodeLists(), status: "review_pending", evidence: null, note: null,
+            first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+          };
+          recordChange({ entity_type: "company", entity_id: id, field: null, prior_value: null, new_value: company, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
+        } else {
+          const id = nextMatchId(matchIds); matchIds = [...matchIds, id];
+          const match: PaperPatentMatch = {
+            ...blankCommon(id, timestamp, currentUser.name), kind, external_id: item.identifier, title: item.label,
+            nodes: { ...emptyMatchNodes(), process: [pathway.process_technology], product: [pathway.product] },
+            status: "review_pending", matched_at: timestamp, note: null, year: item.year ?? null,
+            authors_or_assignee: item.authors_or_assignee ?? null, abstract: null,
+            source: kind === "paper" ? "Semantic Scholar" : "USPTO",
+            first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+          };
+          recordChange({ entity_type: entityType, entity_id: id, field: null, prior_value: null, new_value: match, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
+        }
+        return;
+      }
+      if (existing.status === "rejected") {
+        // Never reinstated: only the seen-again counter moves.
+        const prior = seenAgainOf(existing);
+        seenAgain += 1;
+        recordChange({
+          entity_type: entityType, entity_id: existing.id, field: "seen_again", prior_value: prior,
+          new_value: { count: prior.count + 1, run_ids: [...prior.run_ids, run.run_id] }, operation: "seen_again",
+          enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
+          note: `Found again by run ${run.run_id}. Status unchanged.`,
+        });
+        return;
+      }
+      const prior = reconfirmationsOf(existing);
+      reconfirmed += 1;
+      recordChange({
+        entity_type: entityType, entity_id: existing.id, field: "reconfirmations", prior_value: prior,
+        new_value: [...prior, { run_id: run.run_id, timestamp }], operation: "reconfirm",
+        enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
+        note: `Re-confirmed by run ${run.run_id}. Status unchanged.`,
+      });
+    });
+    return { found: payload.length, added, reconfirmed, seenAgain };
+  }, [companies, paperPatentMatches, pathways, currentUser.name, recordChange]);
+
   const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
     const now = new Date().toISOString();
-    let resolved: EnrichmentRun | null = null;
+    const record = enrichmentRuns.find(run => run.run_id === runId) ?? null;
+    // A failed run merges nothing; a successful run with a seeded payload takes
+    // its counts from the merge itself.
+    const merge = record && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
+    const effective: EnrichmentRunResolution = merge
+      ? { ...resolution, items_found: merge.found, items_new: merge.added, items_reconfirmed: merge.reconfirmed }
+      : resolution;
     setEnrichmentRuns(runs => runs.map(run => {
       if (run.run_id !== runId || !isRunActive(run)) return run;
-      resolved = {
-        ...run, status: resolution.status, completed_at: now, updated_at: now, status_changed_at: now,
-        items_found: resolution.items_found, items_new: resolution.items_new, items_reconfirmed: resolution.items_reconfirmed,
-        error_message: resolution.error_message,
+      return {
+        ...run, status: effective.status, completed_at: now, updated_at: now, status_changed_at: now,
+        items_found: effective.items_found, items_new: effective.items_new, items_reconfirmed: effective.items_reconfirmed,
+        error_message: effective.error_message,
       };
-      return resolved;
     }));
-    const record = enrichmentRuns.find(run => run.run_id === runId) ?? null;
     if (!record || !isRunActive(record)) return;
     recordChange({
       entity_type: "enrichment_run", entity_id: runId, field: "status", prior_value: record.status,
       new_value: {
-        status: resolution.status, items_found: resolution.items_found, items_new: resolution.items_new,
-        items_reconfirmed: resolution.items_reconfirmed, error_message: resolution.error_message,
+        status: effective.status, items_found: effective.items_found, items_new: effective.items_new,
+        items_reconfirmed: effective.items_reconfirmed, error_message: effective.error_message,
+        ...(merge ? { seen_again: merge.seenAgain } : {}),
       },
-      operation: resolution.status === "failed" ? "enrich_fail" : "enrich_complete",
+      operation: effective.status === "failed" ? "enrich_fail" : "enrich_complete",
       enrichment_type: record.enrichment_type, trigger_mode: record.trigger_mode, bulk_job_id: record.bulk_job_id,
-      note: resolution.error_message,
+      note: effective.error_message,
     });
-  }, [enrichmentRuns, recordChange]);
+  }, [enrichmentRuns, recordChange, mergeRerunPayload]);
 
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
