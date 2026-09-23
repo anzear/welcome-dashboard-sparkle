@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export const ENGAGEMENT_STAGES = [
   "Not engaged",
   "Contacted",
+  "RFQ/RFP issued",
   "Under evaluation",
   "Sampling / testing",
   "Negotiation",
