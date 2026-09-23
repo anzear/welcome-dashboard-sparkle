@@ -175,8 +175,8 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
+export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -279,6 +279,42 @@ export const isStale = (indicatorValue: IndicatorValue): boolean => {
   const correctedAt = new Date(indicatorValue.corrected_at).getTime();
   return Number.isFinite(correctedAt) && Date.now() - correctedAt > STALENESS_DAYS * 86_400_000;
 };
+// ---------------------------------------------------------------------------
+// Enrichment runs. Append-only: a completed run is never mutated or removed.
+// ---------------------------------------------------------------------------
+export type EnrichmentType = "companies" | "patents" | "papers" | "indicators";
+export const ENRICHMENT_TYPES: EnrichmentType[] = ["companies", "patents", "papers", "indicators"];
+export const ENRICHMENT_TYPE_LABELS: Record<EnrichmentType, string> = { companies: "Companies", patents: "Patents", papers: "Papers", indicators: "Indicators" };
+export type EnrichmentRunStatus = "queued" | "running" | "completed" | "completed_with_errors" | "failed";
+export const ENRICHMENT_STATUS_LABELS: Record<EnrichmentRunStatus, string> = {
+  queued: "Queued", running: "Running", completed: "Completed", completed_with_errors: "Completed with errors", failed: "Failed",
+};
+export type EnrichmentTriggerMode = "single" | "bulk";
+export interface EnrichmentRun extends CommonRecord {
+  run_id: string;
+  pathway_id: string;
+  enrichment_type: EnrichmentType;
+  status: EnrichmentRunStatus;
+  trigger_mode: EnrichmentTriggerMode;
+  bulk_job_id: string | null;
+  triggered_by: string;
+  triggered_at: string;
+  completed_at: string | null;
+  items_found: number | null;
+  items_new: number | null;
+  items_reconfirmed: number | null;
+  error_message: string | null;
+}
+export const isRunActive = (run: EnrichmentRun): boolean => run.status === "queued" || run.status === "running";
+export const isRunSuccessful = (run: EnrichmentRun): boolean => run.status === "completed" || run.status === "completed_with_errors";
+export interface EnrichmentRunResolution {
+  status: Extract<EnrichmentRunStatus, "completed" | "completed_with_errors" | "failed">;
+  items_found: number | null;
+  items_new: number | null;
+  items_reconfirmed: number | null;
+  error_message: string | null;
+}
+
 export interface AuditEntry extends CommonRecord {
   timestamp: string;
   actor: string;
@@ -290,9 +326,12 @@ export interface AuditEntry extends CommonRecord {
   operation: AuditOperation;
   note: string | null;
   reverts_entry_id: string | null;
+  enrichment_type?: EnrichmentType | null;
+  trigger_mode?: EnrichmentTriggerMode | null;
+  bulk_job_id?: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
-export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue;
+export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue | EnrichmentRun;
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
