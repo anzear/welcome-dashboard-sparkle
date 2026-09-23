@@ -43,7 +43,8 @@ function DataReviewContent() {
   }, [rawRequested, requested, setSearchParams]);
   const queue = useMemo(() => [
     { label: "Pathways pending review", count: store.pathways.filter(item => nodeFilter.matchesPathway(item) && item.status === "review_pending").length, sub: "Pathway definitions awaiting review", section: "pathways" as Section, icon: Link2 },
-    { label: "Companies pending review", count: store.companies.filter(item => companyPassesFilter(item) && item.status === "review_pending").length, sub: "Company node assignments to verify", section: "companies" as Section, icon: Building2 },
+    // Pending matches and pending node links are separate review units.
+    (() => { const visible = store.companies.filter(companyPassesFilter); const matches = visible.filter(item => item.status === "review_pending").length; const links = visible.reduce((total, item) => total + pendingNodeLinks(item).length, 0); return { label: "Company matches pending", count: matches + links, sub: `${matches} match${matches === 1 ? "" : "es"} · ${links} node link${links === 1 ? "" : "s"}`, section: "companies" as Section, icon: Building2 }; })(),
     { label: "Paper matches pending", count: store.paperMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Publication matches to inspect", section: "papers" as Section, icon: FileText },
     { label: "Patent matches pending", count: store.patentMatches().filter(item => evidencePassesFilter(item) && item.status === "review_pending").length, sub: "Patent matches to inspect", section: "patents" as Section, icon: ScrollText },
     { label: "Indicator values pending", count: store.indicatorValues.filter(item => indicatorPassesFilter(item) && item.status === "review_pending").length, sub: "Values requiring validation", section: "indicators" as Section, icon: Gauge },
