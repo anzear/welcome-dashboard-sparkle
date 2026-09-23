@@ -106,7 +106,13 @@ export const FIELD_LABELS: Record<string, string> = {
   first_seen_run_id: "First seen",
   reconfirmations: "Re-confirmed",
   seen_again: "Seen again",
+  found_at: "Found",
+  found_by_run_id: "Found by run",
+  approved_at: "Approved",
+  approved_by: "Approved by",
+  node_links: "Node links",
 };
+
 // Every matched position holds a list of alternative node values: within a position the values
 // are alternatives, across positions all filled positions must match.
 export interface MatchNodes {
@@ -185,8 +191,9 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again";
+export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again" | "found";
+
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -232,10 +239,65 @@ export interface Company extends CommonRecord {
   status: ReviewStatus;
   evidence: string | null;
   note: string | null;
-  first_seen_run_id?: string | null;
-  reconfirmations?: Reconfirmation[];
-  seen_again?: SeenAgain;
+  // --- Company match model (Prompt 50). Found and Approved are two independent
+  // dates; neither is ever overwritten by a later run.
+  /** When this match first entered the review queue. Falls back to created_at. */
+  found_at?: string | null;
+  /** The run that introduced it, null for manually added matches. */
+  found_by_run_id?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  /** Node links, each reviewable on its own, independent of the match status. */
+  node_links?: CompanyNodeLink[];
 }
+/** A node link on a company match. Its status is held per link. */
+export interface CompanyNodeLink {
+  id: string;
+  node_type: PathwayNodePosition;
+  node_value: string;
+  status: ReviewStatus;
+  found_at: string;
+  found_by_run_id: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+}
+export const nodeLinkTypeLabel = (type: PathwayNodePosition): string => NODE_LABELS[type];
+const nodeLinkKey = (value: string) => value.trim().toLocaleLowerCase();
+export const companyNodeLinkId = (companyId: string, type: PathwayNodePosition, value: string): string => `${companyId}:${type}:${nodeLinkKey(value).replace(/\s+/g, "-")}`;
+export const companyFoundAt = (company: Company): string => company.found_at ?? company.created_at;
+export const companyFoundRunId = (company: Company): string | null => company.found_by_run_id ?? null;
+/**
+ * Backfill: an existing match's current node assignment reads as Approved node
+ * links found at the match's Found date.
+ */
+export function deriveCompanyNodeLinks(company: Company): CompanyNodeLink[] {
+  const foundAt = companyFoundAt(company);
+  const links: CompanyNodeLink[] = [];
+  const push = (type: PathwayNodePosition, value: string) => {
+    if (!value.trim()) return;
+    if (links.some(link => link.node_type === type && nodeLinkKey(link.node_value) === nodeLinkKey(value))) return;
+    links.push({
+      id: companyNodeLinkId(company.id, type, value), node_type: type, node_value: value.trim(),
+      status: "approved", found_at: foundAt, found_by_run_id: company.found_by_run_id ?? null,
+      approved_at: company.approved_at ?? foundAt, approved_by: company.approved_by ?? company.last_actor ?? null,
+    });
+  };
+  sortedRoles(company.roles).forEach(role => cleanNodeList(company.role_nodes[role]).forEach(value => push(roleNodePosition(role), value)));
+  allowedSecondaryPositions(company.roles).forEach(type => cleanNodeList(company.secondary_nodes[type]).forEach(value => push(type, value)));
+  return links;
+}
+export const companyNodeLinks = (company: Company): CompanyNodeLink[] => company.node_links ?? deriveCompanyNodeLinks(company);
+export const pendingNodeLinks = (company: Company): CompanyNodeLink[] => companyNodeLinks(company).filter(link => link.status === "review_pending");
+export const approvedNodeLinks = (company: Company): CompanyNodeLink[] => companyNodeLinks(company).filter(link => link.status === "approved");
+export const rejectedNodeLinks = (company: Company): CompanyNodeLink[] => companyNodeLinks(company).filter(link => link.status === "rejected");
+/** Review units awaiting a decision: the match itself plus each pending node link. */
+export const pendingReviewUnits = (company: Company): number => (company.status === "review_pending" ? 1 : 0) + pendingNodeLinks(company).length;
+/** Identity used to group several matches of one company: registry, else website, else name. */
+export const companyIdentityKey = (company: Pick<Company, "name" | "website" | "registry_id">): string =>
+  company.registry_id?.trim().toLocaleLowerCase()
+  || company.website?.trim().toLocaleLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").split(/[/?#]/)[0]
+  || company.name.trim().toLocaleLowerCase();
+
 export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
   external_id: string;
@@ -372,8 +434,10 @@ export interface EnrichmentRun extends CommonRecord {
   triggered_at: string;
   completed_at: string | null;
   items_found: number | null;
+  /** Every new review unit the run created: new matches and new node links alike. */
   items_new: number | null;
-  items_reconfirmed: number | null;
+  /** Run-level figure only. Never written onto any record. */
+  items_already_known: number | null;
   error_message: string | null;
 }
 export const isRunActive = (run: EnrichmentRun): boolean => run.status === "queued" || run.status === "running";
@@ -382,9 +446,10 @@ export interface EnrichmentRunResolution {
   status: Extract<EnrichmentRunStatus, "completed" | "completed_with_errors" | "failed">;
   items_found: number | null;
   items_new: number | null;
-  items_reconfirmed: number | null;
+  items_already_known: number | null;
   error_message: string | null;
 }
+
 
 export interface AuditEntry extends CommonRecord {
   timestamp: string;
@@ -400,9 +465,14 @@ export interface AuditEntry extends CommonRecord {
   enrichment_type?: EnrichmentType | null;
   trigger_mode?: EnrichmentTriggerMode | null;
   bulk_job_id?: string | null;
+  /** Parent record of a child entity, e.g. the match a node link belongs to. */
+  parent_id?: string | null;
+  node_type?: PathwayNodePosition | null;
+  node_value?: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
 export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue | EnrichmentRun | IndicatorRun;
+
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
@@ -416,7 +486,12 @@ export interface RecordChangeInput {
   enrichment_type?: EnrichmentType | null;
   trigger_mode?: EnrichmentTriggerMode | null;
   bulk_job_id?: string | null;
+  /** For company_node_link entries: the parent match, plus the link's node. */
+  parent_id?: string | null;
+  node_type?: PathwayNodePosition | null;
+  node_value?: string | null;
 }
+
 
 const readField = (record: HitlRecord, field: string): unknown => {
   const [root, nested] = field.split(".");
@@ -512,12 +587,14 @@ const seedCompanies: Company[] = companyRows.map((row, index) => {
     const extraNode = role === assignment.role ? (index === 0 ? seedPathways[2][position] : index === 3 ? seedPathways[1][position] : null) : null;
     role_nodes[role] = cleanNodeList([pathway[position], extraNode]);
   });
-  return { ...common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index), name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, roles, role_nodes, secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note };
+  const base = common(`co-${String(index + 1).padStart(3, "0")}`, 13 - index);
+  return { ...base, name: row[0], website: row[1], registry_id: row[2], address: row[3], postal_code: row[4], relevance_url: row[5], country: row[6], city: row[7], industry_sector: row[8], profile_fields: { revenue: index === 2 ? null : `€${(4 + index * 2.5).toFixed(1)}M` }, roles, role_nodes, secondary_nodes, status: assignment.status, evidence: assignment.evidence, note: assignment.note, found_at: base.created_at, found_by_run_id: null, approved_at: assignment.status === "approved" ? base.status_changed_at : null, approved_by: assignment.status === "approved" ? base.last_actor : null };
 });
 
-// Extra pw-001 companies so a single re-run demonstrates every merge branch:
-// co-009 approved (re-confirmed), co-001 rejected (found again), co-010 absent
-// from the payload (untouched).
+// pw-001 companies so one companies run demonstrates every merge branch:
+// co-009 approved and returned unchanged, co-009 gaining a second role,
+// co-010 gaining one new node link, co-001 rejected and returned (no move),
+// co-011 absent from the payload (untouched), plus one wholly new company.
 seedCompanies.push(
   {
     ...common("co-009", 12), name: "Vistula Straw Collective", website: "https://vistula-straw.example", registry_id: "PL-330192",
@@ -525,19 +602,29 @@ seedCompanies.push(
     industry_sector: "Agricultural residues", profile_fields: { revenue: "€12.4M" },
     roles: ["feedstock_supplier"], role_nodes: { ...emptyRoleNodes(), feedstock_supplier: [seedPathways[0].feedstock] },
     secondary_nodes: emptyEvidenceNodeLists(), status: "approved", evidence: "Straw collection contracts published by the cooperative", note: null,
-    first_seen_run_id: "run-001", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+    found_at: iso(9), found_by_run_id: "run-001", approved_at: iso(12), approved_by: "Anže",
   },
   {
     ...common("co-010", 11), name: "Wisła Enzyme Works", website: "https://wisla-enzymes.example", registry_id: "PL-887311",
     address: "Aleja Fabryczna 6", postal_code: "31-231", relevance_url: null, country: "Poland", city: "Kraków",
     industry_sector: "Industrial biotechnology", profile_fields: { revenue: null },
     roles: ["product_manufacturer"], role_nodes: { ...emptyRoleNodes(), product_manufacturer: [seedPathways[0].product] },
+    secondary_nodes: { ...emptyEvidenceNodeLists(), feedstock: [seedPathways[0].feedstock] },
+    status: "approved", evidence: null, note: null,
+    found_at: iso(9), found_by_run_id: "run-001", approved_at: iso(11), approved_by: "Jon Goriup",
+  },
+  {
+    ...common("co-011", 10), name: "Vistula Logistics", website: "https://vistula-logistics.example", registry_id: "PL-661204",
+    address: "Ulica Towarowa 3", postal_code: "00-839", relevance_url: null, country: "Poland", city: "Warsaw",
+    industry_sector: "Logistics", profile_fields: { revenue: null },
+    roles: ["feedstock_supplier"], role_nodes: { ...emptyRoleNodes(), feedstock_supplier: [seedPathways[0].feedstock] },
     secondary_nodes: emptyEvidenceNodeLists(), status: "review_pending", evidence: null, note: null,
-    first_seen_run_id: "run-001", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+    found_at: iso(10), found_by_run_id: "run-001", approved_at: null, approved_by: null,
   },
 );
 // co-001 was introduced by the same first run and was rejected afterwards.
-seedCompanies.forEach(company => { if (company.id === "co-001") { company.first_seen_run_id = "run-001"; company.reconfirmations = []; company.seen_again = { count: 0, run_ids: [] }; } });
+seedCompanies.forEach(company => { if (company.id === "co-001") { company.found_at = iso(9); company.found_by_run_id = "run-001"; } });
+
 
 
 
@@ -887,17 +974,16 @@ const seedAuditEntries: AuditEntry[] = [
   // One completed bulk job: parent entry plus child runs (completed, failed, skipped).
   auditSeed("audit-030", iso(16, 9), "Anže", "bulk_job", "bulk-2026-09-16-a", "bulk_selection", null, { types: ["companies", "papers", "patents", "indicators"], pathway_count: 2, pathway_ids: ["pw-005", "pw-006"], node_filter: { feedstock: "Corn starch", product: null }, runs_started: 4, runs_skipped: 1 }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", note: "Bulk enrichment triggered from the Pathways table" }),
   auditSeed("audit-031", iso(16, 9), "Anže", "enrichment_run", "run-012", null, null, { pathway_id: "pw-005", enrichment_type: "companies", status: "queued" }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies" }),
-  auditSeed("audit-032", laterIso(16, 9, 5), "Anže", "enrichment_run", "run-012", "status", "running", { status: "completed", items_found: 10, items_new: 10, items_reconfirmed: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies" }),
-  auditSeed("audit-033", laterIso(16, 9, 6), "Anže", "enrichment_run", "run-013", "status", "running", { status: "completed", items_found: 4, items_new: 2, items_reconfirmed: 2 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "papers" }),
-  auditSeed("audit-034", laterIso(16, 9, 7), "Anže", "enrichment_run", "run-014", "status", "running", { status: "completed", items_found: 0, items_new: 0, items_reconfirmed: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "indicators" }),
-  auditSeed("audit-035", laterIso(16, 9, 8), "Anže", "enrichment_run", "run-017", "status", "running", { status: "failed", error_message: "Patent source rejected the bulk request", items_found: null, items_new: null, items_reconfirmed: null }, "enrich_fail", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "patents", note: "Patent source rejected the bulk request" }),
+  auditSeed("audit-032", laterIso(16, 9, 5), "Anže", "enrichment_run", "run-012", "status", "running", { status: "completed", items_found: 10, items_new: 10, items_already_known: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies" }),
+  auditSeed("audit-033", laterIso(16, 9, 6), "Anže", "enrichment_run", "run-013", "status", "running", { status: "completed", items_found: 4, items_new: 2, items_already_known: 2 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "papers" }),
+  auditSeed("audit-034", laterIso(16, 9, 7), "Anže", "enrichment_run", "run-014", "status", "running", { status: "completed", items_found: 0, items_new: 0, items_already_known: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "indicators" }),
+  auditSeed("audit-035", laterIso(16, 9, 8), "Anže", "enrichment_run", "run-017", "status", "running", { status: "failed", error_message: "Patent source rejected the bulk request", items_found: null, items_new: null, items_already_known: null }, "enrich_fail", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "patents", note: "Patent source rejected the bulk request" }),
   auditSeed("audit-036", iso(16, 9), "Anže", "bulk_job", "bulk-2026-09-16-a", "skipped", null, { pathway_id: "pw-006", enrichment_type: "companies", reason: "skipped" }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies", note: "Skipped — a companies run was already in flight" }),
   // Single-run enrichment by a second user, with merge outcomes.
   auditSeed("audit-037", iso(20, 11), "Jon Goriup", "enrichment_run", "run-002", null, null, { pathway_id: "pw-001", enrichment_type: "patents", status: "queued" }, "enrich_trigger", { trigger_mode: "single", enrichment_type: "patents" }),
-  auditSeed("audit-038", laterIso(20, 11, 3), "Jon Goriup", "enrichment_run", "run-002", "status", "running", { status: "completed", items_found: 9, items_new: 3, items_reconfirmed: 6 }, "enrich_complete", { trigger_mode: "single", enrichment_type: "patents" }),
+  auditSeed("audit-038", laterIso(20, 11, 3), "Jon Goriup", "enrichment_run", "run-002", "status", "running", { status: "completed", items_found: 9, items_new: 3, items_already_known: 6 }, "enrich_complete", { trigger_mode: "single", enrichment_type: "patents" }),
   auditSeed("audit-039", laterIso(20, 11, 3), "Jon Goriup", "patent_match", "pp-002", "last_reconfirmed_at", null, laterIso(20, 11, 3), "reconfirm", { trigger_mode: "single", enrichment_type: "patents", note: "Re-confirmed by run run-002" }),
-  auditSeed("audit-040", laterIso(20, 11, 3), "Jon Goriup", "company", "co-001", "seen_again_count", 0, 1, "seen_again", { trigger_mode: "single", enrichment_type: "companies", note: "Previously rejected record found again by run run-001" }),
-  auditSeed("audit-041", laterIso(22, 8, 1), "Jon Goriup", "enrichment_run", "run-007", "status", "running", { status: "failed", error_message: "Patent source timed out before returning results", items_found: null, items_new: null, items_reconfirmed: null }, "enrich_fail", { trigger_mode: "single", enrichment_type: "patents", note: "Patent source timed out before returning results" }),
+  auditSeed("audit-041", laterIso(22, 8, 1), "Jon Goriup", "enrichment_run", "run-007", "status", "running", { status: "failed", error_message: "Patent source timed out before returning results", items_found: null, items_new: null, items_already_known: null }, "enrich_fail", { trigger_mode: "single", enrichment_type: "patents", note: "Patent source timed out before returning results" }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -906,7 +992,7 @@ const seedAuditEntries: AuditEntry[] = [
 // ---------------------------------------------------------------------------
 const runSeed = (
   runId: string, pathwayId: string, type: EnrichmentType, status: EnrichmentRunStatus, triggeredAt: string,
-  counts: { found?: number | null; added?: number | null; reconfirmed?: number | null } = {},
+  counts: { found?: number | null; added?: number | null; known?: number | null } = {},
   extra: { completedAt?: string | null; error?: string | null; actor?: string; mode?: EnrichmentTriggerMode; bulkJobId?: string | null } = {},
 ): EnrichmentRun => ({
   id: runId, created_at: triggeredAt, updated_at: extra.completedAt ?? triggeredAt, status_changed_at: extra.completedAt ?? triggeredAt,
@@ -915,36 +1001,36 @@ const runSeed = (
   trigger_mode: extra.mode ?? "single", bulk_job_id: extra.bulkJobId ?? null,
   triggered_by: extra.actor ?? "Anže", triggered_at: triggeredAt,
   completed_at: extra.completedAt ?? null,
-  items_found: counts.found ?? null, items_new: counts.added ?? null, items_reconfirmed: counts.reconfirmed ?? null,
+  items_found: counts.found ?? null, items_new: counts.added ?? null, items_already_known: counts.known ?? null,
   error_message: extra.error ?? null,
 });
 const seedEnrichmentRuns: EnrichmentRun[] = [
   // pw-001 — mixed history, papers never run.
-  runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, reconfirmed: 8 }, { completedAt: laterIso(12, 9, 4) }),
-  runSeed("run-002", "pw-001", "patents", "completed", iso(20, 11), { found: 9, added: 3, reconfirmed: 6 }, { completedAt: laterIso(20, 11, 3) }),
-  runSeed("run-003", "pw-001", "indicators", "completed_with_errors", iso(18, 14), { found: 7, added: 2, reconfirmed: 4 }, { completedAt: laterIso(18, 14, 5), actor: "Jon Goriup" }),
+  runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, known: 8 }, { completedAt: laterIso(12, 9, 4) }),
+  runSeed("run-002", "pw-001", "patents", "completed", iso(20, 11), { found: 9, added: 3, known: 6 }, { completedAt: laterIso(20, 11, 3) }),
+  runSeed("run-003", "pw-001", "indicators", "completed_with_errors", iso(18, 14), { found: 7, added: 2, known: 4 }, { completedAt: laterIso(18, 14, 5), actor: "Jon Goriup" }),
   // pw-002 — companies run that found nothing (success, zero results).
-  runSeed("run-004", "pw-002", "companies", "completed", iso(21, 10), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(21, 10, 2), actor: "Jon Goriup" }),
-  runSeed("run-005", "pw-002", "papers", "completed", iso(15, 12), { found: 5, added: 5, reconfirmed: 0 }, { completedAt: laterIso(15, 12, 3) }),
+  runSeed("run-004", "pw-002", "companies", "completed", iso(21, 10), { found: 0, added: 0, known: 0 }, { completedAt: laterIso(21, 10, 2), actor: "Jon Goriup" }),
+  runSeed("run-005", "pw-002", "papers", "completed", iso(15, 12), { found: 5, added: 5, known: 0 }, { completedAt: laterIso(15, 12, 3) }),
   // pw-003 — failed patents run with an earlier successful patents run.
-  runSeed("run-006", "pw-003", "patents", "completed", iso(13, 9), { found: 11, added: 7, reconfirmed: 4 }, { completedAt: laterIso(13, 9, 6) }),
+  runSeed("run-006", "pw-003", "patents", "completed", iso(13, 9), { found: 11, added: 7, known: 4 }, { completedAt: laterIso(13, 9, 6) }),
   runSeed("run-007", "pw-003", "patents", "failed", iso(22, 8), {}, { completedAt: laterIso(22, 8, 1), error: "Patent source timed out before returning results", actor: "Jon Goriup" }),
-  runSeed("run-008", "pw-003", "companies", "completed", iso(19, 16), { found: 12, added: 4, reconfirmed: 8 }, { completedAt: laterIso(19, 16, 4) }),
+  runSeed("run-008", "pw-003", "companies", "completed", iso(19, 16), { found: 12, added: 4, known: 8 }, { completedAt: laterIso(19, 16, 4) }),
   // pw-004 — a run still in flight on page load.
   runSeed("run-009", "pw-004", "indicators", "running", laterIso(23, 10, 40), {}, { actor: "Jon Goriup" }),
-  runSeed("run-010", "pw-004", "companies", "completed", iso(17, 11), { found: 8, added: 2, reconfirmed: 6 }, { completedAt: laterIso(17, 11, 3) }),
+  runSeed("run-010", "pw-004", "companies", "completed", iso(17, 11), { found: 8, added: 2, known: 6 }, { completedAt: laterIso(17, 11, 3) }),
   // pw-005 — patents recently, papers never.
-  runSeed("run-011", "pw-005", "patents", "completed", iso(22, 15), { found: 6, added: 1, reconfirmed: 5 }, { completedAt: laterIso(22, 15, 3) }),
-  runSeed("run-012", "pw-005", "companies", "completed", iso(16, 9), { found: 10, added: 10, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 5), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-011", "pw-005", "patents", "completed", iso(22, 15), { found: 6, added: 1, known: 5 }, { completedAt: laterIso(22, 15, 3) }),
+  runSeed("run-012", "pw-005", "companies", "completed", iso(16, 9), { found: 10, added: 10, known: 0 }, { completedAt: laterIso(16, 9, 5), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
   // pw-006 — bulk job history across two types.
-  runSeed("run-013", "pw-006", "papers", "completed", iso(16, 9), { found: 4, added: 2, reconfirmed: 2 }, { completedAt: laterIso(16, 9, 6), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
-  runSeed("run-014", "pw-006", "indicators", "completed", iso(16, 9), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 7), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-013", "pw-006", "papers", "completed", iso(16, 9), { found: 4, added: 2, known: 2 }, { completedAt: laterIso(16, 9, 6), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-014", "pw-006", "indicators", "completed", iso(16, 9), { found: 0, added: 0, known: 0 }, { completedAt: laterIso(16, 9, 7), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
   runSeed("run-017", "pw-005", "patents", "failed", iso(16, 9), {}, { completedAt: laterIso(16, 9, 8), error: "Patent source rejected the bulk request", mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
   // pw-009 / pw-010 — sparse single-type histories.
-  runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(11, 13, 2) }),
+  runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, known: 0 }, { completedAt: laterIso(11, 13, 2) }),
   runSeed("run-016", "pw-010", "patents", "failed", iso(14, 10), {}, { completedAt: laterIso(14, 10, 1), error: "Patent family lookup rejected the request" }),
   // The runs that first introduced the re-run demo records.
-  runSeed("run-020", "pw-003", "papers", "completed", iso(12, 10), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(12, 10, 4) }),
+  runSeed("run-020", "pw-003", "papers", "completed", iso(12, 10), { found: 3, added: 3, known: 0 }, { completedAt: laterIso(12, 10, 4) }),
   // pw-007 has zero runs of any type.
 ];
 export const sortRunsNewestFirst = (runs: EnrichmentRun[]) => [...runs].sort((a, b) => +new Date(b.triggered_at) - +new Date(a.triggered_at));
@@ -1020,9 +1106,13 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       enrichment_type: input.enrichment_type ?? null,
       trigger_mode: input.trigger_mode ?? null,
       bulk_job_id: input.bulk_job_id ?? null,
+      parent_id: input.parent_id ?? null,
+      node_type: input.node_type ?? null,
+      node_value: input.node_value ?? null,
     };
+    const inserts = input.operation === "create" || input.operation === "link_add" || input.operation === "found";
     const apply = <T extends HitlRecord>(items: T[]): T[] => {
-      if ((input.operation === "create" || input.operation === "link_add") && input.field === null) {
+      if (inserts && input.field === null) {
         return [...items, input.new_value as T];
       }
       return items.map(item => {
@@ -1032,15 +1122,36 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
           updated_at: now,
           last_actor: currentUser.name,
           ...(input.field === "status" ? { status_changed_at: now } : {}),
+          // Approve stamps the match; Found is never touched by a later decision.
+          ...(input.entity_type === "company" && input.field === "status" && input.new_value === "approved"
+            ? { approved_at: now, approved_by: currentUser.name }
+            : {}),
         };
       });
     };
+    // A node link lives on its parent match. Appending or reviewing a link never
+    // touches the match's own status, Found date or Approved date.
+    const applyNodeLink = (items: Company[]): Company[] => items.map(company => {
+      if (company.id !== (input.parent_id ?? "")) return company;
+      const links = companyNodeLinks(company);
+      if (input.field === null) return { ...company, node_links: [...links, input.new_value as CompanyNodeLink] };
+      return {
+        ...company,
+        node_links: links.map(link => link.id !== input.entity_id ? link : {
+          ...link,
+          [input.field as string]: input.new_value,
+          ...(input.field === "status" && input.new_value === "approved" ? { approved_at: now, approved_by: currentUser.name } : {}),
+        } as CompanyNodeLink),
+      };
+    });
     if (input.entity_type === "pathway") setPathways(apply);
     if (input.entity_type === "group") setGroups(apply);
     if (input.entity_type === "company") setCompanies(apply);
+    if (input.entity_type === "company_node_link") setCompanies(applyNodeLink);
     if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
     if (input.entity_type === "indicator_run") setIndicatorRuns(apply);
+
     setAuditEntries(items => [...items, entry]);
     return entry;
   }, [currentUser.name]);
@@ -1086,7 +1197,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       id: runId, created_at: now, updated_at: now, status_changed_at: now, last_actor: currentUser.name, trace_id: null,
       run_id: runId, pathway_id: input.pathway_id, enrichment_type: input.enrichment_type, status: "queued",
       trigger_mode: input.trigger_mode, bulk_job_id: input.bulk_job_id, triggered_by: currentUser.name, triggered_at: now,
-      completed_at: null, items_found: null, items_new: null, items_reconfirmed: null, error_message: null,
+      completed_at: null, items_found: null, items_new: null, items_already_known: null, error_message: null,
     };
     setEnrichmentRuns(runs => [...runs, run]);
     recordChange({
@@ -1107,7 +1218,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   // Re-run merge. Never deletes, never overwrites an approved record and never
   // changes any existing review status. Returns the counts for the run.
-  const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; reconfirmed: number; seenAgain: number } | null => {
+  const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; known: number; seenAgain: number } | null => {
     const payload = rerunPayloadFor(run.pathway_id, run.enrichment_type);
     if (!payload.length) return null;
     const pathway = pathwaysRef.current.find(item => item.id === run.pathway_id);
@@ -1183,13 +1294,13 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     // its counts from the merge itself.
     const merge = record && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
     const effective: EnrichmentRunResolution = merge
-      ? { ...resolution, items_found: merge.found, items_new: merge.added, items_reconfirmed: merge.reconfirmed }
+      ? { ...resolution, items_found: merge.found, items_new: merge.added, items_already_known: merge.reconfirmed }
       : resolution;
     setEnrichmentRuns(runs => runs.map(run => {
       if (run.run_id !== runId || !isRunActive(run)) return run;
       return {
         ...run, status: effective.status, completed_at: now, updated_at: now, status_changed_at: now,
-        items_found: effective.items_found, items_new: effective.items_new, items_reconfirmed: effective.items_reconfirmed,
+        items_found: effective.items_found, items_new: effective.items_new, items_already_known: effective.items_already_known,
         error_message: effective.error_message,
       };
     }));
@@ -1198,7 +1309,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       entity_type: "enrichment_run", entity_id: runId, field: "status", prior_value: record.status,
       new_value: {
         status: effective.status, items_found: effective.items_found, items_new: effective.items_new,
-        items_reconfirmed: effective.items_reconfirmed, error_message: effective.error_message,
+        items_already_known: effective.items_already_known, error_message: effective.error_message,
         ...(merge ? { seen_again: merge.seenAgain } : {}),
       },
       operation: effective.status === "failed" ? "enrich_fail" : "enrich_complete",
