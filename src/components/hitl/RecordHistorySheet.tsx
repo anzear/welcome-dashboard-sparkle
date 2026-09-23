@@ -6,6 +6,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, OperationChip, ValueDiff } from "./ReviewPrimitives";
+import { useOptionalIndicatorRunSheet } from "./indicatorRunSheetContext";
 import { RoleNodeLine } from "./CompanyFitPrimitives";
 import { PathwayRef } from "./PathwayRef";
 import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
@@ -72,7 +73,7 @@ export function RecordHistoryList({ entityType, entityId }: { entityType: AuditE
   </>;
 }
 
-const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value", enrichment_run: "Enrichment run" };
+const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value", enrichment_run: "Enrichment run", indicator_run: "Indicator run" };
 function GroupIdList({ ids }: { ids: unknown }) {
   const list = Array.isArray(ids) ? ids.filter((value): value is string => typeof value === "string") : typeof ids === "string" ? [ids] : [];
   if (list.length === 0) return <span className="text-muted-foreground">No groups</span>;
@@ -98,6 +99,7 @@ export function RecordHistorySheet() {
   const company = target?.entity_type === "company" && record && "roles" in record ? record as Company : null;
   const indicatorValue = target?.entity_type === "indicator_value" && record && "indicator_key" in record ? record as IndicatorValue : null;
   const relatedPathwayId = target?.entity_type === "pathway" ? target.entity_id : null;
+  const runSheet = useOptionalIndicatorRunSheet();
   const group = target?.entity_type === "group" && record && "color_token" in record ? record as Group : null;
   return (
     <Sheet open={target !== null} onOpenChange={open => { if (!open) closeHistory(); }}>
@@ -106,7 +108,7 @@ export function RecordHistorySheet() {
           <SheetHeader className="border-b px-5 py-4 pr-12">
              <div className="flex items-center gap-2"><SheetTitle className="text-sm">{labels[target.entity_type]}</SheetTitle><code className="font-mono text-[10px] text-muted-foreground">{target.entity_id}</code>{indicatorValue && <span className="inline-flex h-6 items-center whitespace-nowrap rounded-md bg-muted px-2 text-xs text-muted-foreground">Method: {methodTagLabel(indicatorValue.method_tag)}</span>}{indicatorValue && indicatorValue.sources.length > 0 && <SourcesPopover sources={indicatorValue.sources} />}</div>
              <SheetDescription className="text-xs">{target.entity_type === "pathway" ? <PathwayRef pathwayId={target.entity_id} variant="card" /> : group ? <GroupChip group={group} /> : company ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{company.name}</span><RoleNodeLine company={company} compact /></span> : evidence ? <span className="space-y-2"><span className="block truncate font-medium text-foreground">{evidence.title}</span><span className="flex flex-wrap items-center gap-1"><NodeChips nodes={evidence.nodes} compact /><DerivedPathwaysForRecord match={evidence} /><ScopeSummary match={evidence} /></span></span> : indicatorValue ? <span className="space-y-2"><span className="flex flex-wrap items-center gap-2"><ScopeChip scope={indicatorValue.scope} /><span className="font-medium text-foreground">{indicatorLabel(indicatorValue.indicator_key)}</span></span><TargetRef iv={indicatorValue} /></span> : <><span className="block truncate">{summary(record, target.entity_type)}</span>{relatedPathwayId && <span className="mt-2 block"><PathwayRef pathwayId={relatedPathwayId} variant="inline" /></span>}</>}</SheetDescription>
-             {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span></div>}
+             {record && <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-[9px] text-muted-foreground">Updated {format(new Date(record.updated_at), "dd MMM yyyy, HH:mm:ss")}</span>{indicatorValue && runSheet && <Button variant="outline" size="sm" className="h-6 gap-1 px-2 text-[10px]" onClick={() => runSheet.openRuns({ indicatorId: indicatorValue.id, indicatorKey: indicatorValue.indicator_key, readOnly: false, recordId: indicatorValue.id })}>Run history</Button>}</div>}
           </SheetHeader>
           <div className="flex-1 overflow-y-auto px-5 py-4">
             <RecordHistoryList entityType={target.entity_type} entityId={target.entity_id} />

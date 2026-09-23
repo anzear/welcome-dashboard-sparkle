@@ -4,7 +4,7 @@ import { Building2, FileText, Gauge, Link2, ScrollText, ShieldCheck } from "luci
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, useNodeFilter } from "@/components/hitl";
+import { HistorySheetProvider, IndicatorRunSheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, useNodeFilter } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
 import { BulkEnrichmentJobProvider } from "@/components/hitl/EnrichmentControls";
@@ -101,5 +101,5 @@ function DataReviewContent() {
 }
 
 export default function DataReview() {
-  return <HistorySheetProvider><NodeFilterProvider><BulkEnrichmentJobProvider><DataReviewContent /></BulkEnrichmentJobProvider></NodeFilterProvider></HistorySheetProvider>;
+  return <HistorySheetProvider><IndicatorRunSheetProvider><NodeFilterProvider><BulkEnrichmentJobProvider><DataReviewContent /></BulkEnrichmentJobProvider></NodeFilterProvider></IndicatorRunSheetProvider></HistorySheetProvider>;
 }

@@ -159,3 +159,5 @@
 - [x] Row Enrich sheet: per-type run, Run all shortcut, run history
 - [x] Bulk Enrich dialog with type selection, skip handling and one bulk job id
 - [x] Dismissible bulk progress panel with per-Pathway outcome sheet, persists across sections
+
+- [x] Prompt 46 — Indicator run history: append-only IndicatorRun store, value from latest approved run, run history panel with delta, sources and cross-links, read-only computed count runs.

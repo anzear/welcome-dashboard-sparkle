@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
+import { seedIndicatorRuns } from "./indicatorRunSeeds";
 import { rerunPayloadFor } from "@/lib/mockRerunPayload";
 
 export type ReviewStatus = "review_pending" | "approved" | "rejected";
@@ -97,6 +98,11 @@ export const FIELD_LABELS: Record<string, string> = {
   method_tag: "Method",
   method_detail: "Method detail",
   sources: "Sources",
+  null_reason: "Reason for no value",
+  prompt_version: "Prompt version",
+  model: "Model",
+  reviewed_by: "Reviewed by",
+  reviewed_at: "Reviewed at",
   first_seen_run_id: "First seen",
   reconfirmations: "Re-confirmed",
   seen_again: "Seen again",
@@ -179,7 +185,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run";
+export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run";
 export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again";
 export const STALENESS_DAYS = 180;
 
@@ -300,6 +306,51 @@ export const isStale = (indicatorValue: IndicatorValue): boolean => {
   return Number.isFinite(correctedAt) && Date.now() - correctedAt > STALENESS_DAYS * 86_400_000;
 };
 // ---------------------------------------------------------------------------
+// Indicator runs. An indicator run produces a value, not a list of items. Every
+// run is its own immutable row: runs are never replaced, overwritten or averaged.
+// ---------------------------------------------------------------------------
+export interface IndicatorRun extends CommonRecord {
+  run_id: string;
+  /** IndicatorValue id, or computedIndicatorId() for a computed count indicator. */
+  indicator_id: string;
+  indicator_key: string;
+  pathway_id: string;
+  value: number | string | null;
+  /** Why the run found no value. Only ever set when value is null — null is never zero. */
+  null_reason: string | null;
+  unit: string | null;
+  method_tag: MethodTag | null;
+  sources: IndicatorSource[];
+  model: string;
+  prompt_version: string;
+  status: ReviewStatus;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  triggered_by: string;
+  triggered_at: string;
+}
+/** Computed count indicators have no stored IndicatorValue, so runs key off the pathway. */
+export const computedIndicatorId = (indicatorKey: string, pathwayId: string): string => `computed:${indicatorKey}|${pathwayId}`;
+export const sortIndicatorRunsNewestFirst = (runs: IndicatorRun[]): IndicatorRun[] => [...runs].sort((a, b) => +new Date(b.triggered_at) - +new Date(a.triggered_at));
+export const latestApprovedIndicatorRun = (runs: IndicatorRun[]): IndicatorRun | null => sortIndicatorRunsNewestFirst(runs).find(run => run.status === "approved") ?? null;
+/**
+ * The indicator value is the value of the most recent Approved run — never an
+ * average, mean or blend of runs, and never an unapproved run's value.
+ */
+export type IndicatorRunResolution =
+  | { kind: "awaiting" }
+  | { kind: "no_value"; run: IndicatorRun }
+  | { kind: "value"; run: IndicatorRun; value: number | string };
+export function resolveIndicatorRuns(runs: IndicatorRun[]): IndicatorRunResolution {
+  const run = latestApprovedIndicatorRun(runs);
+  if (!run) return { kind: "awaiting" };
+  // null (nothing found) and 0 (a real measurement) stay strictly separate.
+  if (run.value === null) return { kind: "no_value", run };
+  return { kind: "value", run, value: run.value };
+}
+export const pendingIndicatorRuns = (runs: IndicatorRun[]): IndicatorRun[] => runs.filter(run => run.status === "review_pending");
+
+// ---------------------------------------------------------------------------
 // Enrichment runs. Append-only: a completed run is never mutated or removed.
 // ---------------------------------------------------------------------------
 export type EnrichmentType = "companies" | "patents" | "papers" | "indicators";
@@ -351,7 +402,7 @@ export interface AuditEntry extends CommonRecord {
   bulk_job_id?: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
-export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue | EnrichmentRun;
+export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue | EnrichmentRun | IndicatorRun;
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
@@ -907,6 +958,10 @@ interface HitlStoreValue {
   createEnrichmentRun: (input: { pathway_id: string; enrichment_type: EnrichmentType; trigger_mode: EnrichmentTriggerMode; bulk_job_id: string | null }) => EnrichmentRun;
   markEnrichmentRunRunning: (runId: string) => void;
   resolveEnrichmentRun: (runId: string, resolution: EnrichmentRunResolution) => void;
+  indicatorRuns: IndicatorRun[];
+  runsForIndicator: (indicatorId: string) => IndicatorRun[];
+  approvedIndicatorValue: (indicatorId: string) => IndicatorRunResolution;
+  setIndicatorRunStatus: (runId: string, status: Exclude<ReviewStatus, "review_pending">, note?: string | null) => void;
 }
 const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 
@@ -918,6 +973,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
   const [enrichmentRuns, setEnrichmentRuns] = useState(seedEnrichmentRuns);
+  const [indicatorRuns, setIndicatorRuns] = useState(seedIndicatorRuns);
   // Enrichment resolves on a timer, so the callback that fires may be older than
   // the current state. These refs keep merges reading the latest records.
   const runsRef = useRef(enrichmentRuns); runsRef.current = enrichmentRuns;
@@ -930,10 +986,10 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, group: groups, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
-      enrichment_run: enrichmentRuns,
+      enrichment_run: enrichmentRuns, indicator_run: indicatorRuns,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
-  }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns]);
+  }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns, indicatorRuns]);
 
   const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
     const now = new Date().toISOString();
@@ -968,6 +1024,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     if (input.entity_type === "company") setCompanies(apply);
     if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
+    if (input.entity_type === "indicator_run") setIndicatorRuns(apply);
     setAuditEntries(items => [...items, entry]);
     return entry;
   }, [currentUser.name]);
@@ -1134,12 +1191,25 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     });
   }, [recordChange, mergeRerunPayload]);
 
+  const runsForIndicator = useCallback((indicatorId: string) => sortIndicatorRunsNewestFirst(indicatorRuns.filter(run => run.indicator_id === indicatorId)), [indicatorRuns]);
+  const approvedIndicatorValue = useCallback((indicatorId: string) => resolveIndicatorRuns(indicatorRuns.filter(run => run.indicator_id === indicatorId)), [indicatorRuns]);
+  // Reviewing a run never touches any earlier run: each run keeps its own decision.
+  const setIndicatorRunStatus = useCallback((runId: string, status: Exclude<ReviewStatus, "review_pending">, note?: string | null) => {
+    const run = indicatorRuns.find(item => item.run_id === runId);
+    if (!run || run.status === status) return;
+    const now = new Date().toISOString();
+    recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "status", prior_value: run.status, new_value: status, operation: status === "approved" ? "approve" : "reject", note: note ?? null });
+    recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "reviewed_by", prior_value: run.reviewed_by, new_value: currentUser.name, operation: "update", note: null });
+    recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "reviewed_at", prior_value: run.reviewed_at, new_value: now, operation: "update", note: null });
+  }, [indicatorRuns, recordChange, currentUser.name]);
+
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
     paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
     enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob,
     createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun,
-  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord, enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob, createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun]);
+    indicatorRuns, runsForIndicator, approvedIndicatorValue, setIndicatorRunStatus,
+  }), [indicatorRuns, runsForIndicator, approvedIndicatorValue, setIndicatorRunStatus, currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord, enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob, createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 
