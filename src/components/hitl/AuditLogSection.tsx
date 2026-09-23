@@ -160,7 +160,7 @@ export function AuditLogSection() {
     return <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", undo && "border-l-2 border-l-muted-foreground", options.isParent && "bg-muted/40", options.isChild && "bg-muted/10")}>
       <TableCell className="sticky left-0 z-10 bg-background"><Checkbox aria-label={`Select ${item.id}`} checked={selected.includes(item.id)} onCheckedChange={checked => setSelected(ids => checked ? [...ids, item.id] : ids.filter(id => id !== item.id))} /></TableCell>
       <TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell>
-      <TableCell><ActorStamp actor={item.actor} timestamp={item.timestamp} /></TableCell>
+      <TableCell><ActorStamp name={item.actor} timestamp={item.timestamp} /></TableCell>
       <TableCell className="min-w-[18rem]"><div className={cn("flex items-start gap-2", options.isChild && "pl-6")}>
         {options.isParent && <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={options.expanded ? `Collapse runs for ${item.bulk_job_id ?? item.entity_id}` : `Expand runs for ${item.bulk_job_id ?? item.entity_id}`} onClick={options.onToggle}>{options.expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button>}
         <div className="space-y-1">
