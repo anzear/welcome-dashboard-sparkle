@@ -5,9 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ValueCell } from "./ReviewPrimitives";
-import { lastReconfirmation, reconfirmCount, seenAgainOf, type Company, type PaperPatentMatch } from "@/lib/hitlStore";
+import { lastReconfirmation, reconfirmCount, seenAgainOf, type PaperPatentMatch } from "@/lib/hitlStore";
 
-type ProvenanceRow = Company | PaperPatentMatch;
+type ProvenanceRow = PaperPatentMatch;
 
 /** The run that introduced the record, with its run_id. Separate from Re-confirmed. */
 export function FirstSeenCell({ record }: { record: ProvenanceRow }) {
@@ -40,7 +40,7 @@ export function PreviouslyRejectedPanel({ records, onOpen, onHistory }: { record
   const found = records.filter(record => record.status === "rejected" && seenAgainOf(record).count > 0);
   if (found.length === 0) return null;
   const Chevron = open ? ChevronDown : ChevronRight;
-  const title = (record: ProvenanceRow) => "name" in record ? record.name : record.title;
+  const title = (record: ProvenanceRow) => record.title;
   return <div className="mb-3 rounded-md border">
     <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex w-full items-center gap-2 px-3 py-2 text-left">
       <Chevron className="h-3.5 w-3.5 text-muted-foreground" />

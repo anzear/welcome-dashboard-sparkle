@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ValueCell } from "@/components/hitl/ReviewPrimitives";
 import { useNodeFilter } from "@/components/hitl/NodeFilterBar";
-import { ENRICHMENT_STATUS_LABELS, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, NODE_LABELS, isRunActive, useHitlStore, type EnrichmentRun, type EnrichmentRunStatus, type EnrichmentType, type Pathway } from "@/lib/hitlStore";
+import { isRunSuccessful, ENRICHMENT_STATUS_LABELS, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, NODE_LABELS, isRunActive, useHitlStore, type EnrichmentRun, type EnrichmentRunStatus, type EnrichmentType, type Pathway } from "@/lib/hitlStore";
 import { newBulkJobId, startRun } from "@/lib/mockEnrichment";
 import { cn } from "@/lib/utils";
 
@@ -60,12 +60,21 @@ export function EnrichmentCell({ pathway }: { pathway: Pathway }) {
 
 // --- Row panel ---------------------------------------------------------------
 function RunCounts({ run }: { run: EnrichmentRun }) {
+  // A completed companies run that added nothing is a success state, stated as
+  // such and distinct from a never-run state.
+  if (run.enrichment_type === "companies" && isRunSuccessful(run)) {
+    if (run.items_new === 0) return <span className="text-[10px] text-muted-foreground">No new companies found{run.items_already_known === null ? "" : ` · ${run.items_already_known} already known`}</span>;
+    return <span className="text-[10px] text-muted-foreground">
+      <span className="text-foreground"><ValueCell value={run.items_new} /></span> new · <span className="text-foreground"><ValueCell value={run.items_already_known} /></span> already known
+    </span>;
+  }
   return <span className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
     <span>New <span className="text-foreground"><ValueCell value={run.items_new} /></span></span>
-    <span>Re-confirmed <span className="text-foreground"><ValueCell value={run.items_reconfirmed} /></span></span>
+    <span>Already known <span className="text-foreground"><ValueCell value={run.items_already_known} /></span></span>
     <span>Found <span className="text-foreground"><ValueCell value={run.items_found} /></span></span>
   </span>;
 }
+
 
 function TypeRow({ pathway, type }: { pathway: Pathway; type: EnrichmentType }) {
   const store = useHitlStore();
