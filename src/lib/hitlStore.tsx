@@ -861,6 +861,7 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
   return rows;
 }, []);
 
+const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
 const auditSeed = (id: string, timestamp: string, actor: string, entity_type: AuditEntityType, entity_id: string, field: string | null, prior_value: unknown, new_value: unknown, operation: AuditOperation, extra: Partial<AuditEntry> = {}): AuditEntry => ({
   id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
 });
@@ -917,7 +918,6 @@ const runSeed = (
   items_found: counts.found ?? null, items_new: counts.added ?? null, items_reconfirmed: counts.reconfirmed ?? null,
   error_message: extra.error ?? null,
 });
-const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
 const seedEnrichmentRuns: EnrichmentRun[] = [
   // pw-001 — mixed history, papers never run.
   runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, reconfirmed: 8 }, { completedAt: laterIso(12, 9, 4) }),
