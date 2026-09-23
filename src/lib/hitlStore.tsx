@@ -262,6 +262,10 @@ export interface CompanyNodeLink {
   approved_by: string | null;
 }
 export const nodeLinkTypeLabel = (type: PathwayNodePosition): string => NODE_LABELS[type];
+/** Roles stay exactly: Feedstock supplier, Product manufacturer, Application offtaker. */
+export const companyRoleLabel = (role: CompanyRole): string =>
+  ({ feedstock_supplier: "Feedstock supplier", product_manufacturer: "Product manufacturer", application_offtaker: "Application offtaker" } as const)[role];
+
 const nodeLinkKey = (value: string) => value.trim().toLocaleLowerCase();
 export const companyNodeLinkId = (companyId: string, type: PathwayNodePosition, value: string): string => `${companyId}:${type}:${nodeLinkKey(value).replace(/\s+/g, "-")}`;
 export const companyFoundAt = (company: Company): string => company.found_at ?? company.created_at;
