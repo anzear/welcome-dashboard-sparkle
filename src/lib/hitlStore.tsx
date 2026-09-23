@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { rerunPayloadFor } from "@/lib/mockRerunPayload";
 
 export type ReviewStatus = "review_pending" | "approved" | "rejected";
@@ -918,6 +918,12 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
   const [enrichmentRuns, setEnrichmentRuns] = useState(seedEnrichmentRuns);
+  // Enrichment resolves on a timer, so the callback that fires may be older than
+  // the current state. These refs keep merges reading the latest records.
+  const runsRef = useRef(enrichmentRuns); runsRef.current = enrichmentRuns;
+  const companiesRef = useRef(companies); companiesRef.current = companies;
+  const matchesRef = useRef(paperPatentMatches); matchesRef.current = paperPatentMatches;
+  const pathwaysRef = useRef(pathways); pathwaysRef.current = pathways;
   const currentUser: HitlCurrentUser = useMemo(() => ({ name: "Jon Goriup", role: "Super Admin" }), []);
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
@@ -1031,16 +1037,16 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; reconfirmed: number; seenAgain: number } | null => {
     const payload = rerunPayloadFor(run.pathway_id, run.enrichment_type);
     if (!payload.length) return null;
-    const pathway = pathways.find(item => item.id === run.pathway_id);
+    const pathway = pathwaysRef.current.find(item => item.id === run.pathway_id);
     if (!pathway) return null;
     const timestamp = new Date().toISOString();
     const isCompanies = run.enrichment_type === "companies";
     const kind: "paper" | "patent" = run.enrichment_type === "papers" ? "paper" : "patent";
     const entityType: AuditEntityType = isCompanies ? "company" : kind === "paper" ? "paper_match" : "patent_match";
-    const existingCompanies = [...companies];
-    const existingMatches = paperPatentMatches.filter(item => item.kind === kind);
-    let companyIds = companies.map(item => item.id);
-    let matchIds = paperPatentMatches.map(item => item.id);
+    const existingCompanies = [...companiesRef.current];
+    const existingMatches = matchesRef.current.filter(item => item.kind === kind);
+    let companyIds = companiesRef.current.map(item => item.id);
+    let matchIds = matchesRef.current.map(item => item.id);
     let added = 0; let reconfirmed = 0; let seenAgain = 0;
     payload.forEach(item => {
       const existing: (Company | PaperPatentMatch) | null = isCompanies
@@ -1095,11 +1101,11 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       });
     });
     return { found: payload.length, added, reconfirmed, seenAgain };
-  }, [companies, paperPatentMatches, pathways, currentUser.name, recordChange]);
+  }, [currentUser.name, recordChange]);
 
   const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
     const now = new Date().toISOString();
-    const record = enrichmentRuns.find(run => run.run_id === runId) ?? null;
+    const record = runsRef.current.find(run => run.run_id === runId) ?? null;
     // A failed run merges nothing; a successful run with a seeded payload takes
     // its counts from the merge itself.
     const merge = record && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
@@ -1126,7 +1132,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       enrichment_type: record.enrichment_type, trigger_mode: record.trigger_mode, bulk_job_id: record.bulk_job_id,
       note: effective.error_message,
     });
-  }, [enrichmentRuns, recordChange, mergeRerunPayload]);
+  }, [recordChange, mergeRerunPayload]);
 
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
