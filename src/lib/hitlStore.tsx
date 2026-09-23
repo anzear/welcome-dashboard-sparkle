@@ -185,7 +185,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run";
+export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
 export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again";
 export const STALENESS_DAYS = 180;
 
@@ -861,6 +861,7 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
   return rows;
 }, []);
 
+const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
 const auditSeed = (id: string, timestamp: string, actor: string, entity_type: AuditEntityType, entity_id: string, field: string | null, prior_value: unknown, new_value: unknown, operation: AuditOperation, extra: Partial<AuditEntry> = {}): AuditEntry => ({
   id, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: actor, trace_id: `tr_seed${id.slice(-3)}91de7c`, timestamp, actor, entity_type, entity_id, field, prior_value, new_value, operation, note: null, reverts_entry_id: null, ...extra,
 });
@@ -882,6 +883,21 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "approved", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
+  // --- Enrichment audit trail (Prompts 43–46) -------------------------------
+  // One completed bulk job: parent entry plus child runs (completed, failed, skipped).
+  auditSeed("audit-030", iso(16, 9), "Anže", "bulk_job", "bulk-2026-09-16-a", "bulk_selection", null, { types: ["companies", "papers", "patents", "indicators"], pathway_count: 2, pathway_ids: ["pw-005", "pw-006"], node_filter: { feedstock: "Corn starch", product: null }, runs_started: 4, runs_skipped: 1 }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", note: "Bulk enrichment triggered from the Pathways table" }),
+  auditSeed("audit-031", iso(16, 9), "Anže", "enrichment_run", "run-012", null, null, { pathway_id: "pw-005", enrichment_type: "companies", status: "queued" }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies" }),
+  auditSeed("audit-032", laterIso(16, 9, 5), "Anže", "enrichment_run", "run-012", "status", "running", { status: "completed", items_found: 10, items_new: 10, items_reconfirmed: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies" }),
+  auditSeed("audit-033", laterIso(16, 9, 6), "Anže", "enrichment_run", "run-013", "status", "running", { status: "completed", items_found: 4, items_new: 2, items_reconfirmed: 2 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "papers" }),
+  auditSeed("audit-034", laterIso(16, 9, 7), "Anže", "enrichment_run", "run-014", "status", "running", { status: "completed", items_found: 0, items_new: 0, items_reconfirmed: 0 }, "enrich_complete", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "indicators" }),
+  auditSeed("audit-035", laterIso(16, 9, 8), "Anže", "enrichment_run", "run-017", "status", "running", { status: "failed", error_message: "Patent source rejected the bulk request", items_found: null, items_new: null, items_reconfirmed: null }, "enrich_fail", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "patents", note: "Patent source rejected the bulk request" }),
+  auditSeed("audit-036", iso(16, 9), "Anže", "bulk_job", "bulk-2026-09-16-a", "skipped", null, { pathway_id: "pw-006", enrichment_type: "companies", reason: "skipped" }, "enrich_trigger", { bulk_job_id: "bulk-2026-09-16-a", trigger_mode: "bulk", enrichment_type: "companies", note: "Skipped — a companies run was already in flight" }),
+  // Single-run enrichment by a second user, with merge outcomes.
+  auditSeed("audit-037", iso(20, 11), "Jon Goriup", "enrichment_run", "run-002", null, null, { pathway_id: "pw-001", enrichment_type: "patents", status: "queued" }, "enrich_trigger", { trigger_mode: "single", enrichment_type: "patents" }),
+  auditSeed("audit-038", laterIso(20, 11, 3), "Jon Goriup", "enrichment_run", "run-002", "status", "running", { status: "completed", items_found: 9, items_new: 3, items_reconfirmed: 6 }, "enrich_complete", { trigger_mode: "single", enrichment_type: "patents" }),
+  auditSeed("audit-039", laterIso(20, 11, 3), "Jon Goriup", "patent_match", "pp-002", "last_reconfirmed_at", null, laterIso(20, 11, 3), "reconfirm", { trigger_mode: "single", enrichment_type: "patents", note: "Re-confirmed by run run-002" }),
+  auditSeed("audit-040", laterIso(20, 11, 3), "Jon Goriup", "company", "co-001", "seen_again_count", 0, 1, "seen_again", { trigger_mode: "single", enrichment_type: "companies", note: "Previously rejected record found again by run run-001" }),
+  auditSeed("audit-041", laterIso(22, 8, 1), "Jon Goriup", "enrichment_run", "run-007", "status", "running", { status: "failed", error_message: "Patent source timed out before returning results", items_found: null, items_new: null, items_reconfirmed: null }, "enrich_fail", { trigger_mode: "single", enrichment_type: "patents", note: "Patent source timed out before returning results" }),
 ];
 
 // ---------------------------------------------------------------------------
@@ -902,7 +918,6 @@ const runSeed = (
   items_found: counts.found ?? null, items_new: counts.added ?? null, items_reconfirmed: counts.reconfirmed ?? null,
   error_message: extra.error ?? null,
 });
-const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
 const seedEnrichmentRuns: EnrichmentRun[] = [
   // pw-001 — mixed history, papers never run.
   runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, reconfirmed: 8 }, { completedAt: laterIso(12, 9, 4) }),
@@ -924,6 +939,7 @@ const seedEnrichmentRuns: EnrichmentRun[] = [
   // pw-006 — bulk job history across two types.
   runSeed("run-013", "pw-006", "papers", "completed", iso(16, 9), { found: 4, added: 2, reconfirmed: 2 }, { completedAt: laterIso(16, 9, 6), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
   runSeed("run-014", "pw-006", "indicators", "completed", iso(16, 9), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 7), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-017", "pw-005", "patents", "failed", iso(16, 9), {}, { completedAt: laterIso(16, 9, 8), error: "Patent source rejected the bulk request", mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
   // pw-009 / pw-010 — sparse single-type histories.
   runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(11, 13, 2) }),
   runSeed("run-016", "pw-010", "patents", "failed", iso(14, 10), {}, { completedAt: laterIso(14, 10, 1), error: "Patent family lookup rejected the request" }),
@@ -986,7 +1002,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, group: groups, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
-      enrichment_run: enrichmentRuns, indicator_run: indicatorRuns,
+      enrichment_run: enrichmentRuns, indicator_run: indicatorRuns, bulk_job: [],
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
   }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns, indicatorRuns]);

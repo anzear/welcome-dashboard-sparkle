@@ -73,7 +73,7 @@ export function RecordHistoryList({ entityType, entityId }: { entityType: AuditE
   </>;
 }
 
-const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value", enrichment_run: "Enrichment run", indicator_run: "Indicator run" };
+const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value", enrichment_run: "Enrichment run", indicator_run: "Indicator run", bulk_job: "Bulk job" };
 function GroupIdList({ ids }: { ids: unknown }) {
   const list = Array.isArray(ids) ? ids.filter((value): value is string => typeof value === "string") : typeof ids === "string" ? [ids] : [];
   if (list.length === 0) return <span className="text-muted-foreground">No groups</span>;

@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ValueCell } from "@/components/hitl/ReviewPrimitives";
+import { useNodeFilter } from "@/components/hitl/NodeFilterBar";
 import { ENRICHMENT_STATUS_LABELS, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, NODE_LABELS, isRunActive, useHitlStore, type EnrichmentRun, type EnrichmentRunStatus, type EnrichmentType, type Pathway } from "@/lib/hitlStore";
 import { newBulkJobId, startRun } from "@/lib/mockEnrichment";
 import { cn } from "@/lib/utils";
@@ -196,6 +197,7 @@ export function BulkEnrichDialog({ open, pathwayIds, onClose, afterStart }: { op
   const store = useHitlStore();
   const runner = useRunner();
   const { setJob } = useBulkEnrichmentJob();
+  const nodeFilter = useNodeFilter();
   const [types, setTypes] = useState<EnrichmentType[]>(ENRICHMENT_TYPES);
   const allSelected = types.length === ENRICHMENT_TYPES.length;
   const confirm = () => {
@@ -208,6 +210,12 @@ export function BulkEnrichDialog({ open, pathwayIds, onClose, afterStart }: { op
       startRun(runner, { pathway_id: pathwayId, enrichment_type: type, trigger_mode: "bulk", bulk_job_id: bulkJobId });
       started += 1;
     }));
+    store.recordChange({
+      entity_type: "bulk_job", entity_id: bulkJobId, field: "bulk_selection", prior_value: null,
+      new_value: { types, pathway_count: pathwayIds.length, pathway_ids: pathwayIds, node_filter: { feedstock: nodeFilter.feedstock || null, product: nodeFilter.product || null }, runs_started: started, runs_skipped: skipped },
+      operation: "enrich_trigger", trigger_mode: "bulk", bulk_job_id: bulkJobId,
+      note: "Bulk enrichment triggered from the Pathways table",
+    });
     setJob({ bulk_job_id: bulkJobId, pathway_ids: pathwayIds, types, total: started, skipped, started_at: new Date().toISOString() });
     toast.success(`${started} enrichment run${started === 1 ? "" : "s"} queued${skipped ? ` · ${skipped} skipped (already running)` : ""}`);
     onClose(); afterStart?.();

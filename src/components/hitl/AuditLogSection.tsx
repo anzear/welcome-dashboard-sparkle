@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { History, Undo2 } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight, History, Undo2 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,18 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { DerivedPathwaysForRecord, GroupChip, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TargetRef, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
-import { FIELD_LABELS, nodeListMatches, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type MethodTag } from "@/lib/hitlStore";
+import { ActorStamp, DerivedPathwaysForRecord, GroupChip, NodeChips, NodeFilterEmpty, OperationChip, PathwayRef, RoleNodeLine, ScopeChip, ScopeSummary, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, TargetRef, ValueCell, ValueDiff, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, FIELD_LABELS, nodeListMatches, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, groupById, indicatorLabel, methodTagLabel, rolePosition, useHitlStore, type AuditEntityType, type AuditEntry, type AuditOperation, type EnrichmentType, type MethodTag } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
 const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "pathway", label: "Pathway" }, { value: "group", label: "Group" }, { value: "company", label: "Company" },
   { value: "paper_match", label: "Paper match" }, { value: "patent_match", label: "Patent match" },
   { value: "indicator_value", label: "Indicator value" }, { value: "enrichment_run", label: "Enrichment run" },
+  { value: "bulk_job", label: "Bulk job" },
 ];
-const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail"];
+const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail", "reconfirm", "seen_again"];
+const operationLabel = (operation: string) => operation.replace(/_/g, " ");
 const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function AuditLogSection() {
@@ -29,6 +31,9 @@ export function AuditLogSection() {
   const [entity, setEntity] = useState("all");
   const [operation, setOperation] = useState("all");
   const [actor, setActor] = useState("all");
+  const [enrichmentType, setEnrichmentType] = useState("all");
+  const [bulkJob, setBulkJob] = useState("all");
+  const [expandedJobs, setExpandedJobs] = useState<string[]>([]);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);
@@ -53,12 +58,34 @@ export function AuditLogSection() {
   const filtered = useMemo(() => store.auditEntries.filter(item => {
     const haystack = [item.entity_id, item.actor, item.field, item.note].join(" ").toLowerCase();
     const time = new Date(item.timestamp).getTime();
-    return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
-  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companies, store.pathways, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, from, to, nodeFilter.feedstock, nodeFilter.product]);
-  const pages = Math.max(1, Math.ceil(filtered.length / 25));
-  useEffect(() => setPage(1), [search, entity, operation, actor, from, to]);
+    return matchesNodeFilter(item) && (!search || haystack.includes(search.toLowerCase())) && (entity === "all" || item.entity_type === entity) && (operation === "all" || item.operation === operation) && (enrichmentType === "all" || item.enrichment_type === enrichmentType) && (bulkJob === "all" || item.bulk_job_id === bulkJob) && (actor === "all" || item.actor === actor) && (!from || time >= new Date(`${from}T00:00:00`).getTime()) && (!to || time <= new Date(`${to}T23:59:59.999`).getTime());
+  }).sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [store.auditEntries, store.companies, store.pathways, store.paperPatentMatches, store.indicatorValues, search, entity, operation, actor, enrichmentType, bulkJob, from, to, nodeFilter.feedstock, nodeFilter.product]);
+  const bulkParents = useMemo(() => filtered.filter(item => item.entity_type === "bulk_job" && item.field === "bulk_selection"), [filtered]);
+  const parentJobIds = useMemo(() => new Set(bulkParents.map(item => item.bulk_job_id ?? item.entity_id)), [bulkParents]);
+  const grouped = useMemo(() => {
+    const result: { item: AuditEntry; children: AuditEntry[] }[] = [];
+    filtered.forEach(item => {
+      const jobId = item.bulk_job_id ?? null;
+      if (item.entity_type === "bulk_job" && item.field === "bulk_selection") {
+        const id = jobId ?? item.entity_id;
+        result.push({ item, children: filtered.filter(child => child.id !== item.id && child.bulk_job_id === id) });
+        return;
+      }
+      if (jobId && parentJobIds.has(jobId)) return;
+      result.push({ item, children: [] });
+    });
+    return result;
+  }, [filtered, parentJobIds]);
+  const bulkJobOptions = useMemo(() => [...new Set(store.auditEntries.map(item => item.bulk_job_id).filter((id): id is string => Boolean(id)))].map(id => {
+    const runs = store.runsForBulkJob(id);
+    const entries = store.auditEntries.filter(item => item.bulk_job_id === id);
+    const started = runs[runs.length - 1]?.triggered_at ?? entries[0]?.timestamp ?? null;
+    return { id, runs: runs.length, date: started ? format(new Date(started), "dd MMM yyyy") : "—" };
+  }).sort((a, b) => a.id.localeCompare(b.id)), [store.auditEntries, store.enrichmentRuns]);
+  const pages = Math.max(1, Math.ceil(grouped.length / 25));
+  useEffect(() => setPage(1), [search, entity, operation, actor, enrichmentType, bulkJob, from, to]);
   useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
-  const rows = filtered.slice((page - 1) * 25, page * 25);
+  const rows = grouped.slice((page - 1) * 25, page * 25);
   const selectedEntries = selected.map(id => store.auditEntries.find(item => item.id === id)).filter((item): item is AuditEntry => Boolean(item));
   const selectedStates = selectedEntries.map(item => ({ item, reverted: store.revertedBy(item), intervening: store.isSuperseded(item) }));
   const bulkSuperseded = selectedStates.some(state => !state.reverted && state.intervening.length > 0);
@@ -70,7 +97,7 @@ export function AuditLogSection() {
     if (item.entity_type === "enrichment_run") return store.enrichmentRuns.find(run => run.run_id === item.entity_id)?.pathway_id ?? null;
     return null;
   };
-  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setFrom(""); setTo(""); };
+  const reset = () => { setSearch(""); setEntity("all"); setOperation("all"); setActor("all"); setEnrichmentType("all"); setBulkJob("all"); setFrom(""); setTo(""); };
   const doRevert = () => {
     if (!confirm) return;
     const entry = store.revertEntry(confirm.id);
@@ -98,7 +125,7 @@ export function AuditLogSection() {
     const entry = store.recordChange({ entity_type: "indicator_value", entity_id: target.id, field: "value", prior_value: target.value, new_value: value, operation: "update", trace_id: `tr_${Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}` });
     toast.success(`Pipeline change written — ${entry.id}`);
   };
-  const filtersActive = Boolean(search || entity !== "all" || operation !== "all" || actor !== "all" || from || to);
+  const filtersActive = Boolean(search || entity !== "all" || operation !== "all" || actor !== "all" || enrichmentType !== "all" || bulkJob !== "all" || from || to);
   const renderEntitySummary = (item: AuditEntry) => {
     const evidence = item.entity_type === "paper_match" || item.entity_type === "patent_match" ? store.paperPatentMatches.find(match => match.id === item.entity_id) : null;
     const company = item.entity_type === "company" ? store.companies.find(row => row.id === item.entity_id) : null;
@@ -106,12 +133,65 @@ export function AuditLogSection() {
     const group = item.entity_type === "group" ? groupById(store.groups, item.entity_id) : null;
     return <div className="space-y-1"><div className="flex items-center gap-2"><span className="inline-flex h-6 items-center gap-1 whitespace-nowrap rounded border px-2 text-xs text-muted-foreground">{entityTypes.find(type => type.value === item.entity_type)?.label}</span><Button variant="link" className="h-auto p-0 font-mono text-[10px]" onClick={() => openHistory(item.entity_type, item.entity_id)}>{item.entity_id}</Button></div>{company ? <div className="max-w-[520px] space-y-1"><span className="block truncate font-medium">{company.name}</span><RoleNodeLine company={company} compact /></div> : evidence ? <div className="max-w-[520px] space-y-1"><span className="block truncate font-medium">{evidence.title}</span><div className="flex flex-wrap items-center gap-1"><NodeChips nodes={evidence.nodes} compact /><DerivedPathwaysForRecord match={evidence} /><ScopeSummary match={evidence} /></div></div> : indicatorValue ? <div className="max-w-[520px] space-y-1"><div className="flex flex-wrap items-center gap-2"><ScopeChip scope={indicatorValue.scope} /><span className="font-medium">{indicatorLabel(indicatorValue.indicator_key)}</span></div><div className="max-w-[520px] text-muted-foreground"><TargetRef iv={indicatorValue} /></div></div> : group ? <GroupChip group={group} /> : relatedPathwayId(item) ? <div className="max-w-[420px] text-muted-foreground"><PathwayRef pathwayId={relatedPathwayId(item) ?? ""} variant="inline" showId={item.entity_type !== "pathway"} /></div> : null}</div>;
   };
+  const enrichmentCounts = (value: unknown) => {
+    if (!value || typeof value !== "object") return null;
+    const payload = value as Record<string, unknown>;
+    if (!("items_found" in payload) && !("items_new" in payload) && !("items_reconfirmed" in payload)) return null;
+    const cell = (label: string, key: string) => <span className="inline-flex items-center gap-1"><span className="uppercase tracking-widest text-[9px] text-muted-foreground">{label}</span><ValueCell value={(payload[key] ?? null) as number | null} /></span>;
+    return <div className="flex flex-wrap items-center gap-3">{cell("Found", "items_found")}{cell("New", "items_new")}{cell("Re-confirmed", "items_reconfirmed")}</div>;
+  };
+  const renderChange = (item: AuditEntry) => {
+    if (item.entity_type === "bulk_job" && item.field === "bulk_selection") {
+      const payload = (item.new_value ?? {}) as { types?: string[]; pathway_count?: number; node_filter?: { feedstock: string | null; product: string | null }; runs_started?: number | null; runs_skipped?: number | null };
+      const nodes = payload.node_filter;
+      return <div className="space-y-1">
+        <div className="flex flex-wrap items-center gap-1">{(payload.types ?? []).map(type => <span key={type} className="inline-flex h-5 items-center rounded border px-1.5 text-[9px] uppercase tracking-widest text-muted-foreground">{ENRICHMENT_TYPE_LABELS[type as EnrichmentType] ?? type}</span>)}</div>
+        <div className="text-muted-foreground">{payload.pathway_count ?? 0} Pathway{(payload.pathway_count ?? 0) === 1 ? "" : "s"} selected · started <ValueCell value={payload.runs_started ?? null} /> · skipped <ValueCell value={payload.runs_skipped ?? null} /></div>
+        <div className="text-muted-foreground">Node filter: {nodes?.feedstock ?? "—"} → {nodes?.product ?? "—"}</div>
+      </div>;
+    }
+    const counts = enrichmentCounts(item.new_value);
+    if (counts) return counts;
+    return <ValueDiff prior_value={diffValue(item, item.prior_value)} new_value={diffValue(item, item.new_value)} />;
+  };
+  const renderRow = (item: AuditEntry, options: { isParent?: boolean; isChild?: boolean; childCount?: number; expanded?: boolean; onToggle?: () => void } = {}) => {
+    const undo = store.revertedBy(item);
+    const appendOnly = item.entity_type === "enrichment_run" || item.entity_type === "bulk_job" || item.operation === "reconfirm" || item.operation === "seen_again";
+    return <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", undo && "border-l-2 border-l-muted-foreground", options.isParent && "bg-muted/40", options.isChild && "bg-muted/10")}>
+      <TableCell className="sticky left-0 z-10 bg-background"><Checkbox aria-label={`Select ${item.id}`} checked={selected.includes(item.id)} onCheckedChange={checked => setSelected(ids => checked ? [...ids, item.id] : ids.filter(id => id !== item.id))} /></TableCell>
+      <TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell>
+      <TableCell><ActorStamp name={item.actor} timestamp={item.timestamp} /></TableCell>
+      <TableCell className="min-w-[18rem]"><div className={cn("flex items-start gap-2", options.isChild && "pl-6")}>
+        {options.isParent && <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={options.expanded ? `Collapse runs for ${item.bulk_job_id ?? item.entity_id}` : `Expand runs for ${item.bulk_job_id ?? item.entity_id}`} onClick={options.onToggle}>{options.expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}</Button>}
+        <div className="space-y-1">
+          {renderEntitySummary(item)}
+          {options.isParent && <button type="button" className="text-[10px] text-muted-foreground underline-offset-2 hover:underline" onClick={options.onToggle}>{options.childCount} run entr{options.childCount === 1 ? "y" : "ies"}</button>}
+        </div>
+      </div></TableCell>
+      <TableCell className="min-w-32 whitespace-nowrap"><OperationChip operation={item.operation} /></TableCell>
+      <TableCell className="font-mono">{item.enrichment_type ? ENRICHMENT_TYPE_LABELS[item.enrichment_type] : fieldLabel(item.field)}</TableCell>
+      <TableCell>{renderChange(item)}</TableCell>
+      <TableCell className="max-w-48 truncate italic text-muted-foreground">{item.entity_type === "company" ? item.note?.replace(/evidence/gi, "relevance") ?? "—" : item.note ?? "—"}</TableCell>
+      <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end gap-1">
+        <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`History for ${item.id}`} onClick={() => openHistory(item.entity_type, item.entity_id)}><History className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>History</TooltipContent></Tooltip>
+        <Tooltip><TooltipTrigger asChild><span><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Revert ${item.id}`} disabled={Boolean(undo) || appendOnly} onClick={() => setConfirm(item)}><Undo2 className="h-3.5 w-3.5" /></Button></span></TooltipTrigger><TooltipContent>{undo ? `Reverted by ${undo.id}` : appendOnly ? "Enrichment entries are append-only" : "Revert"}</TooltipContent></Tooltip>
+      </div></TableCell>
+    </TableRow>;
+  };
   const intervening = confirm ? store.isSuperseded(confirm) : [];
   const confirmRevertedBy = confirm ? store.revertedBy(confirm) : null;
   return <div>
-    <SectionToolbar title="Audit Log" description="Review every action, field change and reverted operation." filtersActive={filtersActive} onReset={reset} count={filtered.length} total={store.auditEntries.length} actions={<Button variant="outline" size="sm" className="h-9 text-xs" onClick={exportCsv}>Export CSV</Button>} filters={<><SectionSearch value={search} onChange={setSearch} placeholder="Search audit entries…" /><SectionFilterSelect value={entity} onChange={setEntity} label="Entity type"><SelectItem value="all">All entity types</SelectItem>{entityTypes.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={operation} onChange={setOperation} label="Operation"><SelectItem value="all">All operations</SelectItem>{operations.map(item => <SelectItem key={item} value={item}>{item.replace("_", " ")}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={actor} onChange={setActor} label="Actor"><SelectItem value="all">All actors</SelectItem>{actors.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SectionFilterSelect><div className="flex h-9 shrink-0 items-center overflow-hidden rounded-md border"><Input aria-label="From date" type="date" value={from} onChange={event => setFrom(event.target.value)} className="h-9 w-36 rounded-none border-0 text-[10px]" /><span className="text-xs text-muted-foreground">–</span><Input aria-label="To date" type="date" value={to} onChange={event => setTo(event.target.value)} className="h-9 w-36 rounded-none border-0 text-[10px]" /></div></>} bulkBar={<SectionBulkBar count={selected.length} onClear={() => setSelected([])}><Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setAcknowledged(false); setBulkConfirm(true); }}>Revert selected</Button></SectionBulkBar>} />
+    <SectionToolbar title="Audit Log" description="Review every action, field change and reverted operation." filtersActive={filtersActive} onReset={reset} count={filtered.length} total={store.auditEntries.length} actions={<Button variant="outline" size="sm" className="h-9 text-xs" onClick={exportCsv}>Export CSV</Button>} filters={<><SectionSearch value={search} onChange={setSearch} placeholder="Search audit entries…" /><SectionFilterSelect value={entity} onChange={setEntity} label="Entity type"><SelectItem value="all">All entity types</SelectItem>{entityTypes.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={operation} onChange={setOperation} label="Operation"><SelectItem value="all">All operations</SelectItem>{operations.map(item => <SelectItem key={item} value={item}>{operationLabel(item)}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={actor} onChange={setActor} label="Actor"><SelectItem value="all">All actors</SelectItem>{actors.map(item => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={enrichmentType} onChange={setEnrichmentType} label="Enrichment type"><SelectItem value="all">All enrichment types</SelectItem>{ENRICHMENT_TYPES.map(item => <SelectItem key={item} value={item}>{ENRICHMENT_TYPE_LABELS[item as EnrichmentType]}</SelectItem>)}</SectionFilterSelect><SectionFilterSelect value={bulkJob} onChange={setBulkJob} label="Bulk job"><SelectItem value="all">All bulk jobs</SelectItem>{bulkJobOptions.map(item => <SelectItem key={item.id} value={item.id}>{`${item.id} · ${item.runs} run${item.runs === 1 ? "" : "s"} · ${item.date}`}</SelectItem>)}</SectionFilterSelect><div className="flex h-9 shrink-0 items-center overflow-hidden rounded-md border"><Input aria-label="From date" type="date" value={from} onChange={event => setFrom(event.target.value)} className="h-9 w-36 rounded-none border-0 text-[10px]" /><span className="text-xs text-muted-foreground">–</span><Input aria-label="To date" type="date" value={to} onChange={event => setTo(event.target.value)} className="h-9 w-36 rounded-none border-0 text-[10px]" /></div></>} bulkBar={<SectionBulkBar count={selected.length} onClear={() => setSelected([])}><Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { setAcknowledged(false); setBulkConfirm(true); }}>Revert selected</Button></SectionBulkBar>} />
     <div className="overflow-x-auto"><Table className="min-w-[1320px]"><TableHeader><TableRow><TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox aria-label="Select all audit entries" checked={filtered.length > 0 && filtered.every(item => selected.includes(item.id))} onCheckedChange={checked => setSelected(checked ? filtered.map(item => item.id) : [])} /></TableHead><TableHead className="min-w-40">Timestamp</TableHead><TableHead>Actor</TableHead><TableHead className="min-w-[18rem] whitespace-nowrap">Entity</TableHead><TableHead className="min-w-32 whitespace-nowrap">Operation</TableHead><TableHead className="min-w-32">Field</TableHead><TableHead className="min-w-64">Change</TableHead><TableHead className="min-w-48">Note</TableHead><TableHead className="sticky right-0 z-20 min-w-24 bg-background text-right">Actions</TableHead></TableRow></TableHeader><TableBody>
-      {rows.map(item => { const undo = store.revertedBy(item); return <TableRow key={item.id} className={cn("text-[10px]", item.operation === "revert" && "border-l-2 border-l-warning", undo && "border-l-2 border-l-muted-foreground")}><TableCell className="sticky left-0 z-10 bg-background"><Checkbox aria-label={`Select ${item.id}`} checked={selected.includes(item.id)} onCheckedChange={checked => setSelected(ids => checked ? [...ids, item.id] : ids.filter(id => id !== item.id))} /></TableCell><TableCell className="whitespace-nowrap font-mono">{format(new Date(item.timestamp), "dd MMM yyyy, HH:mm:ss")}</TableCell><TableCell>{item.actor}</TableCell><TableCell className="min-w-[18rem]">{renderEntitySummary(item)}</TableCell><TableCell className="min-w-32 whitespace-nowrap"><OperationChip operation={item.operation} /></TableCell><TableCell className="font-mono">{fieldLabel(item.field)}</TableCell><TableCell><ValueDiff prior_value={diffValue(item, item.prior_value)} new_value={diffValue(item, item.new_value)} /></TableCell><TableCell className="max-w-48 truncate italic text-muted-foreground">{item.entity_type === "company" ? item.note?.replace(/evidence/gi, "relevance") ?? "—" : item.note ?? "—"}</TableCell><TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end gap-1"><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`History for ${item.id}`} onClick={() => openHistory(item.entity_type, item.entity_id)}><History className="h-3.5 w-3.5" /></Button></TooltipTrigger><TooltipContent>History</TooltipContent></Tooltip><Tooltip><TooltipTrigger asChild><span><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Revert ${item.id}`} disabled={Boolean(undo) || item.entity_type === "enrichment_run"} onClick={() => setConfirm(item)}><Undo2 className="h-3.5 w-3.5" /></Button></span></TooltipTrigger><TooltipContent>{undo ? `Reverted by ${undo.id}` : item.entity_type === "enrichment_run" ? "Enrichment runs are append-only" : "Revert"}</TooltipContent></Tooltip></div></TableCell></TableRow>; })}
+      {rows.map(({ item, children }) => {
+        const jobId = item.bulk_job_id ?? item.entity_id;
+        const isParent = item.entity_type === "bulk_job" && item.field === "bulk_selection";
+        const open = expandedJobs.includes(jobId);
+        return <Fragment key={item.id}>
+          {renderRow(item, { isParent, childCount: children.length, expanded: open, onToggle: () => setExpandedJobs(ids => ids.includes(jobId) ? ids.filter(id => id !== jobId) : [...ids, jobId]) })}
+          {isParent && open && children.map(child => renderRow(child, { isChild: true }))}
+        </Fragment>;
+      })}
       {rows.length === 0 && <TableRow><TableCell colSpan={9} className="p-0">{nodeFilter.isActive ? <NodeFilterEmpty rows="audit entries" /> : <div className="flex h-32 items-center justify-center text-xs text-muted-foreground">No audit entries match these filters.</div>}</TableCell></TableRow>}
     </TableBody></Table></div>
     <div className="flex items-center justify-between border-t px-4 py-3"><span className="text-[10px] text-muted-foreground">Page {page} of {pages}</span><div className="flex gap-1"><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Previous</Button><Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={page === pages} onClick={() => setPage(value => value + 1)}>Next</Button></div></div>
