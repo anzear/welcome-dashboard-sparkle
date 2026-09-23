@@ -751,6 +751,53 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];
 
+// ---------------------------------------------------------------------------
+// Seeded enrichment runs. Covers never-run, zero-result, failed-after-success
+// and in-flight states so every display state is visible without clicking.
+// ---------------------------------------------------------------------------
+const runSeed = (
+  runId: string, pathwayId: string, type: EnrichmentType, status: EnrichmentRunStatus, triggeredAt: string,
+  counts: { found?: number | null; added?: number | null; reconfirmed?: number | null } = {},
+  extra: { completedAt?: string | null; error?: string | null; actor?: string; mode?: EnrichmentTriggerMode; bulkJobId?: string | null } = {},
+): EnrichmentRun => ({
+  id: runId, created_at: triggeredAt, updated_at: extra.completedAt ?? triggeredAt, status_changed_at: extra.completedAt ?? triggeredAt,
+  last_actor: extra.actor ?? "Anže", trace_id: null,
+  run_id: runId, pathway_id: pathwayId, enrichment_type: type, status,
+  trigger_mode: extra.mode ?? "single", bulk_job_id: extra.bulkJobId ?? null,
+  triggered_by: extra.actor ?? "Anže", triggered_at: triggeredAt,
+  completed_at: extra.completedAt ?? null,
+  items_found: counts.found ?? null, items_new: counts.added ?? null, items_reconfirmed: counts.reconfirmed ?? null,
+  error_message: extra.error ?? null,
+});
+const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
+const seedEnrichmentRuns: EnrichmentRun[] = [
+  // pw-001 — mixed history, papers never run.
+  runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, reconfirmed: 8 }, { completedAt: laterIso(12, 9, 4) }),
+  runSeed("run-002", "pw-001", "patents", "completed", iso(20, 11), { found: 9, added: 3, reconfirmed: 6 }, { completedAt: laterIso(20, 11, 3) }),
+  runSeed("run-003", "pw-001", "indicators", "completed_with_errors", iso(18, 14), { found: 7, added: 2, reconfirmed: 4 }, { completedAt: laterIso(18, 14, 5), actor: "Jon Goriup" }),
+  // pw-002 — companies run that found nothing (success, zero results).
+  runSeed("run-004", "pw-002", "companies", "completed", iso(21, 10), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(21, 10, 2), actor: "Jon Goriup" }),
+  runSeed("run-005", "pw-002", "papers", "completed", iso(15, 12), { found: 5, added: 5, reconfirmed: 0 }, { completedAt: laterIso(15, 12, 3) }),
+  // pw-003 — failed patents run with an earlier successful patents run.
+  runSeed("run-006", "pw-003", "patents", "completed", iso(13, 9), { found: 11, added: 7, reconfirmed: 4 }, { completedAt: laterIso(13, 9, 6) }),
+  runSeed("run-007", "pw-003", "patents", "failed", iso(22, 8), {}, { completedAt: laterIso(22, 8, 1), error: "Patent source timed out before returning results", actor: "Jon Goriup" }),
+  runSeed("run-008", "pw-003", "companies", "completed", iso(19, 16), { found: 12, added: 4, reconfirmed: 8 }, { completedAt: laterIso(19, 16, 4) }),
+  // pw-004 — a run still in flight on page load.
+  runSeed("run-009", "pw-004", "indicators", "running", laterIso(23, 10, 40), {}, { actor: "Jon Goriup" }),
+  runSeed("run-010", "pw-004", "companies", "completed", iso(17, 11), { found: 8, added: 2, reconfirmed: 6 }, { completedAt: laterIso(17, 11, 3) }),
+  // pw-005 — patents recently, papers never.
+  runSeed("run-011", "pw-005", "patents", "completed", iso(22, 15), { found: 6, added: 1, reconfirmed: 5 }, { completedAt: laterIso(22, 15, 3) }),
+  runSeed("run-012", "pw-005", "companies", "completed", iso(16, 9), { found: 10, added: 10, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 5), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  // pw-006 — bulk job history across two types.
+  runSeed("run-013", "pw-006", "papers", "completed", iso(16, 9), { found: 4, added: 2, reconfirmed: 2 }, { completedAt: laterIso(16, 9, 6), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-014", "pw-006", "indicators", "completed", iso(16, 9), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 7), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  // pw-009 / pw-010 — sparse single-type histories.
+  runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(11, 13, 2) }),
+  runSeed("run-016", "pw-010", "patents", "failed", iso(14, 10), {}, { completedAt: laterIso(14, 10, 1), error: "Patent family lookup rejected the request" }),
+  // pw-007 has zero runs of any type.
+];
+export const sortRunsNewestFirst = (runs: EnrichmentRun[]) => [...runs].sort((a, b) => +new Date(b.triggered_at) - +new Date(a.triggered_at));
+
 interface HitlStoreValue {
   currentUser: HitlCurrentUser;
   pathways: Pathway[];
