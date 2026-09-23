@@ -17,10 +17,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
-import { NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ComputedChip, IndicatorRunHistoryButton, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
   INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
-  affectedPathwayIds, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel, unitForStorage,
+  affectedPathwayIds, computedIndicatorId, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel, unitForStorage,
   indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
   sameSources, sourceDisplay, type IndicatorDefinition, type IndicatorScope, type IndicatorSource, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
 } from "@/lib/hitlStore";
@@ -75,11 +75,40 @@ function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat
   return <TableHeader><TableRow>
     <TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
     {variant === "flat" && <><TableHead className="min-w-36 whitespace-nowrap">Scope</TableHead><TableHead>Target</TableHead></>}
-    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
+    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="whitespace-nowrap">Approved run value</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
     <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
     <TableHead>Note</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
+}
+
+// The indicator value comes only from the most recent approved run — never an
+// unapproved run and never a blend of runs.
+function RunCell({ item }: { item: IndicatorValue }) {
+  const store = useHitlStore();
+  const runs = store.runsForIndicator(item.id);
+  return <span className="inline-flex items-center gap-1">
+    <IndicatorRunValue runs={runs} />
+    <IndicatorRunHistoryButton target={{ indicatorId: item.id, indicatorKey: item.indicator_key, readOnly: false, recordId: item.id }} count={runs.length} />
+  </span>;
+}
+
+// Computed count indicators are read-only: run history, no review actions.
+function ComputedRunRow({ definition, pathwayId, contextLabel }: { definition: IndicatorDefinition; pathwayId: string | null; contextLabel: string | null }) {
+  const store = useHitlStore();
+  const indicatorId = pathwayId ? computedIndicatorId(definition.key, pathwayId) : null;
+  const runs = indicatorId ? store.runsForIndicator(indicatorId) : [];
+  return <TableRow className="text-muted-foreground">
+    <TableCell className="sticky left-0 z-10 bg-background" />
+    <TableCell className="whitespace-nowrap text-[10px] font-medium">{definition.label}</TableCell>
+    {Array.from({ length: 3 }, (_, index) => <TableCell key={`computed-pre-${index}`} className="text-[10px]">—</TableCell>)}
+    <TableCell className="whitespace-nowrap">{indicatorId
+      ? <span className="inline-flex items-center gap-1"><IndicatorRunValue runs={runs} /><IndicatorRunHistoryButton target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} /></span>
+      : <span className="text-[10px]">—</span>}</TableCell>
+    <TableCell className="text-[10px]"><ComputedChip /></TableCell>
+    {Array.from({ length: 5 }, (_, index) => <TableCell key={`computed-post-${index}`} className="text-[10px]">—</TableCell>)}
+    <TableCell className="sticky right-0 z-10 bg-background text-right text-[10px] italic">read-only</TableCell>
+  </TableRow>;
 }
 
 function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean, focusSources?: boolean) => void; onClear: () => void }) {
@@ -91,6 +120,7 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
+    <TableCell className="whitespace-nowrap"><RunCell item={item} /></TableCell>
     <TableCell className="cursor-pointer" onClick={() => onCorrect(true)}><Tooltip><TooltipTrigger asChild><span className="block max-w-56 truncate text-[10px]"><ValueCell value={item.justification} /></span></TooltipTrigger>{item.justification && <TooltipContent className="max-w-sm text-xs">{item.justification}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><SourcesPopover sources={item.sources} onEdit={() => onCorrect(false, true)} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
@@ -112,7 +142,7 @@ function NotComputedRow({ label, onAdd }: { label: string; onAdd: () => void }) 
   return <TableRow className="text-muted-foreground">
     <TableCell className="sticky left-0 z-10 bg-background" />
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{label}</TableCell>
-    {Array.from({ length: 6 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
+    {Array.from({ length: 7 }, (_, index) => <TableCell key={`pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap text-[10px] italic">not computed</TableCell>
     {Array.from({ length: 3 }, (_, index) => <TableCell key={`post-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="sticky right-0 z-10 bg-background"><div className="flex justify-end"><Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={onAdd}><Plus className="mr-1 h-3 w-3" />Add value</Button></div></TableCell>
@@ -199,7 +229,10 @@ function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCo
     </div>
     <div className="overflow-x-auto"><Table className="min-w-[1280px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
       {indicatorsForScope(scope).map(definition => {
-        if (definition.computed) return null;
+        if (definition.computed) {
+          const computedPathwayId = affectedPathwayIds({ scope, target }, store.pathways)[0] ?? null;
+          return <ComputedRunRow key={definition.key} definition={definition} pathwayId={computedPathwayId} contextLabel={targetLabel(scope, target)} />;
+        }
         const item = rows.find(row => row.indicator_key === definition.key);
         return item
           ? <IndicatorRow key={definition.key} item={item} variant="grouped" selected={selected.includes(item.id)} onSelect={checked => onSelect(item.id, checked)} onDecision={next => onDecision(item.id, next)} onCorrect={(focus, sources) => onCorrect(item.id, focus, sources)} onClear={() => onClear(item.id)} />
