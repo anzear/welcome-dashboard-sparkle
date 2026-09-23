@@ -817,6 +817,15 @@ interface HitlStoreValue {
   isSuperseded: (entry: AuditEntry) => AuditEntry[];
   revertedBy: (entry: AuditEntry) => AuditEntry | null;
   getRecord: (entityType: AuditEntityType, entityId: string) => HitlRecord | null;
+  enrichmentRuns: EnrichmentRun[];
+  runsForPathway: (pathwayId: string) => EnrichmentRun[];
+  lastRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  lastSuccessfulRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  activeRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  runsForBulkJob: (bulkJobId: string) => EnrichmentRun[];
+  createEnrichmentRun: (input: { pathway_id: string; enrichment_type: EnrichmentType; trigger_mode: EnrichmentTriggerMode; bulk_job_id: string | null }) => EnrichmentRun;
+  markEnrichmentRunRunning: (runId: string) => void;
+  resolveEnrichmentRun: (runId: string, resolution: EnrichmentRunResolution) => void;
 }
 const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 
@@ -827,6 +836,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [paperPatentMatches, setPaperPatentMatches] = useState(seedPaperPatentMatches);
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
+  const [enrichmentRuns, setEnrichmentRuns] = useState(seedEnrichmentRuns);
   const currentUser: HitlCurrentUser = useMemo(() => ({ name: "Jon Goriup", role: "Super Admin" }), []);
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
