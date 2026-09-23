@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { HistorySheetProvider, NodeFilterBar, NodeFilterProvider, RecordHistorySheet, useNodeFilter } from "@/components/hitl";
 import { AuditLogSection } from "@/components/hitl/AuditLogSection";
 import { PathwaysSection } from "@/components/hitl/PathwaysSection";
+import { BulkEnrichmentJobProvider } from "@/components/hitl/EnrichmentControls";
 import { CompaniesSection } from "@/components/hitl/CompaniesSection";
 import { MatchReviewSection } from "@/components/hitl/MatchReviewSection";
 import { IndicatorsSection } from "@/components/hitl/IndicatorsSection";
@@ -100,5 +101,5 @@ function DataReviewContent() {
 }
 
 export default function DataReview() {
-  return <HistorySheetProvider><NodeFilterProvider><DataReviewContent /></NodeFilterProvider></HistorySheetProvider>;
+  return <HistorySheetProvider><NodeFilterProvider><BulkEnrichmentJobProvider><DataReviewContent /></BulkEnrichmentJobProvider></NodeFilterProvider></HistorySheetProvider>;
 }

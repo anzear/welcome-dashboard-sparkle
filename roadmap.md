@@ -153,3 +153,9 @@
 - [x] mockEnrichment.startRun timer simulation with seeded outcomes
 - [x] Audit entries for trigger, complete and fail
 - [x] Seed never-run, zero-result, failed-after-success and in-flight states
+
+## Prompt 44 — Enrichment triggers: table column, row panel, bulk bar
+- [x] Enrichment column with relative time and per-type status dots/spinners
+- [x] Row Enrich sheet: per-type run, Run all shortcut, run history
+- [x] Bulk Enrich dialog with type selection, skip handling and one bulk job id
+- [x] Dismissible bulk progress panel with per-Pathway outcome sheet, persists across sections
