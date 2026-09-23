@@ -78,25 +78,34 @@ export const PathwayEnrichmentPanel: React.FC<Props> = ({ pathwayId, topic, curr
     return () => window.removeEventListener(ENRICHMENT_RUNS_EVENT, handler);
   }, []);
 
+  /** Newest first; records appended later win when timestamps tie. */
+  const pathwayRuns = useMemo(() => {
+    const all = readEnrichmentRuns()
+      .map((run, index) => ({ run, index }))
+      .filter((entry) => entry.run.pathway_id === enrichmentPathwayId);
+    all.sort((a, b) =>
+      a.run.triggered_at === b.run.triggered_at
+        ? b.index - a.index
+        : b.run.triggered_at.localeCompare(a.run.triggered_at),
+    );
+    return all.map((entry) => entry.run);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enrichmentPathwayId, version]);
+
   const rows = useMemo(
     () =>
       TYPES.map(({ type, label }) => {
-        const runs = getPathwayEnrichmentRuns(enrichmentPathwayId, type);
+        const runs = pathwayRuns.filter((run) => run.enrichment_type === type);
         const latest = runs[0] ?? null;
         const lastSuccess = runs.find(
           (run) => run.status === "completed" || run.status === "completed_with_errors",
         ) ?? null;
         return { type, label, latest, lastSuccess };
       }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [enrichmentPathwayId, version],
+    [pathwayRuns],
   );
 
-  const mostRecent = useMemo(() => {
-    const all = getPathwayEnrichmentRuns(enrichmentPathwayId);
-    return all[0] ?? null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enrichmentPathwayId, version]);
+  const mostRecent = pathwayRuns[0] ?? null;
 
   /** Fires one independent run record per type — never a combined record. */
   const fireRun = useCallback(
