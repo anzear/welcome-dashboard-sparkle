@@ -47,7 +47,9 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
+  found: { label: "Found", icon: Sparkles, className: "border-info/40 bg-info/5 text-info" },
   enrich_trigger: { label: "Enrich triggered", icon: Sparkles, className: "border-info/40 bg-info/5 text-info" },
+
   enrich_complete: { label: "Enrich completed", icon: CheckCheck, className: "border-info/50 bg-info/10 text-info" },
   enrich_fail: { label: "Enrich failed", icon: AlertTriangle, className: "border-info/60 bg-info/15 text-info" },
   reconfirm: { label: "Re-confirmed", icon: RefreshCw, className: "border-info/40 bg-info/5 text-info" },
