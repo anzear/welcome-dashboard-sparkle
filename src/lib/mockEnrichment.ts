@@ -46,12 +46,12 @@ const buildResolution = (input: StartRunInput): EnrichmentRunResolution => {
     return { status: "completed", items_found: 0, items_new: 0, items_already_known: 0, error_message: null };
   }
   const added = randomInt(0, 6);
-  const reconfirmed = randomInt(0, 8);
+  const alreadyKnown = randomInt(0, 8);
   return {
     status: outcome === "completed_with_errors" ? "completed_with_errors" : "completed",
-    items_found: added + reconfirmed,
+    items_found: added + alreadyKnown,
     items_new: added,
-    items_already_known: reconfirmed,
+    items_already_known: alreadyKnown,
     error_message: outcome === "completed_with_errors" ? "Some sources could not be read" : null,
   };
 };
