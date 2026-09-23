@@ -1161,9 +1161,13 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const isSuperseded = useCallback((entry: AuditEntry) => auditEntries
     .filter(item => item.entity_type === entry.entity_type && item.entity_id === entry.entity_id && item.field === entry.field && new Date(item.timestamp).getTime() > new Date(entry.timestamp).getTime())
     .sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp)), [auditEntries]);
+  // A match's history also carries its node links' own entries, distinguishable
+  // by entity type and attributed to whoever decided them.
   const getHistory = useCallback((entityType: AuditEntityType, entityId: string) => auditEntries
-    .filter(item => item.entity_type === entityType && item.entity_id === entityId)
+    .filter(item => (item.entity_type === entityType && item.entity_id === entityId)
+      || (entityType === "company" && item.entity_type === "company_node_link" && item.parent_id === entityId))
     .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [auditEntries]);
+
 
   const revertEntry = useCallback((entryId: string): AuditEntry | null => {
     const target = auditEntries.find(item => item.id === entryId);
