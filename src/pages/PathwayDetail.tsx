@@ -16,6 +16,7 @@ import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
+import PathwayEnrichmentPanel from '@/components/pathway/PathwayEnrichmentPanel';
 import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
 import { CompanyShortlistTables, type ShortlistCompany } from '@/components/materialRegister/CompanyShortlistTables';
@@ -945,6 +946,12 @@ const PathwayDetail = () => {
                     <PathwayStatusCard
                       pathwayId={pathwayId || '0'}
                       topic={topic ? decodeURIComponent(topic) : undefined}
+                    />
+
+                    <PathwayEnrichmentPanel
+                      pathwayId={pathwayId || '0'}
+                      topic={topic ? decodeURIComponent(topic) : undefined}
+                      currentUser={CURRENT_REVIEWER}
                     />
 
                     <PathwayMetricsChecklist
