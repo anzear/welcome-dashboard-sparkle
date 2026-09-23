@@ -911,10 +911,72 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   const paperMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "paper"), [paperPatentMatches]);
   const patentMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "patent"), [paperPatentMatches]);
+
+  // --- Enrichment run selectors (append-only history, newest first) ---------
+  const runsForPathway = useCallback((pathwayId: string) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId)), [enrichmentRuns]);
+  const lastRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type))[0] ?? null, [enrichmentRuns]);
+  const lastSuccessfulRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type && isRunSuccessful(run)))[0] ?? null, [enrichmentRuns]);
+  const activeRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type && isRunActive(run)))[0] ?? null, [enrichmentRuns]);
+  const runsForBulkJob = useCallback((bulkJobId: string) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.bulk_job_id === bulkJobId)), [enrichmentRuns]);
+
+  const createEnrichmentRun = useCallback((input: { pathway_id: string; enrichment_type: EnrichmentType; trigger_mode: EnrichmentTriggerMode; bulk_job_id: string | null }): EnrichmentRun => {
+    const now = new Date().toISOString();
+    const runId = `run-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const run: EnrichmentRun = {
+      id: runId, created_at: now, updated_at: now, status_changed_at: now, last_actor: currentUser.name, trace_id: null,
+      run_id: runId, pathway_id: input.pathway_id, enrichment_type: input.enrichment_type, status: "queued",
+      trigger_mode: input.trigger_mode, bulk_job_id: input.bulk_job_id, triggered_by: currentUser.name, triggered_at: now,
+      completed_at: null, items_found: null, items_new: null, items_reconfirmed: null, error_message: null,
+    };
+    setEnrichmentRuns(runs => [...runs, run]);
+    recordChange({
+      entity_type: "enrichment_run", entity_id: runId, field: null, prior_value: null,
+      new_value: { pathway_id: input.pathway_id, enrichment_type: input.enrichment_type, status: "queued" },
+      operation: "enrich_trigger", enrichment_type: input.enrichment_type, trigger_mode: input.trigger_mode, bulk_job_id: input.bulk_job_id,
+      note: null,
+    });
+    return run;
+  }, [currentUser.name, recordChange]);
+
+  // Status transitions only touch a run while it is queued or running.
+  const markEnrichmentRunRunning = useCallback((runId: string) => {
+    setEnrichmentRuns(runs => runs.map(run => (run.run_id === runId && run.status === "queued"
+      ? { ...run, status: "running", updated_at: new Date().toISOString(), status_changed_at: new Date().toISOString() }
+      : run)));
+  }, []);
+
+  const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
+    const now = new Date().toISOString();
+    let resolved: EnrichmentRun | null = null;
+    setEnrichmentRuns(runs => runs.map(run => {
+      if (run.run_id !== runId || !isRunActive(run)) return run;
+      resolved = {
+        ...run, status: resolution.status, completed_at: now, updated_at: now, status_changed_at: now,
+        items_found: resolution.items_found, items_new: resolution.items_new, items_reconfirmed: resolution.items_reconfirmed,
+        error_message: resolution.error_message,
+      };
+      return resolved;
+    }));
+    const record = enrichmentRuns.find(run => run.run_id === runId) ?? null;
+    if (!record || !isRunActive(record)) return;
+    recordChange({
+      entity_type: "enrichment_run", entity_id: runId, field: "status", prior_value: record.status,
+      new_value: {
+        status: resolution.status, items_found: resolution.items_found, items_new: resolution.items_new,
+        items_reconfirmed: resolution.items_reconfirmed, error_message: resolution.error_message,
+      },
+      operation: resolution.status === "failed" ? "enrich_fail" : "enrich_complete",
+      enrichment_type: record.enrichment_type, trigger_mode: record.trigger_mode, bulk_job_id: record.bulk_job_id,
+      note: resolution.error_message,
+    });
+  }, [enrichmentRuns, recordChange]);
+
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
     paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
-  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
+    enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob,
+    createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun,
+  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord, enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob, createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 
