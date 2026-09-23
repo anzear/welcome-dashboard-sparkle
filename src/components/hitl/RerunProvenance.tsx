@@ -40,7 +40,7 @@ export function PreviouslyRejectedPanel({ records, onOpen, onHistory }: { record
   const found = records.filter(record => record.status === "rejected" && seenAgainOf(record).count > 0);
   if (found.length === 0) return null;
   const Chevron = open ? ChevronDown : ChevronRight;
-  const title = (record: ProvenanceRow) => "name" in record ? record.name : record.title;
+  const title = (record: ProvenanceRow) => record.title;
   return <div className="mb-3 rounded-md border">
     <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex w-full items-center gap-2 px-3 py-2 text-left">
       <Chevron className="h-3.5 w-3.5 text-muted-foreground" />
