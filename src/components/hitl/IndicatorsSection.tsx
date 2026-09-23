@@ -94,8 +94,10 @@ function RunCell({ item }: { item: IndicatorValue }) {
 }
 
 // Computed count indicators are read-only: run history, no review actions.
-function ComputedRunRow({ definition, pathwayId, contextLabel }: { definition: IndicatorDefinition; pathwayId: string | null; contextLabel: string | null }) {
+function ComputedRunRow({ definition, reference }: { definition: IndicatorDefinition; reference: { scope: IndicatorScope; target: IndicatorTarget } }) {
   const store = useHitlStore();
+  const pathwayId = affectedPathwayIds(reference, store.pathways)[0] ?? null;
+  const contextLabel = targetLabel(reference);
   const indicatorId = pathwayId ? computedIndicatorId(definition.key, pathwayId) : null;
   const runs = indicatorId ? store.runsForIndicator(indicatorId) : [];
   return <TableRow className="text-muted-foreground">
@@ -230,8 +232,7 @@ function TargetGroup({ scope, target, rows, selected, onSelect, onDecision, onCo
     <div className="overflow-x-auto"><Table className="min-w-[1280px]"><IndicatorHeader variant="grouped" checked={rows.length > 0 && rows.every(item => selected.includes(item.id))} onCheckedChange={checked => rows.forEach(item => onSelect(item.id, checked))} /><TableBody>
       {indicatorsForScope(scope).map(definition => {
         if (definition.computed) {
-          const computedPathwayId = affectedPathwayIds({ scope, target }, store.pathways)[0] ?? null;
-          return <ComputedRunRow key={definition.key} definition={definition} pathwayId={computedPathwayId} contextLabel={targetLabel(scope, target)} />;
+          return <ComputedRunRow key={definition.key} definition={definition} reference={reference} />;
         }
         const item = rows.find(row => row.indicator_key === definition.key);
         return item
