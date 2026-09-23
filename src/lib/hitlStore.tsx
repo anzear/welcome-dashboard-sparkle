@@ -103,10 +103,8 @@ export const FIELD_LABELS: Record<string, string> = {
   model: "Model",
   reviewed_by: "Reviewed by",
   reviewed_at: "Reviewed at",
-  first_seen_run_id: "First seen",
-  reconfirmations: "Re-confirmed",
-  seen_again: "Seen again",
   found_at: "Found",
+  matched_at: "Found",
   found_by_run_id: "Found by run",
   approved_at: "Approved",
   approved_by: "Approved by",
@@ -191,8 +189,8 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again" | "found";
+export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "paper_node_link" | "patent_node_link" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "found";
 
 export const STALENESS_DAYS = 180;
 
@@ -250,8 +248,8 @@ export interface Company extends CommonRecord {
   /** Node links, each reviewable on its own, independent of the match status. */
   node_links?: CompanyNodeLink[];
 }
-/** A node link on a company match. Its status is held per link. */
-export interface CompanyNodeLink {
+/** A node link on a match. Its status is held per link, independent of the match. */
+export interface ReviewNodeLink {
   id: string;
   node_type: PathwayNodePosition;
   node_value: string;
@@ -261,6 +259,7 @@ export interface CompanyNodeLink {
   approved_at: string | null;
   approved_by: string | null;
 }
+export type CompanyNodeLink = ReviewNodeLink;
 export const nodeLinkTypeLabel = (type: PathwayNodePosition): string => NODE_LABELS[type];
 /** Roles stay exactly: Feedstock supplier, Product manufacturer, Application offtaker. */
 export const companyRoleLabel = (role: CompanyRole): string =>
@@ -304,30 +303,53 @@ export const companyIdentityKey = (company: Pick<Company, "name" | "website" | "
 
 export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
+  /** Stable identity: DOI for papers, patent family identifier for patents. */
   external_id: string;
   title: string;
   nodes: MatchNodes;
   status: ReviewStatus;
+  /** The Found date. One home per fact: there is no parallel found_at field. */
   matched_at: string;
   note: string | null;
   year: number | null;
   authors_or_assignee: string | null;
   abstract: string | null;
   source: "Semantic Scholar" | "USPTO" | null;
-  first_seen_run_id?: string | null;
-  reconfirmations?: Reconfirmation[];
-  seen_again?: SeenAgain;
+  // --- Match model (Prompt 51). Found and Approved are two independent dates;
+  // neither is ever overwritten by a later run.
+  /** The run that introduced this match, null for manually added matches. */
+  found_by_run_id?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  /** Node links, each reviewable on its own, independent of the match status. */
+  node_links?: ReviewNodeLink[];
 }
-// --- Re-run provenance. Append-only: a re-run never edits or removes a record. ---
-export interface Reconfirmation { run_id: string; timestamp: string; }
-export interface SeenAgain { count: number; run_ids: string[]; }
-type ProvenanceRecord = { first_seen_run_id?: string | null; reconfirmations?: Reconfirmation[]; seen_again?: SeenAgain };
-export const reconfirmationsOf = (record: ProvenanceRecord): Reconfirmation[] => record.reconfirmations ?? [];
-export const reconfirmCount = (record: ProvenanceRecord): number => reconfirmationsOf(record).length;
-export const lastReconfirmedAt = (record: ProvenanceRecord): string | null => reconfirmationsOf(record).map(item => item.timestamp).sort().slice(-1)[0] ?? null;
-export const lastReconfirmation = (record: ProvenanceRecord): Reconfirmation | null => [...reconfirmationsOf(record)].sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp)).slice(-1)[0] ?? null;
-export const seenAgainOf = (record: ProvenanceRecord): SeenAgain => record.seen_again ?? { count: 0, run_ids: [] };
-export const seenAgainCount = (record: ProvenanceRecord): number => seenAgainOf(record).count;
+export const matchFoundRunId = (match: PaperPatentMatch): string | null => match.found_by_run_id ?? null;
+export const matchNodeLinkId = (matchId: string, type: PathwayNodePosition, value: string): string => `${matchId}:${type}:${nodeLinkKey(value).replace(/\s+/g, "-")}`;
+/** Backfill: a match's current node assignment reads as Approved links found at matched_at. */
+export function deriveMatchNodeLinks(match: PaperPatentMatch): ReviewNodeLink[] {
+  const links: ReviewNodeLink[] = [];
+  matchNodePositions.forEach(position => {
+    const type = matchToPathwayPosition[position];
+    cleanNodeList(match.nodes[position]).forEach(value => {
+      if (links.some(link => link.node_type === type && nodeLinkKey(link.node_value) === nodeLinkKey(value))) return;
+      links.push({
+        id: matchNodeLinkId(match.id, type, value), node_type: type, node_value: value,
+        status: "approved", found_at: match.matched_at, found_by_run_id: match.found_by_run_id ?? null,
+        approved_at: match.approved_at ?? match.matched_at, approved_by: match.approved_by ?? match.last_actor ?? null,
+      });
+    });
+  });
+  return links;
+}
+export const matchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => match.node_links ?? deriveMatchNodeLinks(match);
+export const pendingMatchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => matchNodeLinks(match).filter(link => link.status === "review_pending");
+export const approvedMatchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => matchNodeLinks(match).filter(link => link.status === "approved");
+/** Review units awaiting a decision: the match itself plus each pending node link. */
+export const pendingMatchReviewUnits = (match: PaperPatentMatch): number => (match.status === "review_pending" ? 1 : 0) + pendingMatchNodeLinks(match).length;
+export const matchLinkEntityType = (kind: PaperPatentMatch["kind"]): AuditEntityType => kind === "paper" ? "paper_node_link" : "patent_node_link";
+export const matchEntityType = (kind: PaperPatentMatch["kind"]): AuditEntityType => kind === "paper" ? "paper_match" : "patent_match";
+
 export interface IndicatorSource { url: string; label: string | null; }
 export const sourceDomain = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
 export const sourceDisplay = (source: IndicatorSource): string => source.label?.trim() || sourceDomain(source.url);
@@ -676,13 +698,13 @@ seedPaperPatentMatches.push(
     ...common("pp-101", 12), kind: "paper", external_id: "10.1016/j.biortech.2026.44011",
     title: "Whey-derived lactic acid fermentation at pilot scale", nodes: pw003Nodes(), status: "approved", matched_at: iso(12),
     note: null, year: 2025, authors_or_assignee: "T. Bauer, M. Kovač", abstract: "Pilot-scale fermentation of dairy side streams into purified lactic acid.",
-    source: "Semantic Scholar", first_seen_run_id: "run-020", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+    source: "Semantic Scholar", found_by_run_id: "run-020", approved_at: iso(12), approved_by: "Anže",
   },
   {
     ...common("pp-102", 12), kind: "paper", external_id: "10.1016/j.biortech.2026.44012",
     title: "Membrane separation of dairy fermentation broths", nodes: pw003Nodes(), status: "rejected", matched_at: iso(12),
     note: "Out of scope for this Pathway", year: 2024, authors_or_assignee: "J. Petersen", abstract: "Comparison of membrane configurations for broth clarification.",
-    source: "Semantic Scholar", first_seen_run_id: "run-020", reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+    source: "Semantic Scholar", found_by_run_id: "run-020", approved_at: null, approved_by: null,
   },
   {
     ...common("pp-103", 11), kind: "paper", external_id: "10.1016/j.biortech.2026.44014",
@@ -986,7 +1008,6 @@ const seedAuditEntries: AuditEntry[] = [
   // Single-run enrichment by a second user, with merge outcomes.
   auditSeed("audit-037", iso(20, 11), "Jon Goriup", "enrichment_run", "run-002", null, null, { pathway_id: "pw-001", enrichment_type: "patents", status: "queued" }, "enrich_trigger", { trigger_mode: "single", enrichment_type: "patents" }),
   auditSeed("audit-038", laterIso(20, 11, 3), "Jon Goriup", "enrichment_run", "run-002", "status", "running", { status: "completed", items_found: 9, items_new: 3, items_already_known: 6 }, "enrich_complete", { trigger_mode: "single", enrichment_type: "patents" }),
-  auditSeed("audit-039", laterIso(20, 11, 3), "Jon Goriup", "patent_match", "pp-002", "last_reconfirmed_at", null, laterIso(20, 11, 3), "reconfirm", { trigger_mode: "single", enrichment_type: "patents", note: "Re-confirmed by run run-002" }),
   auditSeed("audit-041", laterIso(22, 8, 1), "Jon Goriup", "enrichment_run", "run-007", "status", "running", { status: "failed", error_message: "Patent source timed out before returning results", items_found: null, items_new: null, items_already_known: null }, "enrich_fail", { trigger_mode: "single", enrichment_type: "patents", note: "Patent source timed out before returning results" }),
 ];
 
@@ -1091,6 +1112,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, group: groups, company: companies, company_node_link: [],
+      paper_node_link: [], patent_node_link: [],
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
       enrichment_run: enrichmentRuns, indicator_run: indicatorRuns, bulk_job: [],
 
@@ -1128,7 +1150,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
           last_actor: currentUser.name,
           ...(input.field === "status" ? { status_changed_at: now } : {}),
           // Approve stamps the match; Found is never touched by a later decision.
-          ...(input.entity_type === "company" && input.field === "status" && input.new_value === "approved"
+          ...((input.entity_type === "company" || input.entity_type === "paper_match" || input.entity_type === "patent_match") && input.field === "status" && input.new_value === "approved"
             ? { approved_at: now, approved_by: currentUser.name }
             : {}),
         };
@@ -1153,6 +1175,21 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     if (input.entity_type === "group") setGroups(apply);
     if (input.entity_type === "company") setCompanies(apply);
     if (input.entity_type === "company_node_link") setCompanies(applyNodeLink);
+    // Match node links live on their parent match and are reviewed on their own.
+    const applyMatchNodeLink = (items: PaperPatentMatch[]): PaperPatentMatch[] => items.map(match => {
+      if (match.id !== (input.parent_id ?? "")) return match;
+      const links = matchNodeLinks(match);
+      if (input.field === null) return { ...match, node_links: [...links, input.new_value as ReviewNodeLink] };
+      return {
+        ...match,
+        node_links: links.map(link => link.id !== input.entity_id ? link : {
+          ...link,
+          [input.field as string]: input.new_value,
+          ...(input.field === "status" && input.new_value === "approved" ? { approved_at: now, approved_by: currentUser.name } : {}),
+        } as ReviewNodeLink),
+      };
+    });
+    if (input.entity_type === "paper_node_link" || input.entity_type === "patent_node_link") setPaperPatentMatches(applyMatchNodeLink);
     if (input.entity_type === "paper_match" || input.entity_type === "patent_match") setPaperPatentMatches(apply);
     if (input.entity_type === "indicator_value") setIndicatorValues(apply);
     if (input.entity_type === "indicator_run") setIndicatorRuns(apply);
@@ -1169,7 +1206,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   // by entity type and attributed to whoever decided them.
   const getHistory = useCallback((entityType: AuditEntityType, entityId: string) => auditEntries
     .filter(item => (item.entity_type === entityType && item.entity_id === entityId)
-      || (entityType === "company" && item.entity_type === "company_node_link" && item.parent_id === entityId))
+      || (entityType === "company" && item.entity_type === "company_node_link" && item.parent_id === entityId)
+      || (entityType === "paper_match" && item.entity_type === "paper_node_link" && item.parent_id === entityId)
+      || (entityType === "patent_match" && item.entity_type === "patent_node_link" && item.parent_id === entityId))
     .sort((a, b) => +new Date(b.timestamp) - +new Date(a.timestamp)), [auditEntries]);
 
 
@@ -1231,8 +1270,8 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   // Companies (Prompt 50): new companies, new roles and new node links arrive
   // alongside the old ones, never in place of them. Anything that already
   // existed is not written to at any status, and leaves no record-level trace.
-  // Papers and patents keep the earlier re-confirmation model.
-  const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; known: number; seenAgain: number } | null => {
+  // Papers and patents (Prompt 51) follow the same model, keyed on external id.
+  const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; known: number } | null => {
     const payload = rerunPayloadFor(run.pathway_id, run.enrichment_type);
     if (!payload.length) return null;
     const pathway = pathwaysRef.current.find(item => item.id === run.pathway_id);
@@ -1245,7 +1284,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const existingMatches = matchesRef.current.filter(item => item.kind === kind);
     let companyIds = companiesRef.current.map(item => item.id);
     let matchIds = matchesRef.current.map(item => item.id);
-    let added = 0; let known = 0; let seenAgain = 0;
+    let added = 0; let known = 0;
 
     if (isCompanies) {
       const pathwayValues = [pathway.feedstock, pathway.process_technology, pathway.product, pathway.application_market]
@@ -1301,47 +1340,68 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
           });
         });
       });
-      return { found: payload.length, added, known, seenAgain };
+      return { found: payload.length, added, known };
     }
 
+    // Papers and patents (Prompt 51). Identity is the external id: DOI for
+    // papers, patent family id for patents, so two documents of one family
+    // resolve to a single match. Nothing existing is written to.
+    const created: PaperPatentMatch[] = [];
+    const addedLinks: Record<string, ReviewNodeLink[]> = {};
     payload.forEach(item => {
-      const existing: PaperPatentMatch | null = existingMatches.find(match => match.external_id === item.identifier) ?? null;
+      const identity = item.identifier.trim().toLocaleLowerCase();
+      const payloadLinks = (item.nodes ?? [
+        { node_type: "process_technology" as PathwayNodePosition, node_value: pathway.process_technology },
+        { node_type: "product" as PathwayNodePosition, node_value: pathway.product },
+      ]);
+      const existing: PaperPatentMatch | null = existingMatches.find(match => match.external_id.trim().toLocaleLowerCase() === identity)
+        ?? created.find(match => match.external_id.trim().toLocaleLowerCase() === identity) ?? null;
       if (!existing) {
-        added += 1;
         const id = nextMatchId(matchIds); matchIds = [...matchIds, id];
+        const nodes = emptyMatchNodes();
+        payloadLinks.forEach(node => {
+          const position = matchNodePositions[pathwayNodePositions.indexOf(node.node_type)];
+          if (position) nodes[position] = [...nodes[position], node.node_value];
+        });
+        const links: ReviewNodeLink[] = payloadLinks.map(node => ({
+          id: matchNodeLinkId(id, node.node_type, node.node_value), node_type: node.node_type, node_value: node.node_value,
+          status: "review_pending", found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null,
+        }));
         const match: PaperPatentMatch = {
           ...blankCommon(id, timestamp, currentUser.name), kind, external_id: item.identifier, title: item.label,
-          nodes: { ...emptyMatchNodes(), process: [pathway.process_technology], product: [pathway.product] },
-          status: "review_pending", matched_at: timestamp, note: null, year: item.year ?? null,
+          nodes, status: "review_pending", matched_at: timestamp, note: null, year: item.year ?? null,
           authors_or_assignee: item.authors_or_assignee ?? null, abstract: null,
           source: kind === "paper" ? "Semantic Scholar" : "USPTO",
-          first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+          found_by_run_id: run.run_id, approved_at: null, approved_by: null, node_links: links,
         };
-        recordChange({ entity_type: entityType, entity_id: id, field: null, prior_value: null, new_value: match, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
+        created.push(match);
+        added += 1 + links.length;
+        recordChange({ entity_type: entityType, entity_id: id, field: null, prior_value: null, new_value: match, operation: "found", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Found by run ${run.run_id}` });
         return;
       }
-      if (existing.status === "rejected") {
-        // Never reinstated: only the seen-again counter moves.
-        const prior = seenAgainOf(existing);
-        seenAgain += 1;
-        recordChange({
-          entity_type: entityType, entity_id: existing.id, field: "seen_again", prior_value: prior,
-          new_value: { count: prior.count + 1, run_ids: [...prior.run_ids, run.run_id] }, operation: "seen_again",
-          enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
-          note: `Found again by run ${run.run_id}. Status unchanged.`,
-        });
-        return;
-      }
-      const prior = reconfirmationsOf(existing);
+      // Already known — whatever its status, including rejected. No write, no
+      // status change, no history entry on the match itself.
       known += 1;
-      recordChange({
-        entity_type: entityType, entity_id: existing.id, field: "reconfirmations", prior_value: prior,
-        new_value: [...prior, { run_id: run.run_id, timestamp }], operation: "reconfirm",
-        enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
-        note: `Re-confirmed by run ${run.run_id}. Status unchanged.`,
+      const links = [...matchNodeLinks(existing), ...(addedLinks[existing.id] ?? [])];
+      payloadLinks.forEach(node => {
+        const held = links.some(link => link.node_type === node.node_type && nodeLinkKey(link.node_value) === nodeLinkKey(node.node_value));
+        if (held) { known += 1; return; }
+        const link: ReviewNodeLink = {
+          id: matchNodeLinkId(existing.id, node.node_type, node.node_value), node_type: node.node_type, node_value: node.node_value,
+          status: "review_pending", found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null,
+        };
+        addedLinks[existing.id] = [...(addedLinks[existing.id] ?? []), link];
+        added += 1;
+        recordChange({
+          entity_type: matchLinkEntityType(kind), entity_id: link.id, parent_id: existing.id,
+          node_type: node.node_type, node_value: node.node_value,
+          field: null, prior_value: null, new_value: link, operation: "found",
+          enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
+          note: `Found by run ${run.run_id} · ${nodeLinkTypeLabel(node.node_type)} ${node.node_value}`,
+        });
       });
     });
-    return { found: payload.length, added, known, seenAgain };
+    return { found: payload.length, added, known };
   }, [currentUser.name, recordChange]);
 
 
