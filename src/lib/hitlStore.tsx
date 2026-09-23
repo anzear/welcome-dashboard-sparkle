@@ -1086,9 +1086,10 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
-      pathway: pathways, group: groups, company: companies,
+      pathway: pathways, group: groups, company: companies, company_node_link: [],
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
       enrichment_run: enrichmentRuns, indicator_run: indicatorRuns, bulk_job: [],
+
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
   }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns, indicatorRuns]);
