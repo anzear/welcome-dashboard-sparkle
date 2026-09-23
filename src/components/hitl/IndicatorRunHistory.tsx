@@ -1,7 +1,7 @@
 // Indicator run history. Separate from RecordHistorySheet: that sheet shows human
 // decisions on the record, this panel shows the runs themselves. Runs are
 // append-only — nothing here replaces, overwrites or averages an earlier run.
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { format } from "date-fns";
 import { ChevronDown, ChevronRight, History } from "lucide-react";
 import { toast } from "sonner";
@@ -10,40 +10,19 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ReviewStatusChip, ValueCell, ValueDiff } from "./ReviewPrimitives";
+import { useHistorySheet } from "./RecordHistorySheet";
+import { IndicatorRunSheetContext, useOptionalIndicatorRunSheet, type IndicatorRunSheetContextValue, type IndicatorRunTarget } from "./indicatorRunSheetContext";
 import {
   indicatorLabel, latestApprovedIndicatorRun, methodTagLabel, resolveIndicatorRuns, sourceDisplay,
   useHitlStore, type IndicatorRun,
 } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
-export interface IndicatorRunTarget {
-  indicatorId: string;
-  indicatorKey: string;
-  /** Computed count indicators show run history but expose no review actions. */
-  readOnly: boolean;
-  /** Record id used to cross-link to the decision history, when one exists. */
-  recordId: string | null;
-  contextLabel?: string | null;
-}
-interface RunSheetContextValue {
-  target: IndicatorRunTarget | null;
-  openRuns: (target: IndicatorRunTarget) => void;
-  closeRuns: () => void;
-}
-const RunSheetContext = createContext<RunSheetContextValue | null>(null);
-
 export function IndicatorRunSheetProvider({ children }: { children: ReactNode }) {
   const [target, setTarget] = useState<IndicatorRunTarget | null>(null);
-  const value = useMemo<RunSheetContextValue>(() => ({ target, openRuns: setTarget, closeRuns: () => setTarget(null) }), [target]);
-  return <RunSheetContext.Provider value={value}>{children}<IndicatorRunHistorySheet />{children === null ? null : null}</RunSheetContext.Provider>;
+  const value = useMemo<IndicatorRunSheetContextValue>(() => ({ target, openRuns: setTarget, closeRuns: () => setTarget(null) }), [target]);
+  return <IndicatorRunSheetContext.Provider value={value}>{children}<IndicatorRunHistorySheet /></IndicatorRunSheetContext.Provider>;
 }
-export function useIndicatorRunSheet() {
-  const context = useContext(RunSheetContext);
-  if (!context) throw new Error("useIndicatorRunSheet must be used within IndicatorRunSheetProvider");
-  return context;
-}
-/** Safe for components rendered outside the Data Review provider. */
-export function useOptionalIndicatorRunSheet() { return useContext(RunSheetContext); }
 
 const timestamp = (value: string) => format(new Date(value), "dd MMM yyyy, HH:mm");
 
@@ -154,15 +133,8 @@ export function IndicatorRunHistorySheet() {
 }
 
 function RecordHistoryLink({ recordId }: { recordId: string }) {
-  const { openHistory } = useHistorySheetSafe();
-  if (!openHistory) return null;
+  const { openHistory } = useHistorySheet();
   return <Button variant="outline" size="sm" className="h-7 w-fit gap-1 px-2 text-[10px]" onClick={() => openHistory("indicator_value", recordId)}>
     <History className="h-3 w-3" />Decisions on this record
   </Button>;
 }
-// Imported lazily to keep the two sheets independent of each other's provider.
-function useHistorySheetSafe() {
-  const context = useContext(HistorySheetBridge);
-  return { openHistory: context?.openHistory ?? null };
-}
-export const HistorySheetBridge = createContext<{ openHistory: (entityType: "indicator_value", entityId: string) => void } | null>(null);
