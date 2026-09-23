@@ -1278,7 +1278,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
               found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null, node_links: links,
             };
             added += 1 + links.length;
-            recordChange({ entity_type: "company", entity_id: id, field: null, prior_value: null, new_value: company, operation: "found", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Found by run ${run.run_id} · ${roleLabel(roleMatch.role)}` });
+            recordChange({ entity_type: "company", entity_id: id, field: null, prior_value: null, new_value: company, operation: "found", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Found by run ${run.run_id} · ${companyRoleLabel(roleMatch.role)}` });
             return;
           }
           // The match itself is already known: no write, no history entry.

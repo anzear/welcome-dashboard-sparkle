@@ -39,11 +39,11 @@ const buildResolution = (input: StartRunInput): EnrichmentRunResolution => {
   const outcome = seededOutcomes[input.pathway_id]?.[input.enrichment_type] ?? "completed";
   if (outcome === "failed") {
     // Failed runs produce no counts at all: all three stay null, never 0.
-    return { status: "failed", items_found: null, items_new: null, items_reconfirmed: null, error_message: errorMessages[input.enrichment_type] };
+    return { status: "failed", items_found: null, items_new: null, items_already_known: null, error_message: errorMessages[input.enrichment_type] };
   }
   if (outcome === "empty") {
     // Success that found nothing: genuinely 0, not null.
-    return { status: "completed", items_found: 0, items_new: 0, items_reconfirmed: 0, error_message: null };
+    return { status: "completed", items_found: 0, items_new: 0, items_already_known: 0, error_message: null };
   }
   const added = randomInt(0, 6);
   const reconfirmed = randomInt(0, 8);
@@ -51,7 +51,7 @@ const buildResolution = (input: StartRunInput): EnrichmentRunResolution => {
     status: outcome === "completed_with_errors" ? "completed_with_errors" : "completed",
     items_found: added + reconfirmed,
     items_new: added,
-    items_reconfirmed: reconfirmed,
+    items_already_known: reconfirmed,
     error_message: outcome === "completed_with_errors" ? "Some sources could not be read" : null,
   };
 };

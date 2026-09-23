@@ -5,9 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ValueCell } from "./ReviewPrimitives";
-import { lastReconfirmation, reconfirmCount, seenAgainOf, type Company, type PaperPatentMatch } from "@/lib/hitlStore";
+import { lastReconfirmation, reconfirmCount, seenAgainOf, type PaperPatentMatch } from "@/lib/hitlStore";
 
-type ProvenanceRow = Company | PaperPatentMatch;
+type ProvenanceRow = PaperPatentMatch;
 
 /** The run that introduced the record, with its run_id. Separate from Re-confirmed. */
 export function FirstSeenCell({ record }: { record: ProvenanceRow }) {
