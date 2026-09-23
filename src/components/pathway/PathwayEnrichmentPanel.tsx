@@ -7,8 +7,7 @@ import {
   ENRICHMENT_RUNS_EVENT,
   appendEnrichmentRun,
   appendEnrichmentRunOutcome,
-  getLatestEnrichmentRun,
-  getPathwayEnrichmentRuns,
+  readEnrichmentRuns,
   type EnrichmentRun,
   type EnrichmentType,
 } from "@/lib/enrichmentRuns";
