@@ -1348,7 +1348,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     // its counts from the merge itself.
     const merge = record && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
     const effective: EnrichmentRunResolution = merge
-      ? { ...resolution, items_found: merge.found, items_new: merge.added, items_already_known: merge.reconfirmed }
+      ? { ...resolution, items_found: merge.found, items_new: merge.added, items_already_known: merge.known }
       : resolution;
     setEnrichmentRuns(runs => runs.map(run => {
       if (run.run_id !== runId || !isRunActive(run)) return run;
