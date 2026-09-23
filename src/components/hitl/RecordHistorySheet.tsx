@@ -82,6 +82,7 @@ function summary(record: HitlRecord | null, type: AuditEntityType) {
   if (type === "group" && "name" in record) return record.name;
   if ((type === "paper_match" || type === "patent_match") && "title" in record) return record.title;
   if (type === "indicator_value" && "indicator_key" in record) return indicatorLabel(record.indicator_key);
+  if (type === "enrichment_run" && "enrichment_type" in record) return `${ENRICHMENT_TYPE_LABELS[record.enrichment_type]} · ${record.pathway_id}`;
   return record.id;
 }
 
