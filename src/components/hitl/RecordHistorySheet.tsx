@@ -12,6 +12,7 @@ import { PathwayRef } from "./PathwayRef";
 import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
 import { SourcesPopover } from "./IndicatorSources";
+import { Badge } from "@/components/ui/badge";
 import { nodeLinkTypeLabel, ENRICHMENT_TYPE_LABELS, FIELD_LABELS, groupById, indicatorLabel, methodTagLabel, useHitlStore, type AuditEntityType, type AuditEntry, type Company, type Group, type HitlRecord, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { GroupChip } from "./GroupChip";
 import { cn } from "@/lib/utils";
