@@ -36,6 +36,41 @@ function Truncated({ value }: { value: string | null }) { return value ? <Toolti
 function WebsiteCell({ company, onEditWebsite }: { company: Company; onEditWebsite: () => void }) { if (!company.website) return <ValueCell value={null} />; return <span className="flex items-center gap-1"><Tooltip><TooltipTrigger asChild><button type="button" className="block max-w-40 truncate text-left text-[10px] hover:underline" aria-label={`Edit website for ${company.name}`} onClick={onEditWebsite}>{domain(company.website)}</button></TooltipTrigger><TooltipContent className="max-w-sm text-xs">{company.website}</TooltipContent></Tooltip><a href={company.website} target="_blank" rel="noreferrer" aria-label={`Open website for ${company.name}`} className="inline-flex text-primary hover:underline"><ExternalLink className="h-3 w-3" /></a></span>; }
 function companyPassesGlobal(company: Company, store: ReturnType<typeof useHitlStore>, nodeFilter: ReturnType<typeof useNodeFilter>) { if (!nodeFilter.isActive) return true; const hits = (value: string) => company.roles.some(role => nodeListMatches(cleanNodeList(company.role_nodes[role]), value)); const directFeedstock = !nodeFilter.feedstock || hits(nodeFilter.feedstock); const directProduct = !nodeFilter.product || hits(nodeFilter.product); return (directFeedstock && directProduct) || derivedCompanyPathwayIds(company, store.pathways).some(id => nodeFilter.matchingPathwayIds.has(id)); }
 
+// --- Found / Approved / Nodes (Prompt 50) -------------------------------------
+// Found and Approved are two independent dates. Neither is ever overwritten by a
+// later run, and an unapproved review unit shows an em dash under Approved.
+const dateOnly = (value: string) => format(new Date(value), "d MMM yyyy");
+const fullStamp = (value: string) => format(new Date(value), "d MMM yyyy HH:mm");
+
+function FoundCell({ at, runId }: { at: string; runId: string | null }) {
+  return <Tooltip><TooltipTrigger asChild><span className="whitespace-nowrap text-[10px]">{dateOnly(at)}</span></TooltipTrigger>
+    <TooltipContent className="text-xs">{fullStamp(at)} · {runId ? `Run ${runId}` : "Added manually"}</TooltipContent></Tooltip>;
+}
+
+function ApprovedCell({ at, by }: { at: string | null | undefined; by: string | null | undefined }) {
+  if (!at) return <ValueCell value={null} />;
+  return <Tooltip><TooltipTrigger asChild><span className="whitespace-nowrap text-[10px]">{dateOnly(at)}</span></TooltipTrigger>
+    <TooltipContent className="text-xs">{fullStamp(at)}{by ? ` · ${by}` : ""}</TooltipContent></Tooltip>;
+}
+
+/** Approved links as chips, pending links outlined with a pending marker. Rejected links live in the expanded row. */
+function NodeLinkChips({ company }: { company: Company }) {
+  const approved = approvedNodeLinks(company); const pending = pendingNodeLinks(company);
+  if (approved.length === 0 && pending.length === 0) return <ValueCell value={null} />;
+  return <span className="flex flex-wrap gap-1">
+    {approved.map(link => <Badge key={link.id} variant="secondary" className="h-5 whitespace-nowrap px-2 text-[9px] font-normal">{nodeLinkTypeLabel(link.node_type)} · {link.node_value}</Badge>)}
+    {pending.map(link => <Badge key={link.id} variant="outline" className="h-5 whitespace-nowrap border-dashed px-2 text-[9px] font-normal text-muted-foreground">{nodeLinkTypeLabel(link.node_type)} · {link.node_value} · pending</Badge>)}
+  </span>;
+}
+
+/** A count of review units, never a status. */
+function PendingUnitsMarker({ count }: { count: number }) {
+  if (count === 0) return null;
+  return <Tooltip><TooltipTrigger asChild><Badge variant="outline" className="ml-1 h-5 whitespace-nowrap px-2 text-[9px] font-normal text-muted-foreground">{count} pending</Badge></TooltipTrigger>
+    <TooltipContent className="text-xs">{count} node link{count === 1 ? "" : "s"} awaiting review. Reviewed separately from the match.</TooltipContent></Tooltip>;
+}
+
+
 export function CompaniesSection() {
   const store = useHitlStore(); const { openHistory } = useHistorySheet(); const nodeFilter = useNodeFilter();
   const [search, setSearch] = useState(""); const [role, setRole] = useState("all"); const [status, setStatus] = useState("all"); const [fit, setFit] = useState("all"); const [selected, setSelected] = useState<string[]>([]);
