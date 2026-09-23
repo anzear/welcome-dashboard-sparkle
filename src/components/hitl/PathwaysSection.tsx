@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ActorStamp, BulkActionsButton, GroupChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, VisibilityChip, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ActorStamp, BulkActionsButton, BulkJobProgressPanel, EnrichmentSelectionBar, EnrichmentTypeDialog, GroupChip, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SplitAddButton, VisibilityChip, useBulkEnrichment, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import { GROUP_COLOR_TOKENS, NODE_LABELS, VISIBILITY_LABELS, VISIBILITY_MEANINGS, VISIBILITY_STATES, affectedPathwayIds, derivedCompanyPathwayIds, derivedPathwayIds, effectiveVisibility, organisations, pathwaysInGroup, sameIndicatorTarget, targetForPathway, useHitlStore, visibilitySummary, type Group, type GroupColorToken, type Pathway, type PathwayVisibility, type ReviewStatus, type VisibilityScope, type VisibilityState } from "@/lib/hitlStore";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +64,8 @@ export function PathwaysSection() {
   useEffect(() => setSelected([]), [nodeFilter.feedstock, nodeFilter.product]);
   useEffect(() => { if (!highlight) return; const timer = window.setTimeout(() => setHighlight(null), 2200); return () => window.clearTimeout(timer); }, [highlight]);
   const applyGroup = (ids: string[], value: string | null, note: string | null = null) => { const target = store.groups.find(item => item.id === value); if (target?.is_system) return; const nextFor = (item: Pathway) => value === null ? [] : [...new Set([...item.group_ids, value])]; const changed = ids.map(id => store.pathways.find(row => row.id === id)).filter((item): item is Pathway => Boolean(item)).filter(item => JSON.stringify(item.group_ids) !== JSON.stringify(nextFor(item))); changed.forEach(item => store.recordChange({ entity_type: "pathway", entity_id: item.id, field: "group_ids", prior_value: item.group_ids, new_value: nextFor(item), operation: "update", note })); toast.success(`${changed.length} pathway${changed.length === 1 ? "" : "s"} updated`); setSelected([]); };
+  const enrichment = useBulkEnrichment(store.currentUser.name);
+  const enrich = (ids: string[], types: Parameters<typeof enrichment.start>[1]) => { const result = enrichment.start(ids, types); setEnrichTarget(null); toast.success(`${result.fired} enrichment run${result.fired === 1 ? "" : "s"} started${result.skipped ? ` · ${result.skipped} skipped (already queued or running)` : ""}`); };
   const filtersActive = Boolean(search || status !== "all" || group !== "all" || visibilityFilter !== "all");
   const resetFilters = () => { setSearch(""); setStatus("all"); setGroup("all"); setVisibilityFilter("all"); };
   return <>
