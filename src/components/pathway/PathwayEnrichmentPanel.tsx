@@ -127,7 +127,20 @@ export const PathwayEnrichmentPanel: React.FC<Props> = ({ pathwayId, topic, curr
       });
 
       window.setTimeout(() => {
-        appendEnrichmentRun({ ...queued, run_id: undefined as unknown as string, status: "running" });
+        appendEnrichmentRun({
+          pathway_id: queued.pathway_id,
+          enrichment_type: queued.enrichment_type,
+          status: "running",
+          triggered_by: queued.triggered_by,
+          triggered_at: queued.triggered_at,
+          completed_at: null,
+          trigger_mode: queued.trigger_mode,
+          bulk_job_id: queued.bulk_job_id,
+          items_found: null,
+          items_new: null,
+          items_reconfirmed: null,
+          error_message: null,
+        });
       }, 700);
 
       window.setTimeout(() => {
