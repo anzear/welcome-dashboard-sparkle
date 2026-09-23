@@ -843,9 +843,10 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, group: groups, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
+      enrichment_run: enrichmentRuns,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
-  }, [pathways, groups, companies, paperPatentMatches, indicatorValues]);
+  }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns]);
 
   const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
     const now = new Date().toISOString();
@@ -857,6 +858,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       entity_id: input.entity_id, field: input.field, prior_value: input.prior_value,
       new_value: input.new_value, operation: input.operation, note: input.note ?? null,
       reverts_entry_id: input.reverts_entry_id ?? null,
+      enrichment_type: input.enrichment_type ?? null,
+      trigger_mode: input.trigger_mode ?? null,
+      bulk_job_id: input.bulk_job_id ?? null,
     };
     const apply = <T extends HitlRecord>(items: T[]): T[] => {
       if ((input.operation === "create" || input.operation === "link_add") && input.field === null) {
