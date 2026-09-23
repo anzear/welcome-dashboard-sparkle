@@ -103,10 +103,8 @@ export const FIELD_LABELS: Record<string, string> = {
   model: "Model",
   reviewed_by: "Reviewed by",
   reviewed_at: "Reviewed at",
-  first_seen_run_id: "First seen",
-  reconfirmations: "Re-confirmed",
-  seen_again: "Seen again",
   found_at: "Found",
+  matched_at: "Found",
   found_by_run_id: "Found by run",
   approved_at: "Approved",
   approved_by: "Approved by",
@@ -191,8 +189,8 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again" | "found";
+export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "paper_node_link" | "patent_node_link" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "found";
 
 export const STALENESS_DAYS = 180;
 
@@ -250,8 +248,8 @@ export interface Company extends CommonRecord {
   /** Node links, each reviewable on its own, independent of the match status. */
   node_links?: CompanyNodeLink[];
 }
-/** A node link on a company match. Its status is held per link. */
-export interface CompanyNodeLink {
+/** A node link on a match. Its status is held per link, independent of the match. */
+export interface ReviewNodeLink {
   id: string;
   node_type: PathwayNodePosition;
   node_value: string;
@@ -261,6 +259,7 @@ export interface CompanyNodeLink {
   approved_at: string | null;
   approved_by: string | null;
 }
+export type CompanyNodeLink = ReviewNodeLink;
 export const nodeLinkTypeLabel = (type: PathwayNodePosition): string => NODE_LABELS[type];
 /** Roles stay exactly: Feedstock supplier, Product manufacturer, Application offtaker. */
 export const companyRoleLabel = (role: CompanyRole): string =>
@@ -304,30 +303,53 @@ export const companyIdentityKey = (company: Pick<Company, "name" | "website" | "
 
 export interface PaperPatentMatch extends CommonRecord {
   kind: "paper" | "patent";
+  /** Stable identity: DOI for papers, patent family identifier for patents. */
   external_id: string;
   title: string;
   nodes: MatchNodes;
   status: ReviewStatus;
+  /** The Found date. One home per fact: there is no parallel found_at field. */
   matched_at: string;
   note: string | null;
   year: number | null;
   authors_or_assignee: string | null;
   abstract: string | null;
   source: "Semantic Scholar" | "USPTO" | null;
-  first_seen_run_id?: string | null;
-  reconfirmations?: Reconfirmation[];
-  seen_again?: SeenAgain;
+  // --- Match model (Prompt 51). Found and Approved are two independent dates;
+  // neither is ever overwritten by a later run.
+  /** The run that introduced this match, null for manually added matches. */
+  found_by_run_id?: string | null;
+  approved_at?: string | null;
+  approved_by?: string | null;
+  /** Node links, each reviewable on its own, independent of the match status. */
+  node_links?: ReviewNodeLink[];
 }
-// --- Re-run provenance. Append-only: a re-run never edits or removes a record. ---
-export interface Reconfirmation { run_id: string; timestamp: string; }
-export interface SeenAgain { count: number; run_ids: string[]; }
-type ProvenanceRecord = { first_seen_run_id?: string | null; reconfirmations?: Reconfirmation[]; seen_again?: SeenAgain };
-export const reconfirmationsOf = (record: ProvenanceRecord): Reconfirmation[] => record.reconfirmations ?? [];
-export const reconfirmCount = (record: ProvenanceRecord): number => reconfirmationsOf(record).length;
-export const lastReconfirmedAt = (record: ProvenanceRecord): string | null => reconfirmationsOf(record).map(item => item.timestamp).sort().slice(-1)[0] ?? null;
-export const lastReconfirmation = (record: ProvenanceRecord): Reconfirmation | null => [...reconfirmationsOf(record)].sort((a, b) => +new Date(a.timestamp) - +new Date(b.timestamp)).slice(-1)[0] ?? null;
-export const seenAgainOf = (record: ProvenanceRecord): SeenAgain => record.seen_again ?? { count: 0, run_ids: [] };
-export const seenAgainCount = (record: ProvenanceRecord): number => seenAgainOf(record).count;
+export const matchFoundRunId = (match: PaperPatentMatch): string | null => match.found_by_run_id ?? null;
+export const matchNodeLinkId = (matchId: string, type: PathwayNodePosition, value: string): string => `${matchId}:${type}:${nodeLinkKey(value).replace(/\s+/g, "-")}`;
+/** Backfill: a match's current node assignment reads as Approved links found at matched_at. */
+export function deriveMatchNodeLinks(match: PaperPatentMatch): ReviewNodeLink[] {
+  const links: ReviewNodeLink[] = [];
+  matchNodePositions.forEach(position => {
+    const type = matchToPathwayPosition[position];
+    cleanNodeList(match.nodes[position]).forEach(value => {
+      if (links.some(link => link.node_type === type && nodeLinkKey(link.node_value) === nodeLinkKey(value))) return;
+      links.push({
+        id: matchNodeLinkId(match.id, type, value), node_type: type, node_value: value,
+        status: "approved", found_at: match.matched_at, found_by_run_id: match.found_by_run_id ?? null,
+        approved_at: match.approved_at ?? match.matched_at, approved_by: match.approved_by ?? match.last_actor ?? null,
+      });
+    });
+  });
+  return links;
+}
+export const matchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => match.node_links ?? deriveMatchNodeLinks(match);
+export const pendingMatchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => matchNodeLinks(match).filter(link => link.status === "review_pending");
+export const approvedMatchNodeLinks = (match: PaperPatentMatch): ReviewNodeLink[] => matchNodeLinks(match).filter(link => link.status === "approved");
+/** Review units awaiting a decision: the match itself plus each pending node link. */
+export const pendingMatchReviewUnits = (match: PaperPatentMatch): number => (match.status === "review_pending" ? 1 : 0) + pendingMatchNodeLinks(match).length;
+export const matchLinkEntityType = (kind: PaperPatentMatch["kind"]): AuditEntityType => kind === "paper" ? "paper_node_link" : "patent_node_link";
+export const matchEntityType = (kind: PaperPatentMatch["kind"]): AuditEntityType => kind === "paper" ? "paper_match" : "patent_match";
+
 export interface IndicatorSource { url: string; label: string | null; }
 export const sourceDomain = (url: string): string => { try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return url; } };
 export const sourceDisplay = (source: IndicatorSource): string => source.label?.trim() || sourceDomain(source.url);
