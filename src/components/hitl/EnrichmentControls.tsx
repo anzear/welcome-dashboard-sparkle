@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ActorStamp, ValueCell } from "@/components/hitl/ReviewPrimitives";
 import { useNodeFilter } from "@/components/hitl/NodeFilterBar";
-import { ENRICHMENT_STATUS_LABELS, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, NODE_LABELS, isRunActive, useHitlStore, type EnrichmentRun, type EnrichmentRunStatus, type EnrichmentType, type Pathway } from "@/lib/hitlStore";
+import { isRunSuccessful, ENRICHMENT_STATUS_LABELS, ENRICHMENT_TYPES, ENRICHMENT_TYPE_LABELS, NODE_LABELS, isRunActive, useHitlStore, type EnrichmentRun, type EnrichmentRunStatus, type EnrichmentType, type Pathway } from "@/lib/hitlStore";
 import { newBulkJobId, startRun } from "@/lib/mockEnrichment";
 import { cn } from "@/lib/utils";
 
