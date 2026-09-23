@@ -1,4 +1,4 @@
-import { Calculator, Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Undo2, Unlink, X } from "lucide-react";
+import { Calculator, Check, Clock, Eye, EyeOff, Link, Lock, Pencil, Plus, Sparkles, Undo2, Unlink, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,9 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
+  enrich_trigger: { label: "Enrich triggered", icon: Sparkles, className: "border-border text-muted-foreground" },
+  enrich_complete: { label: "Enrich completed", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
+  enrich_fail: { label: "Enrich failed", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
 };
 
 export function OperationChip({ operation }: { operation: AuditOperation }) {

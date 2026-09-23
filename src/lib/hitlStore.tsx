@@ -175,8 +175,8 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 ];
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
-export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert";
+export type AuditEntityType = "pathway" | "group" | "company" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail";
 export const STALENESS_DAYS = 180;
 
 export interface CommonRecord {
@@ -279,6 +279,42 @@ export const isStale = (indicatorValue: IndicatorValue): boolean => {
   const correctedAt = new Date(indicatorValue.corrected_at).getTime();
   return Number.isFinite(correctedAt) && Date.now() - correctedAt > STALENESS_DAYS * 86_400_000;
 };
+// ---------------------------------------------------------------------------
+// Enrichment runs. Append-only: a completed run is never mutated or removed.
+// ---------------------------------------------------------------------------
+export type EnrichmentType = "companies" | "patents" | "papers" | "indicators";
+export const ENRICHMENT_TYPES: EnrichmentType[] = ["companies", "patents", "papers", "indicators"];
+export const ENRICHMENT_TYPE_LABELS: Record<EnrichmentType, string> = { companies: "Companies", patents: "Patents", papers: "Papers", indicators: "Indicators" };
+export type EnrichmentRunStatus = "queued" | "running" | "completed" | "completed_with_errors" | "failed";
+export const ENRICHMENT_STATUS_LABELS: Record<EnrichmentRunStatus, string> = {
+  queued: "Queued", running: "Running", completed: "Completed", completed_with_errors: "Completed with errors", failed: "Failed",
+};
+export type EnrichmentTriggerMode = "single" | "bulk";
+export interface EnrichmentRun extends CommonRecord {
+  run_id: string;
+  pathway_id: string;
+  enrichment_type: EnrichmentType;
+  status: EnrichmentRunStatus;
+  trigger_mode: EnrichmentTriggerMode;
+  bulk_job_id: string | null;
+  triggered_by: string;
+  triggered_at: string;
+  completed_at: string | null;
+  items_found: number | null;
+  items_new: number | null;
+  items_reconfirmed: number | null;
+  error_message: string | null;
+}
+export const isRunActive = (run: EnrichmentRun): boolean => run.status === "queued" || run.status === "running";
+export const isRunSuccessful = (run: EnrichmentRun): boolean => run.status === "completed" || run.status === "completed_with_errors";
+export interface EnrichmentRunResolution {
+  status: Extract<EnrichmentRunStatus, "completed" | "completed_with_errors" | "failed">;
+  items_found: number | null;
+  items_new: number | null;
+  items_reconfirmed: number | null;
+  error_message: string | null;
+}
+
 export interface AuditEntry extends CommonRecord {
   timestamp: string;
   actor: string;
@@ -290,9 +326,12 @@ export interface AuditEntry extends CommonRecord {
   operation: AuditOperation;
   note: string | null;
   reverts_entry_id: string | null;
+  enrichment_type?: EnrichmentType | null;
+  trigger_mode?: EnrichmentTriggerMode | null;
+  bulk_job_id?: string | null;
 }
 export interface HitlCurrentUser { name: string; role: "Super Admin" | "User"; }
-export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue;
+export type HitlRecord = Pathway | Group | Company | PaperPatentMatch | IndicatorValue | EnrichmentRun;
 export interface RecordChangeInput {
   entity_type: AuditEntityType;
   entity_id: string;
@@ -303,6 +342,9 @@ export interface RecordChangeInput {
   note?: string | null;
   trace_id?: string | null;
   reverts_entry_id?: string | null;
+  enrichment_type?: EnrichmentType | null;
+  trigger_mode?: EnrichmentTriggerMode | null;
+  bulk_job_id?: string | null;
 }
 
 const readField = (record: HitlRecord, field: string): unknown => {
@@ -712,6 +754,53 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
 ];
 
+// ---------------------------------------------------------------------------
+// Seeded enrichment runs. Covers never-run, zero-result, failed-after-success
+// and in-flight states so every display state is visible without clicking.
+// ---------------------------------------------------------------------------
+const runSeed = (
+  runId: string, pathwayId: string, type: EnrichmentType, status: EnrichmentRunStatus, triggeredAt: string,
+  counts: { found?: number | null; added?: number | null; reconfirmed?: number | null } = {},
+  extra: { completedAt?: string | null; error?: string | null; actor?: string; mode?: EnrichmentTriggerMode; bulkJobId?: string | null } = {},
+): EnrichmentRun => ({
+  id: runId, created_at: triggeredAt, updated_at: extra.completedAt ?? triggeredAt, status_changed_at: extra.completedAt ?? triggeredAt,
+  last_actor: extra.actor ?? "Anže", trace_id: null,
+  run_id: runId, pathway_id: pathwayId, enrichment_type: type, status,
+  trigger_mode: extra.mode ?? "single", bulk_job_id: extra.bulkJobId ?? null,
+  triggered_by: extra.actor ?? "Anže", triggered_at: triggeredAt,
+  completed_at: extra.completedAt ?? null,
+  items_found: counts.found ?? null, items_new: counts.added ?? null, items_reconfirmed: counts.reconfirmed ?? null,
+  error_message: extra.error ?? null,
+});
+const laterIso = (day: number, hour: number, minutes: number) => `2026-09-${String(day).padStart(2, "0")}T${String(hour).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00.000Z`;
+const seedEnrichmentRuns: EnrichmentRun[] = [
+  // pw-001 — mixed history, papers never run.
+  runSeed("run-001", "pw-001", "companies", "completed", iso(12, 9), { found: 14, added: 6, reconfirmed: 8 }, { completedAt: laterIso(12, 9, 4) }),
+  runSeed("run-002", "pw-001", "patents", "completed", iso(20, 11), { found: 9, added: 3, reconfirmed: 6 }, { completedAt: laterIso(20, 11, 3) }),
+  runSeed("run-003", "pw-001", "indicators", "completed_with_errors", iso(18, 14), { found: 7, added: 2, reconfirmed: 4 }, { completedAt: laterIso(18, 14, 5), actor: "Jon Goriup" }),
+  // pw-002 — companies run that found nothing (success, zero results).
+  runSeed("run-004", "pw-002", "companies", "completed", iso(21, 10), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(21, 10, 2), actor: "Jon Goriup" }),
+  runSeed("run-005", "pw-002", "papers", "completed", iso(15, 12), { found: 5, added: 5, reconfirmed: 0 }, { completedAt: laterIso(15, 12, 3) }),
+  // pw-003 — failed patents run with an earlier successful patents run.
+  runSeed("run-006", "pw-003", "patents", "completed", iso(13, 9), { found: 11, added: 7, reconfirmed: 4 }, { completedAt: laterIso(13, 9, 6) }),
+  runSeed("run-007", "pw-003", "patents", "failed", iso(22, 8), {}, { completedAt: laterIso(22, 8, 1), error: "Patent source timed out before returning results", actor: "Jon Goriup" }),
+  runSeed("run-008", "pw-003", "companies", "completed", iso(19, 16), { found: 12, added: 4, reconfirmed: 8 }, { completedAt: laterIso(19, 16, 4) }),
+  // pw-004 — a run still in flight on page load.
+  runSeed("run-009", "pw-004", "indicators", "running", laterIso(23, 10, 40), {}, { actor: "Jon Goriup" }),
+  runSeed("run-010", "pw-004", "companies", "completed", iso(17, 11), { found: 8, added: 2, reconfirmed: 6 }, { completedAt: laterIso(17, 11, 3) }),
+  // pw-005 — patents recently, papers never.
+  runSeed("run-011", "pw-005", "patents", "completed", iso(22, 15), { found: 6, added: 1, reconfirmed: 5 }, { completedAt: laterIso(22, 15, 3) }),
+  runSeed("run-012", "pw-005", "companies", "completed", iso(16, 9), { found: 10, added: 10, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 5), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  // pw-006 — bulk job history across two types.
+  runSeed("run-013", "pw-006", "papers", "completed", iso(16, 9), { found: 4, added: 2, reconfirmed: 2 }, { completedAt: laterIso(16, 9, 6), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  runSeed("run-014", "pw-006", "indicators", "completed", iso(16, 9), { found: 0, added: 0, reconfirmed: 0 }, { completedAt: laterIso(16, 9, 7), mode: "bulk", bulkJobId: "bulk-2026-09-16-a" }),
+  // pw-009 / pw-010 — sparse single-type histories.
+  runSeed("run-015", "pw-009", "companies", "completed", iso(11, 13), { found: 3, added: 3, reconfirmed: 0 }, { completedAt: laterIso(11, 13, 2) }),
+  runSeed("run-016", "pw-010", "patents", "failed", iso(14, 10), {}, { completedAt: laterIso(14, 10, 1), error: "Patent family lookup rejected the request" }),
+  // pw-007 has zero runs of any type.
+];
+export const sortRunsNewestFirst = (runs: EnrichmentRun[]) => [...runs].sort((a, b) => +new Date(b.triggered_at) - +new Date(a.triggered_at));
+
 interface HitlStoreValue {
   currentUser: HitlCurrentUser;
   pathways: Pathway[];
@@ -728,6 +817,15 @@ interface HitlStoreValue {
   isSuperseded: (entry: AuditEntry) => AuditEntry[];
   revertedBy: (entry: AuditEntry) => AuditEntry | null;
   getRecord: (entityType: AuditEntityType, entityId: string) => HitlRecord | null;
+  enrichmentRuns: EnrichmentRun[];
+  runsForPathway: (pathwayId: string) => EnrichmentRun[];
+  lastRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  lastSuccessfulRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  activeRun: (pathwayId: string, type: EnrichmentType) => EnrichmentRun | null;
+  runsForBulkJob: (bulkJobId: string) => EnrichmentRun[];
+  createEnrichmentRun: (input: { pathway_id: string; enrichment_type: EnrichmentType; trigger_mode: EnrichmentTriggerMode; bulk_job_id: string | null }) => EnrichmentRun;
+  markEnrichmentRunRunning: (runId: string) => void;
+  resolveEnrichmentRun: (runId: string, resolution: EnrichmentRunResolution) => void;
 }
 const HitlStoreContext = createContext<HitlStoreValue | null>(null);
 
@@ -738,15 +836,17 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const [paperPatentMatches, setPaperPatentMatches] = useState(seedPaperPatentMatches);
   const [indicatorValues, setIndicatorValues] = useState(seedIndicatorValues);
   const [auditEntries, setAuditEntries] = useState(seedAuditEntries);
+  const [enrichmentRuns, setEnrichmentRuns] = useState(seedEnrichmentRuns);
   const currentUser: HitlCurrentUser = useMemo(() => ({ name: "Jon Goriup", role: "Super Admin" }), []);
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
     const collections: Record<AuditEntityType, HitlRecord[]> = {
       pathway: pathways, group: groups, company: companies,
       paper_match: paperPatentMatches, patent_match: paperPatentMatches, indicator_value: indicatorValues,
+      enrichment_run: enrichmentRuns,
     };
     return collections[entityType].find(item => item.id === entityId) ?? null;
-  }, [pathways, groups, companies, paperPatentMatches, indicatorValues]);
+  }, [pathways, groups, companies, paperPatentMatches, indicatorValues, enrichmentRuns]);
 
   const recordChange = useCallback((input: RecordChangeInput): AuditEntry => {
     const now = new Date().toISOString();
@@ -758,6 +858,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       entity_id: input.entity_id, field: input.field, prior_value: input.prior_value,
       new_value: input.new_value, operation: input.operation, note: input.note ?? null,
       reverts_entry_id: input.reverts_entry_id ?? null,
+      enrichment_type: input.enrichment_type ?? null,
+      trigger_mode: input.trigger_mode ?? null,
+      bulk_job_id: input.bulk_job_id ?? null,
     };
     const apply = <T extends HitlRecord>(items: T[]): T[] => {
       if ((input.operation === "create" || input.operation === "link_add") && input.field === null) {
@@ -808,10 +911,72 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   const paperMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "paper"), [paperPatentMatches]);
   const patentMatches = useCallback(() => paperPatentMatches.filter(item => item.kind === "patent"), [paperPatentMatches]);
+
+  // --- Enrichment run selectors (append-only history, newest first) ---------
+  const runsForPathway = useCallback((pathwayId: string) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId)), [enrichmentRuns]);
+  const lastRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type))[0] ?? null, [enrichmentRuns]);
+  const lastSuccessfulRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type && isRunSuccessful(run)))[0] ?? null, [enrichmentRuns]);
+  const activeRun = useCallback((pathwayId: string, type: EnrichmentType) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.pathway_id === pathwayId && run.enrichment_type === type && isRunActive(run)))[0] ?? null, [enrichmentRuns]);
+  const runsForBulkJob = useCallback((bulkJobId: string) => sortRunsNewestFirst(enrichmentRuns.filter(run => run.bulk_job_id === bulkJobId)), [enrichmentRuns]);
+
+  const createEnrichmentRun = useCallback((input: { pathway_id: string; enrichment_type: EnrichmentType; trigger_mode: EnrichmentTriggerMode; bulk_job_id: string | null }): EnrichmentRun => {
+    const now = new Date().toISOString();
+    const runId = `run-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}`;
+    const run: EnrichmentRun = {
+      id: runId, created_at: now, updated_at: now, status_changed_at: now, last_actor: currentUser.name, trace_id: null,
+      run_id: runId, pathway_id: input.pathway_id, enrichment_type: input.enrichment_type, status: "queued",
+      trigger_mode: input.trigger_mode, bulk_job_id: input.bulk_job_id, triggered_by: currentUser.name, triggered_at: now,
+      completed_at: null, items_found: null, items_new: null, items_reconfirmed: null, error_message: null,
+    };
+    setEnrichmentRuns(runs => [...runs, run]);
+    recordChange({
+      entity_type: "enrichment_run", entity_id: runId, field: null, prior_value: null,
+      new_value: { pathway_id: input.pathway_id, enrichment_type: input.enrichment_type, status: "queued" },
+      operation: "enrich_trigger", enrichment_type: input.enrichment_type, trigger_mode: input.trigger_mode, bulk_job_id: input.bulk_job_id,
+      note: null,
+    });
+    return run;
+  }, [currentUser.name, recordChange]);
+
+  // Status transitions only touch a run while it is queued or running.
+  const markEnrichmentRunRunning = useCallback((runId: string) => {
+    setEnrichmentRuns(runs => runs.map(run => (run.run_id === runId && run.status === "queued"
+      ? { ...run, status: "running", updated_at: new Date().toISOString(), status_changed_at: new Date().toISOString() }
+      : run)));
+  }, []);
+
+  const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
+    const now = new Date().toISOString();
+    let resolved: EnrichmentRun | null = null;
+    setEnrichmentRuns(runs => runs.map(run => {
+      if (run.run_id !== runId || !isRunActive(run)) return run;
+      resolved = {
+        ...run, status: resolution.status, completed_at: now, updated_at: now, status_changed_at: now,
+        items_found: resolution.items_found, items_new: resolution.items_new, items_reconfirmed: resolution.items_reconfirmed,
+        error_message: resolution.error_message,
+      };
+      return resolved;
+    }));
+    const record = enrichmentRuns.find(run => run.run_id === runId) ?? null;
+    if (!record || !isRunActive(record)) return;
+    recordChange({
+      entity_type: "enrichment_run", entity_id: runId, field: "status", prior_value: record.status,
+      new_value: {
+        status: resolution.status, items_found: resolution.items_found, items_new: resolution.items_new,
+        items_reconfirmed: resolution.items_reconfirmed, error_message: resolution.error_message,
+      },
+      operation: resolution.status === "failed" ? "enrich_fail" : "enrich_complete",
+      enrichment_type: record.enrichment_type, trigger_mode: record.trigger_mode, bulk_job_id: record.bulk_job_id,
+      note: resolution.error_message,
+    });
+  }, [enrichmentRuns, recordChange]);
+
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
     paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord,
-  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord]);
+    enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob,
+    createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun,
+  }), [currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries, paperMatches, patentMatches, recordChange, revertEntry, getHistory, isSuperseded, revertedBy, getRecord, enrichmentRuns, runsForPathway, lastRun, lastSuccessfulRun, activeRun, runsForBulkJob, createEnrichmentRun, markEnrichmentRunRunning, resolveEnrichmentRun]);
   return <HitlStoreContext.Provider value={value}>{children}</HitlStoreContext.Provider>;
 }
 

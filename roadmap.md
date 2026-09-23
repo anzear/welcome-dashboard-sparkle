@@ -147,3 +147,9 @@
 - [x] Add collapsed summaries and expandable profile-style indicator rows
 - [x] Add attributed per-user overrides with required reasons and append-only revert history
 - [x] Verify checklist interactions, null/count handling, layout, and build
+
+## Prompt 43 — Enrichment runs: store, simulation, audit
+- [x] Append-only EnrichmentRun records, selectors and status transitions in the mock store
+- [x] mockEnrichment.startRun timer simulation with seeded outcomes
+- [x] Audit entries for trigger, complete and fail
+- [x] Seed never-run, zero-result, failed-after-success and in-flight states

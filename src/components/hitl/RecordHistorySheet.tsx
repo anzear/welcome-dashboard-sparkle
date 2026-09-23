@@ -11,7 +11,7 @@ import { PathwayRef } from "./PathwayRef";
 import { DerivedPathwaysForRecord, NodeChips, ScopeSummary } from "./EvidenceMatchPrimitives";
 import { ScopeChip, TargetRef } from "./IndicatorPrimitives";
 import { SourcesPopover } from "./IndicatorSources";
-import { FIELD_LABELS, groupById, indicatorLabel, methodTagLabel, useHitlStore, type AuditEntityType, type AuditEntry, type Company, type Group, type HitlRecord, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
+import { ENRICHMENT_TYPE_LABELS, FIELD_LABELS, groupById, indicatorLabel, methodTagLabel, useHitlStore, type AuditEntityType, type AuditEntry, type Company, type Group, type HitlRecord, type IndicatorValue, type PaperPatentMatch } from "@/lib/hitlStore";
 import { GroupChip } from "./GroupChip";
 import { cn } from "@/lib/utils";
 
@@ -69,7 +69,7 @@ export function RecordHistoryList({ entityType, entityId }: { entityType: AuditE
   </>;
 }
 
-const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value" };
+const labels: Record<AuditEntityType, string> = { pathway: "Pathway", group: "Group", company: "Company", paper_match: "Paper match", patent_match: "Patent match", indicator_value: "Indicator value", enrichment_run: "Enrichment run" };
 function GroupIdList({ ids }: { ids: unknown }) {
   const list = Array.isArray(ids) ? ids.filter((value): value is string => typeof value === "string") : typeof ids === "string" ? [ids] : [];
   if (list.length === 0) return <span className="text-muted-foreground">No groups</span>;
@@ -82,6 +82,7 @@ function summary(record: HitlRecord | null, type: AuditEntityType) {
   if (type === "group" && "name" in record) return record.name;
   if ((type === "paper_match" || type === "patent_match") && "title" in record) return record.title;
   if (type === "indicator_value" && "indicator_key" in record) return indicatorLabel(record.indicator_key);
+  if (type === "enrichment_run" && "enrichment_type" in record) return `${ENRICHMENT_TYPE_LABELS[record.enrichment_type]} · ${record.pathway_id}`;
   return record.id;
 }
 
