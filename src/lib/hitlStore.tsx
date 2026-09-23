@@ -1223,6 +1223,11 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
 
   // Re-run merge. Never deletes, never overwrites an approved record and never
   // changes any existing review status. Returns the counts for the run.
+  //
+  // Companies (Prompt 50): new companies, new roles and new node links arrive
+  // alongside the old ones, never in place of them. Anything that already
+  // existed is not written to at any status, and leaves no record-level trace.
+  // Papers and patents keep the earlier re-confirmation model.
   const mergeRerunPayload = useCallback((run: EnrichmentRun): { found: number; added: number; known: number; seenAgain: number } | null => {
     const payload = rerunPayloadFor(run.pathway_id, run.enrichment_type);
     if (!payload.length) return null;
@@ -1236,36 +1241,79 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     const existingMatches = matchesRef.current.filter(item => item.kind === kind);
     let companyIds = companiesRef.current.map(item => item.id);
     let matchIds = matchesRef.current.map(item => item.id);
-    let added = 0; let reconfirmed = 0; let seenAgain = 0;
+    let added = 0; let known = 0; let seenAgain = 0;
+
+    if (isCompanies) {
+      const pathwayValues = [pathway.feedstock, pathway.process_technology, pathway.product, pathway.application_market]
+        .map(value => value.trim().toLocaleLowerCase());
+      const touchesPathway = (company: Company) => companyNodeLinks(company)
+        .some(link => pathwayValues.includes(link.node_value.trim().toLocaleLowerCase()));
+      payload.forEach(item => {
+        const identity = companyIdentityKey({ name: item.label, website: item.website ?? null, registry_id: item.identifier });
+        const linked = existingCompanies.filter(company => companyIdentityKey(company) === identity && touchesPathway(company));
+        (item.matches ?? []).forEach(roleMatch => {
+          const existing = linked.find(company => company.roles.includes(roleMatch.role));
+          if (!existing) {
+            // A match is identified by company + pathway + role, so a new role
+            // becomes its own independently reviewable match.
+            const id = nextCompanyId(companyIds); companyIds = [...companyIds, id];
+            const position = roleNodePosition(roleMatch.role);
+            const roleValues = roleMatch.nodes.filter(node => node.node_type === position).map(node => node.node_value);
+            const secondary = emptyEvidenceNodeLists();
+            roleMatch.nodes.filter(node => node.node_type !== position).forEach(node => { secondary[node.node_type] = [...secondary[node.node_type], node.node_value]; });
+            const links: CompanyNodeLink[] = roleMatch.nodes.map(node => ({
+              id: companyNodeLinkId(id, node.node_type, node.node_value), node_type: node.node_type, node_value: node.node_value,
+              status: "review_pending", found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null,
+            }));
+            const company: Company = {
+              ...blankCommon(id, timestamp, currentUser.name), name: item.label, website: item.website ?? null, registry_id: item.identifier,
+              address: null, postal_code: null, relevance_url: null, country: item.country ?? null, city: item.city ?? null,
+              industry_sector: item.industry_sector ?? null, profile_fields: { revenue: null },
+              roles: [roleMatch.role], role_nodes: { ...emptyRoleNodes(), [roleMatch.role]: roleValues } as Company["role_nodes"],
+              secondary_nodes: secondary, status: "review_pending", evidence: null, note: null,
+              found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null, node_links: links,
+            };
+            added += 1 + links.length;
+            recordChange({ entity_type: "company", entity_id: id, field: null, prior_value: null, new_value: company, operation: "found", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Found by run ${run.run_id} · ${roleLabel(roleMatch.role)}` });
+            return;
+          }
+          // The match itself is already known: no write, no history entry.
+          known += 1;
+          const links = companyNodeLinks(existing);
+          roleMatch.nodes.forEach(node => {
+            const held = links.some(link => link.node_type === node.node_type && link.node_value.trim().toLocaleLowerCase() === node.node_value.trim().toLocaleLowerCase());
+            if (held) { known += 1; return; }
+            const link: CompanyNodeLink = {
+              id: companyNodeLinkId(existing.id, node.node_type, node.node_value), node_type: node.node_type, node_value: node.node_value,
+              status: "review_pending", found_at: timestamp, found_by_run_id: run.run_id, approved_at: null, approved_by: null,
+            };
+            added += 1;
+            recordChange({
+              entity_type: "company_node_link", entity_id: link.id, parent_id: existing.id, node_type: node.node_type, node_value: node.node_value,
+              field: null, prior_value: null, new_value: link, operation: "found",
+              enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
+              note: `Found by run ${run.run_id} · ${nodeLinkTypeLabel(node.node_type)} ${node.node_value}`,
+            });
+          });
+        });
+      });
+      return { found: payload.length, added, known, seenAgain };
+    }
+
     payload.forEach(item => {
-      const existing: (Company | PaperPatentMatch) | null = isCompanies
-        ? existingCompanies.find(company => (company.registry_id ?? "") === item.identifier) ?? null
-        : existingMatches.find(match => match.external_id === item.identifier) ?? null;
+      const existing: PaperPatentMatch | null = existingMatches.find(match => match.external_id === item.identifier) ?? null;
       if (!existing) {
         added += 1;
-        if (isCompanies) {
-          const id = nextCompanyId(companyIds); companyIds = [...companyIds, id];
-          const company: Company = {
-            ...blankCommon(id, timestamp, currentUser.name), name: item.label, website: item.website ?? null, registry_id: item.identifier,
-            address: null, postal_code: null, relevance_url: null, country: item.country ?? null, city: item.city ?? null,
-            industry_sector: item.industry_sector ?? null, profile_fields: { revenue: null },
-            roles: ["feedstock_supplier"], role_nodes: { ...emptyRoleNodes(), feedstock_supplier: [pathway.feedstock] },
-            secondary_nodes: emptyEvidenceNodeLists(), status: "review_pending", evidence: null, note: null,
-            first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
-          };
-          recordChange({ entity_type: "company", entity_id: id, field: null, prior_value: null, new_value: company, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
-        } else {
-          const id = nextMatchId(matchIds); matchIds = [...matchIds, id];
-          const match: PaperPatentMatch = {
-            ...blankCommon(id, timestamp, currentUser.name), kind, external_id: item.identifier, title: item.label,
-            nodes: { ...emptyMatchNodes(), process: [pathway.process_technology], product: [pathway.product] },
-            status: "review_pending", matched_at: timestamp, note: null, year: item.year ?? null,
-            authors_or_assignee: item.authors_or_assignee ?? null, abstract: null,
-            source: kind === "paper" ? "Semantic Scholar" : "USPTO",
-            first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
-          };
-          recordChange({ entity_type: entityType, entity_id: id, field: null, prior_value: null, new_value: match, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
-        }
+        const id = nextMatchId(matchIds); matchIds = [...matchIds, id];
+        const match: PaperPatentMatch = {
+          ...blankCommon(id, timestamp, currentUser.name), kind, external_id: item.identifier, title: item.label,
+          nodes: { ...emptyMatchNodes(), process: [pathway.process_technology], product: [pathway.product] },
+          status: "review_pending", matched_at: timestamp, note: null, year: item.year ?? null,
+          authors_or_assignee: item.authors_or_assignee ?? null, abstract: null,
+          source: kind === "paper" ? "Semantic Scholar" : "USPTO",
+          first_seen_run_id: run.run_id, reconfirmations: [], seen_again: { count: 0, run_ids: [] },
+        };
+        recordChange({ entity_type: entityType, entity_id: id, field: null, prior_value: null, new_value: match, operation: "create", enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id, note: `Introduced by run ${run.run_id}` });
         return;
       }
       if (existing.status === "rejected") {
@@ -1281,7 +1329,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
         return;
       }
       const prior = reconfirmationsOf(existing);
-      reconfirmed += 1;
+      known += 1;
       recordChange({
         entity_type: entityType, entity_id: existing.id, field: "reconfirmations", prior_value: prior,
         new_value: [...prior, { run_id: run.run_id, timestamp }], operation: "reconfirm",
@@ -1289,8 +1337,9 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
         note: `Re-confirmed by run ${run.run_id}. Status unchanged.`,
       });
     });
-    return { found: payload.length, added, reconfirmed, seenAgain };
+    return { found: payload.length, added, known, seenAgain };
   }, [currentUser.name, recordChange]);
+
 
   const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
     const now = new Date().toISOString();
