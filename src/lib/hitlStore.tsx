@@ -50,6 +50,7 @@ export const NODE_LABELS = {
   application_market: "Application",
 } as const satisfies Record<keyof EvidenceNodes, string>;
 export const FIELD_LABELS: Record<string, string> = {
+  overrides: "Human override",
   status: "Status",
   note: "Note",
   visibility: "Visibility",
