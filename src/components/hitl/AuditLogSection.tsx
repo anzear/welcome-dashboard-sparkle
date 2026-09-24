@@ -19,7 +19,7 @@ const entityTypes: { value: AuditEntityType; label: string }[] = [
   { value: "indicator_value", label: "Indicator value" }, { value: "enrichment_run", label: "Enrichment run" },
   { value: "bulk_job", label: "Bulk job" },
 ];
-const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail", "reconfirm", "seen_again"];
+const operations: AuditOperation[] = ["create", "update", "link_add", "link_remove", "approve", "reject", "revert", "enrich_trigger", "enrich_complete", "enrich_fail", "reconfirm", "seen_again", "found", "correct", "supersede"];
 const operationLabel = (operation: string) => operation.replace(/_/g, " ");
 const quoteCsv = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
 

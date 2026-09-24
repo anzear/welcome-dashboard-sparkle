@@ -68,6 +68,10 @@ function RunCounts({ run }: { run: EnrichmentRun }) {
       <span className="text-foreground"><ValueCell value={run.items_new} /></span> new · <span className="text-foreground"><ValueCell value={run.items_already_known} /></span> already known
     </span>;
   }
+  // Indicators: every run is a fresh observation needing review; no "already known".
+  if (run.enrichment_type === "indicators" && isRunSuccessful(run)) {
+    return <span className="text-[10px] text-muted-foreground"><span className="text-foreground"><ValueCell value={run.items_new} /></span> values pending review</span>;
+  }
   return <span className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
     <span>New <span className="text-foreground"><ValueCell value={run.items_new} /></span></span>
     <span>Already known <span className="text-foreground"><ValueCell value={run.items_already_known} /></span></span>

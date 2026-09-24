@@ -1,4 +1,4 @@
-import { AlertTriangle, Calculator, Check, CheckCheck, Clock, Eye, EyeOff, Layers, Link, Lock, Pencil, Plus, RefreshCw, Sparkles, Undo2, Unlink, X } from "lucide-react";
+import { AlertTriangle, Calculator, Check, CheckCheck, Clock, Eye, EyeOff, Layers, Link, Lock, Pencil, Plus, RefreshCw, Sparkles, Undo2, Unlink, UserPen, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,8 @@ const operationConfig: Record<AuditOperation, { label: string; icon: typeof Plus
   approve: { label: "Approve", icon: Check, className: "border-primary/30 bg-primary/5 text-primary" },
   reject: { label: "Reject", icon: X, className: "border-destructive/30 bg-destructive/5 text-destructive" },
   revert: { label: "Revert", icon: Undo2, className: "border-warning/40 bg-warning/10 text-warning-foreground" },
+  correct: { label: "Human override", icon: UserPen, className: "border-warning/50 bg-warning/10 text-warning-foreground" },
+  supersede: { label: "Override superseded", icon: Layers, className: "border-warning/40 bg-background text-muted-foreground" },
   found: { label: "Found", icon: Sparkles, className: "border-info/40 bg-info/5 text-info" },
   enrich_trigger: { label: "Enrich triggered", icon: Sparkles, className: "border-info/40 bg-info/5 text-info" },
 
@@ -83,4 +85,14 @@ export function ValueDiff({ prior_value, new_value }: { prior_value: unknown; ne
 export function ActorStamp({ name, timestamp }: { name: string; timestamp: string }) {
   const relative = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
   return <Tooltip><TooltipTrigger asChild><span className="text-[11px] text-muted-foreground">{name} · {relative}</span></TooltipTrigger><TooltipContent className="font-mono text-xs">{timestamp}</TooltipContent></Tooltip>;
+}
+
+/**
+ * Which source controls the displayed indicator value. Human overrides use the
+ * human-edited treatment; approved pipeline runs use the pipeline treatment.
+ * Teal stays reserved for VCG-computed values (ComputedChip).
+ */
+export function ValueSourceChip({ source }: { source: "override" | "run" }) {
+  if (source === "override") return <Badge variant="outline" className="inline-flex h-5 items-center gap-1 whitespace-nowrap border-warning/50 bg-warning/10 px-1.5 text-[10px] font-medium text-warning-foreground"><UserPen className="h-3 w-3 shrink-0" />Human override</Badge>;
+  return <Badge variant="outline" className="inline-flex h-5 items-center gap-1 whitespace-nowrap border-border px-1.5 text-[10px] font-medium text-muted-foreground"><Sparkles className="h-3 w-3 shrink-0" />Approved run</Badge>;
 }
