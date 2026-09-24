@@ -17,9 +17,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
+import { ValueSourceChip } from "./ReviewPrimitives";
 import { ComputedChip, IndicatorRunHistoryButton, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
 import {
   INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
+  activeIndicatorOverride, pendingIndicatorRuns, resolveIndicatorDisplay, type IndicatorOverride,
   affectedPathwayIds, computedIndicatorId, displayedValue, emptyIndicatorTarget, findIndicatorValue, indicatorDefinition, indicatorLabel, unitForStorage,
   indicatorsForScope, isStale, sameIndicatorTarget, targetForPathway, targetLabel, targetToPathwayPosition, useHitlStore,
   sameSources, sourceDisplay, type IndicatorDefinition, type IndicatorScope, type IndicatorSource, type IndicatorTarget, type IndicatorTargetKey, type IndicatorValue, type IndicatorValueType, type MethodTag, type ReviewStatus,
@@ -93,6 +95,22 @@ function RunCell({ item }: { item: IndicatorValue }) {
   </span>;
 }
 
+// Displayed value by precedence: active human override, else latest approved run,
+// else awaiting review. The source chip and the pending count stay separate.
+function DisplayedValueCell({ item }: { item: IndicatorValue }) {
+  const store = useHitlStore();
+  const runs = store.runsForIndicator(item.id);
+  const display = resolveIndicatorDisplay(runs, item.overrides);
+  const pending = pendingIndicatorRuns(runs).length;
+  return <span className="inline-flex items-center gap-1.5">
+    {display.kind === "override"
+      ? <span className="text-[10px] font-bold"><ValueCell value={display.override.value} unit={display.override.unit} /></span>
+      : <IndicatorRunValue runs={runs} />}
+    {display.kind !== "awaiting" && <ValueSourceChip source={display.kind === "override" ? "override" : "run"} />}
+    {pending > 0 && <Badge variant="outline" className="h-5 whitespace-nowrap px-1.5 text-[9px] font-normal text-muted-foreground">{pending} pending</Badge>}
+  </span>;
+}
+
 // Computed count indicators are read-only: run history, no review actions.
 function ComputedRunRow({ definition, reference }: { definition: IndicatorDefinition; reference: { scope: IndicatorScope; target: IndicatorTarget } }) {
   const store = useHitlStore();
@@ -121,7 +139,7 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{indicatorLabel(item.indicator_key)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
-    <TableCell className="whitespace-nowrap text-[10px] font-bold">{valueWithUnit(displayedValue(item), item.unit)}</TableCell>
+    <TableCell className="whitespace-nowrap"><DisplayedValueCell item={item} /></TableCell>
     <TableCell className="whitespace-nowrap"><RunCell item={item} /></TableCell>
     <TableCell className="cursor-pointer" onClick={() => onCorrect(true)}><Tooltip><TooltipTrigger asChild><span className="block max-w-56 truncate text-[10px]"><ValueCell value={item.justification} /></span></TooltipTrigger>{item.justification && <TooltipContent className="max-w-sm text-xs">{item.justification}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><SourcesPopover sources={item.sources} onEdit={() => onCorrect(false, true)} /></TableCell>
@@ -274,6 +292,11 @@ function CorrectDialog({ itemId, focusJustification, focusSources, onClose }: { 
     const valueChanged = corrected.trim() !== "" && "value" in parsed && parsed.value !== item.corrected_value;
     if (corrected.trim() !== "" && !("value" in parsed)) return;
     const nextValue = "value" in parsed ? parsed.value : item.corrected_value; const nextNote = note.trim() || null; const nextJustification = justification.trim() || null; const nextMethodDetail = methodDetail.trim() || null; const nextMethodTag = methodTag || null; const nextDate = new Date(`${date}T00:00:00.000Z`).toISOString(); const now = new Date().toISOString();
+    if (valueChanged && typeof nextValue === "number") {
+      // Append-only human override: earlier overrides are never edited.
+      const override: IndicatorOverride = { id: `ov-${Date.now().toString(36)}`, value: nextValue, unit: (item.unit ?? unit.trim()) || null, reason: nextNote, entered_by: store.currentUser.name, entered_at: now, superseded_at: null, superseded_by_run_id: null };
+      store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "overrides", prior_value: item.overrides, new_value: [...item.overrides, override], operation: "correct", note: nextNote ? `Human override · ${nextNote}` : "Human override" });
+    }
     if (valueChanged) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: nextValue, operation: "update", note: nextNote });
     if (nextNote !== item.correction_note) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "correction_note", prior_value: item.correction_note, new_value: nextNote, operation: "update", note: nextNote });
     if (nextJustification !== item.justification) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "justification", prior_value: item.justification, new_value: nextJustification, operation: "update", note: nextNote });
@@ -305,7 +328,7 @@ function CorrectDialog({ itemId, focusJustification, focusSources, onClose }: { 
 
 function ClearDialog({ itemId, onClose }: { itemId: string | null; onClose: () => void }) {
   const store = useHitlStore(); const item = store.indicatorValues.find(row => row.id === itemId); const nextDisplayed = item?.status === "rejected" ? null : item?.value ?? null;
-  const save = () => { if (!item || item.corrected_value === null) return; store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: null, operation: "update", note: "Correction cleared" }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: null, operation: "update", note: "Correction cleared" }); toast.success("Correction cleared."); onClose(); };
+  const save = () => { if (!item || item.corrected_value === null) return; const active = activeIndicatorOverride(item.overrides); if (active) store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "overrides", prior_value: item.overrides, new_value: item.overrides.map(o => o.id === active.id ? { ...o, superseded_at: new Date().toISOString(), superseded_by: store.currentUser.name } : o), operation: "supersede", note: "Override cleared by hand; it stays in history" }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_value", prior_value: item.corrected_value, new_value: null, operation: "update", note: "Correction cleared" }); store.recordChange({ entity_type: "indicator_value", entity_id: item.id, field: "corrected_at", prior_value: item.corrected_at, new_value: null, operation: "update", note: "Correction cleared" }); toast.success("Correction cleared."); onClose(); };
   return <Dialog open={itemId !== null} onOpenChange={open => { if (!open) onClose(); }}><DialogContent><DialogHeader><DialogTitle>Clear correction</DialogTitle><DialogDescription>Clear the corrected value? It returns to null. Displayed value becomes <strong><ValueCell value={nextDisplayed} unit={nextDisplayed === null ? null : item?.unit} /></strong>.</DialogDescription></DialogHeader>{item?.corrected_at && <p className="text-xs text-muted-foreground">Current correction was saved {formatDistanceStrict(new Date(item.corrected_at), new Date(), { addSuffix: true })}.</p>}<DialogFooter><Button variant="outline" onClick={onClose}>Cancel</Button><Button variant="destructive" onClick={save}>Clear correction</Button></DialogFooter></DialogContent></Dialog>;
 }
 
@@ -351,6 +374,7 @@ function AddValueDialog({ open, preset, onClose }: { open: boolean; preset: AddP
       value_date: new Date(`${date}T00:00:00.000Z`).toISOString(), status: "approved",
       corrected_value: parsed.value, correction_note: note.trim() || null, corrected_at: now,
       justification: justification.trim(), method_tag: methodTag || null, method_detail: methodDetail.trim() || null, sources: cleanedSources,
+      overrides: typeof parsed.value === "number" ? [{ id: `ov-${id}-1`, value: parsed.value, unit: unitForStorage(definition.key, unit), reason: note.trim() || null, entered_by: store.currentUser.name, entered_at: now, superseded_at: null, superseded_by_run_id: null }] : [],
     };
     store.recordChange({ entity_type: "indicator_value", entity_id: id, field: null, prior_value: null, new_value: record, operation: "create", note: note.trim() || null });
     toast.success(`${definition.label} added for ${targetLabel(record)} · affects ${affectedPathwayIds(record, store.pathways).length} pathways`);
