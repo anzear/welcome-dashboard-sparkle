@@ -192,7 +192,7 @@ export const METHOD_TAGS: { value: MethodTag; label: string }[] = [
 export const methodTagLabel = (value: MethodTag | null): string => METHOD_TAGS.find(item => item.value === value)?.label ?? "not set";
 export interface IndicatorTarget { feedstock: string | null; process: string | null; product: string | null; application: string | null; }
 export type AuditEntityType = "pathway" | "group" | "company" | "company_node_link" | "paper_match" | "patent_match" | "indicator_value" | "enrichment_run" | "indicator_run" | "bulk_job";
-export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again" | "found";
+export type AuditOperation = "create" | "update" | "link_add" | "link_remove" | "approve" | "reject" | "revert" | "enrich_trigger" | "enrich_complete" | "enrich_fail" | "reconfirm" | "seen_again" | "found" | "correct" | "supersede";
 
 export const STALENESS_DAYS = 180;
 
@@ -358,7 +358,24 @@ export interface IndicatorValue extends CommonRecord {
   method_tag: MethodTag | null;
   sources: IndicatorSource[];
   method_detail: string | null;
+  /** Human overrides, append-only. An entry is never edited except to mark it superseded. */
+  overrides: IndicatorOverride[];
 }
+
+/** A value entered by a Super Admin through Correct. Outranks every run until a newer run is approved. */
+export interface IndicatorOverride {
+  id: string;
+  value: number;
+  unit: string | null;
+  reason: string | null;
+  entered_by: string;
+  entered_at: string;
+  superseded_at: string | null;
+  superseded_by_run_id: string | null;
+  superseded_by?: string | null;
+}
+export const activeIndicatorOverride = (overrides: IndicatorOverride[] | undefined): IndicatorOverride | null =>
+  [...(overrides ?? [])].filter(o => o.superseded_at === null).sort((a, b) => +new Date(b.entered_at) - +new Date(a.entered_at))[0] ?? null;
 
 export const displayedValue = (indicatorValue: IndicatorValue): number | null => {
   if (indicatorValue.corrected_value !== null) return indicatorValue.corrected_value;
@@ -414,6 +431,18 @@ export function resolveIndicatorRuns(runs: IndicatorRun[]): IndicatorRunResoluti
   if (run.value === null) return { kind: "no_value", run };
   return { kind: "value", run, value: run.value };
 }
+/**
+ * Displayed-value precedence (Prompt 52): 1. the active human override,
+ * 2. the most recent Approved run, 3. awaiting review. Derived, never stored.
+ */
+export type IndicatorDisplay = { kind: "override"; override: IndicatorOverride } | IndicatorRunResolution;
+export function resolveIndicatorDisplay(runs: IndicatorRun[], overrides: IndicatorOverride[] | undefined): IndicatorDisplay {
+  const override = activeIndicatorOverride(overrides);
+  if (override) return { kind: "override", override };
+  return resolveIndicatorRuns(runs);
+}
+export const indicatorDisplayValue = (display: IndicatorDisplay): number | string | null =>
+  display.kind === "override" ? display.override.value : display.kind === "value" ? display.value : null;
 export const pendingIndicatorRuns = (runs: IndicatorRun[]): IndicatorRun[] => runs.filter(run => run.status === "review_pending");
 
 // ---------------------------------------------------------------------------
@@ -903,9 +932,15 @@ const indicatorSeeds: IndicatorSeed[] = [
   ["iv-025", "market_size_eu", 0, 2600, "review_pending", 1],
 ];
 const seedCorrections: Record<string, { value: number; note: string; at: string }> = {
-  "iv-002": { value: 1180, note: "Corrected from verified source appendix", at: "2026-01-08T10:00:00.000Z" },
   "iv-005": { value: 1520, note: "Aligned with published regional dataset", at: "2026-02-14T11:30:00.000Z" },
   "iv-009": { value: 3.2, note: "Updated against source table", at: "2026-09-13T09:00:00.000Z" },
+};
+// Seeded overrides (Prompt 52). iv-005 and iv-009 are active; iv-002's override
+// was superseded when run ir-003 was approved — it stays in history, values intact.
+const seedOverrides: Record<string, Omit<IndicatorOverride, "unit">[]> = {
+  "iv-002": [{ id: "ov-002-1", value: 1180, reason: "Corrected from verified source appendix", entered_by: "Jon Goriup", entered_at: "2026-09-06T10:00:00.000Z", superseded_at: "2026-09-08T13:30:00.000Z", superseded_by_run_id: "ir-003", superseded_by: "Jon Goriup" }],
+  "iv-005": [{ id: "ov-005-1", value: 1520, reason: "Aligned with published regional dataset", entered_by: "Anže", entered_at: "2026-02-14T11:30:00.000Z", superseded_at: null, superseded_by_run_id: null }],
+  "iv-009": [{ id: "ov-009-1", value: 3.2, reason: "Updated against source table", entered_by: "Jon Goriup", entered_at: "2026-09-13T09:00:00.000Z", superseded_at: null, superseded_by_run_id: null }],
 };
 const seedJustifications: Record<string, string> = {
   feedstock_price: "Average of three 2025 European spot quotes for the specified feedstock.",
@@ -948,6 +983,7 @@ const seedIndicatorValues: IndicatorValue[] = indicatorSeeds.reduce<IndicatorVal
     method_tag: correction ? "reported" : index % 6 === 5 ? null : seedMethodTags[index % seedMethodTags.length],
     sources: seedSourcePools[index % seedSourcePools.length],
     method_detail: index % 2 === 0 ? `${seedJustifications[key] ?? "Source observations were reviewed"} Reference period: 2024–2025.` : null,
+    overrides: (seedOverrides[id] ?? []).map(override => ({ ...override, unit: definition.unit })),
   });
   return rows;
 }, []);
@@ -973,6 +1009,11 @@ const seedAuditEntries: AuditEntry[] = [
   auditSeed("audit-014", iso(13, 9), "Jon Goriup", "indicator_value", "iv-009", "corrected_value", null, 3.2, "update", { note: "Updated against source table" }),
   auditSeed("audit-015", iso(14, 10), "Anže", "paper_match", "pp-003", "status", "approved", "review_pending", "update"),
   auditSeed("audit-016", "2026-01-08T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", null, 1180, "update", { note: "Corrected from verified source appendix" }),
+  auditSeed("audit-016b", "2026-09-06T10:00:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "overrides", null, 1180, "correct", { note: "Human override · Corrected from verified source appendix" }),
+  auditSeed("audit-016c", "2026-09-08T13:30:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "overrides", 1180, "ir-003", "supersede", { note: "Override superseded by approving run ir-003" }),
+  auditSeed("audit-016d", "2026-09-08T13:30:00.000Z", "Jon Goriup", "indicator_value", "iv-002", "corrected_value", 1180, null, "update", { note: "Override superseded by approving run ir-003" }),
+  auditSeed("audit-017b", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "overrides", null, 1520, "correct", { note: "Human override · Aligned with published regional dataset" }),
+  auditSeed("audit-014b", "2026-09-13T09:00:00.000Z", "Jon Goriup", "indicator_value", "iv-009", "overrides", null, 3.2, "correct", { note: "Human override · Updated against source table" }),
   auditSeed("audit-017", "2026-02-14T11:30:00.000Z", "Anže", "indicator_value", "iv-005", "corrected_value", null, 1520, "update", { note: "Aligned with published regional dataset" }),
   // --- Enrichment audit trail (Prompts 43–46) -------------------------------
   // One completed bulk job: parent entry plus child runs (completed, failed, skipped).
@@ -1086,6 +1127,8 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   const companiesRef = useRef(companies); companiesRef.current = companies;
   const matchesRef = useRef(paperPatentMatches); matchesRef.current = paperPatentMatches;
   const pathwaysRef = useRef(pathways); pathwaysRef.current = pathways;
+  const indicatorValuesRef = useRef(indicatorValues); indicatorValuesRef.current = indicatorValues;
+  const indicatorRunsRef = useRef(indicatorRuns); indicatorRunsRef.current = indicatorRuns;
   const currentUser: HitlCurrentUser = useMemo(() => ({ name: "Jon Goriup", role: "Super Admin" }), []);
 
   const getRecord = useCallback((entityType: AuditEntityType, entityId: string): HitlRecord | null => {
@@ -1345,15 +1388,58 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
   }, [currentUser.name, recordChange]);
 
 
+  // Indicators (Prompt 52): every run appends a new Review pending IndicatorRun
+  // per indicator — even when the value is identical — and touches nothing else.
+  const recordIndicatorRuns = useCallback((run: EnrichmentRun): number => {
+    const timestamp = new Date().toISOString();
+    const promptVersion = "ind-v1.4";
+    const pathwayList = pathwaysRef.current;
+    const targets: { indicator_id: string; indicator_key: string; unit: string | null; current: number | string | null }[] = [];
+    indicatorValuesRef.current.forEach(iv => {
+      if (!affectedPathwayIds(iv, pathwayList).includes(run.pathway_id)) return;
+      const runs = indicatorRunsRef.current.filter(item => item.indicator_id === iv.id);
+      targets.push({ indicator_id: iv.id, indicator_key: iv.indicator_key, unit: iv.unit, current: indicatorDisplayValue(resolveIndicatorDisplay(runs, iv.overrides)) });
+    });
+    const computedIds = [...new Set(indicatorRunsRef.current.filter(item => item.pathway_id === run.pathway_id && item.indicator_id.startsWith("computed:")).map(item => item.indicator_id))];
+    computedIds.forEach(id => {
+      const latest = sortIndicatorRunsNewestFirst(indicatorRunsRef.current.filter(item => item.indicator_id === id))[0];
+      targets.push({ indicator_id: id, indicator_key: latest.indicator_key, unit: latest.unit, current: resolveIndicatorRuns(indicatorRunsRef.current.filter(item => item.indicator_id === id)).kind === "value" ? latest.value : null });
+    });
+    targets.forEach((target, index) => {
+      // Deterministic mock outcome: identical, different, or nothing found.
+      const branch = index % 3;
+      const value: number | string | null = branch === 0 ? target.current : branch === 1 && typeof target.current === "number" ? Number((target.current * 1.07).toFixed(2)) : branch === 1 ? target.current : null;
+      const irId = `ir-${run.run_id}-${index + 1}`;
+      const newRun: IndicatorRun = {
+        id: irId, created_at: timestamp, updated_at: timestamp, status_changed_at: timestamp, last_actor: run.triggered_by, trace_id: null,
+        run_id: irId, indicator_id: target.indicator_id, indicator_key: target.indicator_key, pathway_id: run.pathway_id,
+        value, null_reason: value === null ? "No source returned a figure for this indicator in this run." : null,
+        unit: target.unit, method_tag: value === null ? null : "estimated", sources: [], model: "gemini-2.5-pro", prompt_version: promptVersion,
+        status: "review_pending", reviewed_by: null, reviewed_at: null, triggered_by: run.triggered_by, triggered_at: timestamp,
+      };
+      recordChange({
+        entity_type: "indicator_run", entity_id: irId, field: null, prior_value: null, new_value: newRun, operation: "found",
+        enrichment_type: run.enrichment_type, trigger_mode: run.trigger_mode, bulk_job_id: run.bulk_job_id,
+        note: `Run ${irId} · prompt ${promptVersion} · enrichment ${run.run_id}`,
+      });
+    });
+    return targets.length;
+  }, [recordChange]);
+
   const resolveEnrichmentRun = useCallback((runId: string, resolution: EnrichmentRunResolution) => {
     const now = new Date().toISOString();
     const record = runsRef.current.find(run => run.run_id === runId) ?? null;
     // A failed run merges nothing; a successful run with a seeded payload takes
     // its counts from the merge itself.
-    const merge = record && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
+    const isIndicators = record?.enrichment_type === "indicators";
+    const merge = record && !isIndicators && resolution.status !== "failed" ? mergeRerunPayload(record) : null;
+    const indicatorCount = record && isIndicators && resolution.status !== "failed" && isRunActive(record) ? recordIndicatorRuns(record) : null;
     const effective: EnrichmentRunResolution = merge
       ? { ...resolution, items_found: merge.found, items_new: merge.added, items_already_known: merge.known }
-      : resolution;
+      : indicatorCount !== null
+        // Every indicator run is recorded and reviewed; "already known" does not apply.
+        ? { ...resolution, items_found: indicatorCount, items_new: indicatorCount, items_already_known: null }
+        : resolution;
     setEnrichmentRuns(runs => runs.map(run => {
       if (run.run_id !== runId || !isRunActive(run)) return run;
       return {
@@ -1374,7 +1460,7 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
       enrichment_type: record.enrichment_type, trigger_mode: record.trigger_mode, bulk_job_id: record.bulk_job_id,
       note: effective.error_message,
     });
-  }, [recordChange, mergeRerunPayload]);
+  }, [recordChange, mergeRerunPayload, recordIndicatorRuns]);
 
   const runsForIndicator = useCallback((indicatorId: string) => sortIndicatorRunsNewestFirst(indicatorRuns.filter(run => run.indicator_id === indicatorId)), [indicatorRuns]);
   const approvedIndicatorValue = useCallback((indicatorId: string) => resolveIndicatorRuns(indicatorRuns.filter(run => run.indicator_id === indicatorId)), [indicatorRuns]);
@@ -1386,7 +1472,15 @@ export function HitlStoreProvider({ children }: { children: ReactNode }) {
     recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "status", prior_value: run.status, new_value: status, operation: status === "approved" ? "approve" : "reject", note: note ?? null });
     recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "reviewed_by", prior_value: run.reviewed_by, new_value: currentUser.name, operation: "update", note: null });
     recordChange({ entity_type: "indicator_run", entity_id: run.id, field: "reviewed_at", prior_value: run.reviewed_at, new_value: now, operation: "update", note: null });
-  }, [indicatorRuns, recordChange, currentUser.name]);
+    // Approving a run supersedes the active override; rejecting leaves it untouched.
+    if (status !== "approved") return;
+    const iv = indicatorValues.find(item => item.id === run.indicator_id);
+    const active = iv ? activeIndicatorOverride(iv.overrides) : null;
+    if (!iv || !active) return;
+    const nextOverrides = iv.overrides.map(o => o.id === active.id ? { ...o, superseded_at: now, superseded_by_run_id: run.run_id, superseded_by: currentUser.name } : o);
+    recordChange({ entity_type: "indicator_value", entity_id: iv.id, field: "overrides", prior_value: iv.overrides, new_value: nextOverrides, operation: "supersede", note: `Override superseded by ${currentUser.name} approving run ${run.run_id}` });
+    if (iv.corrected_value !== null) recordChange({ entity_type: "indicator_value", entity_id: iv.id, field: "corrected_value", prior_value: iv.corrected_value, new_value: null, operation: "update", note: `Override superseded by run ${run.run_id}` });
+  }, [indicatorRuns, indicatorValues, recordChange, currentUser.name]);
 
   const value = useMemo<HitlStoreValue>(() => ({
     currentUser, pathways, groups, companies, paperPatentMatches, indicatorValues, auditEntries,
