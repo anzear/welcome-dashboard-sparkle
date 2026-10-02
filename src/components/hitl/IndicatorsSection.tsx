@@ -114,12 +114,24 @@ function ComputedRunRow({ definition, reference }: { definition: IndicatorDefini
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{definition.label}</TableCell>
     {Array.from({ length: 3 }, (_, index) => <TableCell key={`computed-pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap">{indicatorId
-      ? <span className="inline-flex items-center gap-1"><IndicatorRunValue runs={runs} /><IndicatorRunHistoryButton target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} /></span>
+      ? <IndicatorRunValue runs={runs} />
       : <span className="text-[10px]">—</span>}</TableCell>
     <TableCell className="text-[10px]"><ComputedChip /></TableCell>
     {Array.from({ length: 5 }, (_, index) => <TableCell key={`computed-post-${index}`} className="text-[10px]">—</TableCell>)}
-    <TableCell className="sticky right-0 z-10 bg-background text-right text-[10px] italic">read-only</TableCell>
+    <TableCell className="sticky right-0 z-10 bg-background text-right"><div className="flex items-center justify-end gap-1">
+      <span className="text-[10px] italic">read-only</span>
+      {indicatorId && <RunHistoryMenuItem target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} />}
+    </div></TableCell>
   </TableRow>;
+}
+
+// "Run history" lives in the row's Actions menu, distinct from the record
+// "History" action. Disabled with a "Not run" tooltip when there are no runs.
+function RunHistoryMenuItem({ target, count }: { target: Parameters<ReturnType<typeof useIndicatorRunSheet>["openRuns"]>[0]; count: number }) {
+  const { openRuns } = useIndicatorRunSheet();
+  const item = <DropdownMenuItem disabled={count === 0} onSelect={() => count > 0 && openRuns(target)}><History className="mr-2 h-3.5 w-3.5" />Run history</DropdownMenuItem>;
+  if (count > 0) return item;
+  return <Tooltip><TooltipTrigger asChild><span>{item}</span></TooltipTrigger><TooltipContent className="text-xs">Not run</TooltipContent></Tooltip>;
 }
 
 function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean, focusSources?: boolean) => void; onClear: () => void }) {
