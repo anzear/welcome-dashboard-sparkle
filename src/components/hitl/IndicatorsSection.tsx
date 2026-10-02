@@ -18,7 +18,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
 import { ValueSourceChip } from "./ReviewPrimitives";
-import { ComputedChip, IndicatorRunHistoryButton, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ComputedChip, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { useIndicatorRunSheet, type IndicatorRunTarget } from "@/components/hitl/indicatorRunSheetContext";
 import {
   INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   activeIndicatorOverride, pendingIndicatorRuns, resolveIndicatorDisplay, type IndicatorOverride,
@@ -157,7 +158,7 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
       {item.status !== "approved" && <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" aria-label={`Approve ${item.id}`} onClick={() => onDecision("approved")}><Check className="h-3.5 w-3.5" /></Button>}
       {item.status !== "rejected" && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label={`Reject ${item.id}`} onClick={() => onDecision("rejected")}><X className="h-3.5 w-3.5" /></Button>}
       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Correct ${item.id}`} onClick={() => onCorrect()}><Pencil className="h-3.5 w-3.5" /></Button>
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${item.id}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{item.corrected_value !== null && <DropdownMenuItem onClick={onClear}>Clear correction</DropdownMenuItem>}<DropdownMenuItem onClick={() => openHistory("indicator_value", item.id)}><History className="mr-2 h-3.5 w-3.5" />History</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${item.id}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{item.corrected_value !== null && <DropdownMenuItem onClick={onClear}>Clear correction</DropdownMenuItem>}<DropdownMenuItem onClick={() => openHistory("indicator_value", item.id)}><History className="mr-2 h-3.5 w-3.5" />History</DropdownMenuItem><RunHistoryMenuItem target={{ indicatorId: item.id, indicatorKey: item.indicator_key, readOnly: false, recordId: item.id }} count={runCount} /></DropdownMenuContent></DropdownMenu>
     </div></TableCell>
   </TableRow>;
 }
