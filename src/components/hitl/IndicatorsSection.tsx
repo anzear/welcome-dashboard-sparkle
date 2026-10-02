@@ -120,14 +120,14 @@ function ComputedRunRow({ definition, reference }: { definition: IndicatorDefini
     {Array.from({ length: 5 }, (_, index) => <TableCell key={`computed-post-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="sticky right-0 z-10 bg-background text-right"><div className="flex items-center justify-end gap-1">
       <span className="text-[10px] italic">read-only</span>
-      {indicatorId && <RunHistoryMenuItem target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} />}
+      {indicatorId && <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${definition.key}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><RunHistoryMenuItem target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} /></DropdownMenuContent></DropdownMenu>}
     </div></TableCell>
   </TableRow>;
 }
 
 // "Run history" lives in the row's Actions menu, distinct from the record
 // "History" action. Disabled with a "Not run" tooltip when there are no runs.
-function RunHistoryMenuItem({ target, count }: { target: Parameters<ReturnType<typeof useIndicatorRunSheet>["openRuns"]>[0]; count: number }) {
+function RunHistoryMenuItem({ target, count }: { target: IndicatorRunTarget; count: number }) {
   const { openRuns } = useIndicatorRunSheet();
   const item = <DropdownMenuItem disabled={count === 0} onSelect={() => count > 0 && openRuns(target)}><History className="mr-2 h-3.5 w-3.5" />Run history</DropdownMenuItem>;
   if (count > 0) return item;
