@@ -18,7 +18,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { AffectedPathways, ScopeChip, TargetRef, targetSearchText } from "./IndicatorPrimitives";
 import { BulkAddIndicatorValuesDialog, downloadBulkIndicatorValuesTemplate } from "./BulkAddIndicatorValuesDialog";
 import { ValueSourceChip } from "./ReviewPrimitives";
-import { ComputedChip, IndicatorRunHistoryButton, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { ComputedChip, IndicatorRunValue, NodeFilterEmpty, PathwayRef, ReviewStatusChip, SectionBulkBar, SectionFilterSelect, SectionSearch, SectionToolbar, SourcesEditor, SourcesPopover, SplitAddButton, ValueCell, cleanSources, sourcesValid, useHistorySheet, useNodeFilter } from "@/components/hitl";
+import { useIndicatorRunSheet, type IndicatorRunTarget } from "@/components/hitl/indicatorRunSheetContext";
 import {
   INDICATORS, INDICATOR_SCOPES, METHOD_TAGS, SCOPE_DESCRIPTIONS, SCOPE_LABELS, SCOPE_TARGET_KEYS, TARGET_POSITION_LABELS,
   activeIndicatorOverride, pendingIndicatorRuns, resolveIndicatorDisplay, type IndicatorOverride,
@@ -77,23 +78,14 @@ function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat
   return <TableHeader><TableRow>
     <TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
     {variant === "flat" && <><TableHead className="min-w-36 whitespace-nowrap">Scope</TableHead><TableHead>Target</TableHead></>}
-    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="whitespace-nowrap">Approved run value</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
+    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
     <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
     <TableHead>Note</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
 }
 
-// The indicator value comes only from the most recent approved run — never an
-// unapproved run and never a blend of runs.
-function RunCell({ item }: { item: IndicatorValue }) {
-  const store = useHitlStore();
-  const runs = store.runsForIndicator(item.id);
-  return <span className="inline-flex items-center gap-1">
-    <IndicatorRunValue runs={runs} />
-    <IndicatorRunHistoryButton target={{ indicatorId: item.id, indicatorKey: item.indicator_key, readOnly: false, recordId: item.id }} count={runs.length} />
-  </span>;
-}
+// Run history is opened from the row's Actions menu — no dedicated column.
 
 // Displayed value by precedence: active human override, else latest approved run,
 // else awaiting review. The source chip and the pending count stay separate.
@@ -123,16 +115,30 @@ function ComputedRunRow({ definition, reference }: { definition: IndicatorDefini
     <TableCell className="whitespace-nowrap text-[10px] font-medium">{definition.label}</TableCell>
     {Array.from({ length: 3 }, (_, index) => <TableCell key={`computed-pre-${index}`} className="text-[10px]">—</TableCell>)}
     <TableCell className="whitespace-nowrap">{indicatorId
-      ? <span className="inline-flex items-center gap-1"><IndicatorRunValue runs={runs} /><IndicatorRunHistoryButton target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} /></span>
+      ? <IndicatorRunValue runs={runs} />
       : <span className="text-[10px]">—</span>}</TableCell>
     <TableCell className="text-[10px]"><ComputedChip /></TableCell>
     {Array.from({ length: 5 }, (_, index) => <TableCell key={`computed-post-${index}`} className="text-[10px]">—</TableCell>)}
-    <TableCell className="sticky right-0 z-10 bg-background text-right text-[10px] italic">read-only</TableCell>
+    <TableCell className="sticky right-0 z-10 bg-background text-right"><div className="flex items-center justify-end gap-1">
+      <span className="text-[10px] italic">read-only</span>
+      {indicatorId && <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${definition.key}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><RunHistoryMenuItem target={{ indicatorId, indicatorKey: definition.key, readOnly: true, recordId: null, contextLabel }} count={runs.length} /></DropdownMenuContent></DropdownMenu>}
+    </div></TableCell>
   </TableRow>;
+}
+
+// "Run history" lives in the row's Actions menu, distinct from the record
+// "History" action. Disabled with a "Not run" tooltip when there are no runs.
+function RunHistoryMenuItem({ target, count }: { target: IndicatorRunTarget; count: number }) {
+  const { openRuns } = useIndicatorRunSheet();
+  const item = <DropdownMenuItem disabled={count === 0} onSelect={() => count > 0 && openRuns(target)}><History className="mr-2 h-3.5 w-3.5" />Run history</DropdownMenuItem>;
+  if (count > 0) return item;
+  return <Tooltip><TooltipTrigger asChild><span>{item}</span></TooltipTrigger><TooltipContent className="text-xs">Not run</TooltipContent></Tooltip>;
 }
 
 function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean, focusSources?: boolean) => void; onClear: () => void }) {
   const { openHistory } = useHistorySheet();
+  const store = useHitlStore();
+  const runCount = store.runsForIndicator(item.id).length;
   return <TableRow id={`indicator-row-${item.id}`}>
     <TableCell className="sticky left-0 z-10 bg-background"><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
     {variant === "flat" && <><TableCell className="min-w-36 whitespace-nowrap"><ScopeChip scope={item.scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={item} /></TableCell></>}
@@ -140,7 +146,6 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap"><DisplayedValueCell item={item} /></TableCell>
-    <TableCell className="whitespace-nowrap"><RunCell item={item} /></TableCell>
     <TableCell className="cursor-pointer" onClick={() => onCorrect(true)}><Tooltip><TooltipTrigger asChild><span className="block max-w-56 truncate text-[10px]"><ValueCell value={item.justification} /></span></TooltipTrigger>{item.justification && <TooltipContent className="max-w-sm text-xs">{item.justification}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><SourcesPopover sources={item.sources} onEdit={() => onCorrect(false, true)} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
@@ -153,7 +158,7 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
       {item.status !== "approved" && <Button variant="ghost" size="icon" className="h-7 w-7 text-primary" aria-label={`Approve ${item.id}`} onClick={() => onDecision("approved")}><Check className="h-3.5 w-3.5" /></Button>}
       {item.status !== "rejected" && <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" aria-label={`Reject ${item.id}`} onClick={() => onDecision("rejected")}><X className="h-3.5 w-3.5" /></Button>}
       <Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`Correct ${item.id}`} onClick={() => onCorrect()}><Pencil className="h-3.5 w-3.5" /></Button>
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${item.id}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{item.corrected_value !== null && <DropdownMenuItem onClick={onClear}>Clear correction</DropdownMenuItem>}<DropdownMenuItem onClick={() => openHistory("indicator_value", item.id)}><History className="mr-2 h-3.5 w-3.5" />History</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" aria-label={`More actions for ${item.id}`}><MoreHorizontal className="h-3.5 w-3.5" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">{item.corrected_value !== null && <DropdownMenuItem onClick={onClear}>Clear correction</DropdownMenuItem>}<DropdownMenuItem onClick={() => openHistory("indicator_value", item.id)}><History className="mr-2 h-3.5 w-3.5" />History</DropdownMenuItem><RunHistoryMenuItem target={{ indicatorId: item.id, indicatorKey: item.indicator_key, readOnly: false, recordId: item.id }} count={runCount} /></DropdownMenuContent></DropdownMenu>
     </div></TableCell>
   </TableRow>;
 }
