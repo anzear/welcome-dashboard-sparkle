@@ -77,23 +77,14 @@ function IndicatorHeader({ variant, checked, onCheckedChange }: { variant: "flat
   return <TableHeader><TableRow>
     <TableHead className="sticky left-0 z-20 w-9 min-w-9 bg-background"><Checkbox checked={checked} onCheckedChange={value => onCheckedChange(value === true)} /></TableHead>
     {variant === "flat" && <><TableHead className="min-w-36 whitespace-nowrap">Scope</TableHead><TableHead>Target</TableHead></>}
-    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="whitespace-nowrap">Approved run value</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
+    <TableHead>Indicator</TableHead><TableHead>Pipeline value</TableHead><TableHead>Corrected value</TableHead><TableHead>Displayed</TableHead><TableHead className="min-w-56">Justification</TableHead><TableHead className="whitespace-nowrap">Sources</TableHead>
     <TableHead>Value date</TableHead><TableHead className="min-w-[9.5rem] whitespace-nowrap">Status</TableHead><TableHead>Status changed</TableHead><TableHead>Staleness</TableHead>
     {variant === "flat" && <TableHead>Pathways</TableHead>}
     <TableHead>Note</TableHead><TableHead className="sticky right-0 z-20 min-w-36 bg-background text-right">Actions</TableHead>
   </TableRow></TableHeader>;
 }
 
-// The indicator value comes only from the most recent approved run — never an
-// unapproved run and never a blend of runs.
-function RunCell({ item }: { item: IndicatorValue }) {
-  const store = useHitlStore();
-  const runs = store.runsForIndicator(item.id);
-  return <span className="inline-flex items-center gap-1">
-    <IndicatorRunValue runs={runs} />
-    <IndicatorRunHistoryButton target={{ indicatorId: item.id, indicatorKey: item.indicator_key, readOnly: false, recordId: item.id }} count={runs.length} />
-  </span>;
-}
+// Run history is opened from the row's Actions menu — no dedicated column.
 
 // Displayed value by precedence: active human override, else latest approved run,
 // else awaiting review. The source chip and the pending count stay separate.
