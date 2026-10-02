@@ -145,7 +145,6 @@ function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap text-[10px]">{valueWithUnit(item.corrected_value, item.unit)}</TableCell>
     <TableCell className="whitespace-nowrap"><DisplayedValueCell item={item} /></TableCell>
-    <TableCell className="whitespace-nowrap"><RunCell item={item} /></TableCell>
     <TableCell className="cursor-pointer" onClick={() => onCorrect(true)}><Tooltip><TooltipTrigger asChild><span className="block max-w-56 truncate text-[10px]"><ValueCell value={item.justification} /></span></TooltipTrigger>{item.justification && <TooltipContent className="max-w-sm text-xs">{item.justification}</TooltipContent>}</Tooltip></TableCell>
     <TableCell><SourcesPopover sources={item.sources} onEdit={() => onCorrect(false, true)} /></TableCell>
     <TableCell className="whitespace-nowrap font-mono text-[10px]"><ValueCell value={formatDate(item.value_date)} /></TableCell>
