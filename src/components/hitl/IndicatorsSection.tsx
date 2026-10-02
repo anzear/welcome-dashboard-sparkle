@@ -136,6 +136,8 @@ function RunHistoryMenuItem({ target, count }: { target: IndicatorRunTarget; cou
 
 function IndicatorRow({ item, variant, selected, onSelect, onDecision, onCorrect, onClear }: { item: IndicatorValue; variant: "flat" | "grouped"; selected: boolean; onSelect: (checked: boolean) => void; onDecision: (status: DecidedStatus) => void; onCorrect: (focusJustification?: boolean, focusSources?: boolean) => void; onClear: () => void }) {
   const { openHistory } = useHistorySheet();
+  const store = useHitlStore();
+  const runCount = store.runsForIndicator(item.id).length;
   return <TableRow id={`indicator-row-${item.id}`}>
     <TableCell className="sticky left-0 z-10 bg-background"><Checkbox checked={selected} onCheckedChange={checked => onSelect(checked === true)} /></TableCell>
     {variant === "flat" && <><TableCell className="min-w-36 whitespace-nowrap"><ScopeChip scope={item.scope} /></TableCell><TableCell className="max-w-64"><TargetRef iv={item} /></TableCell></>}
