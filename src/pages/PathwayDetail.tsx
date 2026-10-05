@@ -813,7 +813,7 @@ const PathwayDetail = () => {
                                         >
                                           <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
-                                          <div className="flex items-start justify-end gap-1 min-w-0">
+                                          <div className="flex flex-wrap items-start justify-end gap-1 min-w-0">
                                             <div className="min-w-0 overflow-hidden pr-3 text-right">
                                               {isNull ? (
                                                 <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
@@ -828,7 +828,7 @@ const PathwayDetail = () => {
                                               )}
                                             </div>
                                             <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
-                                            {meta?.method && <div className="min-[720px]:hidden"><MethodChip method={meta.method} /></div>}
+                                            {meta?.method && <div className="flex basis-full justify-end min-[720px]:hidden"><MethodChip method={meta.method} /></div>}
                                           </div>
                                           <div className="hidden items-center min-[720px]:flex">{meta?.method && <MethodChip method={meta.method} />}</div>
 
