@@ -18,7 +18,7 @@ import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { KEY_INDICATOR_META, MethodChip, JustificationButton } from '@/components/pathway/KeyIndicatorMeta';
 
 /** Shared Key Indicators column grid: label · value · bar · method · info. */
-const KI_GRID = 'min-w-0 gap-x-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_20px] min-[720px]:grid-cols-[minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_80px_20px]';
+const KI_GRID = 'min-w-0 gap-x-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_20px] min-[720px]:grid-cols-[minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_92px]';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
 import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
@@ -749,8 +749,7 @@ const PathwayDetail = () => {
                         <span />
                         <span className="text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                         <div className="flex items-center justify-between px-3 text-[9px] uppercase tracking-[0.08em] text-muted-foreground"><span>Low</span><span>High</span></div>
-                        <span className="hidden text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
-                        <span />
+                        <span className="flex items-center justify-center text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:justify-start">Method</span>
                       </div>
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
@@ -867,8 +866,10 @@ const PathwayDetail = () => {
                                              </>
                                            )}
                                          </div></div>
-                                          <div className="hidden min-[720px]:flex items-center">{meta?.method && <MethodChip method={meta.method} />}</div>
-                                          <div className="flex items-center justify-center">{meta?.justification && <JustificationButton label={row.label} value={row.value} meta={meta} />}</div>
+                                          <div className="flex min-w-0 items-center justify-center gap-1 min-[720px]:justify-start">
+                                            {meta?.method && <span className="hidden min-[720px]:inline-flex"><MethodChip method={meta.method} /></span>}
+                                            {meta?.justification && <JustificationButton label={row.label} value={row.value} meta={meta} />}
+                                          </div>
                                        </div>
                                     );
                                   })}

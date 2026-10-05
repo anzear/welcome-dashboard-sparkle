@@ -139,8 +139,10 @@ function Favicon({ url, className }: { url: string; className?: string }) {
 }
 
 const chipClass = (m: IndicatorMethod) => cn(
-  "inline-block whitespace-nowrap rounded-[4px] border border-border bg-transparent px-[6px] py-px text-[11px] font-medium leading-tight text-muted-foreground outline-none focus-visible:ring-1 focus-visible:ring-ring",
-  methodLabel(m) === "Modelled" && "border-dashed",
+  "inline-block whitespace-nowrap rounded-[4px] border bg-transparent px-[6px] py-px text-[11px] font-medium leading-tight outline-none focus-visible:ring-1 focus-visible:ring-ring",
+  methodLabel(m) === "Reported" && "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
+  methodLabel(m) === "Derived" && "border-amber-500/50 text-amber-700 dark:text-amber-400",
+  methodLabel(m) === "Modelled" && "border-dashed border-orange-500/50 text-orange-700 dark:text-orange-400",
 );
 
 export function MethodChip({ method }: { method: IndicatorMethod }) {
