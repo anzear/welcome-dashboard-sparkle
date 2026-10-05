@@ -747,7 +747,7 @@ const PathwayDetail = () => {
                         <span>Low</span>
                         <span>High</span>
                       </div>
-                      <span className="hidden text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
+                      <span className="hidden pl-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
                       const groupHighlighted = hoveredFlowType === group.type;
