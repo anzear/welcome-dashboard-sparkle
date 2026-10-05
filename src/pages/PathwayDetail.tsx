@@ -15,6 +15,7 @@ import PathwayDocumentsCard from '@/components/pathway/PathwayDocumentsCard';
 import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
+import { KEY_INDICATOR_META, MethodChip, JustificationButton } from '@/components/pathway/KeyIndicatorMeta';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
 import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
@@ -739,13 +740,15 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_28px] min-[720px]:grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_136px_minmax(100px,1fr)_28px] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                      <span className="hidden text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
                       <div className="relative flex items-center justify-between pl-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
                       </div>
+                      <span />
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
                       const groupHighlighted = hoveredFlowType === group.type;
@@ -778,7 +781,7 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
+                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_28px] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_136px_minmax(100px,1fr)_28px] items-center pr-2">
                                        <div className="flex items-center gap-1 pl-1">
                                          <span
                                            className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -801,11 +804,12 @@ const PathwayDetail = () => {
                                      for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
                                      const avg = 25 + (hash % 51);
                                      const { number, unit } = splitValueUnit(row.value);
+                                     const meta = KEY_INDICATOR_META[row.label];
                                      return (
                                         <div
                                           key={`${group.category}-${section.name}-${row.label}`}
                                           tabIndex={0}
-                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_28px] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_136px_minmax(100px,1fr)_28px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                         >
                                           <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
@@ -824,7 +828,9 @@ const PathwayDetail = () => {
                                               )}
                                             </div>
                                             <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
+                                            {meta?.method && <div className="min-[720px]:hidden"><MethodChip method={meta.method} /></div>}
                                           </div>
+                                          <div className="hidden items-center min-[720px]:flex">{meta?.method && <MethodChip method={meta.method} />}</div>
 
                                          <div className="relative h-3.5">
                                            {isNull ? (
@@ -858,7 +864,7 @@ const PathwayDetail = () => {
                                              </>
                                            )}
                                          </div>
-
+                                         <div className="flex h-4 w-[28px] items-center justify-center">{meta && <JustificationButton label={row.label} value={row.value} meta={meta} />}</div>
                                        </div>
                                     );
                                   })}
