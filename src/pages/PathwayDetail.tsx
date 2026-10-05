@@ -740,7 +740,7 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_136px] items-center border-b border-border bg-background px-2 py-0.5">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[80px_minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between pl-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
@@ -780,7 +780,7 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_136px] items-center pr-2">
+                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center pr-2">
                                        <div className="flex items-center gap-1 pl-1">
                                          <span
                                            className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -808,7 +808,7 @@ const PathwayDetail = () => {
                                         <div
                                           key={`${group.category}-${section.name}-${row.label}`}
                                           tabIndex={0}
-                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_136px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                         >
                                           <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
