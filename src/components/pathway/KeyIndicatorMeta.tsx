@@ -171,7 +171,7 @@ export function JustificationButton({ label, value, meta }: { label: string; val
           ref={triggerRef}
           type="button"
           aria-label={`Show justification for ${label}`}
-          className={cn("flex h-4 w-4 items-center justify-center text-muted-foreground opacity-40 transition-opacity group-hover/row:opacity-100 focus-visible:opacity-100 outline-none", open && "opacity-100")}
+          className={cn("flex h-4 w-4 items-center justify-center text-muted-foreground opacity-60 transition-opacity hover:opacity-100 group-hover/row:opacity-100 focus-visible:opacity-100 outline-none", open && "opacity-100")}
         >
           <Info className="h-4 w-4" />
         </button>
