@@ -210,6 +210,7 @@ export function JustificationButton({ label, value, meta }: { label: string; val
     <Sheet open={drawer} onOpenChange={setDrawer}>
       <SheetContent
         side="right"
+        overlayClassName="bg-black/20"
         className="flex w-full flex-col gap-0 p-0 min-[720px]:w-[420px] min-[720px]:max-w-[420px] [&>button:last-child]:hidden"
         onOpenAutoFocus={e => { e.preventDefault(); headerRef.current?.focus(); }}
         onCloseAutoFocus={e => { e.preventDefault(); triggerRef.current?.focus(); }}
