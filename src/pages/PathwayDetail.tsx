@@ -16,6 +16,9 @@ import { setActiveSubRegistry } from '@/lib/documentRegistry';
 
 import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { KEY_INDICATOR_META, MethodChip, JustificationButton } from '@/components/pathway/KeyIndicatorMeta';
+
+/** Shared Key Indicators column grid: label · value · bar · method · info. */
+const KI_GRID = 'gap-x-4 grid-cols-[minmax(140px,1fr)_200px_minmax(160px,2fr)_28px] min-[720px]:grid-cols-[minmax(220px,1fr)_200px_minmax(300px,2fr)_112px_28px]';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
 import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
@@ -740,14 +743,15 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[80px_minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center border-b border-border bg-background px-2 py-0.5">
-                      <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
-                      <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
-                      <div className="relative flex items-center justify-between pl-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
-                        <span>Low</span>
-                        <span>High</span>
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(0,1fr)] items-center border-b border-border bg-background py-0.5">
+                      <span className="pl-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
+                      <div className={`grid ${KI_GRID} items-center`}>
+                        <span />
+                        <span className="text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
+                        <div className="flex items-center justify-between px-3 text-[9px] uppercase tracking-[0.08em] text-muted-foreground"><span>Low</span><span>High</span></div>
+                        <span className="hidden text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
+                        <span />
                       </div>
-                      <span className="hidden pl-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground min-[720px]:block">Method</span>
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
                       const groupHighlighted = hoveredFlowType === group.type;
@@ -780,7 +784,7 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center pr-2">
+                                     <div className="grid h-6 grid-cols-1 items-center border-b border-dotted border-foreground/15">
                                        <div className="flex items-center gap-1 pl-1">
                                          <span
                                            className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -790,8 +794,8 @@ const PathwayDetail = () => {
                                            {section.name}
                                          </span>
                                        </div>
-                                       <div />
-                                       <div />
+
+
                                      </div>
                                   )}
 
@@ -808,7 +812,7 @@ const PathwayDetail = () => {
                                         <div
                                           key={`${group.category}-${section.name}-${row.label}`}
                                           tabIndex={0}
-                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] min-[720px]:grid-cols-[minmax(110px,1fr)_minmax(150px,auto)_minmax(80px,1fr)_minmax(100px,auto)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                          className={`group/row grid h-6 ${KI_GRID} items-center outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]`}
                                         >
                                           <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
@@ -827,16 +831,16 @@ const PathwayDetail = () => {
                                               )}
                                             </div>
                                             <ExternalLink className="mt-[3px] h-2 w-2 shrink-0 text-muted-foreground/60 opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-visible/row:opacity-100" />
-                                            <div className="flex basis-full items-center justify-end gap-1 min-[720px]:hidden">{meta?.method && <MethodChip method={meta.method} />}{meta && <JustificationButton label={row.label} value={row.value} meta={meta} />}</div>
+                                            {meta?.method && <div className="flex basis-full justify-end min-[720px]:hidden"><MethodChip method={meta.method} /></div>}
                                           </div>
-                                          <div className="hidden items-center gap-1 min-[720px]:flex">{meta?.method && <MethodChip method={meta.method} />}{meta && <JustificationButton label={row.label} value={row.value} meta={meta} />}</div>
 
-                                         <div className="relative h-3.5">
+
+                                         <div className="min-w-0 px-3"><div className="relative h-3.5">
                                            {isNull ? (
-                                             <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
+                                             <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full border border-dashed border-foreground/20" />
                                            ) : (
                                              <>
-                                                <div className="absolute left-0 right-4 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
+                                                <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-foreground/[0.08]" />
                                                 <div className="absolute left-1/2 top-1/2 h-[9px] w-px -translate-y-1/2 bg-foreground/15" />
                                                 <div
                                                    className="absolute left-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-primary"
@@ -862,7 +866,9 @@ const PathwayDetail = () => {
                                                  </span>
                                              </>
                                            )}
-                                         </div>
+                                         </div></div>
+                                          <div className="hidden min-[720px]:flex items-center">{meta?.method && <MethodChip method={meta.method} />}</div>
+                                          <div className="flex items-center justify-center">{meta?.justification && <JustificationButton label={row.label} value={row.value} meta={meta} />}</div>
                                        </div>
                                     );
                                   })}
