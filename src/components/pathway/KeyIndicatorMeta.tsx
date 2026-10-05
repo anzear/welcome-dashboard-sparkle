@@ -70,16 +70,19 @@ const PLACEHOLDER_SOURCES: Record<string, IndicatorSourceRef[]> = {
   "Application TRL": [bare("https://example-journal.net/articles/pilot-line-trials"), bare("https://example-pilotnetwork.org/projects/demonstrations")],
 };
 
-export const METHOD_DEFINITIONS: Record<IndicatorMethod, string> = {
+export type MethodDisplay = "Reported" | "Derived" | "Modelled";
+export function methodLabel(method: IndicatorMethod): MethodDisplay {
+  if (method === "Reported") return "Reported";
+  if (method === "Derived" || method === "Summed") return "Derived";
+  return "Modelled";
+}
+export const METHOD_DEFINITIONS: Record<MethodDisplay, string> = {
   Reported: "Value stated directly in a source.",
-  Derived: "Calculated from reported inputs. No estimated inputs.",
-  "Derived + estimated": "Calculated, with at least one estimated input or conversion factor.",
-  Summed: "Sum of reported figures. No estimated terms.",
-  "Summed + estimated": "Sum including at least one estimated term.",
-  Estimated: "Built from proxy, analogue, allocation or ratio. Screening estimate.",
+  Derived: "Calculated from reported figures. No estimated inputs.",
+  Modelled: "Built wholly or partly from estimated inputs. Screening estimate.",
 };
 
-const isEstimated = (m: IndicatorMethod) => m.toLowerCase().includes("estimated");
+const isEstimated = (m: IndicatorMethod) => methodLabel(m) === "Modelled";
 
 /** Prototype sample metadata. Rows not listed carry neither method nor justification. */
 export const KEY_INDICATOR_META: Record<string, IndicatorMeta> = {
@@ -96,7 +99,7 @@ export const KEY_INDICATOR_META: Record<string, IndicatorMeta> = {
     justification: "Contract price for pure substance (≥99% grade), EXW Europe. Derived from reported 2025 import unit values in trade statistics, converted from EUR/kg to EUR/t.",
   },
   "Product availability (Europe)": {
-    method: "Estimated" satisfies AvailabilityMethod, asOf: "2024",
+    method: "Summed" satisfies AvailabilityMethod, asOf: "2024",
     justification: "No reported European production figure is available. Volume is allocated from global capacity using Europe's share of installed fermentation capacity from a 2024 industry report. Expressed as pure substance.",
   },
   "Market size (EU)": {
@@ -145,9 +148,9 @@ export function MethodChip({ method }: { method: IndicatorMethod }) {
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span tabIndex={0} title={METHOD_DEFINITIONS[method]} className={chipClass(method)}>{method}</span>
+          <span tabIndex={0} title={METHOD_DEFINITIONS[methodLabel(method)]} className={chipClass(method)}>{methodLabel(method)}</span>
         </TooltipTrigger>
-        <TooltipContent className="max-w-[260px] text-xs">{METHOD_DEFINITIONS[method]}</TooltipContent>
+        <TooltipContent className="max-w-[260px] text-xs">{METHOD_DEFINITIONS[methodLabel(method)]}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -181,8 +184,8 @@ export function JustificationButton({ label, value, meta }: { label: string; val
           </div>
           {meta.method && (
             <div className="flex items-start gap-2">
-              <span className={chipClass(meta.method)}>{meta.method}</span>
-              <span className="text-xs text-muted-foreground">{METHOD_DEFINITIONS[meta.method]}</span>
+              <span className={chipClass(meta.method)}>{methodLabel(meta.method)}</span>
+              <span className="text-xs text-muted-foreground">{METHOD_DEFINITIONS[methodLabel(meta.method)]}</span>
             </div>
           )}
           {meta.asOf && <span className="text-[11px] text-muted-foreground">As of {meta.asOf}</span>}
