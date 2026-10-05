@@ -18,7 +18,7 @@ import PathwayProfileGroups from '@/components/PathwayProfileGroups';
 import { KEY_INDICATOR_META, MethodChip, JustificationButton } from '@/components/pathway/KeyIndicatorMeta';
 
 /** Shared Key Indicators column grid: label · value · bar · method · info. */
-const KI_GRID = 'gap-x-4 grid-cols-[minmax(140px,1fr)_200px_minmax(160px,2fr)_28px] min-[720px]:grid-cols-[minmax(220px,1fr)_200px_minmax(300px,2fr)_112px_28px]';
+const KI_GRID = 'min-w-0 gap-x-2 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_20px] min-[720px]:grid-cols-[minmax(0,1.3fr)_minmax(0,1.1fr)_minmax(0,1.5fr)_80px_20px]';
 import PathwayStatusCard from '@/components/pathway/PathwayStatusCard';
 import PathwayMetricsChecklist, { type ChecklistIndicator } from '@/components/pathway/PathwayMetricsChecklist';
 import { NODE_LABELS } from '@/lib/hitlStore';
@@ -741,7 +741,7 @@ const PathwayDetail = () => {
                 {evaluationTab === 'evaluation' ? (
                   <>
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
-                  <div className="flex-1 min-h-0 overflow-auto">
+                  <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
                     <div className="min-w-0">
                     <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(0,1fr)] items-center border-b border-border bg-background py-0.5">
                       <span className="pl-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
@@ -772,7 +772,7 @@ const PathwayDetail = () => {
                             </span>
                           </div>
 
-                          <div>
+                           <div className="min-w-0">
                             {group.sections.map((section, sectionIndex) => {
                               const sectionHighlighted = hoveredFlowType === section.type;
                               const hideSectionLabel = group.category === 'Application' && section.name === group.category;
@@ -814,10 +814,10 @@ const PathwayDetail = () => {
                                           tabIndex={0}
                                           className={`group/row grid h-6 ${KI_GRID} items-center outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]`}
                                         >
-                                          <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
+                                          <span className="min-w-0 truncate pl-2 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
                                           <div className="flex flex-wrap items-start justify-end gap-1 min-w-0">
-                                            <div className="min-w-0 overflow-hidden pr-3 text-right">
+                                            <div className="min-w-0 flex-1 overflow-hidden text-right">
                                               {isNull ? (
                                                 <span className="text-[10px] tabular-nums text-muted-foreground">—</span>
                                               ) : (
