@@ -739,14 +739,13 @@ const PathwayDetail = () => {
                 <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-border bg-background">
                   <div className="flex-1 min-h-0 overflow-auto">
                     <div className="min-w-0">
-                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_82px] items-center border-b border-border bg-background px-2 py-0.5">
+                    <div className="sticky top-0 z-10 grid grid-cols-[80px_minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center border-b border-border bg-background px-2 py-0.5">
                       <span className="col-span-2 text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Key indicators</span>
                       <span className="pr-6 text-right text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Value</span>
                       <div className="relative flex items-center justify-between pl-2 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">
                         <span>Low</span>
                         <span>High</span>
                       </div>
-                      <span className="pl-2 text-right text-[9px] uppercase tracking-[0.08em] text-muted-foreground">As of</span>
                     </div>
                     {evaluationGroups.map((group, groupIndex) => {
                       const groupHighlighted = hoveredFlowType === group.type;
@@ -779,7 +778,7 @@ const PathwayDetail = () => {
                                   onMouseLeave={() => setHoveredFlowType(group.type)}
                                 >
                                   {!hideSectionLabel && (
-                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_82px] items-center pr-2">
+                                     <div className="grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2">
                                        <div className="flex items-center gap-1 pl-1">
                                          <span
                                            className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -789,7 +788,6 @@ const PathwayDetail = () => {
                                            {section.name}
                                          </span>
                                        </div>
-                                       <div />
                                        <div />
                                        <div />
                                      </div>
@@ -803,13 +801,11 @@ const PathwayDetail = () => {
                                      for (let i = 0; i < row.label.length; i++) hash = (hash * 31 + row.label.charCodeAt(i)) >>> 0;
                                      const avg = 25 + (hash % 51);
                                      const { number, unit } = splitValueUnit(row.value);
-                                     const asOf = shortDate(observedAt(row.label));
-                                     const history = indicatorHistory(row.label, row.value, pct);
                                      return (
                                         <div
                                           key={`${group.category}-${section.name}-${row.label}`}
                                           tabIndex={0}
-                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)_82px] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
+                                          className="group/row grid h-6 grid-cols-[minmax(110px,1fr)_minmax(180px,auto)_minmax(100px,1fr)] items-center pr-2 outline-none transition-colors hover:bg-foreground/[0.04] focus-visible:bg-foreground/[0.04]"
                                         >
                                           <span className="truncate pl-4 text-[10px] font-medium text-muted-foreground" title={row.label}>{row.label}</span>
 
@@ -863,59 +859,6 @@ const PathwayDetail = () => {
                                            )}
                                          </div>
 
-                                          <div className="pl-2 text-right">
-                                            <Popover>
-                                              <PopoverTrigger asChild>
-                                                <button
-                                                  type="button"
-                                                  className="rounded px-0.5 text-[9px] tabular-nums text-muted-foreground underline decoration-dotted underline-offset-2 transition-colors hover:text-foreground focus-visible:text-foreground focus-visible:outline-none"
-                                                  title={`Observed ${asOf} — show history`}
-                                                >
-                                                  {asOf}
-                                                </button>
-                                              </PopoverTrigger>
-                                              <PopoverContent className="w-72 p-3" side="right" align="end">
-                                                <p className="text-[10px] font-semibold text-foreground">{row.label}</p>
-                                                <p className="mt-0.5 text-[9px] text-muted-foreground">Historical readings — newest first</p>
-                                                <div className="mt-2 h-28 w-full">
-                                                  <ResponsiveContainer width="100%" height="100%">
-                                                    <LineChart data={[...history].reverse()} margin={{ top: 4, right: 8, bottom: 4, left: -18 }}>
-                                                      <XAxis dataKey="date" tick={false} axisLine={false} />
-                                                      <YAxis domain={[0, 100]} tick={{ fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} width={30} />
-                                                      <Tooltip
-                                                        content={({ active, payload }) => {
-                                                          if (!active || !payload?.length) return null;
-                                                          const p = payload[0].payload as { date: string; value: string; percentile: number };
-                                                          return (
-                                                            <div className="rounded border border-border bg-background p-1.5 text-[9px] shadow-sm">
-                                                              <p className="text-muted-foreground">{p.date}</p>
-                                                              <p className="font-medium text-foreground">{p.value}</p>
-                                                              <p className="text-muted-foreground">Pct {p.percentile}</p>
-                                                            </div>
-                                                          );
-                                                        }}
-                                                      />
-                                                      <Line type="monotone" dataKey="percentile" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3, fill: 'hsl(var(--primary))', strokeWidth: 0 }} activeDot={{ r: 4 }} />
-                                                    </LineChart>
-                                                  </ResponsiveContainer>
-                                                </div>
-                                                <div className="mt-2 space-y-1">
-                                                  {history.map((h, i) => (
-                                                    <div key={h.date} className="flex items-center gap-2 text-[9px]">
-                                                      <span className="w-[62px] shrink-0 tabular-nums text-muted-foreground">{h.date}</span>
-                                                      <span className={`w-[74px] shrink-0 truncate text-right tabular-nums ${i === 0 ? 'font-semibold text-foreground' : 'text-foreground/80'}`}>
-                                                        {h.value}
-                                                      </span>
-                                                      <div className="relative h-[3px] flex-1 rounded-full bg-foreground/[0.08]">
-                                                        <div className="absolute left-0 top-0 h-full rounded-full bg-primary" style={{ width: `${h.percentile}%`, opacity: i === 0 ? 1 : 0.45 }} />
-                                                      </div>
-                                                      <span className="w-4 shrink-0 text-right tabular-nums text-muted-foreground">{h.percentile}</span>
-                                                    </div>
-                                                  ))}
-                                                </div>
-                                              </PopoverContent>
-                                            </Popover>
-                                          </div>
                                        </div>
                                     );
                                   })}
